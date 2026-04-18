@@ -1,46 +1,90 @@
-# Fossify Keyboard
+# KeyboardSA — InterKeyDelay (IKD) Data Collection Keyboard
 
-<img alt="Logo" src="graphics/icon.webp" width="120" />
+An Android keyboard for research-oriented InterKeyDelay (IKD) measurement. Based on the open-source [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard).
 
-<a href="https://play.google.com/store/apps/details?id=org.fossify.keyboard"><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' height=80/></a> <a href="https://f-droid.org/packages/org.fossify.keyboard/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-en.svg" alt="Get it on F-Droid" height=80/></a> <a href="https://apt.izzysoft.de/fdroid/index/apk/org.fossify.keyboard"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height=80/></a>
+## Project Goal
 
-Introducing Fossify Keyboard – your go-to solution for effortless and efficient typing. Experience a seamless typing experience designed to cater to all your needs, whether chatting with friends or inserting texts, numbers, or symbols.
+This project modifies an existing open-source Android keyboard to **measure and collect InterKeyDelay (IKD) data** — the time interval (in milliseconds) between consecutive key presses during natural typing.
 
-**📶 OFFLINE FUNCTIONALITY:**    
-Fossify Keyboard operates entirely offline without internet permission, allowing you to use it anytime, anywhere, without needing an internet connection. This also provides you with more privacy, security, and stability compared to other keyboards that connect to the internet.
+IKD is a behavioral biometric used in keystroke dynamics research. By capturing precise timing data directly from a soft keyboard, this project enables data collection for studies in:
 
-**🌐 MULTIPLE LANGUAGES AND LAYOUTS:**    
-Choose from a wide variety of languages and keyboard layouts. Fossify Keyboard supports multiple languages, making it easy for you to switch and type in your preferred language effortlessly.
+- User authentication via typing patterns
+- Neuromotor analysis and typing behavior
+- Detection of cognitive or motor impairments
+- Human-computer interaction research
 
-**📋 HANDY CLIPBOARD:**    
-Create clips and pin frequently used ones for easy access. This feature allows you to insert your most-used texts quickly, saving you time and effort.
+## How It Works
 
-**📳 CUSTOMIZABLE SETTINGS:**    
-Tailor your typing experience by toggling vibrations, popups on key presses, and selecting your preferred language from the list of supported ones. Personalize your keyboard settings to suit your preferences.
+The keyboard functions as a normal Android input method. When IKD collection is enabled in the settings, it silently records the timestamp and inter-key delay for each keystroke into a local database on the device. The data can then be exported as CSV or JSON for analysis.
 
-**🌙 MATERIAL DESIGN AND DARK THEME:**    
-Enjoy a sleek, modern design with a default dark theme. Fossify Keyboard offers a visually appealing and comfortable user experience, making typing a pleasure.
+**Key measurements captured per keystroke:**
 
-**🔒 PRIVACY AND SECURITY:**    
-Your privacy is our top priority. Fossify Keyboard does not collect or share any user information with third parties. Experience peace of mind knowing your typing activity remains private and secure.
+| Field | Description |
+|---|---|
+| Session ID | Groups keystrokes by typing session |
+| Timestamp | When the key was pressed (milliseconds) |
+| Key code | Which key was pressed |
+| Inter-key delay | Time since the previous key press (ms) |
 
-**🎨 CUSTOMIZABLE COLORS:**    
-Personalize your keyboard with customizable colors. Fossify Keyboard allows you to choose and adjust colors to match your style and preferences.
+All data stays on-device. Nothing is transmitted over the network.
 
-**🌐 OPEN-SOURCE TRANSPARENCY:**    
-Fossify Keyboard is fully open-source, providing you with transparency and security. You have access to the source code for audits, ensuring a trustworthy and reliable typing tool.
+## Implementation Plan
 
-Experience typing like never before – efficient, personalized, and secure. Download Fossify Keyboard now and elevate your typing experience.
+The full technical implementation plan, including project structure documentation, key press flow diagrams, code change details, and a step-by-step guide, is in [IKD_PLAN.md](IKD_PLAN.md).
 
-➡️ Explore more Fossify apps: https://www.fossify.org    
-➡️ Open-Source Code: https://www.github.com/FossifyOrg    
-➡️ Join the community on Reddit: https://www.reddit.com/r/Fossify    
-➡️ Connect on Telegram: https://t.me/Fossify    
+### Summary of changes from the base Fossify Keyboard
 
-<div align="center">
-<img alt="App image" src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_en-US.png" width="30%">
-<img alt="App image" src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_en-US.png" width="30%">
-<img alt="App image" src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_en-US.png" width="30%">
-</div>
+| Area | What changes |
+|---|---|
+| **IME Service** | Records timestamps and IKD at each key press |
+| **Database** | New `IkdDatabase` with `IkdEvent` entity (separate from the existing clips database) |
+| **Settings** | Toggle to enable/disable IKD collection, export and clear data buttons |
+| **Data export** | CSV/JSON export of all collected IKD events |
+
+### Files added
+
+- `models/IkdEvent.kt` — Room entity for IKD events
+- `interfaces/IkdDao.kt` — Data access object for IKD queries
+- `databases/IkdDatabase.kt` — Separate Room database for IKD storage
+
+### Files modified
+
+- `services/SimpleKeyboardIME.kt` — IKD capture logic in `onKey()`
+- `helpers/Constants.kt` and `helpers/Config.kt` — New preference keys
+- `extensions/ContextExt.kt` — Database access extension
+- `activities/SettingsActivity.kt` — UI for the new settings
+
+## Based On
+
+This project is a fork of [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard), an open-source, privacy-focused Android keyboard. The base keyboard provides:
+
+- Fully offline operation (no internet permission)
+- Multiple languages and layouts
+- Clipboard management
+- Material Design with dark theme
+- Customizable colors and key borders
+
+All original Fossify Keyboard features remain functional.
+
+## Building
+
+See [BUILDING.md](BUILDING.md) for full setup instructions, including first-time environment configuration and how to build from Android Studio or the command line.
+
+Quick build:
+
+```bash
+cd "/media/rmca/QuickStorage/PROJETOS GITHUB/KeyboardSA/Keyboard_SA_IKD"
+./gradlew assembleCoreDebug
+```
+
+Install on a connected device:
+
+```bash
+./gradlew installCoreDebug
+```
+
+## License
+
+This project inherits the license from the original Fossify Keyboard. See [LICENSE](LICENSE) for details.
 
 
