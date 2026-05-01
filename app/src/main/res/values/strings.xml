@@ -160,6 +160,8 @@
     <string name="ikd_delete_session_success">Session deleted</string>
     <string name="ikd_export_session_success">Session exported</string>
     <string name="ikd_export_session_error">Export failed</string>
+    <string name="ikd_export_all_success">All data exported</string>
+    <string name="ikd_export_all_error">Export failed</string>
 
     <!--
         Haven't found some strings? There's more at

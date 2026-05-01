@@ -1,10 +1,17 @@
 package org.fossify.keyboard.helpers
 
+import android.content.Context
+import android.net.Uri
+import org.fossify.commons.helpers.ensureBackgroundThread
+import org.fossify.keyboard.extensions.ikdDB
+import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
+import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
 import org.fossify.keyboard.models.IkdEvent
 import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.models.SensorReadingEvent
 import org.fossify.keyboard.models.SensorSample
 import java.io.BufferedWriter
+import java.io.IOException
 
 /**
  * Single source of truth for the dual-block IKD CSV format.
@@ -110,4 +117,37 @@ object IkdCsvWriter {
         y = y,
         z = z,
     )
+}
+
+/**
+ * Streams all sessions' timing rows + sensor rows to the given SAF [uri] as a single mega-CSV
+ * in the same dual-block format used by per-session export. Runs on a background thread.
+ *
+ * Callers should invoke [onSuccess] / [onError] callbacks themselves on the UI thread
+ * (typically via `runOnUiThread { toast(...) }`) — this helper invokes the callbacks from
+ * the background thread.
+ */
+fun Context.exportAllIkdSessions(
+    uri: Uri,
+    onSuccess: () -> Unit,
+    onError: () -> Unit,
+) {
+    ensureBackgroundThread {
+        try {
+            val timingRows = ikdDB.IkdEventDao().getAllOrderedBySession().map { it.asTimingRow() }
+            val sensorRows = ikdDB.SensorSampleDao().getAllOrderedBySession().map { it.asSensorRow() }
+            contentResolver.openOutputStream(uri)?.use { stream ->
+                stream.bufferedWriter().use { writer ->
+                    IkdCsvWriter.writeSessionCsv(writer, timingRows, sensorRows)
+                }
+            }
+            onSuccess()
+        } catch (e: IOException) {
+            e.printStackTrace()
+            onError()
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+            onError()
+        }
+    }
 }

@@ -17,6 +17,7 @@ import org.fossify.keyboard.extensions.ikdDB
 import org.fossify.keyboard.helpers.IkdCsvWriter
 import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
+import org.fossify.keyboard.helpers.exportAllIkdSessions
 import org.fossify.keyboard.models.SessionRecord
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -43,6 +44,17 @@ class SessionsListActivity : SimpleActivity() {
         exportSessionToUri(sessionId, uri)
     }
 
+    private val saveBulkCsvLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri == null) return@registerForActivityResult
+        exportAllIkdSessions(
+            uri = uri,
+            onSuccess = { runOnUiThread { toast(R.string.ikd_export_all_success) } },
+            onError = { runOnUiThread { toast(R.string.ikd_export_all_error) } },
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
@@ -52,8 +64,18 @@ class SessionsListActivity : SimpleActivity() {
 
         binding.sessionsListToolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                R.id.sessions_export_all, R.id.sessions_delete_all -> {
-                    toast(R.string.coming_soon)
+                R.id.sessions_export_all -> {
+                    val today = SimpleDateFormat(EXPORT_DATE_PATTERN, Locale.getDefault()).format(Date())
+                    saveBulkCsvLauncher.launch("ikd_export_$today.csv")
+                    true
+                }
+                R.id.sessions_delete_all -> {
+                    AlertDialog.Builder(this)
+                        .setTitle(R.string.ikd_delete_all_confirm_title)
+                        .setMessage(R.string.ikd_delete_all_confirm_message)
+                        .setPositiveButton(R.string.yes) { _, _ -> performDeleteAll() }
+                        .setNegativeButton(R.string.cancel, null)
+                        .show()
                     true
                 }
                 else -> false
@@ -103,7 +125,7 @@ class SessionsListActivity : SimpleActivity() {
     private fun startSessionExport(session: SessionRecord) {
         pendingExportSessionId = session.sessionId
         val shortId = session.sessionId.take(SHORT_ID_LENGTH)
-        val datePart = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+        val datePart = SimpleDateFormat(EXPORT_DATE_PATTERN, Locale.getDefault()).format(Date())
         saveSessionCsvLauncher.launch("ikd_session_${shortId}_${datePart}.csv")
     }
 
@@ -151,7 +173,18 @@ class SessionsListActivity : SimpleActivity() {
         }
     }
 
+    private fun performDeleteAll() {
+        ensureBackgroundThread {
+            ikdDB.SessionDao().deleteAll()
+            runOnUiThread {
+                loadSessions()
+                toast(R.string.ikd_delete_all_success)
+            }
+        }
+    }
+
     companion object {
         private const val SHORT_ID_LENGTH = 8
+        private const val EXPORT_DATE_PATTERN = "yyyyMMdd"
     }
 }

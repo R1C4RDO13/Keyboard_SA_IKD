@@ -4,6 +4,7 @@ import android.content.Intent
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.text.format.Formatter
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getProperPrimaryColor
@@ -24,9 +25,24 @@ import org.fossify.keyboard.helpers.RETENTION_DAYS_90
 import org.fossify.keyboard.helpers.RETENTION_DAYS_DEFAULT
 import org.fossify.keyboard.helpers.RETENTION_FOREVER
 import org.fossify.keyboard.helpers.computeIkdStorageStats
+import org.fossify.keyboard.helpers.exportAllIkdSessions
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class IkdSettingsActivity : SimpleActivity() {
     private val binding by viewBinding(ActivityIkdSettingsBinding::inflate)
+
+    private val saveBulkCsvLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri == null) return@registerForActivityResult
+        exportAllIkdSessions(
+            uri = uri,
+            onSuccess = { runOnUiThread { toast(R.string.ikd_export_all_success) } },
+            onError = { runOnUiThread { toast(R.string.ikd_export_all_error) } },
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -179,9 +195,14 @@ class IkdSettingsActivity : SimpleActivity() {
             ikdViewSessionsButton.setOnClickListener {
                 startActivity(Intent(this@IkdSettingsActivity, SessionsListActivity::class.java))
             }
-            ikdExportAllButton.setOnClickListener { toast(R.string.coming_soon) }
+            ikdExportAllButton.setOnClickListener { triggerBulkExport() }
             ikdDeleteAllButton.setOnClickListener { confirmDeleteAll() }
         }
+    }
+
+    private fun triggerBulkExport() {
+        val today = SimpleDateFormat(EXPORT_DATE_PATTERN, Locale.getDefault()).format(Date())
+        saveBulkCsvLauncher.launch("ikd_export_$today.csv")
     }
 
     private fun confirmDeleteAll() {
@@ -201,5 +222,9 @@ class IkdSettingsActivity : SimpleActivity() {
                 refreshStorageStats()
             }
         }
+    }
+
+    companion object {
+        private const val EXPORT_DATE_PATTERN = "yyyyMMdd"
     }
 }
