@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/event_feed_coordinator"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <org.fossify.commons.views.MyAppBarLayout
+        android:id="@+id/event_feed_appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/event_feed_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/color_primary"
+            app:menu="@menu/menu_event_feed"
+            app:title="@string/event_feed_title"
+            app:titleTextAppearance="@style/AppTheme.ActionBar.TitleTextStyle" />
+
+    </org.fossify.commons.views.MyAppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/event_feed_nested_scrollview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/activity_margin">
+
+            <!-- No data placeholder -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/event_feed_empty_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="@dimen/activity_margin"
+                android:text="@string/event_feed_no_data"
+                android:visibility="gone" />
+
+            <!-- Key Events section -->
+            <TextView
+                android:id="@+id/event_feed_timing_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/event_feed_timing_section" />
+
+            <LinearLayout
+                android:id="@+id/event_feed_timing_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/tiny_margin"
+                android:paddingHorizontal="4dp">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/event_feed_header_category"
+                    android:textStyle="bold"
+                    android:textSize="@dimen/smaller_text_size" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="@string/event_feed_header_ikd"
+                    android:textStyle="bold"
+                    android:textSize="@dimen/smaller_text_size" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="@string/event_feed_header_hold"
+                    android:textStyle="bold"
+                    android:textSize="@dimen/smaller_text_size" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="@string/event_feed_header_flight"
+                    android:textStyle="bold"
+                    android:textSize="@dimen/smaller_text_size" />
+
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/event_feed_timing_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/tiny_margin"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
+
+            <!-- Sensor Readings section -->
+            <TextView
+                android:id="@+id/event_feed_sensor_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/event_feed_sensor_section" />
+
+            <LinearLayout
+                android:id="@+id/event_feed_sensor_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/tiny_margin"
+                android:paddingHorizontal="4dp">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/event_feed_header_sensor"
+                    android:textStyle="bold"
+                    android:textSize="@dimen/smaller_text_size" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="@string/event_feed_header_x"
+                    android:textStyle="bold"
+                    android:textSize="@dimen/smaller_text_size" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="@string/event_feed_header_y"
+                    android:textStyle="bold"
+                    android:textSize="@dimen/smaller_text_size" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="@string/event_feed_header_z"
+                    android:textStyle="bold"
+                    android:textSize="@dimen/smaller_text_size" />
+
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/event_feed_sensor_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/tiny_margin"
+                android:layout_marginBottom="@dimen/activity_margin"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

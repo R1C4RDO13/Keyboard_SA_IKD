@@ -1,15 +1,13 @@
 package org.fossify.keyboard.activities
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.os.SystemClock
-import android.view.MotionEvent
-import android.view.View
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.result.contract.ActivityResultContracts
 import org.fossify.commons.extensions.beGone
-import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.getProperPrimaryColor
+import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
@@ -19,25 +17,19 @@ import org.fossify.keyboard.helpers.KinematicSensorHelper
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.models.SensorReadingEvent
-import java.util.UUID
 
 class DiagnosticsActivity : SimpleActivity() {
     private val binding by viewBinding(ActivityDiagnosticsBinding::inflate)
 
-    private val sessionEvents = mutableListOf<KeyTimingEvent>()
-    private val sensorReadings = mutableListOf<SensorReadingEvent>()
-    private var currentSessionId: String = UUID.randomUUID().toString()
-
-    private var pressDownTime = 0L
-    private var lastReleaseTime = 0L
-
     private lateinit var sensorHelper: KinematicSensorHelper
+    private var displayedSessionId = ""
 
-    companion object {
-        private const val KEY_SESSION_ID = "session_id"
-        private const val KEY_PRESS_DOWN_TIME = "press_down_time"
-        private const val KEY_LAST_RELEASE_TIME = "last_release_time"
-        private const val KEY_EVENT_COUNT = "event_count"
+    private val statusRefreshHandler = Handler(Looper.getMainLooper())
+    private val statusRefreshRunnable = object : Runnable {
+        override fun run() {
+            updateStatusDisplay()
+            statusRefreshHandler.postDelayed(this, 250)
+        }
     }
 
     private val saveCsvLauncher = registerForActivityResult(
@@ -45,10 +37,12 @@ class DiagnosticsActivity : SimpleActivity() {
     ) { uri ->
         if (uri == null) return@registerForActivityResult
         try {
+            val timingEvents = LiveCaptureSessionStore.getTimingEvents()
+            val sensorReadings = LiveCaptureSessionStore.getSensorReadings()
             contentResolver.openOutputStream(uri)?.use { stream ->
                 stream.bufferedWriter().use { writer ->
                     writer.write("session_id,timestamp_ms,event_category,ikd_ms,hold_time_ms,flight_time_ms,is_correction\n")
-                    for (event in sessionEvents) {
+                    for (event in timingEvents) {
                         writer.write("${event.sessionId},${event.timestamp},${event.eventCategory},${event.ikdMs},${event.holdTimeMs},${event.flightTimeMs},${event.isCorrection}\n")
                     }
                     writer.write("\n#sensor_readings\n")
@@ -68,23 +62,18 @@ class DiagnosticsActivity : SimpleActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        savedInstanceState?.let { state ->
-            currentSessionId = state.getString(KEY_SESSION_ID, currentSessionId)
-            pressDownTime = state.getLong(KEY_PRESS_DOWN_TIME, 0L)
-            lastReleaseTime = state.getLong(KEY_LAST_RELEASE_TIME, 0L)
-            val savedCount = state.getInt(KEY_EVENT_COUNT, 0)
-            binding.diagnosticsEventCountValue.text = savedCount.toString()
-        }
-
-        sensorHelper = KinematicSensorHelper(this, { currentSessionId }) { event ->
-            sensorReadings.add(event)
+        sensorHelper = KinematicSensorHelper(
+            context = this,
+            getSessionId = { LiveCaptureSessionStore.currentSessionId }
+        ) { event ->
             runOnUiThread { updateSensorDisplay(event) }
         }
 
         setupGyroVisibility()
-        setupTouchListener()
         setupOptionsMenu()
-        setupLiveKeyboardSection()
+        binding.diagnosticsViewLogHolder.setOnClickListener {
+            startActivity(Intent(this, EventFeedActivity::class.java))
+        }
         setupEdgeToEdge(padBottomSystem = listOf(binding.diagnosticsNestedScrollview))
         setupMaterialScrollListener(binding.diagnosticsNestedScrollview, binding.diagnosticsAppbar)
     }
@@ -93,20 +82,18 @@ class DiagnosticsActivity : SimpleActivity() {
         super.onResume()
         setupTopAppBar(binding.diagnosticsAppbar, NavigationIcon.Arrow)
         sensorHelper.start()
-        updateLiveKeyboardSection()
+        LiveCaptureSessionStore.setTimingEventListener { event ->
+            runOnUiThread { onNewTimingEvent(event) }
+        }
+        refreshDisplayFromStore()
+        statusRefreshHandler.post(statusRefreshRunnable)
     }
 
     override fun onPause() {
         super.onPause()
         sensorHelper.stop()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putString(KEY_SESSION_ID, currentSessionId)
-        outState.putLong(KEY_PRESS_DOWN_TIME, pressDownTime)
-        outState.putLong(KEY_LAST_RELEASE_TIME, lastReleaseTime)
-        outState.putInt(KEY_EVENT_COUNT, sessionEvents.size)
+        LiveCaptureSessionStore.setTimingEventListener(null)
+        statusRefreshHandler.removeCallbacks(statusRefreshRunnable)
     }
 
     private fun setupGyroVisibility() {
@@ -116,61 +103,102 @@ class DiagnosticsActivity : SimpleActivity() {
         }
     }
 
-    private fun setupTouchListener() {
-        binding.diagnosticsEditText.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    pressDownTime = SystemClock.uptimeMillis()
-                }
-                MotionEvent.ACTION_UP -> {
-                    val now = SystemClock.uptimeMillis()
-                    val dwell = now - pressDownTime
-                    val flight = if (lastReleaseTime > 0L) pressDownTime - lastReleaseTime else -1L
-                    val ikd = if (lastReleaseTime > 0L) now - lastReleaseTime else -1L
-                    lastReleaseTime = now
-                    recordEvent(ikd, dwell, flight)
-                    updateTimingDisplay(ikd, dwell, flight)
-                }
-            }
-            false
-        }
-    }
-
     private fun setupOptionsMenu() {
         binding.diagnosticsToolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.diagnostics_new_session -> {
-                    startNewSession()
-                    true
-                }
-                R.id.diagnostics_save_csv -> {
-                    saveAsCsv()
-                    true
-                }
+                R.id.diagnostics_save_csv -> { saveAsCsv(); true }
                 else -> false
             }
         }
     }
 
-    private fun recordEvent(ikd: Long, dwell: Long, flight: Long) {
-        val event = KeyTimingEvent(
-            sessionId = currentSessionId,
-            timestamp = SystemClock.uptimeMillis(),
-            eventCategory = "TOUCH",  // Phase 1 diagnostics use touch events, not keyboard
-            ikdMs = ikd,
-            holdTimeMs = dwell,
-            flightTimeMs = flight,
-            isCorrection = false  // Phase 1 diagnostics don't track corrections
+    private fun onNewTimingEvent(event: KeyTimingEvent) {
+        // Detect IME-initiated session reset (keyboard re-opened)
+        if (event.sessionId != displayedSessionId) {
+            displayedSessionId = event.sessionId
+            binding.diagnosticsEditText.text?.clear()
+            resetMetricsDisplay()
+        }
+
+        val count = LiveCaptureSessionStore.getEventCount()
+        binding.diagnosticsEventCountValue.text = count.toString()
+        updateTimingDisplay(event.ikdMs, event.holdTimeMs, event.flightTimeMs)
+        updateComputedMetrics(LiveCaptureSessionStore.getTimingEvents())
+        updateViewLogCount(count)
+        updateMenuItemStates()
+    }
+
+    private fun refreshDisplayFromStore() {
+        val events = LiveCaptureSessionStore.getTimingEvents()
+        displayedSessionId = LiveCaptureSessionStore.currentSessionId
+
+        binding.diagnosticsEventCountValue.text = events.size.toString()
+        updateStatusDisplay()
+
+        if (events.isNotEmpty()) {
+            val last = events.last()
+            updateTimingDisplay(last.ikdMs, last.holdTimeMs, last.flightTimeMs)
+            updateComputedMetrics(events)
+        } else {
+            resetMetricsDisplay()
+        }
+
+        updateViewLogCount(events.size)
+        updateMenuItemStates()
+    }
+
+    private fun updateStatusDisplay() {
+        val isCapturing = LiveCaptureSessionStore.isCapturing
+        val hasEvents = LiveCaptureSessionStore.hasData()
+        val statusText = when {
+            isCapturing -> getString(R.string.diagnostics_capture_status_capturing)
+            hasEvents -> getString(R.string.diagnostics_capture_status_stopped)
+            else -> getString(R.string.diagnostics_capture_status_no_data)
+        }
+        binding.diagnosticsCaptureStatusValue.text = statusText
+        binding.diagnosticsCaptureStatusValue.setTextColor(
+            if (isCapturing) getProperPrimaryColor() else getProperTextColor()
         )
-        sessionEvents.add(event)
-        binding.diagnosticsEventCountValue.text = sessionEvents.size.toString()
-        updateSaveMenuItemState()
+    }
+
+    private fun resetMetricsDisplay() {
+        binding.diagnosticsIkdValue.text = getString(R.string.diagnostics_value_none)
+        binding.diagnosticsDwellValue.text = getString(R.string.diagnostics_value_none)
+        binding.diagnosticsFlightValue.text = getString(R.string.diagnostics_value_none)
+        binding.diagnosticsEventCountValue.text = "0"
+        binding.diagnosticsTypingSpeedValue.text = getString(R.string.diagnostics_value_none)
+        binding.diagnosticsErrorRateValue.text = getString(R.string.diagnostics_value_none)
     }
 
     private fun updateTimingDisplay(ikd: Long, dwell: Long, flight: Long) {
         binding.diagnosticsIkdValue.text = if (ikd >= 0) getString(R.string.diagnostics_ms_format, ikd) else getString(R.string.diagnostics_value_none)
-        binding.diagnosticsDwellValue.text = getString(R.string.diagnostics_ms_format, dwell)
+        binding.diagnosticsDwellValue.text = if (dwell >= 0) getString(R.string.diagnostics_ms_format, dwell) else getString(R.string.diagnostics_value_none)
         binding.diagnosticsFlightValue.text = if (flight >= 0) getString(R.string.diagnostics_ms_format, flight) else getString(R.string.diagnostics_value_none)
+    }
+
+    private fun updateComputedMetrics(events: List<KeyTimingEvent>) {
+        // Typing speed in keys per minute
+        binding.diagnosticsTypingSpeedValue.text = if (events.size >= 2) {
+            val durationMs = events.last().timestamp - events.first().timestamp
+            if (durationMs > 0) {
+                val kpm = (events.size * 60_000L / durationMs).toInt()
+                getString(R.string.diagnostics_kpm_format, kpm)
+            } else getString(R.string.diagnostics_value_none)
+        } else getString(R.string.diagnostics_value_none)
+
+        // Error rate as % of backspace events
+        binding.diagnosticsErrorRateValue.text = if (events.isNotEmpty()) {
+            val rate = events.count { it.isCorrection } * 100.0 / events.size
+            getString(R.string.diagnostics_error_rate_format, rate)
+        } else getString(R.string.diagnostics_value_none)
+    }
+
+    private fun updateViewLogCount(count: Int) {
+        binding.diagnosticsViewLogCount.text = if (count > 0) {
+            getString(R.string.diagnostics_view_log_count, count)
+        } else {
+            getString(R.string.diagnostics_value_none)
+        }
     }
 
     private fun updateSensorDisplay(event: SensorReadingEvent) {
@@ -194,63 +222,20 @@ class DiagnosticsActivity : SimpleActivity() {
         }
     }
 
-    private fun startNewSession() {
-        currentSessionId = UUID.randomUUID().toString()
-        sessionEvents.clear()
-        sensorReadings.clear()
-        pressDownTime = 0L
-        lastReleaseTime = 0L
-        binding.diagnosticsEditText.text?.clear()
-        binding.diagnosticsIkdValue.text = getString(R.string.diagnostics_value_none)
-        binding.diagnosticsDwellValue.text = getString(R.string.diagnostics_value_none)
-        binding.diagnosticsFlightValue.text = getString(R.string.diagnostics_value_none)
-        binding.diagnosticsEventCountValue.text = "0"
-        updateSaveMenuItemState()
-    }
-
     private fun saveAsCsv() {
-        if (sessionEvents.isEmpty()) {
+        if (!LiveCaptureSessionStore.hasData()) {
             toast(R.string.diagnostics_no_events)
             return
         }
-        val filename = "ikd_session_${currentSessionId.take(8)}.csv"
-        saveCsvLauncher.launch(filename)
+        val sessionId = LiveCaptureSessionStore.currentSessionId.take(8)
+        saveCsvLauncher.launch("ikd_live_${sessionId}.csv")
     }
 
-    private fun updateSaveMenuItemState() {
-        val saveItem = binding.diagnosticsToolbar.menu.findItem(R.id.diagnostics_save_csv)
-        saveItem?.isEnabled = sessionEvents.isNotEmpty()
+    private fun updateMenuItemStates() {
+        binding.diagnosticsToolbar.menu.findItem(R.id.diagnostics_save_csv)
+            ?.isEnabled = LiveCaptureSessionStore.hasData()
     }
 
     private fun toGyroProgress(v: Float): Int = ((v + 10f) / 20f * 100).toInt().coerceIn(0, 100)
-
-    // Phase 1.1: Live keyboard capture integration
-    private fun setupLiveKeyboardSection() {
-        binding.diagnosticsOpenLiveCaptureButton.setOnClickListener {
-            Intent(this, LiveCaptureReviewActivity::class.java).apply {
-                startActivity(this)
-            }
-        }
-    }
-
-    private fun updateLiveKeyboardSection() {
-        val isCapturing = LiveCaptureSessionStore.isCapturing
-        val eventCount = LiveCaptureSessionStore.getEventCount()
-
-        // Update status
-        val statusText = when {
-            isCapturing -> getString(R.string.live_capture_status_active)
-            eventCount > 0 -> getString(R.string.live_capture_status_stopped)
-            else -> getString(R.string.live_capture_status_no_data)
-        }
-        binding.diagnosticsLiveKeyboardStatusValue.text = statusText
-
-        if (isCapturing) {
-            binding.diagnosticsLiveKeyboardStatusValue.setTextColor(getProperPrimaryColor())
-        }
-
-        // Update event count
-        binding.diagnosticsLiveKeyboardEventsValue.text = eventCount.toString()
-    }
     private fun toAccelProgress(v: Float): Int = (v / 20f * 100).toInt().coerceIn(0, 100)
 }

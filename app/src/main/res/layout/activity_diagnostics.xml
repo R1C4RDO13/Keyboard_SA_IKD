@@ -40,9 +40,9 @@
             <org.fossify.commons.views.MyEditText
                 android:id="@+id/diagnostics_edit_text"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:minHeight="120dp"
+                android:layout_height="wrap_content"
+                android:minLines="2"
+                android:maxLines="6"
                 android:gravity="top|start"
                 android:hint="@string/diagnostics_type_here"
                 android:inputType="textMultiLine|textCapSentences"
@@ -138,6 +138,69 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/small_margin">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/diagnostics_capture_status_label"
+                    android:textStyle="bold"
+                    android:minWidth="100dp" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/diagnostics_capture_status_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/diagnostics_value_none" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/small_margin">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/diagnostics_typing_speed_label"
+                    android:textStyle="bold"
+                    android:minWidth="100dp" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/diagnostics_typing_speed_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/diagnostics_value_none" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/small_margin">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/diagnostics_error_rate_label"
+                    android:textStyle="bold"
+                    android:minWidth="100dp" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/diagnostics_error_rate_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/diagnostics_value_none" />
 
             </LinearLayout>
 
@@ -372,72 +435,36 @@
 
             </LinearLayout>
 
-            <!-- Phase 1.1: Live Keyboard Capture section -->
-            <TextView
-                android:id="@+id/diagnostics_live_keyboard_section_label"
-                style="@style/SettingsSectionLabelStyle"
+            <!-- View Log row -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/diagnostics_view_log_holder"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/diagnostics_live_keyboard_section" />
-
-            <org.fossify.commons.views.MyTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/tiny_margin"
-                android:text="@string/diagnostics_live_keyboard_info"
-                android:textSize="@dimen/smaller_text_size" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="@dimen/small_margin">
+                android:layout_marginBottom="@dimen/activity_margin">
 
                 <org.fossify.commons.views.MyTextView
+                    android:id="@+id/diagnostics_view_log_label"
+                    style="@style/SettingsTextLabelStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/diagnostics_live_keyboard_status"
-                    android:textStyle="bold"
-                    android:minWidth="100dp" />
+                    android:text="@string/diagnostics_view_log"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
 
                 <org.fossify.commons.views.MyTextView
-                    android:id="@+id/diagnostics_live_keyboard_status_value"
+                    android:id="@+id/diagnostics_view_log_count"
+                    style="@style/SettingsTextValueStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/diagnostics_value_none" />
+                    android:text="@string/diagnostics_value_none"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
 
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="@dimen/small_margin">
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/diagnostics_live_keyboard_events"
-                    android:textStyle="bold"
-                    android:minWidth="100dp" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/diagnostics_live_keyboard_events_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0" />
-
-            </LinearLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/diagnostics_open_live_capture_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/medium_margin"
-                android:layout_marginBottom="@dimen/activity_margin"
-                android:text="@string/diagnostics_open_live_capture"
-                style="@style/Widget.Material3.Button.OutlinedButton" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

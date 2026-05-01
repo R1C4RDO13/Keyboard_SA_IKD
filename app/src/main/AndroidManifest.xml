@@ -59,10 +59,10 @@
             android:parentActivityName=".activities.SettingsActivity" />
 
         <activity
-            android:name=".activities.LiveCaptureReviewActivity"
+            android:name=".activities.EventFeedActivity"
             android:exported="false"
-            android:label="@string/live_capture_review_title"
-            android:parentActivityName=".activities.SettingsActivity" />
+            android:label="@string/event_feed_title"
+            android:parentActivityName=".activities.DiagnosticsActivity" />
 
         <activity
             android:name=".activities.SettingsActivity"

@@ -64,7 +64,6 @@
     <string name="developer_section">Developer</string>
     <string name="diagnostics">Diagnostics</string>
     <string name="diagnostics_open">Open diagnostics screen</string>
-    <string name="diagnostics_new_session">New session</string>
     <string name="diagnostics_save_csv">Save as CSV</string>
     <string name="diagnostics_type_here">Type here…</string>
     <string name="diagnostics_keystroke_timing">Keystroke Timing</string>
@@ -79,34 +78,31 @@
     <string name="diagnostics_export_success">CSV exported successfully</string>
     <string name="diagnostics_export_error">Failed to export CSV</string>
     <string name="diagnostics_no_events">No events recorded yet</string>
-    <string name="diagnostics_live_keyboard_section">Live Keyboard Capture (Phase 1.1)</string>
-    <string name="diagnostics_live_keyboard_info">Real keyboard timing from IME callbacks (not EditText touch events)</string>
-    <string name="diagnostics_live_keyboard_status">Status</string>
-    <string name="diagnostics_live_keyboard_events">IME Events</string>
-    <string name="diagnostics_open_live_capture">Open Live Capture Review</string>
+    <string name="diagnostics_capture_status_label">Status</string>
+    <string name="diagnostics_capture_status_capturing">Capturing</string>
+    <string name="diagnostics_capture_status_stopped">Stopped</string>
+    <string name="diagnostics_capture_status_no_data">No data</string>
+    <string name="diagnostics_typing_speed_label">Speed</string>
+    <string name="diagnostics_error_rate_label">Error Rate</string>
+    <string name="diagnostics_kpm_format">%d kpm</string>
+    <string name="diagnostics_error_rate_format">%.1f%%</string>
+    <string name="diagnostics_view_log">Event Log</string>
+    <string name="diagnostics_view_log_count">%d events</string>
 
-    <!-- Phase 1.1: Live Keyboard Capture -->
-    <string name="live_capture_review_title">Live Keyboard Capture</string>
-    <string name="live_capture_review_subtitle">Review and export real keyboard typing data</string>
-    <string name="live_capture_session_info">Session Info</string>
-    <string name="live_capture_status_label">Status</string>
-    <string name="live_capture_status_active">Capturing</string>
-    <string name="live_capture_status_stopped">Stopped</string>
-    <string name="live_capture_status_no_data">No data</string>
-    <string name="live_capture_session_id_label">Session ID</string>
-    <string name="live_capture_no_session">—</string>
-    <string name="live_capture_event_count_label">Events</string>
-    <string name="live_capture_data_preview">Data Preview</string>
-    <string name="live_capture_preview_info">Event categories and timing metrics are captured without storing actual text</string>
-    <string name="live_capture_instructions">Tap "Start Session" to begin capturing typing data from the real keyboard. Type anywhere on your device, then return here to review and export.</string>
-    <string name="live_capture_start_session">Start Session</string>
-    <string name="live_capture_stop_session">Stop Session</string>
-    <string name="live_capture_export_csv">Export CSV</string>
-    <string name="live_capture_session_started">Session started — type anywhere to capture data</string>
-    <string name="live_capture_session_stopped">Session stopped</string>
-    <string name="live_capture_no_data_to_export">No data to export</string>
-    <string name="live_capture_export_success">CSV exported successfully</string>
-    <string name="live_capture_export_error">Failed to export CSV</string>
+    <!-- Event Feed Activity -->
+    <string name="event_feed_title">Event Log</string>
+    <string name="event_feed_timing_section">Key Events</string>
+    <string name="event_feed_sensor_section">Sensor Readings</string>
+    <string name="event_feed_header_category">Type</string>
+    <string name="event_feed_header_ikd">IKD</string>
+    <string name="event_feed_header_hold">Hold</string>
+    <string name="event_feed_header_flight">Flight</string>
+    <string name="event_feed_header_sensor">Sensor</string>
+    <string name="event_feed_header_x">X</string>
+    <string name="event_feed_header_y">Y</string>
+    <string name="event_feed_header_z">Z</string>
+    <string name="event_feed_no_data">No data captured yet. Open the keyboard and start typing.</string>
+    <string name="event_feed_refresh">Refresh</string>
 
     <!--
         Haven't found some strings? There's more at

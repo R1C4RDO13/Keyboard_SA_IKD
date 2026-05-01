@@ -190,8 +190,7 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         binding.keyboardHolder.post {
             ViewCompat.requestApplyInsets(binding.keyboardHolder)
         }
-        
-        // Phase 1.1: Initialize sensor helper if not already done
+
         if (sensorHelper == null) {
             sensorHelper = KinematicSensorHelper(
                 context = this,
@@ -200,17 +199,21 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
                 LiveCaptureSessionStore.recordSensorReading(sensorReading)
             }
         }
-        
-        // Phase 1.1: Start sensors if live capture is active
-        if (LiveCaptureSessionStore.isCapturing) {
-            sensorHelper?.start()
+
+        // New session on each fresh keyboard open; restarting=true means same input reconnected
+        if (!restarting) {
+            LiveCaptureSessionStore.startSession()
+            lastKeyDownTimestamp = 0L
+            lastKeyUpTimestamp = 0L
+            pendingFlightTime = -1L
         }
+
+        sensorHelper?.start()
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
         super.onFinishInputView(finishingInput)
-        
-        // Phase 1.1: Stop sensors when keyboard is hidden
+        LiveCaptureSessionStore.stopSession()
         sensorHelper?.stop()
     }
 

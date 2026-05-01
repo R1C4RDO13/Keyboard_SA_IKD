@@ -5,12 +5,6 @@
     tools:ignore="AppCompatResource">
 
     <item
-        android:id="@+id/diagnostics_new_session"
-        android:icon="@drawable/ic_plus_vector"
-        android:title="@string/diagnostics_new_session"
-        app:showAsAction="ifRoom" />
-
-    <item
         android:id="@+id/diagnostics_save_csv"
         android:title="@string/diagnostics_save_csv"
         app:showAsAction="never" />

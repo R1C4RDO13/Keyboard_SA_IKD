@@ -68,7 +68,6 @@ class SettingsActivity : SimpleActivity() {
         setupShowNumbersRow()
         setupVoiceInputMethod()
         setupDiagnostics()
-        setupLiveCaptureReview()
 
         binding.apply {
             updateTextColors(settingsNestedScrollview)
@@ -347,11 +346,4 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
-    private fun setupLiveCaptureReview() {
-        binding.settingsLiveCaptureHolder.setOnClickListener {
-            Intent(this, LiveCaptureReviewActivity::class.java).apply {
-                startActivity(this)
-            }
-        }
-    }
 }

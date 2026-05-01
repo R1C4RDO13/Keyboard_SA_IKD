@@ -7,18 +7,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-/**
- * Phase 1.1: In-memory store for live keyboard capture validation sessions.
- * 
- * This singleton holds the most recent IME typing session's data for developer
- * review and export. Data is ephemeral and cleared when a new session starts.
- * 
- * Thread-safe for concurrent IME callbacks and UI access.
- */
+fun interface OnTimingEventListener {
+    fun onTimingEventRecorded(event: KeyTimingEvent)
+}
+
 object LiveCaptureSessionStore {
     private val lock = ReentrantReadWriteLock()
     private val timingEvents = mutableListOf<KeyTimingEvent>()
     private val sensorReadings = mutableListOf<SensorReadingEvent>()
+
+    @Volatile private var timingEventListener: OnTimingEventListener? = null
+
+    fun setTimingEventListener(listener: OnTimingEventListener?) {
+        timingEventListener = listener
+    }
     
     var currentSessionId: String = ""
         private set
@@ -47,10 +49,15 @@ object LiveCaptureSessionStore {
     /**
      * Record a key timing event from the IME.
      */
-    fun recordTimingEvent(event: KeyTimingEvent) = lock.write {
-        if (isCapturing && event.sessionId == currentSessionId) {
-            timingEvents.add(event)
+    fun recordTimingEvent(event: KeyTimingEvent) {
+        var listener: OnTimingEventListener? = null
+        lock.write {
+            if (isCapturing && event.sessionId == currentSessionId) {
+                timingEvents.add(event)
+                listener = timingEventListener
+            }
         }
+        listener?.onTimingEventRecorded(event)
     }
     
     /**
