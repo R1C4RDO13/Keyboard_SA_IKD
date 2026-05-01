@@ -5,6 +5,8 @@ import android.view.Menu
 import androidx.activity.result.contract.ActivityResultContracts
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
+import org.fossify.commons.extensions.getProperPrimaryColor
+import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
