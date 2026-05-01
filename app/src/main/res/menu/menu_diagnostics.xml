@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="AppCompatResource">
+
+    <item
+        android:id="@+id/diagnostics_new_session"
+        android:icon="@drawable/ic_plus_vector"
+        android:title="@string/diagnostics_new_session"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/diagnostics_save_csv"
+        android:title="@string/diagnostics_save_csv"
+        app:showAsAction="never" />
+
+</menu>
