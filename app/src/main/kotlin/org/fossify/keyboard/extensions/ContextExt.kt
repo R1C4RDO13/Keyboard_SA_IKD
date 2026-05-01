@@ -32,6 +32,7 @@ import org.fossify.commons.models.RadioItem
 import org.fossify.commons.views.MyTextView
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databases.ClipsDatabase
+import org.fossify.keyboard.databases.IkdDatabase
 import org.fossify.keyboard.helpers.Config
 import org.fossify.keyboard.helpers.INPUT_METHOD_SUBTYPE_VOICE
 import org.fossify.keyboard.interfaces.ClipsDao
@@ -62,6 +63,9 @@ val Context.inputMethodManager: InputMethodManager
 
 val Context.clipsDB: ClipsDao
     get() = ClipsDatabase.getInstance(applicationContext.safeStorageContext).ClipsDao()
+
+val Context.ikdDB: IkdDatabase
+    get() = IkdDatabase.getInstance(applicationContext.safeStorageContext)
 
 fun Context.getCurrentClip(): String? {
     val clipboardManager = (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
