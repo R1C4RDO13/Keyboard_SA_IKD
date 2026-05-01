@@ -2,7 +2,7 @@
 
 **Roadmap goal:** Validate the corrected behavioral metrics on the real keyboard input path before Phase 2 adds passive storage and long-lived collection.
 
-**Status:** Not started  
+**Status:** Complete (2026-05-01)  
 **Depends on:** Phase 1  
 **Scope:** Live `SimpleKeyboardIME` capture only. Developer-facing validation flow. No Room persistence, no passive always-on collection, and no dashboard aggregation.
 
@@ -256,27 +256,49 @@ No DAOs, no Room entities, and no migrations belong in this phase.
 
 ### Metric correctness
 
-- [ ] Flight Time is computed as `previous ACTION_UP -> current ACTION_DOWN`
-- [ ] IKD is computed as `previous ACTION_UP -> current ACTION_UP`
-- [ ] Key Hold Time is computed as `current ACTION_DOWN -> current ACTION_UP`
-- [ ] Flight Time and IKD diverge when hold times are non-zero, proving they are separate measurements
+- [x] Flight Time is computed as `previous ACTION_UP -> current ACTION_DOWN`
+- [x] IKD is computed as `previous ACTION_UP -> current ACTION_UP`
+- [x] Key Hold Time is computed as `current ACTION_DOWN -> current ACTION_UP`
+- [x] Flight Time and IKD diverge when hold times are non-zero, proving they are separate measurements
 
 ### Live capture
 
-- [ ] A developer can start a validation session and type with the real keyboard
-- [ ] The session uses `SimpleKeyboardIME` callbacks, not `EditText` touch events
-- [ ] Backspace events are recorded as correction events without storing raw text
-- [ ] Sensor samples are captured only during the active validation session
+- [x] A developer can start a validation session and type with the real keyboard
+- [x] The session uses `SimpleKeyboardIME` callbacks, not `EditText` touch events
+- [x] Backspace events are recorded as correction events without storing raw text
+- [x] Sensor samples are captured only during the active validation session
 
 ### Review and export
 
-- [ ] The latest live-captured session can be reviewed after typing
-- [ ] Export produces the corrected CSV schema with `event_category`, `hold_time_ms`, `flight_time_ms`, and `ikd_ms`
-- [ ] Export contains no raw character data
-- [ ] Starting a new validation session clears the previous in-memory data
+- [x] The latest live-captured session can be reviewed after typing
+- [x] Export produces the corrected CSV schema with `event_category`, `hold_time_ms`, `flight_time_ms`, and `ikd_ms`
+- [x] Export contains no raw character data
+- [x] Starting a new validation session clears the previous in-memory data
 
 ### Phase boundary
 
-- [ ] No Room database is introduced
-- [ ] No passive background collection survives beyond the active validation session
-- [ ] No aggregation or dashboard code is added in this phase
+- [x] No Room database is introduced
+- [x] No passive background collection survives beyond the active validation session
+- [x] No aggregation or dashboard code is added in this phase
+
+---
+
+## 9. Implementation Notes (Closeout)
+
+**Implemented as planned:**
+- Corrected metrics (Hold / Flight / IKD) per Section 2
+- Capture moved from EditText touch to real `SimpleKeyboardIME.onPress` / `onKey`
+- Privacy-preserving event categories (ALPHA, DIGIT, SPACE, BACKSPACE, ENTER, OTHER)
+- In-memory `LiveCaptureSessionStore` (no Room)
+- Sensor samples scoped to active session
+- CSV export with the dual-block schema in Section 5
+
+**Diverged from plan:**
+
+- The plan called for a separate `LiveCaptureReviewActivity`. That activity was created in the first implementation pass and then merged into `DiagnosticsActivity` per user feedback that two screens were excessive. `DiagnosticsActivity` is now the single developer-facing surface.
+- A new `EventFeedActivity` was added (not in the original plan) so the live log can be reviewed on a dedicated full-screen page, with sensor readings shown alongside timing events.
+- Session lifecycle moved from manual Start / Stop / New Session toolbar controls to fully **IME-driven** lifecycle: `onStartInputView(restarting=false)` calls `LiveCaptureSessionStore.startSession()`, `onFinishInputView` calls `stopSession()`. Manual session controls were removed; only Save as CSV remains in the toolbar.
+- `OnTimingEventListener` was added to the store to push events to the activity in real time. A 250 ms Handler-driven refresh keeps the **Status** row in sync with the keyboard open/close lifecycle (since those transitions emit no events).
+- Live derived metrics added beyond the plan: **typing speed** (keys per minute, computed from first/last event timestamps) and **error rate** (% of `isCorrection` events). Both update with each keystroke.
+
+**Acceptance:** all checkboxes in Section 8 are now satisfied. No persistence introduced; no passive collection beyond the active IME session; no aggregation.

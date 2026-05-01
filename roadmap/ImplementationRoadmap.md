@@ -263,19 +263,17 @@ session_id,timestamp_ms,sensor_type,x,y,z
 ---
 
 ### Phase 1.1: Live Keyboard Data Validation & Metric Alignment
-**Status: Not started**
+**Status: Complete (2026-05-01) — BUILD SUCCESSFUL**
 
 **Roadmap objective:** Move capturing to the actual `SimpleKeyboardIME` interface to collect real live typing data instead of diagnostic dummy inputs. Realign captured models to match BiAffect methodologies (Hold Time, Flight Time sequences, Error Rate/Backspace integration, explicit orientation capture).
 
-Detailed scope: [`Phase1/Phase1.1_Plan.md`](Phase1/Phase1.1_Plan.md)
+Detailed scope and implementation notes: [`Phase1/Phase1.1_Plan.md`](Phase1/Phase1.1_Plan.md) (see Section 9 for divergences from the original plan).
 
-#### Step 1.1.1 — Update Internal Models
-Update the `KeyTimingEvent` to match the new definitions:
-- Swap `dwellMs` to `holdTimeMs`
-- Update flight time calculation to match the correct standard interval between downward strokes.
+#### Step 1.1.1 — Update Internal Models ✅ COMPLETE
+`KeyTimingEvent` now carries `eventCategory`, `holdTimeMs`, `flightTimeMs`, `ikdMs`, and `isCorrection`. `SensorReadingEvent` carries `sessionId` so timing and sensor rows align. Both remain plain Kotlin data classes — Room promotion is Phase 2.
 
-#### Step 1.1.2 — Live Key Capture Sandbox
-Hook directly into `MyKeyboardView`'s live production text flow, and confirm metrics mirror natural typing. Establish the baseline for how Error Rates (BACKSPACE) are reported vs a standard space-delimited typing burst, and prepare the models for Phase 2's SQLite backend.
+#### Step 1.1.2 — Live Key Capture Sandbox ✅ COMPLETE
+Capture is hooked into `SimpleKeyboardIME.onPress`/`onKey`. Sessions are **IME-driven**: started on `onStartInputView(!restarting)`, stopped on `onFinishInputView`. `LiveCaptureSessionStore` holds events in memory and pushes them to `DiagnosticsActivity` via `OnTimingEventListener`. `EventFeedActivity` provides a full log view (timing + sensor sections). See `Phase1.1_Plan.md` Section 9 for the `LiveCaptureReviewActivity` → `DiagnosticsActivity` consolidation and the typing speed / error rate additions.
 
 ---
 
