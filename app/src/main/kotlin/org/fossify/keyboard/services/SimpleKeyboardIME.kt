@@ -123,10 +123,14 @@ import org.fossify.keyboard.helpers.SHOW_NUMBERS_ROW
 import org.fossify.keyboard.helpers.ShiftState
 import org.fossify.keyboard.helpers.VOICE_INPUT_METHOD
 import org.fossify.keyboard.helpers.cachedVNTelexData
+import org.fossify.keyboard.helpers.KinematicSensorHelper
+import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 import org.fossify.keyboard.interfaces.OnKeyboardActionListener
+import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.views.MyKeyboardView
 import java.io.ByteArrayOutputStream
 import java.util.Locale
+import android.os.SystemClock
 
 
 // based on https://www.androidauthority.com/lets-build-custom-keyboard-android-832362/
@@ -156,6 +160,12 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
 
     private lateinit var binding: KeyboardViewKeyboardBinding
 
+    // Phase 1.1: Live keyboard capture state
+    private var lastKeyDownTimestamp = 0L
+    private var lastKeyUpTimestamp = 0L
+    private var pendingFlightTime = -1L
+    private var sensorHelper: KinematicSensorHelper? = null
+
     override fun onInitializeInterface() {
         super.onInitializeInterface()
         safeStorageContext.getSharedPrefs().registerOnSharedPreferenceChangeListener(this)
@@ -180,11 +190,44 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         binding.keyboardHolder.post {
             ViewCompat.requestApplyInsets(binding.keyboardHolder)
         }
+        
+        // Phase 1.1: Initialize sensor helper if not already done
+        if (sensorHelper == null) {
+            sensorHelper = KinematicSensorHelper(
+                context = this,
+                getSessionId = { LiveCaptureSessionStore.currentSessionId }
+            ) { sensorReading ->
+                LiveCaptureSessionStore.recordSensorReading(sensorReading)
+            }
+        }
+        
+        // Phase 1.1: Start sensors if live capture is active
+        if (LiveCaptureSessionStore.isCapturing) {
+            sensorHelper?.start()
+        }
+    }
+
+    override fun onFinishInputView(finishingInput: Boolean) {
+        super.onFinishInputView(finishingInput)
+        
+        // Phase 1.1: Stop sensors when keyboard is hidden
+        sensorHelper?.stop()
     }
 
     override fun onPress(primaryCode: Int) {
         if (primaryCode != 0) {
             keyboardView?.performKeypressFeedback(primaryCode)
+        }
+        
+        // Phase 1.1: Capture key-down timing and compute flight time
+        if (LiveCaptureSessionStore.isCapturing && primaryCode != 0) {
+            val now = SystemClock.uptimeMillis()
+            pendingFlightTime = if (lastKeyUpTimestamp > 0L) {
+                now - lastKeyUpTimestamp
+            } else {
+                -1L
+            }
+            lastKeyDownTimestamp = now
         }
     }
 
@@ -255,6 +298,31 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         val inputConnection = currentInputConnection
         if (keyboard == null || inputConnection == null) {
             return
+        }
+
+        // Phase 1.1: Capture key-up timing and record event
+        if (LiveCaptureSessionStore.isCapturing && code != 0) {
+            val now = SystemClock.uptimeMillis()
+            val holdTime = if (lastKeyDownTimestamp > 0L) now - lastKeyDownTimestamp else -1L
+            val ikd = if (lastKeyUpTimestamp > 0L) now - lastKeyUpTimestamp else -1L
+            val flightTime = pendingFlightTime
+            lastKeyUpTimestamp = now
+            pendingFlightTime = -1L
+            
+            val event = KeyTimingEvent(
+                sessionId = LiveCaptureSessionStore.currentSessionId,
+                timestamp = now,
+                eventCategory = categorizeKeyCode(code),
+                ikdMs = ikd,
+                holdTimeMs = holdTime,
+                flightTimeMs = flightTime,
+                isCorrection = code == MyKeyboard.KEYCODE_DELETE
+            )
+            
+            // Record event off the main thread to avoid keyboard lag
+            Thread {
+                LiveCaptureSessionStore.recordTimingEvent(event)
+            }.start()
         }
 
         if (code != MyKeyboard.KEYCODE_SHIFT) {
@@ -428,6 +496,19 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         }
 
         return 1
+    }
+
+    // Phase 1.1: Categorize key codes for privacy-preserving event capture
+    private fun categorizeKeyCode(code: Int): String {
+        return when (code) {
+            in 97..122 -> "ALPHA"  // lowercase a-z
+            in 65..90 -> "ALPHA"   // uppercase A-Z
+            in 48..57 -> "DIGIT"   // 0-9
+            MyKeyboard.KEYCODE_SPACE -> "SPACE"
+            MyKeyboard.KEYCODE_DELETE -> "BACKSPACE"
+            MyKeyboard.KEYCODE_ENTER -> "ENTER"
+            else -> "OTHER"
+        }
     }
 
     override fun onActionUp() {
