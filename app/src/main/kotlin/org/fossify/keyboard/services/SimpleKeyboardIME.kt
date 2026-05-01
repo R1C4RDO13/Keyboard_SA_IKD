@@ -200,8 +200,9 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
             }
         }
 
-        // New session on each fresh keyboard open; restarting=true means same input reconnected
-        if (!restarting) {
+        // New session on each fresh keyboard open; restarting=true means same input reconnected.
+        // Privacy mode (default ON) gates all data collection — no session, no sensors.
+        if (!restarting && !config.privacyModeEnabled) {
             val orientation = resources.configuration.orientation
             val locale = resources.configuration.locales[0].toLanguageTag()
             LiveCaptureSessionStore.startSession(orientation, locale)
@@ -210,7 +211,9 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
             pendingFlightTime = -1L
         }
 
-        sensorHelper?.start()
+        if (!config.privacyModeEnabled) {
+            sensorHelper?.start()
+        }
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {

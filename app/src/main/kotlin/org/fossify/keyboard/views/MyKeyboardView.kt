@@ -92,6 +92,7 @@ import org.fossify.keyboard.helpers.KeyboardFeedbackManager
 import org.fossify.keyboard.helpers.LANGUAGE_TURKISH_Q
 import org.fossify.keyboard.helpers.LANGUAGE_VIETNAMESE_TELEX
 import org.fossify.keyboard.helpers.LANGUAGE_VN_TELEX
+import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 import org.fossify.keyboard.helpers.MAX_KEYS_PER_MINI_ROW
 import org.fossify.keyboard.helpers.MyKeyboard
 import org.fossify.keyboard.helpers.MyKeyboard.Companion.KEYCODE_DELETE
@@ -403,6 +404,36 @@ class MyKeyboardView @JvmOverloads constructor(
                 toggleClipboardVisibility(false)
             }
 
+            privacyToggleButton.setImageResource(
+                if (context.config.privacyModeEnabled) {
+                    R.drawable.ic_privacy_on_vector
+                } else {
+                    R.drawable.ic_privacy_off_vector
+                }
+            )
+            privacyToggleButton.setOnLongClickListener {
+                context.toast(R.string.privacy_toggle_content_description); true
+            }
+            privacyToggleButton.setOnClickListener {
+                vibrateIfNeeded()
+                val newValue = !context.config.privacyModeEnabled
+                context.config.privacyModeEnabled = newValue
+                privacyToggleButton.setImageResource(
+                    if (newValue) {
+                        R.drawable.ic_privacy_on_vector
+                    } else {
+                        R.drawable.ic_privacy_off_vector
+                    }
+                )
+                context.toast(
+                    if (newValue) R.string.privacy_mode_on_toast else R.string.privacy_mode_off_toast
+                )
+                // If toggling to ON mid-session, finalize the in-flight session immediately
+                if (newValue && LiveCaptureSessionStore.isCapturing) {
+                    LiveCaptureSessionStore.stopSession()
+                }
+            }
+
             suggestionsHolder.addOnLayoutChangeListener(object : OnLayoutChangeListener {
                 override fun onLayoutChange(
                     v: View?,
@@ -514,6 +545,7 @@ class MyKeyboardView @JvmOverloads constructor(
             settingsCog.applyColorFilter(mTextColor)
             pinnedClipboardItems.applyColorFilter(mTextColor)
             clipboardClear.applyColorFilter(mTextColor)
+            privacyToggleButton.applyColorFilter(mTextColor)
             voiceInputButton.applyColorFilter(mTextColor)
             voiceInputButton.beGoneIf(mVoiceInputMethod.isEmpty())
 
