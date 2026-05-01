@@ -1,6 +1,6 @@
 # Behavioral Analytics — Implementation Plan
 
-This document explains how the keyboard project is structured and provides a step-by-step implementation plan aligned with the three phases defined in `ROADMAP/Roadmap.md`.
+This document explains how the keyboard project is structured and provides a step-by-step implementation plan aligned with the phases defined in `ROADMAP/FeatureRoadmap.md`.
 
 ---
 
@@ -266,6 +266,8 @@ session_id,timestamp_ms,sensor_type,x,y,z
 **Status: Not started**
 
 **Roadmap objective:** Move capturing to the actual `SimpleKeyboardIME` interface to collect real live typing data instead of diagnostic dummy inputs. Realign captured models to match BiAffect methodologies (Hold Time, Flight Time sequences, Error Rate/Backspace integration, explicit orientation capture).
+
+Detailed scope: [`Phase1/Phase1.1_Plan.md`](Phase1/Phase1.1_Plan.md)
 
 #### Step 1.1.1 — Update Internal Models
 Update the `KeyTimingEvent` to match the new definitions:

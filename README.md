@@ -29,19 +29,20 @@ All data stays on-device. Nothing is transmitted over the network.
 
 ## Roadmap
 
-Development is structured in phases. See [`ROADMAP/Roadmap.md`](ROADMAP/Roadmap.md) for the full overview.
+Development is structured in phases. See [`ROADMAP/FeatureRoadmap.md`](ROADMAP/FeatureRoadmap.md) for the full overview.
 
 | Phase | Goal | Status |
 |---|---|---|
 | **1 — Sensor Calibration & Debug Environment** | Diagnostic screen to verify sensors and timing math in real time | Complete (2026-05-01) |
-| **1.1 — Live Keyboard Data & Metric Alignment** | Transition to the actual keyboard interface and validate the updated | Not started |
+| **1.1 — Live Keyboard Data & Metric Alignment** | Transition to the actual keyboard interface and validate the corrected metrics | Not started |
 | **2 — Background Collection & Local Storage** | Passive capture inside the live keyboard, stored in a local database | Not started |
 | **3 — User Insights & Dashboard** | Visual analytics: typing rhythm, fatigue heatmap, circadian patterns | Not started |
 
 Detailed implementation plans:
 
-- [`ROADMAP/Phase1/Phase1_Plan.md`](ROADMAP/Phase1/Phase1_Plan.md) — Phase 1 feature spec
-- [`ROADMAP/IKD_PLAN.md`](ROADMAP/IKD_PLAN.md) — Full technical plan covering all three phases
+- [`ROADMAP/Phase1/Phase1_Plan.md`](ROADMAP/Phase1/Phase1_Plan.md) — Phase 1 diagnostic screen spec
+- [`ROADMAP/Phase1/Phase1.1_Plan.md`](ROADMAP/Phase1/Phase1.1_Plan.md) — Phase 1.1 live keyboard validation spec
+- [`ROADMAP/ImplementationRoadmap.md`](ROADMAP/ImplementationRoadmap.md) — Cross-phase technical implementation plan
 
 ## Based On
 
