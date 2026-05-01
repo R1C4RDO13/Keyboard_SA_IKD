@@ -45,14 +45,14 @@ class DiagnosticsActivity : SimpleActivity() {
         try {
             contentResolver.openOutputStream(uri)?.use { stream ->
                 stream.bufferedWriter().use { writer ->
-                    writer.write("session_id,timestamp_ms,ikd_ms,dwell_ms,flight_ms\n")
+                    writer.write("session_id,timestamp_ms,event_category,ikd_ms,hold_time_ms,flight_time_ms,is_correction\n")
                     for (event in sessionEvents) {
-                        writer.write("${event.sessionId},${event.timestamp},${event.ikdMs},${event.dwellMs},${event.flightMs}\n")
+                        writer.write("${event.sessionId},${event.timestamp},${event.eventCategory},${event.ikdMs},${event.holdTimeMs},${event.flightTimeMs},${event.isCorrection}\n")
                     }
                     writer.write("\n#sensor_readings\n")
                     writer.write("session_id,timestamp_ms,sensor_type,x,y,z\n")
                     for (reading in sensorReadings) {
-                        writer.write("$currentSessionId,${reading.timestamp},${reading.sensorType},${reading.x},${reading.y},${reading.z}\n")
+                        writer.write("${reading.sessionId},${reading.timestamp},${reading.sensorType},${reading.x},${reading.y},${reading.z}\n")
                     }
                 }
             }
@@ -74,7 +74,7 @@ class DiagnosticsActivity : SimpleActivity() {
             binding.diagnosticsEventCountValue.text = savedCount.toString()
         }
 
-        sensorHelper = KinematicSensorHelper(this) { event ->
+        sensorHelper = KinematicSensorHelper(this, { currentSessionId }) { event ->
             sensorReadings.add(event)
             runOnUiThread { updateSensorDisplay(event) }
         }
@@ -152,9 +152,11 @@ class DiagnosticsActivity : SimpleActivity() {
         val event = KeyTimingEvent(
             sessionId = currentSessionId,
             timestamp = SystemClock.uptimeMillis(),
+            eventCategory = "TOUCH",  // Phase 1 diagnostics use touch events, not keyboard
             ikdMs = ikd,
-            dwellMs = dwell,
-            flightMs = flight
+            holdTimeMs = dwell,
+            flightTimeMs = flight,
+            isCorrection = false  // Phase 1 diagnostics don't track corrections
         )
         sessionEvents.add(event)
         binding.diagnosticsEventCountValue.text = sessionEvents.size.toString()

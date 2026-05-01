@@ -10,6 +10,7 @@ import org.fossify.keyboard.models.SensorReadingEvent
 
 class KinematicSensorHelper(
     context: Context,
+    private val getSessionId: () -> String,  // Updated for Phase 1.1: session ID provider
     private val onSample: (SensorReadingEvent) -> Unit
 ) : SensorEventListener {
 
@@ -37,6 +38,7 @@ class KinematicSensorHelper(
         }
         onSample(
             SensorReadingEvent(
+                sessionId = getSessionId(),  // Phase 1.1: attach current session ID
                 timestamp = SystemClock.uptimeMillis(),
                 sensorType = type,
                 x = event.values[0],
