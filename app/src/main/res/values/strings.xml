@@ -109,6 +109,43 @@
     <string name="privacy_mode_off_toast">Data collection on</string>
     <string name="privacy_toggle_content_description">Toggle data collection</string>
 
+    <!-- IKD Settings page -->
+    <string name="ikd_settings_title">Data Collection &amp; Privacy</string>
+    <string name="ikd_settings_disclaimer">All data collected by this keyboard is stored locally on your device. Nothing is transmitted, uploaded, or shared with any server. You can export or delete your data at any time.</string>
+    <string name="ikd_section_privacy">Privacy</string>
+    <string name="ikd_section_sensors">Sensor collection</string>
+    <string name="ikd_section_sampling">Sensor sampling rate</string>
+    <string name="ikd_section_metadata">Session metadata</string>
+    <string name="ikd_section_retention">Retention period</string>
+    <string name="ikd_section_storage">Storage usage</string>
+    <string name="ikd_privacy_mode_label">Privacy mode</string>
+    <string name="ikd_privacy_mode_description">When on, no keyboard data is collected.</string>
+    <string name="ikd_collect_gyro">Collect gyroscope data</string>
+    <string name="ikd_collect_accel">Collect accelerometer data</string>
+    <string name="ikd_sampling_fastest">Fastest (~200 Hz)</string>
+    <string name="ikd_sampling_game">Game (~50 Hz)</string>
+    <string name="ikd_sampling_ui">UI (~16 Hz)</string>
+    <string name="ikd_sampling_normal">Normal (~5 Hz)</string>
+    <string name="ikd_capture_orientation">Device orientation</string>
+    <string name="ikd_capture_locale">Locale</string>
+    <string name="ikd_capture_battery">Battery level</string>
+    <string name="ikd_retention_forever">Forever</string>
+    <string name="ikd_retention_7_days">7 days</string>
+    <string name="ikd_retention_14_days">14 days</string>
+    <string name="ikd_retention_30_days">30 days</string>
+    <string name="ikd_retention_60_days">60 days</string>
+    <string name="ikd_retention_90_days">90 days</string>
+    <string name="ikd_storage_db_size">Database size</string>
+    <string name="ikd_storage_session_count">Sessions</string>
+    <string name="ikd_storage_event_count">Events</string>
+    <string name="ikd_storage_sensor_count">Sensor samples</string>
+    <string name="ikd_action_view_sessions">View Sessions History</string>
+    <string name="ikd_action_export_all">Export all data</string>
+    <string name="ikd_action_delete_all">Delete all data</string>
+    <string name="ikd_delete_all_confirm_title">Delete all data?</string>
+    <string name="ikd_delete_all_confirm_message">This will permanently delete all stored sessions, key events, and sensor samples. This cannot be undone.</string>
+    <string name="ikd_delete_all_success">All data deleted</string>
+
     <!--
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res

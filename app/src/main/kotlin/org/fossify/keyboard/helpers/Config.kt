@@ -1,6 +1,7 @@
 package org.fossify.keyboard.helpers
 
 import android.content.Context
+import android.hardware.SensorManager
 import org.fossify.commons.helpers.BaseConfig
 import org.fossify.keyboard.extensions.isDeviceLocked
 import org.fossify.keyboard.extensions.safeStorageContext
@@ -18,6 +19,34 @@ class Config(context: Context) : BaseConfig(context) {
     var privacyModeEnabled: Boolean
         get() = prefs.getBoolean(PRIVACY_MODE_ENABLED, true)
         set(value) = prefs.edit().putBoolean(PRIVACY_MODE_ENABLED, value).apply()
+
+    var collectGyro: Boolean
+        get() = prefs.getBoolean(COLLECT_GYRO, true)
+        set(value) = prefs.edit().putBoolean(COLLECT_GYRO, value).apply()
+
+    var collectAccel: Boolean
+        get() = prefs.getBoolean(COLLECT_ACCEL, true)
+        set(value) = prefs.edit().putBoolean(COLLECT_ACCEL, value).apply()
+
+    var sensorSamplingRate: Int
+        get() = prefs.getInt(SENSOR_SAMPLING_RATE, SensorManager.SENSOR_DELAY_GAME)
+        set(value) = prefs.edit().putInt(SENSOR_SAMPLING_RATE, value).apply()
+
+    var captureOrientation: Boolean
+        get() = prefs.getBoolean(CAPTURE_ORIENTATION, true)
+        set(value) = prefs.edit().putBoolean(CAPTURE_ORIENTATION, value).apply()
+
+    var captureLocale: Boolean
+        get() = prefs.getBoolean(CAPTURE_LOCALE, true)
+        set(value) = prefs.edit().putBoolean(CAPTURE_LOCALE, value).apply()
+
+    var captureBattery: Boolean
+        get() = prefs.getBoolean(CAPTURE_BATTERY, false)
+        set(value) = prefs.edit().putBoolean(CAPTURE_BATTERY, value).apply()
+
+    var retentionDays: Int
+        get() = prefs.getInt(RETENTION_DAYS, RETENTION_DAYS_DEFAULT)
+        set(value) = prefs.edit().putInt(RETENTION_DAYS, value).apply()
 
     var soundOnKeypress: Int
         get() = prefs.getInt(SOUND_ON_KEYPRESS, SOUND_SYSTEM)

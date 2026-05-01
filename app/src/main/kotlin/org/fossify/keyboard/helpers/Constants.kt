@@ -14,6 +14,17 @@ const val MAX_KEYS_PER_MINI_ROW = 9
 const val VIBRATE_ON_KEYPRESS = "vibrate_on_keypress"
 const val PRIVACY_MODE_ENABLED = "privacy_mode_enabled"
 
+// IKD data collection settings
+const val COLLECT_GYRO = "ikd_collect_gyro"
+const val COLLECT_ACCEL = "ikd_collect_accel"
+const val SENSOR_SAMPLING_RATE = "ikd_sensor_sampling_rate"
+const val CAPTURE_ORIENTATION = "ikd_capture_orientation"
+const val CAPTURE_LOCALE = "ikd_capture_locale"
+const val CAPTURE_BATTERY = "ikd_capture_battery"
+const val RETENTION_DAYS = "ikd_retention_days"
+const val RETENTION_FOREVER = -1
+const val RETENTION_DAYS_DEFAULT = 30
+
 const val SOUND_ON_KEYPRESS = "sound_on_keypress"
 const val SOUND_NONE = 0
 const val SOUND_SYSTEM = 1
