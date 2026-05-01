@@ -13,6 +13,9 @@ import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityDiagnosticsBinding
+import org.fossify.keyboard.helpers.IkdCsvWriter
+import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
+import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
 import org.fossify.keyboard.helpers.KinematicSensorHelper
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 import org.fossify.keyboard.models.KeyTimingEvent
@@ -37,19 +40,13 @@ class DiagnosticsActivity : SimpleActivity() {
     ) { uri ->
         if (uri == null) return@registerForActivityResult
         try {
-            val timingEvents = LiveCaptureSessionStore.getTimingEvents()
-            val sensorReadings = LiveCaptureSessionStore.getSensorReadings()
             contentResolver.openOutputStream(uri)?.use { stream ->
                 stream.bufferedWriter().use { writer ->
-                    writer.write("session_id,timestamp_ms,event_category,ikd_ms,hold_time_ms,flight_time_ms,is_correction\n")
-                    for (event in timingEvents) {
-                        writer.write("${event.sessionId},${event.timestamp},${event.eventCategory},${event.ikdMs},${event.holdTimeMs},${event.flightTimeMs},${event.isCorrection}\n")
-                    }
-                    writer.write("\n#sensor_readings\n")
-                    writer.write("session_id,timestamp_ms,sensor_type,x,y,z\n")
-                    for (reading in sensorReadings) {
-                        writer.write("${reading.sessionId},${reading.timestamp},${reading.sensorType},${reading.x},${reading.y},${reading.z}\n")
-                    }
+                    IkdCsvWriter.writeSessionCsv(
+                        writer,
+                        LiveCaptureSessionStore.getTimingEvents().map { it.asTimingRow() },
+                        LiveCaptureSessionStore.getSensorReadings().map { it.asSensorRow() },
+                    )
                 }
             }
             toast(R.string.diagnostics_export_success)

@@ -153,6 +153,13 @@
     <string name="session_summary_duration">Duration: %1$s</string>
     <string name="session_summary_stats">Events: %1$d · Samples: %2$d</string>
     <string name="session_summary_kpm">KPM: %1$d</string>
+    <string name="session_action_export">Export</string>
+    <string name="session_action_delete">Delete</string>
+    <string name="ikd_delete_session_confirm_title">Delete this session?</string>
+    <string name="ikd_delete_session_confirm_message">All events and sensor samples for this session will be permanently removed.</string>
+    <string name="ikd_delete_session_success">Session deleted</string>
+    <string name="ikd_export_session_success">Session exported</string>
+    <string name="ikd_export_session_error">Export failed</string>
 
     <!--
         Haven't found some strings? There's more at

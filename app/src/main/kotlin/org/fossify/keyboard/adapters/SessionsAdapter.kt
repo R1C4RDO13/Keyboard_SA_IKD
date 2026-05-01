@@ -14,7 +14,8 @@ import java.util.Locale
 
 class SessionsAdapter(
     private var sessions: List<SessionRecord>,
-    private val onClick: (SessionRecord) -> Unit
+    private val onClick: (SessionRecord) -> Unit,
+    private val onLongClick: (SessionRecord) -> Unit = {}
 ) : RecyclerView.Adapter<SessionsAdapter.ViewHolder>() {
 
     companion object {
@@ -70,6 +71,10 @@ class SessionsAdapter(
             }
 
             binding.root.setOnClickListener { onClick(session) }
+            binding.root.setOnLongClickListener {
+                onLongClick(session)
+                true
+            }
         }
 
         private fun formatDuration(ms: Long): String {
