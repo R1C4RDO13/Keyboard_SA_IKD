@@ -9,12 +9,14 @@ import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
+import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityDiagnosticsBinding
 import org.fossify.keyboard.helpers.KinematicSensorHelper
+import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.models.SensorReadingEvent
 import java.util.UUID
@@ -82,6 +84,7 @@ class DiagnosticsActivity : SimpleActivity() {
         setupGyroVisibility()
         setupTouchListener()
         setupOptionsMenu()
+        setupLiveKeyboardSection()
         setupEdgeToEdge(padBottomSystem = listOf(binding.diagnosticsNestedScrollview))
         setupMaterialScrollListener(binding.diagnosticsNestedScrollview, binding.diagnosticsAppbar)
     }
@@ -90,6 +93,7 @@ class DiagnosticsActivity : SimpleActivity() {
         super.onResume()
         setupTopAppBar(binding.diagnosticsAppbar, NavigationIcon.Arrow)
         sensorHelper.start()
+        updateLiveKeyboardSection()
     }
 
     override fun onPause() {
@@ -219,5 +223,34 @@ class DiagnosticsActivity : SimpleActivity() {
     }
 
     private fun toGyroProgress(v: Float): Int = ((v + 10f) / 20f * 100).toInt().coerceIn(0, 100)
+
+    // Phase 1.1: Live keyboard capture integration
+    private fun setupLiveKeyboardSection() {
+        binding.diagnosticsOpenLiveCaptureButton.setOnClickListener {
+            Intent(this, LiveCaptureReviewActivity::class.java).apply {
+                startActivity(this)
+            }
+        }
+    }
+
+    private fun updateLiveKeyboardSection() {
+        val isCapturing = LiveCaptureSessionStore.isCapturing
+        val eventCount = LiveCaptureSessionStore.getEventCount()
+
+        // Update status
+        val statusText = when {
+            isCapturing -> getString(R.string.live_capture_status_active)
+            eventCount > 0 -> getString(R.string.live_capture_status_stopped)
+            else -> getString(R.string.live_capture_status_no_data)
+        }
+        binding.diagnosticsLiveKeyboardStatusValue.text = statusText
+
+        if (isCapturing) {
+            binding.diagnosticsLiveKeyboardStatusValue.setTextColor(getProperPrimaryColor())
+        }
+
+        // Update event count
+        binding.diagnosticsLiveKeyboardEventsValue.text = eventCount.toString()
+    }
     private fun toAccelProgress(v: Float): Int = (v / 20f * 100).toInt().coerceIn(0, 100)
 }

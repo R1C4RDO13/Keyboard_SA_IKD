@@ -79,6 +79,11 @@
     <string name="diagnostics_export_success">CSV exported successfully</string>
     <string name="diagnostics_export_error">Failed to export CSV</string>
     <string name="diagnostics_no_events">No events recorded yet</string>
+    <string name="diagnostics_live_keyboard_section">Live Keyboard Capture (Phase 1.1)</string>
+    <string name="diagnostics_live_keyboard_info">Real keyboard timing from IME callbacks (not EditText touch events)</string>
+    <string name="diagnostics_live_keyboard_status">Status</string>
+    <string name="diagnostics_live_keyboard_events">IME Events</string>
+    <string name="diagnostics_open_live_capture">Open Live Capture Review</string>
 
     <!-- Phase 1.1: Live Keyboard Capture -->
     <string name="live_capture_review_title">Live Keyboard Capture</string>

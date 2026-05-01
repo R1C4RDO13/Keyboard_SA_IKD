@@ -372,6 +372,73 @@
 
             </LinearLayout>
 
+            <!-- Phase 1.1: Live Keyboard Capture section -->
+            <TextView
+                android:id="@+id/diagnostics_live_keyboard_section_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/diagnostics_live_keyboard_section" />
+
+            <org.fossify.commons.views.MyTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/tiny_margin"
+                android:text="@string/diagnostics_live_keyboard_info"
+                android:textSize="@dimen/smaller_text_size" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/small_margin">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/diagnostics_live_keyboard_status"
+                    android:textStyle="bold"
+                    android:minWidth="100dp" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/diagnostics_live_keyboard_status_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/diagnostics_value_none" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/small_margin">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/diagnostics_live_keyboard_events"
+                    android:textStyle="bold"
+                    android:minWidth="100dp" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/diagnostics_live_keyboard_events_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/diagnostics_open_live_capture_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/medium_margin"
+                android:layout_marginBottom="@dimen/activity_margin"
+                android:text="@string/diagnostics_open_live_capture"
+                style="@style/Widget.Material3.Button.OutlinedButton" />
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
