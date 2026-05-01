@@ -12,6 +12,7 @@ const val MAX_KEYS_PER_MINI_ROW = 9
 
 // shared prefs
 const val VIBRATE_ON_KEYPRESS = "vibrate_on_keypress"
+const val PRIVACY_MODE_ENABLED = "privacy_mode_enabled"
 
 const val SOUND_ON_KEYPRESS = "sound_on_keypress"
 const val SOUND_NONE = 0

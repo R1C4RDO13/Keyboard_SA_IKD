@@ -104,6 +104,11 @@
     <string name="event_feed_no_data">No data captured yet. Open the keyboard and start typing.</string>
     <string name="event_feed_refresh">Refresh</string>
 
+    <!-- Privacy mode -->
+    <string name="privacy_mode_on_toast">Privacy mode on</string>
+    <string name="privacy_mode_off_toast">Data collection on</string>
+    <string name="privacy_toggle_content_description">Toggle data collection</string>
+
     <!--
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res

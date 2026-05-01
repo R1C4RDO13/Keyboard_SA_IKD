@@ -15,6 +15,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(VIBRATE_ON_KEYPRESS, true)
         set(vibrateOnKeypress) = prefs.edit().putBoolean(VIBRATE_ON_KEYPRESS, vibrateOnKeypress).apply()
 
+    var privacyModeEnabled: Boolean
+        get() = prefs.getBoolean(PRIVACY_MODE_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(PRIVACY_MODE_ENABLED, value).apply()
+
     var soundOnKeypress: Int
         get() = prefs.getInt(SOUND_ON_KEYPRESS, SOUND_SYSTEM)
         set(soundOnKeypress) = prefs.edit().putInt(SOUND_ON_KEYPRESS, soundOnKeypress).apply()
