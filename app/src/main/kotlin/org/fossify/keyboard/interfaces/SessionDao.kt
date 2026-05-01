@@ -23,6 +23,9 @@ interface SessionDao {
     @Query("DELETE FROM sessions WHERE session_id = :id")
     fun deleteSession(id: String)
 
+    @Query("DELETE FROM sessions WHERE started_at < :cutoff")
+    fun deleteOlderThan(cutoff: Long)
+
     @Query("DELETE FROM sessions")
     fun deleteAll()
 
