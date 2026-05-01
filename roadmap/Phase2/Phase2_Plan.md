@@ -1,6 +1,6 @@
 # Phase 2 — Persistent Local Storage & Privacy-First Collection
 
-**Status:** Planned
+**Status:** Complete (2026-05-01)
 **Depends on:** Phase 1.1 (IME-driven live capture)
 **Scope:** Promote ephemeral in-memory capture to persistent local storage; add a user-controlled privacy switch on the keyboard top bar; expose a sessions browser with per-session export and deletion.
 

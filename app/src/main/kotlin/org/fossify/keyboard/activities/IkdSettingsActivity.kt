@@ -39,7 +39,12 @@ class IkdSettingsActivity : SimpleActivity() {
         if (uri == null) return@registerForActivityResult
         exportAllIkdSessions(
             uri = uri,
-            onSuccess = { runOnUiThread { toast(R.string.ikd_export_all_success) } },
+            onSuccess = {
+                runOnUiThread {
+                    toast(R.string.ikd_export_all_success)
+                    refreshStorageStats()
+                }
+            },
             onError = { runOnUiThread { toast(R.string.ikd_export_all_error) } },
         )
     }

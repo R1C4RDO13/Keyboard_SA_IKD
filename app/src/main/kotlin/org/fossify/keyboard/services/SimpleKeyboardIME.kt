@@ -203,8 +203,8 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         // New session on each fresh keyboard open; restarting=true means same input reconnected.
         // Privacy mode (default ON) gates all data collection — no session, no sensors.
         if (!restarting && !config.privacyModeEnabled) {
-            val orientation = resources.configuration.orientation
-            val locale = resources.configuration.locales[0].toLanguageTag()
+            val orientation = if (config.captureOrientation) resources.configuration.orientation else -1
+            val locale = if (config.captureLocale) resources.configuration.locales[0].toLanguageTag() else ""
             LiveCaptureSessionStore.startSession(orientation, locale)
             lastKeyDownTimestamp = 0L
             lastKeyUpTimestamp = 0L
