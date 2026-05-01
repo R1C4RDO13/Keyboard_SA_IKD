@@ -53,6 +53,12 @@
         </service>
 
         <activity
+            android:name=".activities.DiagnosticsActivity"
+            android:exported="false"
+            android:label="@string/diagnostics"
+            android:parentActivityName=".activities.SettingsActivity" />
+
+        <activity
             android:name=".activities.SettingsActivity"
             android:configChanges="orientation"
             android:exported="true"
