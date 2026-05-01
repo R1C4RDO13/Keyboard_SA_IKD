@@ -60,6 +60,25 @@
     <!-- Voice Input -->
     <string name="voice_typing_method">Voice typing method</string>
     <string name="switch_to_voice_typing">Switch to voice typing</string>
+    <!-- Developer / Diagnostics -->
+    <string name="developer_section">Developer</string>
+    <string name="diagnostics">Diagnostics</string>
+    <string name="diagnostics_open">Open diagnostics screen</string>
+    <string name="diagnostics_new_session">New session</string>
+    <string name="diagnostics_save_csv">Save as CSV</string>
+    <string name="diagnostics_type_here">Type here…</string>
+    <string name="diagnostics_keystroke_timing">Keystroke Timing</string>
+    <string name="diagnostics_ikd_label">IKD</string>
+    <string name="diagnostics_dwell_label">Dwell Time</string>
+    <string name="diagnostics_flight_label">Flight Time</string>
+    <string name="diagnostics_event_count_label">Events</string>
+    <string name="diagnostics_value_none">—</string>
+    <string name="diagnostics_ms_format">%d ms</string>
+    <string name="diagnostics_gyroscope_section">Gyroscope (rad/s)</string>
+    <string name="diagnostics_accelerometer_section">Accelerometer (m/s²)</string>
+    <string name="diagnostics_export_success">CSV exported successfully</string>
+    <string name="diagnostics_export_error">Failed to export CSV</string>
+    <string name="diagnostics_no_events">No events recorded yet</string>
     <!--
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res
