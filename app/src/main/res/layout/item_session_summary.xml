@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/normal_margin"
+    android:paddingVertical="@dimen/small_margin">
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/item_session_started_at"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/item_session_duration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/tiny_margin"
+        android:textSize="@dimen/smaller_text_size" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/item_session_stats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/tiny_margin"
+        android:textSize="@dimen/smaller_text_size" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/item_session_kpm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/tiny_margin"
+        android:textSize="@dimen/smaller_text_size"
+        android:visibility="gone" />
+
+</LinearLayout>

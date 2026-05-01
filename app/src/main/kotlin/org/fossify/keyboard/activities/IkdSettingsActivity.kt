@@ -1,5 +1,6 @@
 package org.fossify.keyboard.activities
 
+import android.content.Intent
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.text.format.Formatter
@@ -175,7 +176,9 @@ class IkdSettingsActivity : SimpleActivity() {
                 }
             }
 
-            ikdViewSessionsButton.setOnClickListener { toast(R.string.coming_soon) }
+            ikdViewSessionsButton.setOnClickListener {
+                startActivity(Intent(this@IkdSettingsActivity, SessionsListActivity::class.java))
+            }
             ikdExportAllButton.setOnClickListener { toast(R.string.coming_soon) }
             ikdDeleteAllButton.setOnClickListener { confirmDeleteAll() }
         }

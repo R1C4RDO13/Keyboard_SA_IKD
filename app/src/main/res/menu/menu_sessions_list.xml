@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/sessions_export_all"
+        android:title="@string/ikd_action_export_all"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/sessions_delete_all"
+        android:title="@string/ikd_action_delete_all"
+        app:showAsAction="never" />
+
+</menu>

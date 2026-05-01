@@ -71,6 +71,12 @@
             android:parentActivityName=".activities.SettingsActivity" />
 
         <activity
+            android:name=".activities.SessionsListActivity"
+            android:exported="false"
+            android:label="@string/sessions_list_title"
+            android:parentActivityName=".activities.IkdSettingsActivity" />
+
+        <activity
             android:name=".activities.SettingsActivity"
             android:configChanges="orientation"
             android:exported="true"
