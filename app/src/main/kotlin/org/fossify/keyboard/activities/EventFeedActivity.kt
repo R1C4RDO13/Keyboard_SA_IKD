@@ -9,15 +9,22 @@ import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
+import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityEventFeedBinding
 import org.fossify.keyboard.databinding.ItemSensorReadingBinding
 import org.fossify.keyboard.databinding.ItemTimingEventBinding
+import org.fossify.keyboard.extensions.ikdDB
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.models.SensorReadingEvent
 
 class EventFeedActivity : SimpleActivity() {
+    companion object {
+        const val EXTRA_SESSION_ID = "session_id"
+        private const val SESSION_ID_SHORT_LENGTH = 8
+    }
+
     private val binding by viewBinding(ActivityEventFeedBinding::inflate)
 
     private lateinit var timingAdapter: TimingAdapter
@@ -54,9 +61,57 @@ class EventFeedActivity : SimpleActivity() {
     }
 
     private fun loadData() {
+        val sessionId = intent.getStringExtra(EXTRA_SESSION_ID)
+        if (sessionId != null) {
+            loadDataFromDb(sessionId)
+        } else {
+            loadDataFromLiveStore()
+        }
+    }
+
+    private fun loadDataFromLiveStore() {
         val timingEvents = LiveCaptureSessionStore.getTimingEvents().asReversed()
         val sensorReadings = LiveCaptureSessionStore.getSensorReadings().asReversed()
+        populateUI(timingEvents, sensorReadings)
+    }
 
+    private fun loadDataFromDb(sessionId: String) {
+        ensureBackgroundThread {
+            val events = ikdDB.IkdEventDao().getEventsForSession(sessionId)
+            val samples = ikdDB.SensorSampleDao().getSamplesForSession(sessionId)
+            val timingEvents = events.map { e ->
+                KeyTimingEvent(
+                    sessionId = e.sessionId,
+                    timestamp = e.timestamp,
+                    eventCategory = e.eventCategory,
+                    ikdMs = e.ikdMs,
+                    holdTimeMs = e.holdTimeMs,
+                    flightTimeMs = e.flightTimeMs,
+                    isCorrection = e.isCorrection,
+                )
+            }.asReversed()
+            val sensorReadings = samples.map { s ->
+                SensorReadingEvent(
+                    sessionId = s.sessionId,
+                    timestamp = s.timestamp,
+                    sensorType = s.sensorType,
+                    x = s.x,
+                    y = s.y,
+                    z = s.z,
+                )
+            }.asReversed()
+            val label = "Session ${sessionId.takeLast(SESSION_ID_SHORT_LENGTH)} (${timingEvents.size})"
+            runOnUiThread {
+                populateUI(timingEvents, sensorReadings, label)
+            }
+        }
+    }
+
+    private fun populateUI(
+        timingEvents: List<KeyTimingEvent>,
+        sensorReadings: List<SensorReadingEvent>,
+        sessionLabel: String? = null,
+    ) {
         val hasAnyData = timingEvents.isNotEmpty() || sensorReadings.isNotEmpty()
 
         if (hasAnyData) {
@@ -73,10 +128,10 @@ class EventFeedActivity : SimpleActivity() {
             binding.eventFeedSensorHeader.beGone()
         }
 
-        binding.eventFeedToolbar.title = if (timingEvents.isNotEmpty()) {
-            "${getString(R.string.event_feed_title)} (${timingEvents.size})"
-        } else {
-            getString(R.string.event_feed_title)
+        binding.eventFeedToolbar.title = when {
+            sessionLabel != null -> sessionLabel
+            timingEvents.isNotEmpty() -> "${getString(R.string.event_feed_title)} (${timingEvents.size})"
+            else -> getString(R.string.event_feed_title)
         }
 
         timingAdapter.setEvents(timingEvents)
