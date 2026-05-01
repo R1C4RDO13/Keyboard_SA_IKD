@@ -67,6 +67,7 @@ class SettingsActivity : SimpleActivity() {
         setupSentencesCapitalization()
         setupShowNumbersRow()
         setupVoiceInputMethod()
+        setupIkdSettings()
         setupDiagnostics()
 
         binding.apply {
@@ -334,6 +335,14 @@ class SettingsActivity : SimpleActivity() {
                         getCurrentVoiceInputMethod(inputMethods)?.first?.loadLabel(packageManager)
                             ?: getString(R.string.none)
                 }
+            }
+        }
+    }
+
+    private fun setupIkdSettings() {
+        binding.settingsIkdSettingsHolder.setOnClickListener {
+            Intent(this, IkdSettingsActivity::class.java).apply {
+                startActivity(this)
             }
         }
     }

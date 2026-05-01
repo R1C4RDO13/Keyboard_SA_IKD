@@ -2,15 +2,19 @@ package org.fossify.keyboard.activities
 
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.text.format.Formatter
+import androidx.appcompat.app.AlertDialog
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
+import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityIkdSettingsBinding
 import org.fossify.keyboard.extensions.config
+import org.fossify.keyboard.extensions.ikdDB
 import org.fossify.keyboard.helpers.KinematicSensorHelper
 import org.fossify.keyboard.helpers.RETENTION_DAYS_14
 import org.fossify.keyboard.helpers.RETENTION_DAYS_60
@@ -18,6 +22,7 @@ import org.fossify.keyboard.helpers.RETENTION_DAYS_7
 import org.fossify.keyboard.helpers.RETENTION_DAYS_90
 import org.fossify.keyboard.helpers.RETENTION_DAYS_DEFAULT
 import org.fossify.keyboard.helpers.RETENTION_FOREVER
+import org.fossify.keyboard.helpers.computeIkdStorageStats
 
 class IkdSettingsActivity : SimpleActivity() {
     private val binding by viewBinding(ActivityIkdSettingsBinding::inflate)
@@ -40,6 +45,7 @@ class IkdSettingsActivity : SimpleActivity() {
         applySensorAvailability()
         applyControlState()
         applySectionLabelColors()
+        refreshStorageStats()
         binding.apply {
             updateTextColors(ikdSettingsNestedScrollview)
         }
@@ -94,12 +100,25 @@ class IkdSettingsActivity : SimpleActivity() {
             else -> R.id.ikd_retention_30
         }
         binding.ikdRetentionGroup.check(retentionRadioId)
+    }
 
+    private fun refreshStorageStats() {
         val placeholder = getString(R.string.diagnostics_value_none)
         binding.ikdStorageDbSizeValue.text = placeholder
         binding.ikdStorageSessionCountValue.text = placeholder
         binding.ikdStorageEventCountValue.text = placeholder
         binding.ikdStorageSensorCountValue.text = placeholder
+
+        ensureBackgroundThread {
+            val stats = computeIkdStorageStats()
+            val sizeText = Formatter.formatShortFileSize(this, stats.dbSizeBytes)
+            runOnUiThread {
+                binding.ikdStorageDbSizeValue.text = sizeText
+                binding.ikdStorageSessionCountValue.text = stats.sessionCount.toString()
+                binding.ikdStorageEventCountValue.text = stats.eventCount.toString()
+                binding.ikdStorageSensorCountValue.text = stats.sensorCount.toString()
+            }
+        }
     }
 
     private fun setupListeners() {
@@ -158,7 +177,26 @@ class IkdSettingsActivity : SimpleActivity() {
 
             ikdViewSessionsButton.setOnClickListener { toast(R.string.coming_soon) }
             ikdExportAllButton.setOnClickListener { toast(R.string.coming_soon) }
-            ikdDeleteAllButton.setOnClickListener { toast(R.string.coming_soon) }
+            ikdDeleteAllButton.setOnClickListener { confirmDeleteAll() }
+        }
+    }
+
+    private fun confirmDeleteAll() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.ikd_delete_all_confirm_title)
+            .setMessage(R.string.ikd_delete_all_confirm_message)
+            .setPositiveButton(R.string.yes) { _, _ -> performDeleteAll() }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun performDeleteAll() {
+        ensureBackgroundThread {
+            ikdDB.SessionDao().deleteAll()
+            runOnUiThread {
+                toast(R.string.ikd_delete_all_success)
+                refreshStorageStats()
+            }
         }
     }
 }
