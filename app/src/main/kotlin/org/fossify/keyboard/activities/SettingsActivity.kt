@@ -67,6 +67,7 @@ class SettingsActivity : SimpleActivity() {
         setupSentencesCapitalization()
         setupShowNumbersRow()
         setupVoiceInputMethod()
+        setupDiagnostics()
 
         binding.apply {
             updateTextColors(settingsNestedScrollview)
@@ -77,7 +78,8 @@ class SettingsActivity : SimpleActivity() {
                 settingsLayoutAppearanceLabel,
                 settingsKeypressLabel,
                 settingsTypingInputLabel,
-                settingsClipboardSettingsLabel
+                settingsClipboardSettingsLabel,
+                settingsDeveloperSectionLabel
             ).forEach {
                 it.setTextColor(getProperPrimaryColor())
             }
@@ -332,6 +334,14 @@ class SettingsActivity : SimpleActivity() {
                         getCurrentVoiceInputMethod(inputMethods)?.first?.loadLabel(packageManager)
                             ?: getString(R.string.none)
                 }
+            }
+        }
+    }
+
+    private fun setupDiagnostics() {
+        binding.settingsDiagnosticsHolder.setOnClickListener {
+            Intent(this, DiagnosticsActivity::class.java).apply {
+                startActivity(this)
             }
         }
     }
