@@ -6,10 +6,11 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.SystemClock
+import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.models.SensorReadingEvent
 
 class KinematicSensorHelper(
-    context: Context,
+    private val context: Context,
     private val getSessionId: () -> String,  // Updated for Phase 1.1: session ID provider
     private val onSample: (SensorReadingEvent) -> Unit
 ) : SensorEventListener {
@@ -22,8 +23,13 @@ class KinematicSensorHelper(
     val hasAccel: Boolean get() = accel != null
 
     fun start() {
-        gyro?.let { manager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
-        accel?.let { manager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+        val cfg = context.config
+        if (cfg.collectGyro) {
+            gyro?.let { manager.registerListener(this, it, cfg.sensorSamplingRate) }
+        }
+        if (cfg.collectAccel) {
+            accel?.let { manager.registerListener(this, it, cfg.sensorSamplingRate) }
+        }
     }
 
     fun stop() {
