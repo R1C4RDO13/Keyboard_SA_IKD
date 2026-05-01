@@ -5,12 +5,14 @@ import androidx.emoji2.bundled.BundledEmojiCompatConfig
 import androidx.emoji2.text.EmojiCompat
 import org.fossify.commons.extensions.checkUseEnglish
 import org.fossify.keyboard.extensions.isDeviceInDirectBootMode
+import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
         if (!isDeviceInDirectBootMode) {
             checkUseEnglish()
+            LiveCaptureSessionStore.init(this)
         }
         setupEmojiCompat()
     }

@@ -202,7 +202,9 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
 
         // New session on each fresh keyboard open; restarting=true means same input reconnected
         if (!restarting) {
-            LiveCaptureSessionStore.startSession()
+            val orientation = resources.configuration.orientation
+            val locale = resources.configuration.locales[0].toLanguageTag()
+            LiveCaptureSessionStore.startSession(orientation, locale)
             lastKeyDownTimestamp = 0L
             lastKeyUpTimestamp = 0L
             pendingFlightTime = -1L
