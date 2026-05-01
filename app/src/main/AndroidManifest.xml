@@ -65,6 +65,12 @@
             android:parentActivityName=".activities.DiagnosticsActivity" />
 
         <activity
+            android:name=".activities.IkdSettingsActivity"
+            android:exported="false"
+            android:label="@string/ikd_settings_title"
+            android:parentActivityName=".activities.SettingsActivity" />
+
+        <activity
             android:name=".activities.SettingsActivity"
             android:configChanges="orientation"
             android:exported="true"

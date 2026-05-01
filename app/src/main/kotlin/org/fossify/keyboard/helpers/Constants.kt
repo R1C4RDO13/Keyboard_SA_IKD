@@ -23,7 +23,11 @@ const val CAPTURE_LOCALE = "ikd_capture_locale"
 const val CAPTURE_BATTERY = "ikd_capture_battery"
 const val RETENTION_DAYS = "ikd_retention_days"
 const val RETENTION_FOREVER = -1
+const val RETENTION_DAYS_7 = 7
+const val RETENTION_DAYS_14 = 14
 const val RETENTION_DAYS_DEFAULT = 30
+const val RETENTION_DAYS_60 = 60
+const val RETENTION_DAYS_90 = 90
 
 const val SOUND_ON_KEYPRESS = "sound_on_keypress"
 const val SOUND_NONE = 0

@@ -145,6 +145,7 @@
     <string name="ikd_delete_all_confirm_title">Delete all data?</string>
     <string name="ikd_delete_all_confirm_message">This will permanently delete all stored sessions, key events, and sensor samples. This cannot be undone.</string>
     <string name="ikd_delete_all_success">All data deleted</string>
+    <string name="coming_soon">Coming soon</string>
 
     <!--
         Haven't found some strings? There's more at

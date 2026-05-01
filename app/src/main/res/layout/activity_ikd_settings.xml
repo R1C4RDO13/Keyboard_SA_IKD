@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/ikd_settings_coordinator"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <org.fossify.commons.views.MyAppBarLayout
+        android:id="@+id/ikd_settings_appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/ikd_settings_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/color_primary"
+            app:title="@string/ikd_settings_title"
+            app:titleTextAppearance="@style/AppTheme.ActionBar.TitleTextStyle" />
+
+    </org.fossify.commons.views.MyAppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/ikd_settings_nested_scrollview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:id="@+id/ikd_settings_holder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/activity_margin">
+
+            <!-- Disclaimer -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/ikd_settings_disclaimer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/normal_margin"
+                android:text="@string/ikd_settings_disclaimer"
+                android:textStyle="italic" />
+
+            <!-- Privacy section -->
+            <TextView
+                android:id="@+id/ikd_section_privacy_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/ikd_section_privacy" />
+
+            <RelativeLayout
+                android:id="@+id/ikd_privacy_mode_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/ikd_privacy_mode_switch"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_privacy_mode_label" />
+
+            </RelativeLayout>
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/ikd_privacy_mode_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/normal_margin"
+                android:layout_marginTop="@dimen/tiny_margin"
+                android:text="@string/ikd_privacy_mode_description"
+                android:textSize="@dimen/smaller_text_size" />
+
+            <!-- Sensor collection section -->
+            <TextView
+                android:id="@+id/ikd_section_sensors_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/ikd_section_sensors" />
+
+            <RelativeLayout
+                android:id="@+id/ikd_collect_gyro_holder"
+                style="@style/SettingsHolderCheckboxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyAppCompatCheckbox
+                    android:id="@+id/ikd_collect_gyro_checkbox"
+                    style="@style/SettingsCheckboxStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_collect_gyro" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/ikd_collect_accel_holder"
+                style="@style/SettingsHolderCheckboxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyAppCompatCheckbox
+                    android:id="@+id/ikd_collect_accel_checkbox"
+                    style="@style/SettingsCheckboxStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_collect_accel" />
+
+            </RelativeLayout>
+
+            <!-- Sampling rate section -->
+            <TextView
+                android:id="@+id/ikd_section_sampling_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/ikd_section_sampling" />
+
+            <RadioGroup
+                android:id="@+id/ikd_sampling_rate_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/normal_margin"
+                android:layout_marginTop="@dimen/small_margin"
+                android:orientation="vertical">
+
+                <org.fossify.commons.views.MyCompatRadioButton
+                    android:id="@+id/ikd_sampling_fastest"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_sampling_fastest" />
+
+                <org.fossify.commons.views.MyCompatRadioButton
+                    android:id="@+id/ikd_sampling_game"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_sampling_game" />
+
+                <org.fossify.commons.views.MyCompatRadioButton
+                    android:id="@+id/ikd_sampling_ui"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_sampling_ui" />
+
+                <org.fossify.commons.views.MyCompatRadioButton
+                    android:id="@+id/ikd_sampling_normal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_sampling_normal" />
+
+            </RadioGroup>
+
+            <!-- Session metadata section -->
+            <TextView
+                android:id="@+id/ikd_section_metadata_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/ikd_section_metadata" />
+
+            <RelativeLayout
+                android:id="@+id/ikd_capture_orientation_holder"
+                style="@style/SettingsHolderCheckboxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyAppCompatCheckbox
+                    android:id="@+id/ikd_capture_orientation_checkbox"
+                    style="@style/SettingsCheckboxStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_capture_orientation" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/ikd_capture_locale_holder"
+                style="@style/SettingsHolderCheckboxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyAppCompatCheckbox
+                    android:id="@+id/ikd_capture_locale_checkbox"
+                    style="@style/SettingsCheckboxStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_capture_locale" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/ikd_capture_battery_holder"
+                style="@style/SettingsHolderCheckboxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyAppCompatCheckbox
+                    android:id="@+id/ikd_capture_battery_checkbox"
+                    style="@style/SettingsCheckboxStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_capture_battery" />
+
+            </RelativeLayout>
+
+            <!-- Retention period section -->
+            <TextView
+                android:id="@+id/ikd_section_retention_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/ikd_section_retention" />
+
+            <RadioGroup
+                android:id="@+id/ikd_retention_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/normal_margin"
+                android:layout_marginTop="@dimen/small_margin"
+                android:orientation="vertical">
+
+                <org.fossify.commons.views.MyCompatRadioButton
+                    android:id="@+id/ikd_retention_forever"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_retention_forever" />
+
+                <org.fossify.commons.views.MyCompatRadioButton
+                    android:id="@+id/ikd_retention_7"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_retention_7_days" />
+
+                <org.fossify.commons.views.MyCompatRadioButton
+                    android:id="@+id/ikd_retention_14"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_retention_14_days" />
+
+                <org.fossify.commons.views.MyCompatRadioButton
+                    android:id="@+id/ikd_retention_30"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_retention_30_days" />
+
+                <org.fossify.commons.views.MyCompatRadioButton
+                    android:id="@+id/ikd_retention_60"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_retention_60_days" />
+
+                <org.fossify.commons.views.MyCompatRadioButton
+                    android:id="@+id/ikd_retention_90"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_retention_90_days" />
+
+            </RadioGroup>
+
+            <!-- Storage usage section -->
+            <TextView
+                android:id="@+id/ikd_section_storage_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/ikd_section_storage" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/normal_margin"
+                android:layout_marginTop="@dimen/small_margin"
+                android:orientation="horizontal">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/ikd_storage_db_size"
+                    android:textStyle="bold" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/ikd_storage_db_size_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:text="@string/diagnostics_value_none" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/normal_margin"
+                android:layout_marginTop="@dimen/small_margin"
+                android:orientation="horizontal">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/ikd_storage_session_count"
+                    android:textStyle="bold" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/ikd_storage_session_count_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:text="@string/diagnostics_value_none" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/normal_margin"
+                android:layout_marginTop="@dimen/small_margin"
+                android:orientation="horizontal">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/ikd_storage_event_count"
+                    android:textStyle="bold" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/ikd_storage_event_count_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:text="@string/diagnostics_value_none" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/normal_margin"
+                android:layout_marginTop="@dimen/small_margin"
+                android:orientation="horizontal">
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/ikd_storage_sensor_count"
+                    android:textStyle="bold" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/ikd_storage_sensor_count_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:text="@string/diagnostics_value_none" />
+
+            </LinearLayout>
+
+            <!-- Action buttons -->
+            <Button
+                android:id="@+id/ikd_view_sessions_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/ikd_action_view_sessions" />
+
+            <Button
+                android:id="@+id/ikd_export_all_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/small_margin"
+                android:text="@string/ikd_action_export_all" />
+
+            <Button
+                android:id="@+id/ikd_delete_all_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/small_margin"
+                android:layout_marginBottom="@dimen/activity_margin"
+                android:text="@string/ikd_action_delete_all"
+                android:textColor="?attr/colorError" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
