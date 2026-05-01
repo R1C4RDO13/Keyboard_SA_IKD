@@ -79,6 +79,30 @@
     <string name="diagnostics_export_success">CSV exported successfully</string>
     <string name="diagnostics_export_error">Failed to export CSV</string>
     <string name="diagnostics_no_events">No events recorded yet</string>
+
+    <!-- Phase 1.1: Live Keyboard Capture -->
+    <string name="live_capture_review_title">Live Keyboard Capture</string>
+    <string name="live_capture_review_subtitle">Review and export real keyboard typing data</string>
+    <string name="live_capture_session_info">Session Info</string>
+    <string name="live_capture_status_label">Status</string>
+    <string name="live_capture_status_active">Capturing</string>
+    <string name="live_capture_status_stopped">Stopped</string>
+    <string name="live_capture_status_no_data">No data</string>
+    <string name="live_capture_session_id_label">Session ID</string>
+    <string name="live_capture_no_session">—</string>
+    <string name="live_capture_event_count_label">Events</string>
+    <string name="live_capture_data_preview">Data Preview</string>
+    <string name="live_capture_preview_info">Event categories and timing metrics are captured without storing actual text</string>
+    <string name="live_capture_instructions">Tap "Start Session" to begin capturing typing data from the real keyboard. Type anywhere on your device, then return here to review and export.</string>
+    <string name="live_capture_start_session">Start Session</string>
+    <string name="live_capture_stop_session">Stop Session</string>
+    <string name="live_capture_export_csv">Export CSV</string>
+    <string name="live_capture_session_started">Session started — type anywhere to capture data</string>
+    <string name="live_capture_session_stopped">Session stopped</string>
+    <string name="live_capture_no_data_to_export">No data to export</string>
+    <string name="live_capture_export_success">CSV exported successfully</string>
+    <string name="live_capture_export_error">Failed to export CSV</string>
+
     <!--
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res
