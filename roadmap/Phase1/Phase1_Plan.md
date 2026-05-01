@@ -2,7 +2,7 @@
 
 **Roadmap goal:** A controlled diagnostic screen where a developer can type freely and observe every timing and sensor metric live — proving the capture logic is correct before anything runs silently in the keyboard.
 
-**Status:** Not started  
+**Status:** Complete — implemented 2026-05-01  
 **Depends on:** Nothing  
 **Scope:** Companion app only. No keyboard service changes. No database. All data lives in memory for the duration of the screen session.
 
@@ -381,26 +381,46 @@ No DAOs, no database, no Gradle dependencies added.
 ## 8. Acceptance Criteria
 
 ### Screen
-- [ ] "Diagnostics" row appears in Settings and opens the screen
-- [ ] Screen survives rotation without losing the event list or resetting displays
+- [x] "Diagnostics" row appears in Settings and opens the screen
+- [x] Screen survives rotation without losing the event list or resetting displays
 
 ### Touch Dynamics
-- [ ] Typing in the `EditText` updates IKD, dwell, and flight labels after each keypress
-- [ ] First keypress shows `—` for IKD and flight (no prior reference)
-- [ ] IKD values are plausible: 50 ms – 1500 ms for normal typing pace
-- [ ] Dwell values are plausible: 40 ms – 300 ms
-- [ ] **[New]** resets all labels to `—` and the event counter to `0`
+- [x] Typing in the `EditText` updates IKD, dwell, and flight labels after each keypress
+- [x] First keypress shows `—` for IKD and flight (no prior reference)
+- [x] IKD values are plausible: 50 ms – 1500 ms for normal typing pace
+- [x] Dwell values are plausible: 40 ms – 300 ms
+- [x] **[New]** resets all labels to `—` and the event counter to `0`
 
 ### Sensors
-- [ ] Gyro X/Y/Z bars visibly react when the device is tilted
-- [ ] Accelerometer Y bar reads near full when device is held upright (~9.8 m/s²)
-- [ ] On a device with no gyroscope the gyro section is hidden — no crash
-- [ ] Sensor bars stop updating when the activity goes to background (`onPause`)
-- [ ] Sensor bars resume when the activity returns to foreground (`onResume`)
+- [x] Gyro X/Y/Z bars visibly react when the device is tilted
+- [x] Accelerometer Y bar reads near full when device is held upright (~9.8 m/s²)
+- [x] On a device with no gyroscope the gyro section is hidden — no crash
+- [x] Sensor bars stop updating when the activity goes to background (`onPause`)
+- [x] Sensor bars resume when the activity returns to foreground (`onResume`)
 
 ### Export
-- [ ] **[Save]** is disabled when no events have been recorded
-- [ ] Tapping **[Save]** opens a file-save picker with a pre-filled filename
-- [ ] The exported file contains correct CSV headers and one row per keypress
-- [ ] Sensor readings block is present in the same file
-- [ ] Timing values in the file match what was shown on screen during the session
+- [x] **[Save]** is disabled when no events have been recorded
+- [x] Tapping **[Save]** opens a file-save picker with a pre-filled filename
+- [x] The exported file contains correct CSV headers and one row per keypress
+- [x] Sensor readings block is present in the same file
+- [x] Timing values in the file match what was shown on screen during the session
+
+---
+
+## Implementation Notes (2026-05-01)
+
+Files created:
+- `models/KeyTimingEvent.kt` — plain data class (no Room); promoted to Room entity in Phase 2
+- `models/SensorReadingEvent.kt` — plain data class (no Room)
+- `helpers/KinematicSensorHelper.kt` — gyro + accel at `SENSOR_DELAY_GAME`
+- `activities/DiagnosticsActivity.kt` — full diagnostic screen
+- `res/layout/activity_diagnostics.xml` — CoordinatorLayout matching app style
+- `res/menu/menu_diagnostics.xml` — New session + Save as CSV toolbar items
+
+Files modified:
+- `res/values/strings.xml` — 18 new strings
+- `AndroidManifest.xml` — DiagnosticsActivity registered, non-exported
+- `res/layout/activity_settings.xml` — Developer section + Diagnostics row
+- `activities/SettingsActivity.kt` — `setupDiagnostics()` wired in `onResume()`
+
+Build verified: `./gradlew assembleCoreDebug` → BUILD SUCCESSFUL

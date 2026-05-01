@@ -18,21 +18,23 @@ The data collected supports research in:
 
 | Signal | Description |
 |---|---|
-| **Inter-Key Delay (IKD)** | Time between consecutive key releases (ms) |
-| **Dwell Time** | How long each key is physically held down (ms) |
-| **Flight Time** | Transition speed between keys: prev release → next press (ms) |
-| **Gyroscope** | Device rotational velocity (X/Y/Z, rad/s) during typing |
-| **Accelerometer** | Device linear acceleration (X/Y/Z, m/s²) during typing |
+| **Inter-Key Delay (IKD)** | Time between consecutive key releases (UP to UP) (ms) |
+| **Key Hold Time (Dwell Time)** | How long each key is physically held down (ms) |
+| **Flight Time** | Time interval between key release and next key press (UP to DOWN) (ms) |
+| **Typing Speed** | Statistical distribution of flight times indicating processing speed and alertness |
+| **Error Rates** | Frequency of corrections and typos during input |
+| **Accelerometer & Gyroscope** | Device physical context (e.g., walking, standing) using movement/orientation |
 
 All data stays on-device. Nothing is transmitted over the network.
 
 ## Roadmap
 
-Development is structured in three phases. See [`ROADMAP/Roadmap.md`](ROADMAP/Roadmap.md) for the full overview.
+Development is structured in phases. See [`ROADMAP/Roadmap.md`](ROADMAP/Roadmap.md) for the full overview.
 
 | Phase | Goal | Status |
 |---|---|---|
-| **1 — Sensor Calibration & Debug Environment** | Diagnostic screen to verify sensors and timing math in real time | Not started |
+| **1 — Sensor Calibration & Debug Environment** | Diagnostic screen to verify sensors and timing math in real time | Complete (2026-05-01) |
+| **1.1 — Live Keyboard Data & Metric Alignment** | Transition to the actual keyboard interface and validate the updated | Not started |
 | **2 — Background Collection & Local Storage** | Passive capture inside the live keyboard, stored in a local database | Not started |
 | **3 — User Insights & Dashboard** | Visual analytics: typing rhythm, fatigue heatmap, circadian patterns | Not started |
 

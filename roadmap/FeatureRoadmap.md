@@ -10,16 +10,23 @@ flowchart TD
     classDef feature fill:#e1f5fe,stroke:#0288d1,stroke-width:1px;
 
     P1[Phase 1: Sensor Calibration & Debug Environment]:::phase
+    P1_1[Phase 1.1: Live Keyboard Data & Metric Alignment]:::phase
     P2[Phase 2: Background Collection & Local Storage]:::phase
     P3[Phase 3: User Insights & Dashboard Presentation]:::phase
 
-    P1 --> P2
+    P1 --> P1_1
+    P1_1 --> P2
     P2 --> P3
 
     subgraph Phase 1 Features
         F1[Real-Time Data Interface]:::feature
         F2[Kinematic Sensor Integration]:::feature
         F3[Touch Dynamics Tracking]:::feature
+    end
+
+    subgraph Phase 1.1 Features
+        F1_1[Live Keyboard Capture]:::feature
+        F1_2[Metric Realignment]:::feature
     end
 
     subgraph Phase 2 Features
@@ -35,6 +42,7 @@ flowchart TD
     end
 
     P1 -.-> F1 & F2 & F3
+    P1_1 -.-> F1_1 & F1_2
     P2 -.-> F4 & F5 & F6
     P3 -.-> F7 & F8 & F9
 ```
@@ -42,6 +50,8 @@ flowchart TD
 ---
 
 ## Phase 1: Sensor Calibration and Debug Environment
+**Status: Complete (2026-05-01)**
+
 **Objective:** Establish a controlled, isolated testing environment within the companion application to verify that all device sensors are capturing data accurately and at the appropriate frequencies before deploying to the live keyboard.
 
 *   **Real-Time Data Interface:** 
@@ -57,7 +67,29 @@ flowchart TD
 
 ---
 
+## Phase 1.1: Live Keyboard Data Validation & Metric Alignment
+**Status: Not started**
+
+**Objective:** Correct measurement mismatches from Phase 1 and upgrade data capture to the *actual* keyboard interface. Implement the updated metric standards, setting up accurate behavioral signals for the backend.
+
+*   **Typing Speed Analysis:** 
+    *   Measure true processing speed through the statistical distribution of flight times, revealing various mental states (cognitive fatigue/depression vs. alertness/anxiety).
+*   **Flight Time:** 
+    *   Calculate the interval between key release and next key press (UP to DOWN). High ranges characterize hesitation, cognitive overload, or distraction, while short ranges suggest urgency or impulsivity.
+*   **Inter-Key Delay (IKD):** 
+    *   Track the legacy interval between consecutive key releases (UP to UP) to maintain historical comparison and additional rhythm signatures.
+*   **Error Rates Tracking:** 
+    *   Calculate the frequency of corrections and typos. Monitor for deviations indicative of cognitive stress or severe depression.
+*   **Key Hold Time (Dwell Time):** 
+    *   Repurpose "Dwell Time" into Key Hold Time (duration a key is pressed) to assess motor function and potential cognitive slowing vs inattention/restlessness.
+*   **Contextual Accelerometer & Gyroscope Data:** 
+    *   Incorporate smartphone-specific accelerometer data handling to provide background on physical context (walking, standing, vehicle) simultaneously with keystrokes.
+
+---
+
 ## Phase 2: Unobtrusive Background Collection & Secure Local Storage
+**Status: Not started**
+
 **Objective:** Seamlessly transition the sensor tracking into the live keyboard environment, ensuring data is collected passively without draining the device battery, causing input lag, or compromising user privacy.
 
 *   **Lifecycle-Aware Activation:** 
@@ -72,6 +104,8 @@ flowchart TD
 ---
 
 ## Phase 3: User Insights and Dashboard Presentation
+**Status: Not started**
+
 **Objective:** Utilize the companion application to translate vast amounts of raw behavioral and kinematic data into digestible, visual insights that empower the user to understand their digital habits and cognitive states.
 
 *   **Data Aggregation Engine:** 

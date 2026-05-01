@@ -94,9 +94,11 @@ YOUR FINGER TOUCHES THE SCREEN
 
 | Metric | Measurement | Captured in |
 |---|---|---|
-| **Dwell Time** | Duration a key is held (ACTION_DOWN → ACTION_UP for same key) | `onPress()` start, `onKey()` end |
-| **Flight Time** | Transition speed between keys (prev ACTION_UP → next ACTION_DOWN) | `onKey()` end, next `onPress()` start |
-| **Inter-Key Delay (IKD)** | Time between consecutive key commits (ACTION_UP → ACTION_UP) | `onKey()` to `onKey()` |
+| **Key Hold Time (Dwell Time)** | Duration a key is held down (ACTION_DOWN → ACTION_UP for same key) | `onPress()` start, `onKey()` end |
+| **Flight Time** | Time interval between key release and next key press (prev ACTION_UP → next ACTION_DOWN) | `onKey()` end, next `onPress()` start |
+| **Inter-Key Delay (IKD)** | Time between consecutive key commits (prev ACTION_UP → current ACTION_UP) | `onKey()` to `onKey()` |
+| **Typing Speed** | Measured via statistical distribution of flight times | Backend / Phase 3 Analytics |
+| **Error Rates** | Frequency of backspace / corrections | `onKey(DELETE)` |
 
 ### The database (Room)
 
@@ -123,204 +125,160 @@ Adding a new setting means: add a property to `Config.kt`, add the preference ke
 
 ## Part 2 — Implementation Plan
 
-The three phases below map directly to the Roadmap phases.
+The phases below map directly to the Roadmap phases.
 
 ---
 
 ### Phase 1: Sensor Calibration & Debug Environment
+**Status: Complete (2026-05-01) — BUILD SUCCESSFUL**
 
 **Roadmap objective:** A controlled, isolated diagnostic screen inside the companion app where developers can type and observe all sensor metrics live before deploying to the background keyboard.
 
 ---
 
-#### Step 1.1 — Expand the data model
+#### Step 1.1 — In-memory data models ✅ COMPLETE
 
-**Create:** `app/src/main/kotlin/org/fossify/keyboard/models/IkdEvent.kt`
+Phase 1 uses plain Kotlin data classes — no Room annotations. These will be promoted to Room entities in Phase 2.
 
+**`models/KeyTimingEvent.kt`** (created):
 ```kotlin
-@Entity(tableName = "ikd_events")
-data class IkdEvent(
-    @PrimaryKey(autoGenerate = true) val id: Long? = null,
-    @ColumnInfo(name = "session_id") val sessionId: String,
-    @ColumnInfo(name = "timestamp") val timestamp: Long,
-    @ColumnInfo(name = "key_code") val keyCode: Int,
-    @ColumnInfo(name = "inter_key_delay_ms") val interKeyDelayMs: Long,   // -1 for first key
-    @ColumnInfo(name = "dwell_time_ms") val dwellTimeMs: Long,             // key hold duration
-    @ColumnInfo(name = "flight_time_ms") val flightTimeMs: Long,           // -1 for first key
-    @ColumnInfo(name = "is_repeat") val isRepeat: Boolean = false
+data class KeyTimingEvent(
+    val sessionId: String,
+    val timestamp: Long,
+    val ikdMs:     Long,    // -1 = first event
+    val dwellMs:   Long,    // -1 = unknown
+    val flightMs:  Long     // -1 = first event
 )
 ```
 
-**Create:** `app/src/main/kotlin/org/fossify/keyboard/models/SensorSample.kt`
-
+**`models/SensorReadingEvent.kt`** (created):
 ```kotlin
-@Entity(tableName = "sensor_samples")
-data class SensorSample(
-    @PrimaryKey(autoGenerate = true) val id: Long? = null,
-    @ColumnInfo(name = "session_id") val sessionId: String,
-    @ColumnInfo(name = "timestamp") val timestamp: Long,
-    @ColumnInfo(name = "sensor_type") val sensorType: String,  // "GYRO" or "ACCEL"
-    @ColumnInfo(name = "x") val x: Float,
-    @ColumnInfo(name = "y") val y: Float,
-    @ColumnInfo(name = "z") val z: Float
+data class SensorReadingEvent(
+    val timestamp:  Long,
+    val sensorType: String,   // "GYRO" or "ACCEL"
+    val x: Float,
+    val y: Float,
+    val z: Float
 )
 ```
 
 ---
 
-#### Step 1.2 — Create the DAOs
+#### Step 1.2 — DAOs (deferred to Phase 2)
 
-**Create:** `app/src/main/kotlin/org/fossify/keyboard/interfaces/IkdDao.kt`
-
-```kotlin
-@Dao
-interface IkdDao {
-    @Insert fun insert(event: IkdEvent)
-    @Insert fun insertAll(events: List<IkdEvent>)
-    @Query("SELECT * FROM ikd_events ORDER BY timestamp ASC") fun getAll(): List<IkdEvent>
-    @Query("SELECT * FROM ikd_events WHERE session_id = :sessionId ORDER BY timestamp ASC") fun getBySession(sessionId: String): List<IkdEvent>
-    @Query("SELECT DISTINCT session_id FROM ikd_events ORDER BY session_id") fun getSessions(): List<String>
-    @Query("DELETE FROM ikd_events") fun deleteAll()
-    @Query("SELECT COUNT(*) FROM ikd_events") fun getCount(): Long
-}
-```
-
-**Create:** `app/src/main/kotlin/org/fossify/keyboard/interfaces/SensorDao.kt`
-
-```kotlin
-@Dao
-interface SensorDao {
-    @Insert fun insert(sample: SensorSample)
-    @Insert fun insertAll(samples: List<SensorSample>)
-    @Query("SELECT * FROM sensor_samples WHERE session_id = :sessionId ORDER BY timestamp ASC") fun getBySession(sessionId: String): List<SensorSample>
-    @Query("DELETE FROM sensor_samples") fun deleteAll()
-    @Query("SELECT COUNT(*) FROM sensor_samples") fun getCount(): Long
-}
-```
+Room DAOs (`IkdDao`, `SensorDao`) are not created in Phase 1. All data lives in `MutableList` in memory for the duration of the `DiagnosticsActivity` session.
 
 ---
 
-#### Step 1.3 — Create the analytics database
+#### Step 1.3 — Analytics database (deferred to Phase 2)
 
-**Create:** `app/src/main/kotlin/org/fossify/keyboard/databases/IkdDatabase.kt`
-
-```kotlin
-@Database(entities = [IkdEvent::class, SensorSample::class], version = 1)
-abstract class IkdDatabase : RoomDatabase() {
-    abstract fun ikdDao(): IkdDao
-    abstract fun sensorDao(): SensorDao
-
-    companion object {
-        private var db: IkdDatabase? = null
-
-        fun getInstance(context: Context): IkdDatabase {
-            if (db == null) {
-                synchronized(IkdDatabase::class) {
-                    db = Room.databaseBuilder(context.applicationContext, IkdDatabase::class.java, "ikd.db")
-                        .build()
-                }
-            }
-            return db!!
-        }
-    }
-}
-```
-
-**Modify:** `app/src/main/kotlin/org/fossify/keyboard/extensions/ContextExt.kt`
-
-```kotlin
-val Context.ikdDB: IkdDatabase get() = IkdDatabase.getInstance(applicationContext)
-```
+`IkdDatabase`, `ContextExt.ikdDB`, and Room entities are Phase 2 work. Phase 1 has zero new Gradle dependencies.
 
 ---
 
-#### Step 1.4 — Kinematic sensor helper
+#### Step 1.4 — Kinematic sensor helper ✅ COMPLETE
 
-**Create:** `app/src/main/kotlin/org/fossify/keyboard/helpers/KinematicSensorHelper.kt`
+**File:** `app/src/main/kotlin/org/fossify/keyboard/helpers/KinematicSensorHelper.kt`
 
-This class wraps Android's `SensorManager` to subscribe to gyroscope and accelerometer events during a session.
+Implemented as a `SensorEventListener` wrapping both gyroscope and accelerometer. Key differences from the original plan:
+- API is `start()` / `stop()` (no `sessionId` arg — the activity owns session identity)
+- Emits `SensorReadingEvent` (plain data class, not Room entity) via `onSample` callback
+- Callbacks fire on the sensor thread; `DiagnosticsActivity` posts UI updates via `runOnUiThread`
+- `hasGyro` and `hasAccel` properties let the caller hide unavailable sensor sections
 
 ```kotlin
 class KinematicSensorHelper(
-    private val context: Context,
-    private val onSample: (SensorSample) -> Unit
+    context: Context,
+    private val onSample: (SensorReadingEvent) -> Unit
 ) : SensorEventListener {
-
-    private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    private var sessionId: String = ""
-
-    fun startSession(sessionId: String) {
-        this.sessionId = sessionId
-        val gyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-        val accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        gyro?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
-        accel?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
-    }
-
-    fun stopSession() {
-        sensorManager.unregisterListener(this)
-    }
-
-    override fun onSensorChanged(event: SensorEvent) {
-        val type = when (event.sensor.type) {
-            Sensor.TYPE_GYROSCOPE -> "GYRO"
-            Sensor.TYPE_ACCELEROMETER -> "ACCEL"
-            else -> return
-        }
-        onSample(SensorSample(
-            sessionId = sessionId,
-            timestamp = SystemClock.uptimeMillis(),
-            sensorType = type,
-            x = event.values[0], y = event.values[1], z = event.values[2]
-        ))
-    }
-
+    private val manager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val gyro    = manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+    private val accel   = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    val hasGyro:  Boolean get() = gyro  != null
+    val hasAccel: Boolean get() = accel != null
+    fun start()  { gyro?.let { manager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+                   accel?.let { manager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) } }
+    fun stop()   { manager.unregisterListener(this) }
+    override fun onSensorChanged(event: SensorEvent) { /* emits SensorReadingEvent */ }
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
 }
 ```
 
 ---
 
-#### Step 1.5 — Build the diagnostics activity
+#### Step 1.5 — Diagnostics activity ✅ COMPLETE
 
-**Create:** `app/src/main/kotlin/org/fossify/keyboard/activities/DiagnosticsActivity.kt`
+**Files:**
+- `app/src/main/kotlin/org/fossify/keyboard/activities/DiagnosticsActivity.kt`
+- `app/src/main/res/layout/activity_diagnostics.xml`
+- `app/src/main/res/menu/menu_diagnostics.xml`
 
-This is a dedicated screen where the developer types in a `EditText` while observing live metrics. The activity hosts its own `KinematicSensorHelper` and a lightweight keystroke tracker (not the live keyboard service — input comes from the soft keyboard already active on the device).
+`DiagnosticsActivity` extends `SimpleActivity` and uses view binding (`ActivityDiagnosticsBinding`).
 
-Key UI elements to build in the corresponding layout (`activity_diagnostics.xml`):
-- `EditText` for typing input
-- Real-time text labels: last IKD, last dwell time, last flight time, session event count
-- Live `TextView` or simple bar indicators for gyroscope X/Y/Z and accelerometer X/Y/Z
-- "Export Session" button → exports current session to CSV via SAF (`ACTION_CREATE_DOCUMENT`)
-- "Clear" button → wipes the in-memory session buffer
+**Touch timing** — `OnTouchListener` on `MyEditText`:
+```kotlin
+ACTION_DOWN  → pressDownTime = SystemClock.uptimeMillis()
+ACTION_UP    → dwell  = now - pressDownTime
+               flight = if (lastReleaseTime > 0) pressDownTime - lastReleaseTime else -1
+               ikd    = if (lastReleaseTime > 0) now - lastReleaseTime else -1
+               lastReleaseTime = now
+```
+Returns `false` so `EditText` still receives text input.
 
-The activity uses `TextWatcher` + manual timestamp tracking on `onTouchEvent` of the `EditText` to measure IKD, dwell, and flight time within the app itself (this is a diagnostic-only approximation; the live keyboard captures these more precisely via `onPress`/`onKey`).
+**Sensor display** — six `ProgressBar` + `MyTextView` pairs (gyroX/Y/Z, accelX/Y/Z). Progress mapping:
+- Gyro: `((v + 10f) / 20f * 100).toInt().coerceIn(0, 100)`
+- Accel: `(v / 20f * 100).toInt().coerceIn(0, 100)`
 
-Add a navigation entry from `MainActivity` or `SettingsActivity` to reach this screen.
+Gyro section (`diagnostics_gyro_section_label` + `diagnostics_gyro_container`) is set to `GONE` if `!sensorHelper.hasGyro`.
+
+**Session lifecycle:**
+- `onResume` → `sensorHelper.start()`
+- `onPause` → `sensorHelper.stop()`
+- `onSaveInstanceState` persists `sessionId`, `pressDownTime`, `lastReleaseTime`, `eventCount`
+
+**Toolbar menu** (`menu_diagnostics.xml`):
+- `diagnostics_new_session` — clears lists, resets labels, generates new `UUID`, shown `ifRoom` with `ic_plus_vector`
+- `diagnostics_save_csv` — overflow; disabled when `sessionEvents.isEmpty()`
+
+**Navigation:** `SettingsActivity.setupDiagnostics()` sets a click listener on `settingsDiagnosticsHolder` that starts `DiagnosticsActivity`. The holder and `settingsDeveloperSectionLabel` are in `activity_settings.xml` and the label is included in the primary-color array in `SettingsActivity.onResume()`.
 
 ---
 
-#### Step 1.6 — Data validation export (Phase 1)
+#### Step 1.6 — CSV export ✅ COMPLETE
 
-Export a raw diagnostic session to CSV for verifying data structure and timing accuracy. Follow the existing clipboard export pattern in `ManageClipboardItemsActivity.kt`:
+Uses `ActivityResultContracts.CreateDocument("text/csv")`. Filename: `ikd_session_<first 8 chars of UUID>.csv`.
 
-```csv
-session_id,timestamp,key_code,inter_key_delay_ms,dwell_time_ms,flight_time_ms,is_repeat
-abc-123,1700000000000,104,-1,98,-1,false
-abc-123,1700000000210,101,210,87,112,false
+Single file, two blocks:
+```
+session_id,timestamp_ms,ikd_ms,dwell_ms,flight_ms
+<keystroke rows>
+
+#sensor_readings
+session_id,timestamp_ms,sensor_type,x,y,z
+<sensor rows>
 ```
 
-Sensor samples export to a separate CSV:
+`-1` in `ikd_ms` / `flight_ms` = first event in session (no prior reference). The Save menu item is disabled until `sessionEvents` is non-empty.
 
-```csv
-session_id,timestamp,sensor_type,x,y,z
-abc-123,1700000000015,GYRO,0.012,-0.003,0.041
-abc-123,1700000000015,ACCEL,0.21,9.78,-0.11
-```
+---
+
+### Phase 1.1: Live Keyboard Data Validation & Metric Alignment
+**Status: Not started**
+
+**Roadmap objective:** Move capturing to the actual `SimpleKeyboardIME` interface to collect real live typing data instead of diagnostic dummy inputs. Realign captured models to match BiAffect methodologies (Hold Time, Flight Time sequences, Error Rate/Backspace integration, explicit orientation capture).
+
+#### Step 1.1.1 — Update Internal Models
+Update the `KeyTimingEvent` to match the new definitions:
+- Swap `dwellMs` to `holdTimeMs`
+- Update flight time calculation to match the correct standard interval between downward strokes.
+
+#### Step 1.1.2 — Live Key Capture Sandbox
+Hook directly into `MyKeyboardView`'s live production text flow, and confirm metrics mirror natural typing. Establish the baseline for how Error Rates (BACKSPACE) are reported vs a standard space-delimited typing burst, and prepare the models for Phase 2's SQLite backend.
 
 ---
 
 ### Phase 2: Unobtrusive Background Collection & Secure Local Storage
+**Status: Not started**
 
 **Roadmap objective:** Passive, privacy-respecting collection inside the live keyboard with zero impact on typing experience.
 
@@ -473,6 +431,7 @@ Follow the existing export/import pattern from `ManageClipboardItemsActivity.kt`
 ---
 
 ### Phase 3: User Insights & Dashboard Presentation
+**Status: Not started**
 
 **Roadmap objective:** Translate raw behavioral data into digestible visual insights in the companion app.
 
