@@ -15,6 +15,8 @@ room = "2.8.4"
 androidx-work = "2.9.1"
 #Test
 junit = "4.13.2"
+#Charts
+mpandroidchart = "v3.1.0"
 #Fossify
 commons = "6.1.6"
 #Gradle
@@ -37,6 +39,8 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 #Test
 junit = { module = "junit:junit", version.ref = "junit" }
+#Charts
+mpandroidchart = { module = "com.github.PhilJay:MPAndroidChart", version.ref = "mpandroidchart" }
 #Compose
 compose-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "detektCompose" }
 #Fossify
