@@ -110,6 +110,8 @@ Detailed scope: [`Phase1/Phase1.1_Plan.md`](Phase1/Phase1.1_Plan.md)
 
 **Objective:** Utilize the companion application to translate vast amounts of raw behavioral and kinematic data into digestible, visual insights that empower the user to understand their digital habits and cognitive states.
 
+Detailed scope: [`Phase3/Phase3_Plan.md`](Phase3/Phase3_Plan.md)
+
 *   **Data Aggregation Engine:** 
     *   Create internal processes to summarize the raw data points into daily and weekly averages (e.g., average words per minute, daily backspace frequency, average dwell times).
 *   **Visual Analytics Modules:**
