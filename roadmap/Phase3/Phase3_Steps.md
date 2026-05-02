@@ -4,7 +4,27 @@ This document breaks the four sub-phases of `Phase3_Plan.md` into small, individ
 build-green commits. Each step is one focused change; each ends in a single
 conventional-commit on `feat/phase3-dashboard`.
 
-Status is updated as each step lands.
+Status: **All steps complete.** Branch `feat/phase3-dashboard` is ready for review.
+
+| Step | Status |
+|---|---|
+| 0 — Branch + roadmap pointer | Complete |
+| 1 — Room POJOs (`EventBucketRow`, `SessionBucketRow`) | Complete |
+| 2 — `IkdEventDao.getEventBuckets(...)` | Complete |
+| 3 — `SessionDao` aggregation queries | Complete |
+| 4 — `IkdAggregator` skeleton | Complete |
+| 5 — `IkdAggregator.snapshot()` real implementation | Complete |
+| 6 — `Context.ikdAggregator` extension | Complete |
+| 7 — Aggregator unit tests | Complete |
+| 8 — Dashboard strings + menu | Complete |
+| 9 — Dashboard layout + activity shell + manifest | Complete |
+| 10 — Navigation entry points | Complete |
+| 11 — Add MPAndroidChart dependency | Complete |
+| 12 — `IkdLineChartView` wrapper | Complete |
+| 13 — Wire three charts into the dashboard | Complete |
+| 14 — StrictMode in debug build | Complete |
+| 15 — Wall-clock perf logging in `IkdAggregator` | Complete |
+| 16 — `CLAUDE.md` / docs update | Complete |
 
 ---
 

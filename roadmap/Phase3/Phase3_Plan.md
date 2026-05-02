@@ -1,6 +1,6 @@
 # Phase 3 — Insights Dashboard (Minimal, Performance-First)
 
-**Status:** Not started
+**Status:** Complete
 **Depends on:** Phase 2 (`ikd.db` populated)
 **Branch:** `feat/phase3-dashboard` — all work lands on this branch and is merged to `main` only when sub-phase 3.4 (Polish) passes acceptance.
 **Scope (one sentence):** A read-only dashboard activity that shows daily/weekly/monthly trends from `ikd.db` using a small number of simple charts, with all aggregation done server-side in SQL, and **zero edits to the keyboard layer**.
