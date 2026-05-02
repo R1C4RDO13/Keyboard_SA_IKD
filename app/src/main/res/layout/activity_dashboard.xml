@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/dashboard_coordinator"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <org.fossify.commons.views.MyAppBarLayout
+        android:id="@+id/dashboard_appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/dashboard_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/color_primary"
+            app:menu="@menu/menu_dashboard"
+            app:title="@string/dashboard_title"
+            app:titleTextAppearance="@style/AppTheme.ActionBar.TitleTextStyle" />
+
+    </org.fossify.commons.views.MyAppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/dashboard_nested_scrollview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:id="@+id/dashboard_holder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/activity_margin">
+
+            <!-- Range selector -->
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/dashboard_range_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/dashboard_range_week"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/dashboard_range_week" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/dashboard_range_month"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/dashboard_range_month" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/dashboard_range_all"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/dashboard_range_all" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <!-- KPI strip -->
+            <LinearLayout
+                android:id="@+id/dashboard_kpi_strip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:orientation="horizontal"
+                android:weightSum="4">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_kpi_sessions_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_value_placeholder"
+                        android:textSize="@dimen/bigger_text_size"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_kpi_sessions"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_kpi_typing_time_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_value_placeholder"
+                        android:textSize="@dimen/bigger_text_size"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_kpi_typing_time"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_kpi_wpm_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_value_placeholder"
+                        android:textSize="@dimen/bigger_text_size"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_kpi_wpm"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_kpi_error_rate_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_value_placeholder"
+                        android:textSize="@dimen/bigger_text_size"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_kpi_error_rate"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Speed chart placeholder (filled in Step 13) -->
+            <org.fossify.commons.views.MyTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_chart_speed"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:id="@+id/dashboard_chart_speed_holder"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="@dimen/small_margin" />
+
+            <!-- IKD chart placeholder -->
+            <org.fossify.commons.views.MyTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_chart_ikd"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:id="@+id/dashboard_chart_ikd_holder"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="@dimen/small_margin" />
+
+            <!-- Error rate chart placeholder -->
+            <org.fossify.commons.views.MyTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_chart_error"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:id="@+id/dashboard_chart_error_holder"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="@dimen/small_margin" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Empty state: shown when no sessions exist -->
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/dashboard_empty_message"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:padding="@dimen/activity_margin"
+        android:text="@string/dashboard_empty_message"
+        android:visibility="gone"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

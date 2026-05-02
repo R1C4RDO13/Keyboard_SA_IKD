@@ -77,6 +77,12 @@
             android:parentActivityName=".activities.IkdSettingsActivity" />
 
         <activity
+            android:name=".activities.DashboardActivity"
+            android:exported="false"
+            android:label="@string/dashboard_title"
+            android:parentActivityName=".activities.IkdSettingsActivity" />
+
+        <activity
             android:name=".activities.SettingsActivity"
             android:configChanges="orientation"
             android:exported="true"
