@@ -163,6 +163,28 @@
     <string name="ikd_export_all_success">All data exported</string>
     <string name="ikd_export_all_error">Export failed</string>
 
+    <!-- Insights dashboard -->
+    <string name="dashboard_title">Insights</string>
+    <string name="dashboard_range_week">Week</string>
+    <string name="dashboard_range_month">Month</string>
+    <string name="dashboard_range_all">All Time</string>
+    <string name="dashboard_kpi_sessions">Sessions</string>
+    <string name="dashboard_kpi_typing_time">Typing time</string>
+    <string name="dashboard_kpi_wpm">Avg WPM</string>
+    <string name="dashboard_kpi_error_rate">Error rate</string>
+    <string name="dashboard_chart_speed">Speed (WPM)</string>
+    <string name="dashboard_chart_ikd">Avg IKD (ms)</string>
+    <string name="dashboard_chart_error">Error rate (%)</string>
+    <string name="dashboard_empty_message">Type with privacy mode off and your trends will appear here. Open Data Collection &amp; Privacy and toggle Privacy mode.</string>
+    <string name="dashboard_open_settings">Open Data Collection &amp; Privacy</string>
+    <string name="dashboard_value_placeholder">—</string>
+    <string name="dashboard_action_view">View Dashboard</string>
+    <string name="dashboard_menu_refresh">Refresh</string>
+    <!-- Format strings: KPI values -->
+    <string name="dashboard_kpi_typing_time_value">%1$s min</string>
+    <string name="dashboard_kpi_wpm_value">%1$.1f</string>
+    <string name="dashboard_kpi_error_rate_value">%1$.1f%%</string>
+
     <!--
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res
