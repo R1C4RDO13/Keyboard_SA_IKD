@@ -1,6 +1,12 @@
 package org.fossify.keyboard.helpers
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.fossify.keyboard.databases.IkdDatabase
+import org.fossify.keyboard.interfaces.EventBucketRow
+import org.fossify.keyboard.interfaces.SessionBucketRow
+import java.util.Calendar
+import java.util.TimeZone
 
 /**
  * Read-only aggregator over `ikd.db`. Phase 3 read-side surface — never writes
@@ -8,10 +14,8 @@ import org.fossify.keyboard.databases.IkdDatabase
  * return at most ~52 rows per call (capped by `Range.bucketFormat` and the
  * configured retention window).
  *
- * Thread safety: the SQL execution is wrapped in `Dispatchers.IO` inside
- * `snapshot()`. Callers may invoke `snapshot()` from any coroutine context.
- *
- * Skeleton (Step 4): contracts only. The real query execution lands in Step 5.
+ * Thread safety: `snapshot()` runs entirely on `Dispatchers.IO`. Callers may
+ * invoke it from any coroutine context.
  */
 class IkdAggregator(private val db: IkdDatabase) {
 
@@ -21,8 +25,8 @@ class IkdAggregator(private val db: IkdDatabase) {
      * the DB".
      */
     enum class Range(val days: Int?, val bucketFormat: String) {
-        WEEK(7, "%Y-%m-%d"),
-        MONTH(30, "%Y-%m-%d"),
+        WEEK(WEEK_DAYS, "%Y-%m-%d"),
+        MONTH(MONTH_DAYS, "%Y-%m-%d"),
         ALL_TIME(null, "%Y-%W"),
     }
 
@@ -52,21 +56,113 @@ class IkdAggregator(private val db: IkdDatabase) {
     )
 
     /**
-     * Computes a fresh dashboard snapshot. Implementation lands in Step 5.
+     * Computes a fresh dashboard snapshot for the given range. Runs on
+     * `Dispatchers.IO`. The returned Snapshot is plain data; callers should
+     * marshal it back to the main thread for rendering.
      */
-    @Suppress("UnusedPrivateProperty")
-    suspend fun snapshot(range: Range): Snapshot {
-        // Reference db so the constructor parameter compiles cleanly under
-        // 'unused property' checks while the real implementation is queued
-        // for Step 5.
-        @Suppress("UnusedExpression") db
+    suspend fun snapshot(range: Range): Snapshot = withContext(Dispatchers.IO) {
+        val nowMs = System.currentTimeMillis()
+        val (fromMs, toMs) = computeRangeWindow(range, nowMs)
+
+        val eventBuckets = db.IkdEventDao().getEventBuckets(range.bucketFormat, fromMs, toMs)
+        val sessionBuckets = db.SessionDao().getSessionBuckets(range.bucketFormat, fromMs, toMs)
+
+        buildSnapshot(range, eventBuckets, sessionBuckets)
+    }
+
+    private fun computeRangeWindow(range: Range, nowMs: Long): Pair<Long, Long> {
+        val days = range.days
+        val fromMs = if (days != null) {
+            // Anchor on the local-day boundary so day buckets line up with the user's clock.
+            startOfLocalDayMillis(nowMs) - (days - 1).toLong() * MS_PER_DAY
+        } else {
+            // ALL_TIME: read from the earliest session, falling back to "everything since
+            // the start of recordable time" when the DB is empty.
+            db.SessionDao().getEarliestSessionStart() ?: 0L
+        }
+        // Use now+1ms as the exclusive upper bound to cover events written this millisecond.
+        return fromMs to (nowMs + 1L)
+    }
+
+    private fun buildSnapshot(
+        range: Range,
+        eventBuckets: List<EventBucketRow>,
+        sessionBuckets: List<SessionBucketRow>,
+    ): Snapshot {
+        val sessionByBucket = sessionBuckets.associateBy { it.bucket }
+        val eventByBucket = eventBuckets.associateBy { it.bucket }
+        val orderedKeys = (eventByBucket.keys + sessionByBucket.keys).toSortedSet()
+
+        val merged = orderedKeys.map { key ->
+            val ev = eventByBucket[key]
+            val sess = sessionByBucket[key]
+            val wpm = computeWpm(ev?.eventCount ?: 0, sess?.totalDurationMs ?: 0L)
+            Bucket(
+                label = key,
+                wpm = wpm,
+                avgIkdMs = ev?.avgIkdMs,
+                errorRatePct = ev?.errorRatePct,
+            )
+        }
+
+        val totalSessions = sessionBuckets.sumOf { it.sessionCount }
+        val totalDurationMs = sessionBuckets.sumOf { it.totalDurationMs }
+        val totalEvents = eventBuckets.sumOf { it.eventCount.toLong() }
+        val avgWpm = computeWpm(totalEvents.toInt(), totalDurationMs)
+        val avgErrorRatePct = computeOverallErrorRate(eventBuckets)
+
         return Snapshot(
             range = range,
-            totalSessions = 0,
-            totalTypingTimeMs = 0L,
-            avgWpm = null,
-            avgErrorRatePct = null,
-            buckets = emptyList(),
+            totalSessions = totalSessions,
+            totalTypingTimeMs = totalDurationMs,
+            avgWpm = avgWpm,
+            avgErrorRatePct = avgErrorRatePct,
+            buckets = merged,
         )
+    }
+
+    private fun computeOverallErrorRate(eventBuckets: List<EventBucketRow>): Double? {
+        if (eventBuckets.isEmpty()) return null
+        val totalEvents = eventBuckets.sumOf { it.eventCount.toLong() }
+        if (totalEvents == 0L) return null
+        // Recover the per-bucket correction count from the percentage so we
+        // can sum corrections without re-querying the DB:
+        //   pct = 100 * corrections / count  =>  corrections = pct * count / 100
+        val totalCorrections = eventBuckets.sumOf {
+            (it.errorRatePct * it.eventCount / PCT_DIVISOR)
+        }
+        return PCT_MULTIPLIER * totalCorrections / totalEvents
+    }
+
+    private fun computeWpm(eventCount: Int, totalDurationMs: Long): Double? {
+        if (eventCount <= 0 || totalDurationMs <= 0L) return null
+        // WPM convention: 5 keystrokes per word.
+        return eventCount.toDouble() / WORD_KEYSTROKES *
+            MS_PER_MINUTE.toDouble() / totalDurationMs.toDouble()
+    }
+
+    private fun startOfLocalDayMillis(epochMs: Long): Long {
+        val cal = Calendar.getInstance(TimeZone.getDefault())
+        cal.timeInMillis = epochMs
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
+    }
+
+    companion object {
+        // Range windows in days. Named to keep detekt's MagicNumber rule quiet.
+        private const val WEEK_DAYS = 7
+        private const val MONTH_DAYS = 30
+
+        // Time conversion constants.
+        private const val MS_PER_DAY = 86_400_000L
+        private const val MS_PER_MINUTE = 60_000L
+
+        // WPM and percentage scaling.
+        private const val WORD_KEYSTROKES = 5.0
+        private const val PCT_DIVISOR = 100.0
+        private const val PCT_MULTIPLIER = 100.0
     }
 }
