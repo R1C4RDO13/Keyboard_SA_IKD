@@ -1,12 +1,15 @@
 package org.fossify.keyboard.helpers
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.fossify.keyboard.BuildConfig
 import org.fossify.keyboard.databases.IkdDatabase
 import org.fossify.keyboard.interfaces.EventBucketRow
 import org.fossify.keyboard.interfaces.SessionBucketRow
 import java.util.Calendar
 import java.util.TimeZone
+import kotlin.system.measureTimeMillis
 
 /**
  * Read-only aggregator over `ikd.db`. Phase 3 read-side surface — never writes
@@ -61,13 +64,20 @@ class IkdAggregator(private val db: IkdDatabase) {
      * marshal it back to the main thread for rendering.
      */
     suspend fun snapshot(range: Range): Snapshot = withContext(Dispatchers.IO) {
-        val nowMs = System.currentTimeMillis()
-        val (fromMs, toMs) = computeRangeWindow(range, nowMs)
+        var result: Snapshot? = null
+        val durationMs = measureTimeMillis {
+            val nowMs = System.currentTimeMillis()
+            val (fromMs, toMs) = computeRangeWindow(range, nowMs)
 
-        val eventBuckets = db.IkdEventDao().getEventBuckets(range.bucketFormat, fromMs, toMs)
-        val sessionBuckets = db.SessionDao().getSessionBuckets(range.bucketFormat, fromMs, toMs)
+            val eventBuckets = db.IkdEventDao().getEventBuckets(range.bucketFormat, fromMs, toMs)
+            val sessionBuckets = db.SessionDao().getSessionBuckets(range.bucketFormat, fromMs, toMs)
 
-        Companion.buildSnapshot(range, eventBuckets, sessionBuckets)
+            result = Companion.buildSnapshot(range, eventBuckets, sessionBuckets)
+        }
+        if (BuildConfig.DEBUG) {
+            Log.d(LOG_TAG, "snapshot(${range.name}) took ${durationMs}ms")
+        }
+        result!!
     }
 
     private fun computeRangeWindow(range: Range, nowMs: Long): Pair<Long, Long> {
@@ -95,6 +105,8 @@ class IkdAggregator(private val db: IkdDatabase) {
     }
 
     companion object {
+        private const val LOG_TAG = "IkdAggregator"
+
         // Range windows in days. Named to keep detekt's MagicNumber rule quiet.
         private const val WEEK_DAYS = 7
         private const val MONTH_DAYS = 30
