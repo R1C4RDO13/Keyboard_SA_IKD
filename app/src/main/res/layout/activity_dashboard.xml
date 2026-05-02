@@ -173,7 +173,7 @@
 
             </LinearLayout>
 
-            <!-- Speed chart placeholder (filled in Step 13) -->
+            <!-- Speed chart -->
             <org.fossify.commons.views.MyTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -181,13 +181,13 @@
                 android:text="@string/dashboard_chart_speed"
                 android:textStyle="bold" />
 
-            <FrameLayout
-                android:id="@+id/dashboard_chart_speed_holder"
+            <org.fossify.keyboard.views.IkdLineChartView
+                android:id="@+id/dashboard_chart_speed"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:layout_marginTop="@dimen/small_margin" />
 
-            <!-- IKD chart placeholder -->
+            <!-- IKD chart -->
             <org.fossify.commons.views.MyTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -195,13 +195,13 @@
                 android:text="@string/dashboard_chart_ikd"
                 android:textStyle="bold" />
 
-            <FrameLayout
-                android:id="@+id/dashboard_chart_ikd_holder"
+            <org.fossify.keyboard.views.IkdLineChartView
+                android:id="@+id/dashboard_chart_ikd"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:layout_marginTop="@dimen/small_margin" />
 
-            <!-- Error rate chart placeholder -->
+            <!-- Error rate chart -->
             <org.fossify.commons.views.MyTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -209,8 +209,8 @@
                 android:text="@string/dashboard_chart_error"
                 android:textStyle="bold" />
 
-            <FrameLayout
-                android:id="@+id/dashboard_chart_error_holder"
+            <org.fossify.keyboard.views.IkdLineChartView
+                android:id="@+id/dashboard_chart_error"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:layout_marginTop="@dimen/small_margin" />
