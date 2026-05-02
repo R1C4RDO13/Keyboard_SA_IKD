@@ -13,6 +13,8 @@ detektCompose = "0.4.28"
 room = "2.8.4"
 #WorkManager
 androidx-work = "2.9.1"
+#Test
+junit = "4.13.2"
 #Fossify
 commons = "6.1.6"
 #Gradle
@@ -33,6 +35,8 @@ androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 #WorkManager
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
+#Test
+junit = { module = "junit:junit", version.ref = "junit" }
 #Compose
 compose-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "detektCompose" }
 #Fossify

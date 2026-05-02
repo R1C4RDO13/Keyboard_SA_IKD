@@ -67,7 +67,7 @@ class IkdAggregator(private val db: IkdDatabase) {
         val eventBuckets = db.IkdEventDao().getEventBuckets(range.bucketFormat, fromMs, toMs)
         val sessionBuckets = db.SessionDao().getSessionBuckets(range.bucketFormat, fromMs, toMs)
 
-        buildSnapshot(range, eventBuckets, sessionBuckets)
+        Companion.buildSnapshot(range, eventBuckets, sessionBuckets)
     }
 
     private fun computeRangeWindow(range: Range, nowMs: Long): Pair<Long, Long> {
@@ -82,63 +82,6 @@ class IkdAggregator(private val db: IkdDatabase) {
         }
         // Use now+1ms as the exclusive upper bound to cover events written this millisecond.
         return fromMs to (nowMs + 1L)
-    }
-
-    private fun buildSnapshot(
-        range: Range,
-        eventBuckets: List<EventBucketRow>,
-        sessionBuckets: List<SessionBucketRow>,
-    ): Snapshot {
-        val sessionByBucket = sessionBuckets.associateBy { it.bucket }
-        val eventByBucket = eventBuckets.associateBy { it.bucket }
-        val orderedKeys = (eventByBucket.keys + sessionByBucket.keys).toSortedSet()
-
-        val merged = orderedKeys.map { key ->
-            val ev = eventByBucket[key]
-            val sess = sessionByBucket[key]
-            val wpm = computeWpm(ev?.eventCount ?: 0, sess?.totalDurationMs ?: 0L)
-            Bucket(
-                label = key,
-                wpm = wpm,
-                avgIkdMs = ev?.avgIkdMs,
-                errorRatePct = ev?.errorRatePct,
-            )
-        }
-
-        val totalSessions = sessionBuckets.sumOf { it.sessionCount }
-        val totalDurationMs = sessionBuckets.sumOf { it.totalDurationMs }
-        val totalEvents = eventBuckets.sumOf { it.eventCount.toLong() }
-        val avgWpm = computeWpm(totalEvents.toInt(), totalDurationMs)
-        val avgErrorRatePct = computeOverallErrorRate(eventBuckets)
-
-        return Snapshot(
-            range = range,
-            totalSessions = totalSessions,
-            totalTypingTimeMs = totalDurationMs,
-            avgWpm = avgWpm,
-            avgErrorRatePct = avgErrorRatePct,
-            buckets = merged,
-        )
-    }
-
-    private fun computeOverallErrorRate(eventBuckets: List<EventBucketRow>): Double? {
-        if (eventBuckets.isEmpty()) return null
-        val totalEvents = eventBuckets.sumOf { it.eventCount.toLong() }
-        if (totalEvents == 0L) return null
-        // Recover the per-bucket correction count from the percentage so we
-        // can sum corrections without re-querying the DB:
-        //   pct = 100 * corrections / count  =>  corrections = pct * count / 100
-        val totalCorrections = eventBuckets.sumOf {
-            (it.errorRatePct * it.eventCount / PCT_DIVISOR)
-        }
-        return PCT_MULTIPLIER * totalCorrections / totalEvents
-    }
-
-    private fun computeWpm(eventCount: Int, totalDurationMs: Long): Double? {
-        if (eventCount <= 0 || totalDurationMs <= 0L) return null
-        // WPM convention: 5 keystrokes per word.
-        return eventCount.toDouble() / WORD_KEYSTROKES *
-            MS_PER_MINUTE.toDouble() / totalDurationMs.toDouble()
     }
 
     private fun startOfLocalDayMillis(epochMs: Long): Long {
@@ -164,5 +107,67 @@ class IkdAggregator(private val db: IkdDatabase) {
         private const val WORD_KEYSTROKES = 5.0
         private const val PCT_DIVISOR = 100.0
         private const val PCT_MULTIPLIER = 100.0
+
+        /**
+         * Pure aggregation. Lives on the companion so it can be unit-tested
+         * without standing up a Room DB. No I/O, no time read, no
+         * dependency on `IkdAggregator` instance state.
+         */
+        internal fun buildSnapshot(
+            range: Range,
+            eventBuckets: List<EventBucketRow>,
+            sessionBuckets: List<SessionBucketRow>,
+        ): Snapshot {
+            val sessionByBucket = sessionBuckets.associateBy { it.bucket }
+            val eventByBucket = eventBuckets.associateBy { it.bucket }
+            val orderedKeys = (eventByBucket.keys + sessionByBucket.keys).toSortedSet()
+
+            val merged = orderedKeys.map { key ->
+                val ev = eventByBucket[key]
+                val sess = sessionByBucket[key]
+                val wpm = computeWpm(ev?.eventCount ?: 0, sess?.totalDurationMs ?: 0L)
+                Bucket(
+                    label = key,
+                    wpm = wpm,
+                    avgIkdMs = ev?.avgIkdMs,
+                    errorRatePct = ev?.errorRatePct,
+                )
+            }
+
+            val totalSessions = sessionBuckets.sumOf { it.sessionCount }
+            val totalDurationMs = sessionBuckets.sumOf { it.totalDurationMs }
+            val totalEvents = eventBuckets.sumOf { it.eventCount.toLong() }
+            val avgWpm = computeWpm(totalEvents.toInt(), totalDurationMs)
+            val avgErrorRatePct = computeOverallErrorRate(eventBuckets)
+
+            return Snapshot(
+                range = range,
+                totalSessions = totalSessions,
+                totalTypingTimeMs = totalDurationMs,
+                avgWpm = avgWpm,
+                avgErrorRatePct = avgErrorRatePct,
+                buckets = merged,
+            )
+        }
+
+        private fun computeOverallErrorRate(eventBuckets: List<EventBucketRow>): Double? {
+            if (eventBuckets.isEmpty()) return null
+            val totalEvents = eventBuckets.sumOf { it.eventCount.toLong() }
+            if (totalEvents == 0L) return null
+            // Recover the per-bucket correction count from the percentage so we
+            // can sum corrections without re-querying the DB:
+            //   pct = 100 * corrections / count  =>  corrections = pct * count / 100
+            val totalCorrections = eventBuckets.sumOf {
+                (it.errorRatePct * it.eventCount / PCT_DIVISOR)
+            }
+            return PCT_MULTIPLIER * totalCorrections / totalEvents
+        }
+
+        private fun computeWpm(eventCount: Int, totalDurationMs: Long): Double? {
+            if (eventCount <= 0 || totalDurationMs <= 0L) return null
+            // WPM convention: 5 keystrokes per word.
+            return eventCount.toDouble() / WORD_KEYSTROKES *
+                MS_PER_MINUTE.toDouble() / totalDurationMs.toDouble()
+        }
     }
 }
