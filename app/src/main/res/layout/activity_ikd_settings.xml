@@ -378,10 +378,17 @@
 
             <!-- Action buttons -->
             <Button
-                android:id="@+id/ikd_view_sessions_button"
+                android:id="@+id/ikd_view_dashboard_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_action_view" />
+
+            <Button
+                android:id="@+id/ikd_view_sessions_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/small_margin"
                 android:text="@string/ikd_action_view_sessions" />
 
             <Button

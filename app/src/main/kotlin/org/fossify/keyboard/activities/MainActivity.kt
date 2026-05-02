@@ -71,6 +71,7 @@ class MainActivity : SimpleActivity() {
             when (menuItem.itemId) {
                 R.id.more_apps_from_us -> launchMoreAppsFromUsIntent()
                 R.id.settings -> launchSettings()
+                R.id.dashboard -> startActivity(Intent(this, DashboardActivity::class.java))
                 R.id.about -> launchAbout()
                 else -> return@setOnMenuItemClickListener false
             }

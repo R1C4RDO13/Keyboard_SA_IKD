@@ -197,6 +197,9 @@ class IkdSettingsActivity : SimpleActivity() {
                 }
             }
 
+            ikdViewDashboardButton.setOnClickListener {
+                startActivity(Intent(this@IkdSettingsActivity, DashboardActivity::class.java))
+            }
             ikdViewSessionsButton.setOnClickListener {
                 startActivity(Intent(this@IkdSettingsActivity, SessionsListActivity::class.java))
             }
