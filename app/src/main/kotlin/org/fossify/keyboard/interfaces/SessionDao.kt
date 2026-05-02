@@ -31,4 +31,30 @@ interface SessionDao {
 
     @Query("SELECT COUNT(*) FROM sessions")
     fun count(): Int
+
+    /**
+     * Bucketed session aggregation. `totalDurationMs` only sums sessions whose
+     * `ended_at` is set; in-flight sessions still bump `sessionCount`.
+     *
+     * @param bucketFormat strftime pattern ("%Y-%m-%d" / "%Y-%W" / "%Y-%m").
+     * @param fromMs inclusive lower bound on `started_at` (epoch millis).
+     * @param toMs exclusive upper bound on `started_at` (epoch millis).
+     */
+    @Query(
+        """
+        SELECT
+            strftime(:bucketFormat, started_at / 1000, 'unixepoch', 'localtime') AS bucket,
+            SUM(CASE WHEN ended_at IS NOT NULL THEN ended_at - started_at ELSE 0 END) AS totalDurationMs,
+            COUNT(*) AS sessionCount
+        FROM sessions
+        WHERE started_at >= :fromMs AND started_at < :toMs
+        GROUP BY bucket
+        ORDER BY bucket
+        """
+    )
+    fun getSessionBuckets(bucketFormat: String, fromMs: Long, toMs: Long): List<SessionBucketRow>
+
+    /** Returns null when the sessions table is empty. Used to size the All Time range. */
+    @Query("SELECT MIN(started_at) FROM sessions")
+    fun getEarliestSessionStart(): Long?
 }
