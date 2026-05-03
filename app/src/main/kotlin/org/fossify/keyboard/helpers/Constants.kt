@@ -20,7 +20,6 @@ const val COLLECT_ACCEL = "ikd_collect_accel"
 const val SENSOR_SAMPLING_RATE = "ikd_sensor_sampling_rate"
 const val CAPTURE_ORIENTATION = "ikd_capture_orientation"
 const val CAPTURE_LOCALE = "ikd_capture_locale"
-const val CAPTURE_BATTERY = "ikd_capture_battery"
 const val RETENTION_DAYS = "ikd_retention_days"
 const val RETENTION_FOREVER = -1
 const val RETENTION_DAYS_7 = 7

@@ -128,7 +128,6 @@
     <string name="ikd_sampling_normal">Normal (~5 Hz)</string>
     <string name="ikd_capture_orientation">Device orientation</string>
     <string name="ikd_capture_locale">Locale</string>
-    <string name="ikd_capture_battery">Battery level</string>
     <string name="ikd_retention_forever">Forever</string>
     <string name="ikd_retention_7_days">7 days</string>
     <string name="ikd_retention_14_days">14 days</string>

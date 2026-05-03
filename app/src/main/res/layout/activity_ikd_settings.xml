@@ -200,21 +200,6 @@
 
             </RelativeLayout>
 
-            <RelativeLayout
-                android:id="@+id/ikd_capture_battery_holder"
-                style="@style/SettingsHolderCheckboxStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyAppCompatCheckbox
-                    android:id="@+id/ikd_capture_battery_checkbox"
-                    style="@style/SettingsCheckboxStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/ikd_capture_battery" />
-
-            </RelativeLayout>
-
             <!-- Retention period section -->
             <TextView
                 android:id="@+id/ikd_section_retention_label"

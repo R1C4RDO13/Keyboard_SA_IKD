@@ -40,10 +40,6 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(CAPTURE_LOCALE, true)
         set(value) = prefs.edit().putBoolean(CAPTURE_LOCALE, value).apply()
 
-    var captureBattery: Boolean
-        get() = prefs.getBoolean(CAPTURE_BATTERY, false)
-        set(value) = prefs.edit().putBoolean(CAPTURE_BATTERY, value).apply()
-
     var retentionDays: Int
         get() = prefs.getInt(RETENTION_DAYS, RETENTION_DAYS_DEFAULT)
         set(value) = prefs.edit().putInt(RETENTION_DAYS, value).apply()

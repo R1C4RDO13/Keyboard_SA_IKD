@@ -110,7 +110,6 @@ class IkdSettingsActivity : SimpleActivity() {
 
         binding.ikdCaptureOrientationCheckbox.isChecked = config.captureOrientation
         binding.ikdCaptureLocaleCheckbox.isChecked = config.captureLocale
-        binding.ikdCaptureBatteryCheckbox.isChecked = config.captureBattery
 
         val retentionRadioId = when (config.retentionDays) {
             RETENTION_FOREVER -> R.id.ikd_retention_forever
@@ -178,11 +177,6 @@ class IkdSettingsActivity : SimpleActivity() {
             ikdCaptureLocaleHolder.setOnClickListener { ikdCaptureLocaleCheckbox.toggle() }
             ikdCaptureLocaleCheckbox.setOnCheckedChangeListener { _, checked ->
                 config.captureLocale = checked
-            }
-
-            ikdCaptureBatteryHolder.setOnClickListener { ikdCaptureBatteryCheckbox.toggle() }
-            ikdCaptureBatteryCheckbox.setOnCheckedChangeListener { _, checked ->
-                config.captureBattery = checked
             }
 
             ikdRetentionGroup.setOnCheckedChangeListener { _, checkedId ->
