@@ -330,11 +330,13 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
                 flightTimeMs = flightTime,
                 isCorrection = code == MyKeyboard.KEYCODE_DELETE
             )
-            
-            // Record event off the main thread to avoid keyboard lag
-            Thread {
-                LiveCaptureSessionStore.recordTimingEvent(event)
-            }.start()
+
+            // recordTimingEvent only appends to in-memory lists under a write lock.
+            // DB persistence is deferred to the flushExecutor inside the store, so this
+            // call is safe on the IME thread. Spawning a Thread here previously raced
+            // with onFinishInputView → stopSession, causing just-typed sessions to be
+            // counted as zero-event and deleted by the drop-empty-sessions guard.
+            LiveCaptureSessionStore.recordTimingEvent(event)
         }
 
         if (code != MyKeyboard.KEYCODE_SHIFT) {
