@@ -14,11 +14,13 @@ flowchart TD
     P2[Phase 2: Background Collection & Local Storage]:::phase
     P3[Phase 3: User Insights & Dashboard Presentation]:::phase
     P4[Phase 4: Session Detail Refresh]:::phase
+    P5[Phase 5: Session Dashboard]:::phase
 
     P1 --> P1_1
     P1_1 --> P2
     P2 --> P3
     P3 --> P4
+    P4 --> P5
 
     subgraph Phase 1 Features
         F1[Real-Time Data Interface]:::feature
@@ -48,11 +50,18 @@ flowchart TD
         F11[Magnitude-First Sensor Display]:::feature
     end
 
+    subgraph Phase 5 Features
+        F12[Per-Session KPI + Metadata Strip]:::feature
+        F13[IKD / Gyro / Accel Time-Series Charts]:::feature
+        F14[Raw Lists Replaced by Charts]:::feature
+    end
+
     P1 -.-> F1 & F2 & F3
     P1_1 -.-> F1_1 & F1_2
     P2 -.-> F4 & F5 & F6
     P3 -.-> F7 & F8 & F9
     P4 -.-> F10 & F11
+    P5 -.-> F12 & F13 & F14
 ```
 
 ---
@@ -152,3 +161,30 @@ Like Phase 3, Phase 4 is a read-side refresh: zero edits to the keyboard / captu
     *   Sensor list rows and Diagnostics live bars default to a single magnitude value (`sqrt(x² + y² + z²)`) instead of three per-axis values.
     *   A single toolbar action toggles between `MAGNITUDE` and `AXES` modes; the choice persists via a new `Config.sensorDisplayMode` preference.
     *   Magnitude is derived in Kotlin at read time — never stored in the DB and never added to the CSV export, so the experiment's data contract stays frozen.
+
+> **Phase 4 follow-up identified during review:** the metadata header turned out to be a 12-row label/value strip *above* unchanged raw timing + sensor lists. The raw rows still dominate the screen and the strip didn't read like a "dashboard." The fix is scoped as Phase 5 below.
+
+---
+
+## Phase 5: Session Dashboard — Charts Replace Raw Lists
+**Status: Planned**
+
+Detailed scope: [`Phase5/Phase5_Plan.md`](Phase5/Phase5_Plan.md)
+
+**Objective:** Turn the saved-session detail screen into a real per-session dashboard, parallel to the aggregate `DashboardActivity` from Phase 3 but scoped to a single session. Drop the raw timing/sensor row dump in favour of a compact KPI strip + metadata chip + three line charts (IKD over time, gyro magnitude over time, accelerometer magnitude over time). Live mode (`EventFeedActivity` without `EXTRA_SESSION_ID`, used as the Diagnostics event log) is preserved as-is.
+
+Like Phases 3 and 4, Phase 5 is a read-side refresh: zero edits to the keyboard / capture layer, no schema migration, **no new dependencies** — the same Phase 3 MPAndroidChart wrapper (`views/IkdLineChartView.kt`) is reused verbatim so the per-session and aggregate dashboards belong to the same visual family.
+
+*   **Per-Session KPI + Metadata Strip:**
+    *   Compact 4-cell KPI card at the top of the session detail (Events · Total typing time · WPM · Error rate), styled identically to `DashboardActivity`'s strip
+    *   Secondary chip row beneath with avg IKD / avg dwell / avg flight
+    *   Single-line metadata chip (Started at · Duration · Orientation · Locale) — sentinel/empty values omitted from the line rather than rendered as "—"
+    *   The existing Phase 4 `IkdSessionStatsLoader` (frozen) supplies all four KPI values
+*   **IKD / Gyro / Accel Time-Series Charts:**
+    *   Three `IkdLineChartView` instances stacked below the KPI strip
+    *   Two new additive `@Query` methods (`IkdEventDao.getSessionTimingBuckets`, `SensorSampleDao.getSessionSensorBuckets`) do **SQL-side downsampling** — each chart receives at most 200 points regardless of session length
+    *   Bucket width chosen as `max(50 ms, ceil(durationMs / 200))`; SQLite has no `sqrt`, so the loader averages the squared norm in SQL and applies `sqrt` in Kotlin per row (≤ 400 calls per session load)
+*   **Raw Lists Replaced by Charts:**
+    *   Saved-session mode: the wall of timing rows + sensor sample rows is **removed**. Raw data still exists in `ikd.db` and is still recoverable via the existing per-session CSV export.
+    *   Live mode (Diagnostics → "View Log") **keeps** the raw lists — that screen is a real-time debug feed and a different feature.
+    *   Phase 4's `Config.sensorDisplayMode` toggle still works in live mode and `DiagnosticsActivity`; on the session dashboard the toolbar action is hidden because there are no rows to toggle.

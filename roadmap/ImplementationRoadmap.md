@@ -538,6 +538,30 @@ Empty states for "session not found", refresh menu re-runs both queries, perf lo
 
 ---
 
+### Phase 5: Session Dashboard — Charts Replace Raw Lists
+**Status: Planned**
+
+Authoritative scope, sub-phases, files, and acceptance criteria are in [`Phase5/Phase5_Plan.md`](Phase5/Phase5_Plan.md). Below is just the high-level shape so this document stays a useful index.
+
+**Roadmap objective:** Turn the saved-session detail screen into a real per-session dashboard. The Phase 4 metadata header sat above unchanged raw timing + sensor lists; the raw rows still dominated the screen. Phase 5 drops the raw lists, replaces them with a KPI strip + metadata chip + three line charts (IKD / gyro magnitude / accel magnitude over time), and reuses the Phase 3 MPAndroidChart wrapper so the per-session and aggregate dashboards are visually consistent.
+
+#### Step 5.1 — Per-session chart loader + DAO additions
+Two additive `@Query` methods (`IkdEventDao.getSessionTimingBuckets`, `SensorSampleDao.getSessionSensorBuckets`) do SQL-side downsampling via `((timestamp - :startMs) / :bucketWidthMs)` as the bucket key. New POJOs `TimingBucketRow` / `SensorBucketRow`. New `helpers/IkdSessionChartLoader.kt` mirrors the `IkdAggregator` pattern: suspend on `Dispatchers.IO`, pure `Companion.bucketWidthMs(durationMs)` and `Companion.buildChartData(...)` for JVM unit tests. SQLite has no `sqrt`, so the loader averages `x*x + y*y + z*z` in SQL and takes `sqrt` in Kotlin per row.
+
+#### Step 5.2 — Session dashboard layout + KPI / metadata strip
+Add a new `event_feed_session_dashboard` container at the top of `activity_event_feed.xml` with a 4-cell KPI card (events / typing time / WPM / error rate), a secondary chip row (avg IKD / avg dwell / avg flight), and a metadata chip (started · duration · orientation · locale). Wrap the existing live-mode raw lists in a sibling `event_feed_live_container`. Activity logic gates which container is visible based on `intent.hasExtra(EXTRA_SESSION_ID)`. Phase 4's `event_feed_toggle_sensor_view` toolbar action is hidden when in DB-backed mode (no rows to toggle).
+
+#### Step 5.3 — Three per-session line charts
+Inflate three `IkdLineChartView` instances into the new container — IKD ms / gyro magnitude rad/s / accel magnitude m/s². Each chart receives at most 200 floats (SQL-bucket-capped). Reuse Phase 3's null-bucket-as-line-break convention. Each chart sits inside its own `MaterialCardView` with a small primary-color title above it.
+
+#### Step 5.4 — Polish, empty states, style pass, perf validation
+Empty-state cards when a session has no gyro / accel data. Wall-clock perf log on the loader (mirrors `IkdAggregator`). Cards / labels / colors aligned with `DashboardActivity` so the two dashboards belong to the same family. `CLAUDE.md` and roadmap updated.
+
+#### Forbidden in Phase 5 (carries forward from Phases 3 + 4)
+All Phase 4 forbidden files, **plus** `helpers/IkdSessionStatsLoader.kt` (the Phase 4 KPI source — frozen, reused unchanged) and `views/IkdLineChartView.kt` (Phase 3 chart wrapper — frozen at single-series; multi-series is a Phase 6 design call).
+
+---
+
 ## Part 3 — Files Summary
 
 ### Files to create
@@ -557,6 +581,9 @@ Empty states for "session not found", refresh menu re-runs both queries, perf lo
 | `interfaces/SessionStatsRow.kt` | 4 | Room POJO for per-session aggregation projection |
 | `helpers/IkdSessionStatsLoader.kt` | 4 | Per-session metadata + derived metrics loader |
 | `helpers/IkdFormatters.kt` | 4 | Shared duration / metric formatters |
+| `interfaces/TimingBucketRow.kt` | 5 | Room POJO for per-session timing-bucket projection |
+| `interfaces/SensorBucketRow.kt` | 5 | Room POJO for per-session sensor-bucket projection |
+| `helpers/IkdSessionChartLoader.kt` | 5 | Per-session chart-data loader (SQL-side downsampled) |
 
 ### Files to modify
 
@@ -564,14 +591,16 @@ Empty states for "session not found", refresh menu re-runs both queries, perf lo
 |---|---|---|
 | `helpers/Constants.kt` | 2, 4 | Add `IKD_COLLECTION_ENABLED` key (P2); add `SENSOR_DISPLAY_MODE` keys + values (P4) |
 | `helpers/Config.kt` | 2, 4 | Add `ikdCollectionEnabled` (P2); add `sensorDisplayMode` (P4) |
-| `extensions/ContextExt.kt` | 1, 4 | Add `ikdDB` (P1); add `ikdSessionStatsLoader` (P4) |
+| `extensions/ContextExt.kt` | 1, 4, 5 | Add `ikdDB` (P1); add `ikdSessionStatsLoader` (P4); add `ikdSessionChartLoader` (P5) |
 | `services/SimpleKeyboardIME.kt` | 2 | Add IKD/dwell/flight capture in `onPress()` + `onKey()`, session lifecycle |
 | `activities/SettingsActivity.kt` | 2 | Add collection toggle + export/clear buttons |
 | `activities/MainActivity.kt` | 1, 3 | Add navigation to Diagnostics and Dashboard |
-| `activities/EventFeedActivity.kt` | 4 | Session metadata header card + sensor magnitude toggle |
+| `activities/EventFeedActivity.kt` | 4, 5 | Session metadata header + sensor magnitude toggle (P4); rewrite as charts-first dashboard for DB-backed mode (P5) |
 | `activities/DiagnosticsActivity.kt` | 4 | Sensor magnitude bars + axis toggle |
-| `interfaces/IkdEventDao.kt` | 3, 4 | Additive bucket query (P3); additive `getSessionStats(sessionId)` (P4) |
-| `res/values/strings.xml` | 1, 2, 3, 4 | UI strings for all new screens |
+| `interfaces/IkdEventDao.kt` | 3, 4, 5 | Additive bucket query (P3); additive `getSessionStats(sessionId)` (P4); additive `getSessionTimingBuckets(...)` (P5) |
+| `interfaces/SensorSampleDao.kt` | 5 | Additive `getSessionSensorBuckets(...)` |
+| `res/layout/activity_event_feed.xml` | 4, 5 | Session metadata header (P4); session dashboard container with KPI + 3 chart cards, live-mode container preserved as sibling (P5) |
+| `res/values/strings.xml` | 1, 2, 3, 4, 5 | UI strings for all new screens |
 
 ### Files NOT to modify
 
