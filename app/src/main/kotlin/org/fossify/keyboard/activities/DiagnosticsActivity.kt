@@ -9,6 +9,7 @@ import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.toast
+import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.keyboard.R
@@ -78,12 +79,21 @@ class DiagnosticsActivity : SimpleActivity() {
     override fun onResume() {
         super.onResume()
         setupTopAppBar(binding.diagnosticsAppbar, NavigationIcon.Arrow)
+        applyThemeColors()
         sensorHelper.start()
         LiveCaptureSessionStore.setTimingEventListener { event ->
             runOnUiThread { onNewTimingEvent(event) }
         }
         refreshDisplayFromStore()
         statusRefreshHandler.post(statusRefreshRunnable)
+    }
+
+    private fun applyThemeColors() {
+        updateTextColors(binding.diagnosticsNestedScrollview)
+        val primary = getProperPrimaryColor()
+        binding.diagnosticsTimingSectionLabel.setTextColor(primary)
+        binding.diagnosticsGyroSectionLabel.setTextColor(primary)
+        binding.diagnosticsAccelSectionLabel.setTextColor(primary)
     }
 
     override fun onPause() {

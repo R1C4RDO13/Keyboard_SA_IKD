@@ -7,6 +7,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
+import org.fossify.commons.extensions.getProperPrimaryColor
+import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.helpers.ensureBackgroundThread
@@ -57,7 +59,15 @@ class EventFeedActivity : SimpleActivity() {
     override fun onResume() {
         super.onResume()
         setupTopAppBar(binding.eventFeedAppbar, NavigationIcon.Arrow)
+        applyThemeColors()
         loadData()
+    }
+
+    private fun applyThemeColors() {
+        updateTextColors(binding.eventFeedNestedScrollview)
+        val primary = getProperPrimaryColor()
+        binding.eventFeedTimingLabel.setTextColor(primary)
+        binding.eventFeedSensorLabel.setTextColor(primary)
     }
 
     private fun loadData() {
@@ -136,6 +146,10 @@ class EventFeedActivity : SimpleActivity() {
 
         timingAdapter.setEvents(timingEvents)
         sensorAdapter.setReadings(sensorReadings)
+
+        binding.eventFeedTimingList.post {
+            updateTextColors(binding.eventFeedNestedScrollview)
+        }
     }
 
     private inner class TimingAdapter : RecyclerView.Adapter<TimingAdapter.VH>() {

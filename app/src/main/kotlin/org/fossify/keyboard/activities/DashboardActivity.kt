@@ -1,10 +1,15 @@
 package org.fossify.keyboard.activities
 
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 import org.fossify.commons.extensions.beVisibleIf
+import org.fossify.commons.extensions.getContrastColor
+import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
@@ -43,7 +48,30 @@ class DashboardActivity : SimpleActivity() {
         binding.apply {
             updateTextColors(dashboardNestedScrollview)
         }
+        applyRangeToggleColors()
         loadSnapshot()
+    }
+
+    private fun applyRangeToggleColors() {
+        val primary = getProperPrimaryColor()
+        val onPrimary = primary.getContrastColor()
+        val checkedState = intArrayOf(android.R.attr.state_checked)
+        val uncheckedState = intArrayOf(-android.R.attr.state_checked)
+        val states = arrayOf(checkedState, uncheckedState)
+
+        val textColors = ColorStateList(states, intArrayOf(onPrimary, primary))
+        val bgColors = ColorStateList(states, intArrayOf(primary, Color.TRANSPARENT))
+        val strokeColors = ColorStateList(states, intArrayOf(primary, primary))
+
+        listOf(
+            binding.dashboardRangeWeek,
+            binding.dashboardRangeMonth,
+            binding.dashboardRangeAll,
+        ).forEach { button: MaterialButton ->
+            button.setTextColor(textColors)
+            button.backgroundTintList = bgColors
+            button.strokeColor = strokeColors
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

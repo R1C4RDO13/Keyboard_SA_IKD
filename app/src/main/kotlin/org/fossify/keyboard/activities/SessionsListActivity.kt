@@ -7,6 +7,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.toast
+import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.helpers.ensureBackgroundThread
@@ -86,6 +87,7 @@ class SessionsListActivity : SimpleActivity() {
     override fun onResume() {
         super.onResume()
         setupTopAppBar(binding.sessionsListAppbar, NavigationIcon.Arrow)
+        updateTextColors(binding.sessionsListContent)
         loadSessions()
     }
 
@@ -96,6 +98,9 @@ class SessionsListActivity : SimpleActivity() {
                 adapter.setSessions(sessions)
                 binding.sessionsListEmpty.beVisibleIf(sessions.isEmpty())
                 binding.sessionsListRecycler.beVisibleIf(sessions.isNotEmpty())
+                binding.sessionsListRecycler.post {
+                    updateTextColors(binding.sessionsListContent)
+                }
             }
         }
     }

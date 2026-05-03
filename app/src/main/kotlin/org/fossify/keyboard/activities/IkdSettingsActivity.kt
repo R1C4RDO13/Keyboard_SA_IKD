@@ -1,12 +1,14 @@
 package org.fossify.keyboard.activities
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.text.format.Formatter
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import org.fossify.commons.extensions.beVisibleIf
+import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.updateTextColors
@@ -67,6 +69,7 @@ class IkdSettingsActivity : SimpleActivity() {
         applySensorAvailability()
         applyControlState()
         applySectionLabelColors()
+        applyActionButtonColors()
         refreshStorageStats()
         binding.apply {
             updateTextColors(ikdSettingsNestedScrollview)
@@ -82,6 +85,18 @@ class IkdSettingsActivity : SimpleActivity() {
             ikdSectionMetadataLabel.setTextColor(color)
             ikdSectionRetentionLabel.setTextColor(color)
             ikdSectionStorageLabel.setTextColor(color)
+        }
+    }
+
+    private fun applyActionButtonColors() {
+        val primary = getProperPrimaryColor()
+        val onPrimary = primary.getContrastColor()
+        val tint = ColorStateList.valueOf(primary)
+        binding.apply {
+            listOf(ikdViewDashboardButton, ikdViewSessionsButton, ikdExportAllButton).forEach {
+                it.backgroundTintList = tint
+                it.setTextColor(onPrimary)
+            }
         }
     }
 
