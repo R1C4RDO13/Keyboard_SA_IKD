@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperPrimaryColor
+import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
@@ -48,6 +49,9 @@ class DashboardActivity : SimpleActivity() {
         binding.apply {
             updateTextColors(dashboardNestedScrollview)
         }
+        // The empty-state message sits as a sibling of the scrollview under the
+        // CoordinatorLayout, so updateTextColors above does not reach it.
+        binding.dashboardEmptyMessage.setTextColor(getProperTextColor())
         applyRangeToggleColors()
         loadSnapshot()
     }
