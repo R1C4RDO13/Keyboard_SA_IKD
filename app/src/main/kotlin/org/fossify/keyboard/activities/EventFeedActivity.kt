@@ -1,10 +1,12 @@
 package org.fossify.keyboard.activities
 
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
@@ -13,18 +15,25 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
+import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
+import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.views.MyTextView
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityEventFeedBinding
 import org.fossify.keyboard.databinding.ItemSensorReadingBinding
 import org.fossify.keyboard.databinding.ItemTimingEventBinding
 import org.fossify.keyboard.extensions.config
+import org.fossify.keyboard.extensions.ikdDB
 import org.fossify.keyboard.extensions.ikdSessionChartLoader
 import org.fossify.keyboard.extensions.ikdSessionStatsLoader
+import org.fossify.keyboard.helpers.IkdCsvWriter
+import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
+import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
 import org.fossify.keyboard.helpers.IkdFormatters
 import org.fossify.keyboard.helpers.IkdSessionChartLoader
 import org.fossify.keyboard.helpers.IkdSessionStatsLoader
@@ -36,6 +45,7 @@ import org.fossify.keyboard.models.SensorReadingEvent
 import org.fossify.keyboard.models.SessionRecord
 import org.fossify.keyboard.models.magnitude
 import org.fossify.keyboard.views.IkdLineChartView
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -79,6 +89,7 @@ class EventFeedActivity : SimpleActivity() {
     companion object {
         const val EXTRA_SESSION_ID = "session_id"
         private const val SESSION_ID_SHORT_LENGTH = 8
+        private const val EXPORT_DATE_PATTERN = "yyyyMMdd"
     }
 
     private val binding by viewBinding(ActivityEventFeedBinding::inflate)
@@ -88,6 +99,14 @@ class EventFeedActivity : SimpleActivity() {
 
     private val isDbBackedMode: Boolean
         get() = intent.hasExtra(EXTRA_SESSION_ID)
+
+    private val saveSessionCsvLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri == null) return@registerForActivityResult
+        val sessionId = intent.getStringExtra(EXTRA_SESSION_ID) ?: return@registerForActivityResult
+        exportSessionToUri(sessionId, uri)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,6 +127,7 @@ class EventFeedActivity : SimpleActivity() {
         binding.eventFeedToolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.event_feed_refresh -> { loadData(); true }
+                R.id.event_feed_save_csv -> { startSessionExport(); true }
                 R.id.event_feed_toggle_sensor_view -> {
                     val next = if (config.sensorDisplayMode == SENSOR_DISPLAY_MODE_MAGNITUDE) {
                         SENSOR_DISPLAY_MODE_AXES
@@ -144,6 +164,9 @@ class EventFeedActivity : SimpleActivity() {
         // Hide the live-mode-only sensor toggle when in DB-backed dashboard mode.
         binding.eventFeedToolbar.menu.findItem(R.id.event_feed_toggle_sensor_view)
             ?.isVisible = !isDbBackedMode
+        // Save as CSV is only meaningful for the persisted-session view.
+        binding.eventFeedToolbar.menu.findItem(R.id.event_feed_save_csv)
+            ?.isVisible = isDbBackedMode
         applyThemeColors()
         applySensorDisplayMode(config.sensorDisplayMode)
         loadData()
@@ -195,6 +218,15 @@ class EventFeedActivity : SimpleActivity() {
         binding.sessionDashboardIkdTitle.setTextColor(primary)
         binding.sessionDashboardGyroTitle.setTextColor(primary)
         binding.sessionDashboardAccelTitle.setTextColor(primary)
+        // MaterialCardView's default ?attr/colorSurface does not track Fossify's
+        // runtime background color, so on a custom theme the cards stand out as
+        // unthemed slabs. Tint them to the activity's background color and let
+        // cardElevation's shadow demarcate the card silhouette.
+        val background = getProperBackgroundColor()
+        binding.sessionDashboardKpiCard.setCardBackgroundColor(background)
+        binding.sessionDashboardIkdCard.setCardBackgroundColor(background)
+        binding.sessionDashboardGyroCard.setCardBackgroundColor(background)
+        binding.sessionDashboardAccelCard.setCardBackgroundColor(background)
     }
 
     /**
@@ -225,6 +257,38 @@ class EventFeedActivity : SimpleActivity() {
         val sensorReadings = LiveCaptureSessionStore.getSensorReadings().asReversed()
         binding.eventFeedNotFoundText.beGone()
         populateLiveLists(timingEvents, sensorReadings)
+    }
+
+    private fun startSessionExport() {
+        val sessionId = intent.getStringExtra(EXTRA_SESSION_ID) ?: return
+        val shortId = sessionId.take(SESSION_ID_SHORT_LENGTH)
+        val datePart = SimpleDateFormat(EXPORT_DATE_PATTERN, Locale.getDefault()).format(Date())
+        saveSessionCsvLauncher.launch("ikd_session_${shortId}_$datePart.csv")
+    }
+
+    private fun exportSessionToUri(sessionId: String, uri: Uri) {
+        ensureBackgroundThread {
+            try {
+                val events = ikdDB.IkdEventDao().getEventsForSession(sessionId)
+                val samples = ikdDB.SensorSampleDao().getSamplesForSession(sessionId)
+                contentResolver.openOutputStream(uri)?.use { stream ->
+                    stream.bufferedWriter().use { writer ->
+                        IkdCsvWriter.writeSessionCsv(
+                            writer,
+                            events.map { it.asTimingRow() },
+                            samples.map { it.asSensorRow() },
+                        )
+                    }
+                }
+                runOnUiThread { toast(R.string.ikd_export_session_success) }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                runOnUiThread { toast(R.string.ikd_export_session_error) }
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+                runOnUiThread { toast(R.string.ikd_export_session_error) }
+            }
+        }
     }
 
     private fun loadDataFromDb(sessionId: String) {

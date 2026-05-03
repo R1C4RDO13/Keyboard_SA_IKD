@@ -9,6 +9,11 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/event_feed_save_csv"
+        android:title="@string/diagnostics_save_csv"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/event_feed_refresh"
         android:title="@string/event_feed_refresh"
         app:showAsAction="never" />
