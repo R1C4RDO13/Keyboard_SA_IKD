@@ -21,29 +21,80 @@
 
     </org.fossify.commons.views.MyAppBarLayout>
 
-    <FrameLayout
+    <LinearLayout
         android:id="@+id/sessions_list_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/sessions_list_recycler"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:scrollbars="vertical" />
-
-        <org.fossify.commons.views.MyTextView
-            android:id="@+id/sessions_list_empty"
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/sessions_filter_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:padding="@dimen/activity_margin"
-            android:text="@string/sessions_list_empty"
-            android:visibility="gone" />
+            android:layout_marginHorizontal="@dimen/activity_margin"
+            android:layout_marginTop="@dimen/small_margin"
+            app:singleSelection="true"
+            app:selectionRequired="true">
 
-    </FrameLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/sessions_filter_all"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/sessions_filter_all" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/sessions_filter_today"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/sessions_filter_today" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/sessions_filter_7d"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/sessions_filter_7d" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/sessions_filter_30d"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/sessions_filter_30d" />
+
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/sessions_list_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:scrollbars="vertical" />
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/sessions_list_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:padding="@dimen/activity_margin"
+                android:text="@string/sessions_list_empty"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

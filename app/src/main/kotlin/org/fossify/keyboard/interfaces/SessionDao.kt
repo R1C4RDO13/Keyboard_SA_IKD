@@ -17,6 +17,9 @@ interface SessionDao {
     @Query("SELECT * FROM sessions ORDER BY started_at DESC")
     fun getAllSessions(): List<SessionRecord>
 
+    @Query("SELECT * FROM sessions WHERE started_at >= :fromMs ORDER BY started_at DESC")
+    fun getSessionsSince(fromMs: Long): List<SessionRecord>
+
     @Query("SELECT * FROM sessions WHERE session_id = :id")
     fun getSession(id: String): SessionRecord?
 

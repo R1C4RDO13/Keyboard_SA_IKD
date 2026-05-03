@@ -1,11 +1,16 @@
 package org.fossify.keyboard.activities
 
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.button.MaterialButton
 import org.fossify.commons.extensions.beVisibleIf
+import org.fossify.commons.extensions.getContrastColor
+import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
@@ -22,8 +27,10 @@ import org.fossify.keyboard.helpers.exportAllIkdSessions
 import org.fossify.keyboard.models.SessionRecord
 import java.io.IOException
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class SessionsListActivity : SimpleActivity() {
     private val binding by viewBinding(ActivitySessionsListBinding::inflate)
@@ -35,6 +42,9 @@ class SessionsListActivity : SimpleActivity() {
     )
 
     private var pendingExportSessionId: String? = null
+    private var currentFilter: FilterRange = FilterRange.ALL
+
+    private enum class FilterRange { ALL, TODAY, DAYS_7, DAYS_30 }
 
     private val saveSessionCsvLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("text/csv")
@@ -60,8 +70,22 @@ class SessionsListActivity : SimpleActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
+        currentFilter = savedInstanceState?.getString(STATE_FILTER)
+            ?.let { runCatching { FilterRange.valueOf(it) }.getOrNull() }
+            ?: FilterRange.ALL
+
         binding.sessionsListRecycler.layoutManager = LinearLayoutManager(this)
         binding.sessionsListRecycler.adapter = adapter
+
+        binding.sessionsFilterGroup.check(filterToButtonId(currentFilter))
+        binding.sessionsFilterGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            val next = buttonIdToFilter(checkedId)
+            if (next != currentFilter) {
+                currentFilter = next
+                loadSessions()
+            }
+        }
 
         binding.sessionsListToolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
@@ -84,16 +108,24 @@ class SessionsListActivity : SimpleActivity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_FILTER, currentFilter.name)
+    }
+
     override fun onResume() {
         super.onResume()
         setupTopAppBar(binding.sessionsListAppbar, NavigationIcon.Arrow)
         updateTextColors(binding.sessionsListContent)
+        applyFilterToggleColors()
         loadSessions()
     }
 
     private fun loadSessions() {
+        val cutoff = currentFilter.cutoffMillis()
         ensureBackgroundThread {
-            val sessions = ikdDB.SessionDao().getAllSessions()
+            val dao = ikdDB.SessionDao()
+            val sessions = if (cutoff == null) dao.getAllSessions() else dao.getSessionsSince(cutoff)
             runOnUiThread {
                 adapter.setSessions(sessions)
                 binding.sessionsListEmpty.beVisibleIf(sessions.isEmpty())
@@ -102,6 +134,56 @@ class SessionsListActivity : SimpleActivity() {
                     updateTextColors(binding.sessionsListContent)
                 }
             }
+        }
+    }
+
+    private fun FilterRange.cutoffMillis(): Long? = when (this) {
+        FilterRange.ALL -> null
+        FilterRange.TODAY -> Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        FilterRange.DAYS_7 -> System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
+        FilterRange.DAYS_30 -> System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30)
+    }
+
+    private fun filterToButtonId(filter: FilterRange): Int = when (filter) {
+        FilterRange.ALL -> R.id.sessions_filter_all
+        FilterRange.TODAY -> R.id.sessions_filter_today
+        FilterRange.DAYS_7 -> R.id.sessions_filter_7d
+        FilterRange.DAYS_30 -> R.id.sessions_filter_30d
+    }
+
+    private fun buttonIdToFilter(id: Int): FilterRange = when (id) {
+        R.id.sessions_filter_all -> FilterRange.ALL
+        R.id.sessions_filter_today -> FilterRange.TODAY
+        R.id.sessions_filter_7d -> FilterRange.DAYS_7
+        R.id.sessions_filter_30d -> FilterRange.DAYS_30
+        else -> FilterRange.ALL
+    }
+
+    private fun applyFilterToggleColors() {
+        val primary = getProperPrimaryColor()
+        val onPrimary = primary.getContrastColor()
+        val checkedState = intArrayOf(android.R.attr.state_checked)
+        val uncheckedState = intArrayOf(-android.R.attr.state_checked)
+        val states = arrayOf(checkedState, uncheckedState)
+
+        val textColors = ColorStateList(states, intArrayOf(onPrimary, primary))
+        val bgColors = ColorStateList(states, intArrayOf(primary, Color.TRANSPARENT))
+        val strokeColors = ColorStateList(states, intArrayOf(primary, primary))
+
+        listOf(
+            binding.sessionsFilterAll,
+            binding.sessionsFilterToday,
+            binding.sessionsFilter7d,
+            binding.sessionsFilter30d,
+        ).forEach { button: MaterialButton ->
+            button.setTextColor(textColors)
+            button.backgroundTintList = bgColors
+            button.strokeColor = strokeColors
         }
     }
 
@@ -191,5 +273,6 @@ class SessionsListActivity : SimpleActivity() {
     companion object {
         private const val SHORT_ID_LENGTH = 8
         private const val EXPORT_DATE_PATTERN = "yyyyMMdd"
+        private const val STATE_FILTER = "sessions_filter"
     }
 }
