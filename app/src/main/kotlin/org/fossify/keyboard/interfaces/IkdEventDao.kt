@@ -69,4 +69,37 @@ interface IkdEventDao {
         """
     )
     fun getSessionStats(sessionId: String): SessionStatsRow
+
+    /**
+     * Per-session bucketed timing aggregation (Phase 5). Each row is one
+     * time bucket relative to the session's start, ≤ ~200 rows per call
+     * (capped by the loader's bucket-width formula).
+     *
+     * `avgIkdMs` / `avgHoldMs` / `avgFlightMs` are NULL when every row in
+     * the bucket carries the sentinel `-1` (the first event of a session).
+     * The loader surfaces that as a missing chart point.
+     *
+     * @param sessionId the session to aggregate.
+     * @param startMs the session's start timestamp, used as the bucket-zero anchor.
+     * @param bucketWidthMs the integer bucket width in milliseconds.
+     */
+    @Query(
+        """
+        SELECT
+            ((timestamp - :startMs) / :bucketWidthMs)                   AS bucketIndex,
+            AVG(CASE WHEN ikd_ms         >= 0 THEN ikd_ms         END)  AS avgIkdMs,
+            AVG(CASE WHEN hold_time_ms   >= 0 THEN hold_time_ms   END)  AS avgHoldMs,
+            AVG(CASE WHEN flight_time_ms >= 0 THEN flight_time_ms END)  AS avgFlightMs,
+            COUNT(*)                                                    AS eventCount
+        FROM ikd_events
+        WHERE session_id = :sessionId
+        GROUP BY bucketIndex
+        ORDER BY bucketIndex
+        """
+    )
+    fun getSessionTimingBuckets(
+        sessionId: String,
+        startMs: Long,
+        bucketWidthMs: Long,
+    ): List<TimingBucketRow>
 }
