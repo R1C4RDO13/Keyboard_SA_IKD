@@ -13,10 +13,12 @@ flowchart TD
     P1_1[Phase 1.1: Live Keyboard Data & Metric Alignment]:::phase
     P2[Phase 2: Background Collection & Local Storage]:::phase
     P3[Phase 3: User Insights & Dashboard Presentation]:::phase
+    P4[Phase 4: Session Detail Refresh]:::phase
 
     P1 --> P1_1
     P1_1 --> P2
     P2 --> P3
+    P3 --> P4
 
     subgraph Phase 1 Features
         F1[Real-Time Data Interface]:::feature
@@ -41,10 +43,16 @@ flowchart TD
         F9[Subjective Context Overlay]:::feature
     end
 
+    subgraph Phase 4 Features
+        F10[Session Metadata Header]:::feature
+        F11[Magnitude-First Sensor Display]:::feature
+    end
+
     P1 -.-> F1 & F2 & F3
     P1_1 -.-> F1_1 & F1_2
     P2 -.-> F4 & F5 & F6
     P3 -.-> F7 & F8 & F9
+    P4 -.-> F10 & F11
 ```
 
 ---
@@ -68,7 +76,7 @@ flowchart TD
 ---
 
 ## Phase 1.1: Live Keyboard Data Validation & Metric Alignment
-**Status: Not started**
+**Status: Complete (2026-05-01)**
 
 **Objective:** Correct measurement mismatches from Phase 1 and upgrade data capture to the *actual* keyboard interface. Implement the updated metric standards, setting up accurate behavioral signals for the backend.
 
@@ -90,7 +98,9 @@ Detailed scope: [`Phase1/Phase1.1_Plan.md`](Phase1/Phase1.1_Plan.md)
 ---
 
 ## Phase 2: Unobtrusive Background Collection & Secure Local Storage
-**Status: Not started**
+**Status: Complete (2026-05-01)**
+
+Detailed scope: [`Phase2/Phase2_Plan.md`](Phase2/Phase2_Plan.md)
 
 **Objective:** Seamlessly transition the sensor tracking into the live keyboard environment, ensuring data is collected passively without draining the device battery, causing input lag, or compromising user privacy.
 
@@ -106,18 +116,39 @@ Detailed scope: [`Phase1/Phase1.1_Plan.md`](Phase1/Phase1.1_Plan.md)
 ---
 
 ## Phase 3: User Insights and Dashboard Presentation
-**Status: Not started**
+**Status: Complete (2026-05-03)**
+
+Detailed scope: [`Phase3/Phase3_Plan.md`](Phase3/Phase3_Plan.md) · step breakdown: [`Phase3/Phase3_Steps.md`](Phase3/Phase3_Steps.md)
 
 **Objective:** Utilize the companion application to translate vast amounts of raw behavioral and kinematic data into digestible, visual insights that empower the user to understand their digital habits and cognitive states.
 
-Detailed scope: [`Phase3/Phase3_Plan.md`](Phase3/Phase3_Plan.md)
+The shipped Phase 3 deliberately scoped down to the minimum useful dashboard: three line charts (WPM, average IKD, error rate) over Week / Month / All Time, plus a four-number KPI strip. Cognitive Fatigue Heatmap, Circadian Usage Patterns, and the Subjective Context Overlay listed below were deferred to keep scope tight; they remain candidate features for a future phase.
 
-*   **Data Aggregation Engine:** 
-    *   Create internal processes to summarize the raw data points into daily and weekly averages (e.g., average words per minute, daily backspace frequency, average dwell times).
+*   **Data Aggregation Engine:**
+    *   Create internal processes to summarize the raw data points into daily and weekly averages (e.g., average words per minute, daily backspace frequency, average dwell times). **(Shipped — `helpers/IkdAggregator.kt`, single SQL `GROUP BY` per chart, ≤ ~52 rows per range.)**
 *   **Visual Analytics Modules:**
-    *   **Typing Rhythm Trends:** A visual graph displaying typing speed and fluidity over time, helping to establish a user baseline and highlight deviations.
-    *   **Cognitive Fatigue Heatmap:** Visual representations of error rates and auto-correct reliance to indicate potential moments of low focus or fatigue.
-    *   **Circadian Usage Patterns:** Time-of-day visualizations that map when typing sessions occur, specifically flagging late-night usage that may indicate sleep disruption.
-*   **Subjective Context Overlay (Optional):** 
+    *   **Typing Rhythm Trends:** A visual graph displaying typing speed and fluidity over time, helping to establish a user baseline and highlight deviations. **(Shipped — three line charts in `DashboardActivity`.)**
+    *   **Cognitive Fatigue Heatmap:** Visual representations of error rates and auto-correct reliance to indicate potential moments of low focus or fatigue. **(Deferred.)**
+    *   **Circadian Usage Patterns:** Time-of-day visualizations that map when typing sessions occur, specifically flagging late-night usage that may indicate sleep disruption. **(Deferred.)**
+*   **Subjective Context Overlay (Optional):**
     *   Implement a simple daily check-in allowing users to log their mood or energy levels.
-    *   Overlay this subjective self-reporting onto the objective sensor graphs to help users identify personal behavioral patterns.
+    *   Overlay this subjective self-reporting onto the objective sensor graphs to help users identify personal behavioral patterns. **(Deferred — needs schema migration for a `mood_entries` table.)**
+
+---
+
+## Phase 4: Session Detail Refresh — Magnitude-First Sensors + Rich Session Metadata
+**Status: Planned**
+
+Detailed scope: [`Phase4/Phase4_Plan.md`](Phase4/Phase4_Plan.md)
+
+**Objective:** Make the per-session detail screen actually useful at a glance — surface the metadata already captured in `sessions` (orientation, locale, started/ended, counts) alongside derived per-session metrics (WPM, error rate, avg IKD / dwell / flight), and replace the per-axis sensor wall-of-numbers with a magnitude-by-default view that can toggle back to X / Y / Z.
+
+Like Phase 3, Phase 4 is a read-side refresh: zero edits to the keyboard / capture layer, no schema migration, no new dependencies.
+
+*   **Session Metadata Header:**
+    *   New header card on the session detail screen (`EventFeedActivity` when launched with a session ID) showing started / ended / duration, orientation, locale, event and sensor counts, plus the four derived metrics (WPM, error rate, avg IKD, avg dwell, avg flight).
+    *   Powered by one additive `IkdEventDao.getSessionStats(sessionId)` query — averages and counts in a single SQL round-trip — joined in Kotlin with the existing `SessionRecord` row.
+*   **Magnitude-First Sensor Display:**
+    *   Sensor list rows and Diagnostics live bars default to a single magnitude value (`sqrt(x² + y² + z²)`) instead of three per-axis values.
+    *   A single toolbar action toggles between `MAGNITUDE` and `AXES` modes; the choice persists via a new `Config.sensorDisplayMode` preference.
+    *   Magnitude is derived in Kotlin at read time — never stored in the DB and never added to the CSV export, so the experiment's data contract stays frozen.

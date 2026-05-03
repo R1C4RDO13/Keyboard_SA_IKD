@@ -278,7 +278,9 @@ Capture is hooked into `SimpleKeyboardIME.onPress`/`onKey`. Sessions are **IME-d
 ---
 
 ### Phase 2: Unobtrusive Background Collection & Secure Local Storage
-**Status: Not started**
+**Status: Complete (2026-05-01) — BUILD SUCCESSFUL**
+
+Authoritative scope and step breakdown have moved to [`Phase2/Phase2_Plan.md`](Phase2/Phase2_Plan.md). The step sketches below are kept as historical context only and may diverge from the shipped implementation.
 
 **Roadmap objective:** Passive, privacy-respecting collection inside the live keyboard with zero impact on typing experience.
 
@@ -431,7 +433,9 @@ Follow the existing export/import pattern from `ManageClipboardItemsActivity.kt`
 ---
 
 ### Phase 3: User Insights & Dashboard Presentation
-**Status: Not started**
+**Status: Complete (2026-05-03) — BUILD SUCCESSFUL**
+
+Authoritative scope, sub-phases, and acceptance criteria are in [`Phase3/Phase3_Plan.md`](Phase3/Phase3_Plan.md); step-by-step commit log in [`Phase3/Phase3_Steps.md`](Phase3/Phase3_Steps.md). The step sketches below are kept as historical context only — the shipped Phase 3 deliberately scoped down to three line charts + a KPI strip; the heatmap, circadian chart, and mood overlay listed in Step 3.3 / 3.4 are deferred.
 
 **Roadmap objective:** Translate raw behavioral data into digestible visual insights in the companion app.
 
@@ -510,6 +514,30 @@ On the dashboard, overlay mood/energy scores as a secondary line on the Typing R
 
 ---
 
+### Phase 4: Session Detail Refresh — Magnitude-First Sensors + Rich Session Metadata
+**Status: Planned**
+
+Authoritative scope, sub-phases, files, and acceptance criteria are in [`Phase4/Phase4_Plan.md`](Phase4/Phase4_Plan.md). Below is just the high-level shape so this document stays a useful index.
+
+**Roadmap objective:** Make the per-session detail screen useful at a glance — show the already-stored session metadata (orientation, locale, counts, timestamps) plus derived per-session metrics (WPM, error rate, avg IKD / dwell / flight), and switch the sensor display from per-axis X / Y / Z to a magnitude-first view with a toggle.
+
+#### Step 4.1 — Per-session stats query + loader
+Add one additive `IkdEventDao.getSessionStats(sessionId)` returning a `SessionStatsRow` (counts, correction count, avg IKD / hold / flight, first/last timestamp). Wrap it in `IkdSessionStatsLoader` (mirrors Phase 3's `IkdAggregator` pattern; runs on `Dispatchers.IO`). Pure derivation logic on `Companion.compute(...)` is JVM-unit-tested. **No `IkdDatabase` version bump.**
+
+#### Step 4.2 — Session detail header card
+Add a metadata header to `EventFeedActivity` (only when launched with `EXTRA_SESSION_ID`) showing started / ended / duration, orientation, locale, event and sensor counts, WPM, error rate, avg IKD / dwell / flight. Live event-log mode (no session ID) is unchanged.
+
+#### Step 4.3 — Magnitude-first sensor display with axis toggle
+Sensor list rows and Diagnostics live bars default to one magnitude value (`sqrt(x² + y² + z²)`, derived in Kotlin at read time). A single toolbar action toggles between `MAGNITUDE` and `AXES`; the choice persists via a new `Config.sensorDisplayMode` preference. **CSV export is unchanged — magnitude is a UI concern only.**
+
+#### Step 4.4 — Polish, persisted toggle, validation
+Empty states for "session not found", refresh menu re-runs both queries, perf log on the loader (mirrors `IkdAggregator`'s wall-clock log), `CLAUDE.md` and roadmap updated.
+
+#### Forbidden in Phase 4 (carries forward from Phase 3)
+`SimpleKeyboardIME.kt`, `MyKeyboardView.kt`, `LiveCaptureSessionStore.kt`, `KinematicSensorHelper.kt`, `IkdRetentionWorker.kt`, `IkdDatabase.kt`, all `@Entity` data classes, `ClipsDatabase.kt`, `ClipsDao.kt`, **plus** `IkdAggregator.kt` and `IkdCsvWriter.kt` (frozen so the Phase 3 read-side surface and the experiment's CSV data contract stay stable).
+
+---
+
 ## Part 3 — Files Summary
 
 ### Files to create
@@ -526,18 +554,24 @@ On the dashboard, overlay mood/energy scores as a secondary line on the Typing R
 | `helpers/IkdAggregator.kt` | 3 | Daily/weekly metric aggregation |
 | `activities/DiagnosticsActivity.kt` | 1 | Live sensor debug screen |
 | `activities/DashboardActivity.kt` | 3 | User insights dashboard |
+| `interfaces/SessionStatsRow.kt` | 4 | Room POJO for per-session aggregation projection |
+| `helpers/IkdSessionStatsLoader.kt` | 4 | Per-session metadata + derived metrics loader |
+| `helpers/IkdFormatters.kt` | 4 | Shared duration / metric formatters |
 
 ### Files to modify
 
 | File | Phase | What to change |
 |---|---|---|
-| `helpers/Constants.kt` | 2 | Add `IKD_COLLECTION_ENABLED` key |
-| `helpers/Config.kt` | 2 | Add `ikdCollectionEnabled` property |
-| `extensions/ContextExt.kt` | 1 | Add `ikdDB` extension property |
+| `helpers/Constants.kt` | 2, 4 | Add `IKD_COLLECTION_ENABLED` key (P2); add `SENSOR_DISPLAY_MODE` keys + values (P4) |
+| `helpers/Config.kt` | 2, 4 | Add `ikdCollectionEnabled` (P2); add `sensorDisplayMode` (P4) |
+| `extensions/ContextExt.kt` | 1, 4 | Add `ikdDB` (P1); add `ikdSessionStatsLoader` (P4) |
 | `services/SimpleKeyboardIME.kt` | 2 | Add IKD/dwell/flight capture in `onPress()` + `onKey()`, session lifecycle |
 | `activities/SettingsActivity.kt` | 2 | Add collection toggle + export/clear buttons |
 | `activities/MainActivity.kt` | 1, 3 | Add navigation to Diagnostics and Dashboard |
-| `res/values/strings.xml` | 1, 2, 3 | UI strings for all new screens |
+| `activities/EventFeedActivity.kt` | 4 | Session metadata header card + sensor magnitude toggle |
+| `activities/DiagnosticsActivity.kt` | 4 | Sensor magnitude bars + axis toggle |
+| `interfaces/IkdEventDao.kt` | 3, 4 | Additive bucket query (P3); additive `getSessionStats(sessionId)` (P4) |
+| `res/values/strings.xml` | 1, 2, 3, 4 | UI strings for all new screens |
 
 ### Files NOT to modify
 
