@@ -35,6 +35,7 @@ import org.fossify.keyboard.databases.ClipsDatabase
 import org.fossify.keyboard.databases.IkdDatabase
 import org.fossify.keyboard.helpers.Config
 import org.fossify.keyboard.helpers.IkdAggregator
+import org.fossify.keyboard.helpers.IkdSessionStatsLoader
 import org.fossify.keyboard.helpers.INPUT_METHOD_SUBTYPE_VOICE
 import org.fossify.keyboard.interfaces.ClipsDao
 
@@ -70,6 +71,9 @@ val Context.ikdDB: IkdDatabase
 
 val Context.ikdAggregator: IkdAggregator
     get() = IkdAggregator(ikdDB)
+
+val Context.ikdSessionStatsLoader: IkdSessionStatsLoader
+    get() = IkdSessionStatsLoader(ikdDB)
 
 fun Context.getCurrentClip(): String? {
     val clipboardManager = (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)

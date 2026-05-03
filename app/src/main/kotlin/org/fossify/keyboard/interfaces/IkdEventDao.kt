@@ -46,4 +46,27 @@ interface IkdEventDao {
         """
     )
     fun getEventBuckets(bucketFormat: String, fromMs: Long, toMs: Long): List<EventBucketRow>
+
+    /**
+     * Per-session aggregation. Returns exactly one row, even for sessions with
+     * no events (`eventCount` will be 0 and the averages / timestamps NULL).
+     * Sentinel `-1` rows for `ikd_ms` / `hold_time_ms` / `flight_time_ms`
+     * are excluded from the corresponding averages so the first event of a
+     * session does not poison the means.
+     */
+    @Query(
+        """
+        SELECT
+            COUNT(*)                                                    AS eventCount,
+            SUM(CASE WHEN is_correction THEN 1 ELSE 0 END)              AS correctionCount,
+            AVG(CASE WHEN ikd_ms         >= 0 THEN ikd_ms         END)  AS avgIkdMs,
+            AVG(CASE WHEN hold_time_ms   >= 0 THEN hold_time_ms   END)  AS avgHoldMs,
+            AVG(CASE WHEN flight_time_ms >= 0 THEN flight_time_ms END)  AS avgFlightMs,
+            MIN(timestamp)                                              AS firstTimestamp,
+            MAX(timestamp)                                              AS lastTimestamp
+        FROM ikd_events
+        WHERE session_id = :sessionId
+        """
+    )
+    fun getSessionStats(sessionId: String): SessionStatsRow
 }
