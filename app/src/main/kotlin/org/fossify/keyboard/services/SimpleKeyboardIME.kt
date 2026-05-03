@@ -310,16 +310,20 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
 
         // Phase 1.1: Capture key-up timing and record event
         if (LiveCaptureSessionStore.isCapturing && code != 0) {
+            // Uptime clock for IKD/hold/flight deltas (monotonic, immune to wall-clock jumps).
+            // Wall-clock for the persisted row timestamp so it shares an epoch with
+            // SessionRecord.startedAt and the dashboard's range filters can match events.
             val now = SystemClock.uptimeMillis()
+            val nowWall = System.currentTimeMillis()
             val holdTime = if (lastKeyDownTimestamp > 0L) now - lastKeyDownTimestamp else -1L
             val ikd = if (lastKeyUpTimestamp > 0L) now - lastKeyUpTimestamp else -1L
             val flightTime = pendingFlightTime
             lastKeyUpTimestamp = now
             pendingFlightTime = -1L
-            
+
             val event = KeyTimingEvent(
                 sessionId = LiveCaptureSessionStore.currentSessionId,
-                timestamp = now,
+                timestamp = nowWall,
                 eventCategory = categorizeKeyCode(code),
                 ikdMs = ikd,
                 holdTimeMs = holdTime,

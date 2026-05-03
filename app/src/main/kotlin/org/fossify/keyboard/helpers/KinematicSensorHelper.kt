@@ -5,7 +5,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.SystemClock
 import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.models.SensorReadingEvent
 
@@ -45,7 +44,8 @@ class KinematicSensorHelper(
         onSample(
             SensorReadingEvent(
                 sessionId = getSessionId(),  // Phase 1.1: attach current session ID
-                timestamp = SystemClock.uptimeMillis(),
+                // Wall-clock so sensor rows share an epoch with SessionRecord.startedAt.
+                timestamp = System.currentTimeMillis(),
                 sensorType = type,
                 x = event.values[0],
                 y = event.values[1],
