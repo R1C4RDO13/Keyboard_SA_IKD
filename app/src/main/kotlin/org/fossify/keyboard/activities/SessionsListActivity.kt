@@ -106,6 +106,12 @@ class SessionsListActivity : SimpleActivity() {
                 else -> false
             }
         }
+
+        // Without this, the bottom rows of the recycler render under the
+        // gesture / nav bar on edge-to-edge devices and look like missing
+        // sessions. clipToPadding=false on the recycler is already set, so
+        // the inset becomes scroll-past padding rather than a hard cutoff.
+        setupEdgeToEdge(padBottomSystem = listOf(binding.sessionsListRecycler))
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -130,6 +136,11 @@ class SessionsListActivity : SimpleActivity() {
                 adapter.setSessions(sessions)
                 binding.sessionsListEmpty.beVisibleIf(sessions.isEmpty())
                 binding.sessionsListRecycler.beVisibleIf(sessions.isNotEmpty())
+                binding.sessionsListToolbar.title = if (sessions.isEmpty()) {
+                    getString(R.string.sessions_list_title)
+                } else {
+                    "${getString(R.string.sessions_list_title)} (${sessions.size})"
+                }
                 binding.sessionsListRecycler.post {
                     updateTextColors(binding.sessionsListContent)
                 }
