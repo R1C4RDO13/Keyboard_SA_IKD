@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import org.fossify.commons.extensions.beVisibleIf
+import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ItemSessionSummaryBinding
 import org.fossify.keyboard.helpers.IkdFormatters
@@ -50,6 +51,12 @@ class SessionsAdapter(
 
         fun bind(session: SessionRecord) {
             val context: Context = binding.root.context
+            val textColor = context.getProperTextColor()
+
+            binding.itemSessionStartedAt.setTextColor(textColor)
+            binding.itemSessionDuration.setTextColor(textColor)
+            binding.itemSessionStats.setTextColor(textColor)
+            binding.itemSessionKpm.setTextColor(textColor)
 
             binding.itemSessionStartedAt.text = dateFormatter.format(Date(session.startedAt))
 
