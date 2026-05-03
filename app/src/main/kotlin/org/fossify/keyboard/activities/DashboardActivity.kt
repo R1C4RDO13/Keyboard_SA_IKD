@@ -34,8 +34,7 @@ class DashboardActivity : SimpleActivity() {
             setupMaterialScrollListener(dashboardNestedScrollview, dashboardAppbar)
         }
 
-        setupRangeSelector()
-        setupMenu()
+        setupListeners()
     }
 
     override fun onResume() {
@@ -52,7 +51,7 @@ class DashboardActivity : SimpleActivity() {
         outState.putString(STATE_RANGE, currentRange.name)
     }
 
-    private fun setupRangeSelector() {
+    private fun setupListeners() {
         binding.dashboardRangeGroup.check(rangeButtonId(currentRange))
         binding.dashboardRangeGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
@@ -62,9 +61,6 @@ class DashboardActivity : SimpleActivity() {
                 loadSnapshot()
             }
         }
-    }
-
-    private fun setupMenu() {
         binding.dashboardToolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.dashboard_refresh -> {
@@ -73,6 +69,9 @@ class DashboardActivity : SimpleActivity() {
                 }
                 else -> false
             }
+        }
+        binding.dashboardEmptyMessage.setOnClickListener {
+            startActivity(Intent(this, IkdSettingsActivity::class.java))
         }
     }
 
@@ -88,12 +87,7 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
         binding.dashboardNestedScrollview.beVisibleIf(!isEmpty)
 
-        if (isEmpty) {
-            binding.dashboardEmptyMessage.setOnClickListener {
-                startActivity(Intent(this, IkdSettingsActivity::class.java))
-            }
-            return
-        }
+        if (isEmpty) return
 
         val placeholder = getString(R.string.dashboard_value_placeholder)
         val locale = Locale.getDefault()
@@ -127,12 +121,11 @@ class DashboardActivity : SimpleActivity() {
      * key when parsing fails — no crash, just less prettiness.
      */
     private fun formatBucketLabel(rawKey: String, range: IkdAggregator.Range): String {
-        val locale = Locale.getDefault()
         return when (range) {
             IkdAggregator.Range.WEEK,
             IkdAggregator.Range.MONTH -> runCatching {
                 val date = isoDayParser.parse(rawKey) ?: return@runCatching rawKey
-                shortDayFormatter(locale).format(date)
+                SimpleDateFormat("MMM d", Locale.getDefault()).format(date)
             }.getOrDefault(rawKey)
 
             IkdAggregator.Range.ALL_TIME -> {
@@ -142,8 +135,6 @@ class DashboardActivity : SimpleActivity() {
             }
         }
     }
-
-    private fun shortDayFormatter(locale: Locale) = SimpleDateFormat("MMM d", locale)
 
     private fun rangeButtonId(range: IkdAggregator.Range): Int = when (range) {
         IkdAggregator.Range.WEEK -> R.id.dashboard_range_week
