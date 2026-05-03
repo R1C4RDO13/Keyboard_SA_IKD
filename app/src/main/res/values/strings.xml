@@ -88,6 +88,11 @@
     <string name="diagnostics_error_rate_format">%.1f%%</string>
     <string name="diagnostics_view_log">Event Log</string>
     <string name="diagnostics_view_log_count">%d events</string>
+    <string name="diagnostics_view_event_log">View Event Log</string>
+    <string name="diagnostics_session_insights">Session Insights</string>
+    <string name="diagnostics_no_sessions_recorded">No sessions recorded yet — start typing to capture your first session.</string>
+    <string name="diagnostics_sensor_readings_section">Sensor Readings</string>
+    <string name="diagnostics_capture_status_privacy">Privacy On</string>
 
     <!-- Event Feed Activity -->
     <string name="event_feed_title">Event Log</string>

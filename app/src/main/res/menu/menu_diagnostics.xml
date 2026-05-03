@@ -5,6 +5,12 @@
     tools:ignore="AppCompatResource">
 
     <item
+        android:id="@+id/diagnostics_session_insights"
+        android:icon="@drawable/ic_insights_vector"
+        android:title="@string/diagnostics_session_insights"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/diagnostics_toggle_sensor_view"
         android:icon="@drawable/ic_view_axes_vector"
         android:title="@string/sensor_view_toggle"

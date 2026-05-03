@@ -1,6 +1,8 @@
 package org.fossify.keyboard.activities
 
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -8,14 +10,15 @@ import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.getProperPrimaryColor
-import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
+import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityDiagnosticsBinding
 import org.fossify.keyboard.extensions.config
+import org.fossify.keyboard.extensions.ikdDB
 import org.fossify.keyboard.helpers.IkdCsvWriter
 import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
@@ -43,6 +46,7 @@ class DiagnosticsActivity : SimpleActivity() {
 
     private lateinit var sensorHelper: KinematicSensorHelper
     private var displayedSessionId = ""
+    private var isSensorExpanded = true
 
     private val statusRefreshHandler = Handler(Looper.getMainLooper())
     private val statusRefreshRunnable = object : Runnable {
@@ -88,6 +92,9 @@ class DiagnosticsActivity : SimpleActivity() {
         binding.diagnosticsViewLogHolder.setOnClickListener {
             startActivity(Intent(this, EventFeedActivity::class.java))
         }
+        binding.diagnosticsSensorReadingsHeader.setOnClickListener {
+            toggleSensorCard()
+        }
         setupEdgeToEdge(padBottomSystem = listOf(binding.diagnosticsNestedScrollview))
         setupMaterialScrollListener(binding.diagnosticsNestedScrollview, binding.diagnosticsAppbar)
     }
@@ -111,6 +118,7 @@ class DiagnosticsActivity : SimpleActivity() {
         binding.diagnosticsTimingSectionLabel.setTextColor(primary)
         binding.diagnosticsGyroSectionLabel.setTextColor(primary)
         binding.diagnosticsAccelSectionLabel.setTextColor(primary)
+        binding.diagnosticsSensorReadingsLabel.setTextColor(primary)
     }
 
     override fun onPause() {
@@ -131,6 +139,7 @@ class DiagnosticsActivity : SimpleActivity() {
         binding.diagnosticsToolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.diagnostics_save_csv -> { saveAsCsv(); true }
+                R.id.diagnostics_session_insights -> { openSessionInsights(); true }
                 R.id.diagnostics_toggle_sensor_view -> {
                     val next = if (config.sensorDisplayMode == SENSOR_DISPLAY_MODE_MAGNITUDE) {
                         SENSOR_DISPLAY_MODE_AXES
@@ -144,6 +153,33 @@ class DiagnosticsActivity : SimpleActivity() {
                 else -> false
             }
         }
+    }
+
+    private fun openSessionInsights() {
+        if (LiveCaptureSessionStore.isCapturing) {
+            startActivity(Intent(this, EventFeedActivity::class.java))
+            return
+        }
+        ensureBackgroundThread {
+            val session = ikdDB.SessionDao().getMostRecentSession()
+            runOnUiThread {
+                if (session != null) {
+                    val intent = Intent(this, EventFeedActivity::class.java)
+                    intent.putExtra(EventFeedActivity.EXTRA_SESSION_ID, session.sessionId)
+                    startActivity(intent)
+                } else {
+                    toast(R.string.diagnostics_no_sessions_recorded)
+                }
+            }
+        }
+    }
+
+    private fun toggleSensorCard() {
+        isSensorExpanded = !isSensorExpanded
+        binding.diagnosticsSensorReadingsContent.visibility =
+            if (isSensorExpanded) View.VISIBLE else View.GONE
+        binding.diagnosticsSensorReadingsChevron.rotation =
+            if (isSensorExpanded) 0f else -90f
     }
 
     private fun applySensorDisplayMode(mode: String) {
@@ -208,17 +244,29 @@ class DiagnosticsActivity : SimpleActivity() {
     }
 
     private fun updateStatusDisplay() {
+        val privacyOn = config.privacyModeEnabled
         val isCapturing = LiveCaptureSessionStore.isCapturing
-        val hasEvents = LiveCaptureSessionStore.hasData()
-        val statusText = when {
-            isCapturing -> getString(R.string.diagnostics_capture_status_capturing)
-            hasEvents -> getString(R.string.diagnostics_capture_status_stopped)
-            else -> getString(R.string.diagnostics_capture_status_no_data)
+        val hasData = LiveCaptureSessionStore.hasData()
+        val (statusText, chipColor) = when {
+            privacyOn -> Pair(
+                getString(R.string.diagnostics_capture_status_privacy),
+                Color.parseColor("#FFC107")
+            )
+            isCapturing -> Pair(
+                getString(R.string.diagnostics_capture_status_capturing),
+                Color.parseColor("#4CAF50")
+            )
+            hasData -> Pair(
+                getString(R.string.diagnostics_capture_status_stopped),
+                Color.parseColor("#9E9E9E")
+            )
+            else -> Pair(
+                getString(R.string.diagnostics_capture_status_no_data),
+                Color.parseColor("#9E9E9E")
+            )
         }
-        binding.diagnosticsCaptureStatusValue.text = statusText
-        binding.diagnosticsCaptureStatusValue.setTextColor(
-            if (isCapturing) getProperPrimaryColor() else getProperTextColor()
-        )
+        binding.diagnosticsStatusChip.text = statusText
+        binding.diagnosticsStatusChip.backgroundTintList = ColorStateList.valueOf(chipColor)
     }
 
     private fun resetMetricsDisplay() {

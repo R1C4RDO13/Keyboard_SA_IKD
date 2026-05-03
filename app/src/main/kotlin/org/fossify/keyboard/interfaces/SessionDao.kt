@@ -60,4 +60,8 @@ interface SessionDao {
     /** Returns null when the sessions table is empty. Used to size the All Time range. */
     @Query("SELECT MIN(started_at) FROM sessions")
     fun getEarliestSessionStart(): Long?
+
+    /** Returns the most recently started session, or null when the table is empty. */
+    @Query("SELECT * FROM sessions ORDER BY started_at DESC LIMIT 1")
+    fun getMostRecentSession(): SessionRecord?
 }
