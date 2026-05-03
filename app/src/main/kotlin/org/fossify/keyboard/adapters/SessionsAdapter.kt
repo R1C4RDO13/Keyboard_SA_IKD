@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ItemSessionSummaryBinding
+import org.fossify.keyboard.helpers.IkdFormatters
 import org.fossify.keyboard.models.SessionRecord
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -19,8 +20,6 @@ class SessionsAdapter(
 ) : RecyclerView.Adapter<SessionsAdapter.ViewHolder>() {
 
     companion object {
-        private const val MS_PER_SECOND = 1000L
-        private const val SECONDS_PER_MINUTE = 60L
         private const val MS_PER_MINUTE = 60_000L
         private const val DATE_PATTERN = "MMM d yyyy, HH:mm"
     }
@@ -56,7 +55,7 @@ class SessionsAdapter(
 
             val durationMs = session.endedAt?.let { it - session.startedAt } ?: 0L
             binding.itemSessionDuration.text = context.getString(
-                R.string.session_summary_duration, formatDuration(durationMs)
+                R.string.session_summary_duration, IkdFormatters.formatDuration(durationMs)
             )
 
             binding.itemSessionStats.text = context.getString(
@@ -75,13 +74,6 @@ class SessionsAdapter(
                 onLongClick(session)
                 true
             }
-        }
-
-        private fun formatDuration(ms: Long): String {
-            val totalSeconds = ms / MS_PER_SECOND
-            val minutes = totalSeconds / SECONDS_PER_MINUTE
-            val seconds = totalSeconds % SECONDS_PER_MINUTE
-            return if (minutes > 0) "${minutes}m ${seconds}s" else "${seconds}s"
         }
     }
 }

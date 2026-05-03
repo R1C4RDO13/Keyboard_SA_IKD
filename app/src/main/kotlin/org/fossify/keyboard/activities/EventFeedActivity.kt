@@ -1,10 +1,14 @@
 package org.fossify.keyboard.activities
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.getProperPrimaryColor
@@ -17,9 +21,33 @@ import org.fossify.keyboard.databinding.ActivityEventFeedBinding
 import org.fossify.keyboard.databinding.ItemSensorReadingBinding
 import org.fossify.keyboard.databinding.ItemTimingEventBinding
 import org.fossify.keyboard.extensions.ikdDB
+import org.fossify.keyboard.extensions.ikdSessionStatsLoader
+import org.fossify.keyboard.helpers.IkdFormatters
+import org.fossify.keyboard.helpers.IkdSessionStatsLoader
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.models.SensorReadingEvent
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+private const val HEADER_DATE_PATTERN = "MMM d yyyy, HH:mm:ss"
+
+private val headerDateFormatter = SimpleDateFormat(HEADER_DATE_PATTERN, Locale.getDefault())
+
+private fun Context.placeholder(): String = getString(R.string.session_detail_value_placeholder)
+
+private fun Context.formatNullableDate(timestampMs: Long?): String =
+    timestampMs?.let { headerDateFormatter.format(Date(it)) } ?: placeholder()
+
+private fun Context.formatNullableDuration(durationMs: Long?): String =
+    durationMs?.let { IkdFormatters.formatDuration(it) } ?: placeholder()
+
+private fun Context.formatNullableValue(value: Double?, formatRes: Int): String =
+    value?.let { getString(formatRes, it) } ?: placeholder()
+
+private fun Context.formatLocale(locale: String): String =
+    if (locale.isNotEmpty()) locale else placeholder()
 
 class EventFeedActivity : SimpleActivity() {
     companion object {
@@ -68,6 +96,7 @@ class EventFeedActivity : SimpleActivity() {
         val primary = getProperPrimaryColor()
         binding.eventFeedTimingLabel.setTextColor(primary)
         binding.eventFeedSensorLabel.setTextColor(primary)
+        binding.sessionDetailSectionLabel.setTextColor(primary)
     }
 
     private fun loadData() {
@@ -82,6 +111,10 @@ class EventFeedActivity : SimpleActivity() {
     private fun loadDataFromLiveStore() {
         val timingEvents = LiveCaptureSessionStore.getTimingEvents().asReversed()
         val sensorReadings = LiveCaptureSessionStore.getSensorReadings().asReversed()
+        // Live mode never shows the session detail header — the data is in flux
+        // and there is no canonical SessionRecord to query.
+        binding.eventFeedSessionHeader.beGone()
+        binding.eventFeedNotFoundText.beGone()
         populateUI(timingEvents, sensorReadings)
     }
 
@@ -115,6 +148,48 @@ class EventFeedActivity : SimpleActivity() {
                 populateUI(timingEvents, sensorReadings, label)
             }
         }
+        // Loader handles its own background hop via Dispatchers.IO.
+        loadSessionStats(sessionId)
+    }
+
+    private fun loadSessionStats(sessionId: String) {
+        val loader = ikdSessionStatsLoader
+        CoroutineScope(Dispatchers.Main).launch {
+            val stats = loader.load(sessionId)
+            renderSessionHeader(stats)
+        }
+    }
+
+    private fun renderSessionHeader(stats: IkdSessionStatsLoader.SessionStats?) {
+        if (stats == null) {
+            binding.eventFeedSessionHeader.beGone()
+            binding.eventFeedNotFoundText.beVisible()
+            return
+        }
+        binding.eventFeedNotFoundText.beGone()
+        binding.eventFeedSessionHeader.beVisible()
+
+        val record = stats.record
+        val msFmt = R.string.session_detail_ms_format
+        binding.sessionDetailStartedAtValue.text = formatNullableDate(record.startedAt)
+        binding.sessionDetailEndedAtValue.text = formatNullableDate(record.endedAt)
+        binding.sessionDetailDurationValue.text = formatNullableDuration(stats.durationMs)
+        binding.sessionDetailOrientationValue.text =
+            IkdFormatters.orientationLabel(this, record.deviceOrientation)
+        binding.sessionDetailLocaleValue.text = formatLocale(record.locale)
+        binding.sessionDetailEventsValue.text = record.eventCount.toString()
+        binding.sessionDetailSensorsValue.text = record.sensorCount.toString()
+        binding.sessionDetailWpmValue.text =
+            formatNullableValue(stats.wpm, R.string.session_detail_wpm_format)
+        binding.sessionDetailErrorRateValue.text =
+            formatNullableValue(stats.errorRatePct, R.string.session_detail_error_rate_format)
+        binding.sessionDetailAvgIkdValue.text = formatNullableValue(stats.avgIkdMs, msFmt)
+        binding.sessionDetailAvgDwellValue.text = formatNullableValue(stats.avgHoldMs, msFmt)
+        binding.sessionDetailAvgFlightValue.text = formatNullableValue(stats.avgFlightMs, msFmt)
+
+        // Re-apply theme colors to the freshly-shown header.
+        updateTextColors(binding.eventFeedSessionHeader)
+        binding.sessionDetailSectionLabel.setTextColor(getProperPrimaryColor())
     }
 
     private fun populateUI(

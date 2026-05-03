@@ -183,6 +183,30 @@
     <string name="dashboard_kpi_wpm_value">%1$.1f</string>
     <string name="dashboard_kpi_error_rate_value">%1$.1f%%</string>
 
+    <!-- Session detail header (Phase 4) -->
+    <string name="session_detail_section">Session details</string>
+    <string name="session_detail_started_at">Started at</string>
+    <string name="session_detail_ended_at">Ended at</string>
+    <string name="session_detail_duration">Duration</string>
+    <string name="session_detail_orientation">Orientation</string>
+    <string name="session_detail_locale">Locale</string>
+    <string name="session_detail_events">Events</string>
+    <string name="session_detail_sensors">Sensor samples</string>
+    <string name="session_detail_wpm">WPM</string>
+    <string name="session_detail_error_rate">Error rate</string>
+    <string name="session_detail_avg_ikd">Avg IKD</string>
+    <string name="session_detail_avg_dwell">Avg dwell</string>
+    <string name="session_detail_avg_flight">Avg flight</string>
+    <string name="session_detail_orientation_portrait">Portrait</string>
+    <string name="session_detail_orientation_landscape">Landscape</string>
+    <string name="session_detail_orientation_reverse_portrait">Reverse portrait</string>
+    <string name="session_detail_orientation_reverse_landscape">Reverse landscape</string>
+    <string name="session_detail_not_found">Session not found</string>
+    <string name="session_detail_value_placeholder">—</string>
+    <string name="session_detail_ms_format">%1$.1f ms</string>
+    <string name="session_detail_wpm_format">%1$.1f</string>
+    <string name="session_detail_error_rate_format">%1$.1f%%</string>
+
     <!--
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res

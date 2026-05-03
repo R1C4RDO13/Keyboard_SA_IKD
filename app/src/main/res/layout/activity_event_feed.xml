@@ -44,6 +44,298 @@
                 android:text="@string/event_feed_no_data"
                 android:visibility="gone" />
 
+            <!-- Session not found placeholder (Phase 4) -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/event_feed_not_found_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="@dimen/activity_margin"
+                android:text="@string/session_detail_not_found"
+                android:visibility="gone" />
+
+            <!-- Session detail header card (Phase 4) -->
+            <LinearLayout
+                android:id="@+id/event_feed_session_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="@dimen/normal_margin"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/session_detail_section_label"
+                    style="@style/SettingsSectionLabelStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/session_detail_section" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_started_at"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_started_at_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_ended_at"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_ended_at_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_duration"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_duration_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_orientation"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_orientation_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_locale"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_locale_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_events"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_events_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_sensors"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_sensors_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_wpm"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_wpm_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_error_rate"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_error_rate_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_avg_ikd"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_avg_ikd_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_avg_dwell"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_avg_dwell_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_detail_avg_flight"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_detail_avg_flight_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/session_detail_value_placeholder" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
             <!-- Key Events section -->
             <TextView
                 android:id="@+id/event_feed_timing_label"
