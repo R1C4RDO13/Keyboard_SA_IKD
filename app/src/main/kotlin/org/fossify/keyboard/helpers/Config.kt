@@ -44,6 +44,11 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(RETENTION_DAYS, RETENTION_DAYS_DEFAULT)
         set(value) = prefs.edit().putInt(RETENTION_DAYS, value).apply()
 
+    var sensorDisplayMode: String
+        get() = prefs.getString(SENSOR_DISPLAY_MODE, SENSOR_DISPLAY_MODE_MAGNITUDE)
+            ?: SENSOR_DISPLAY_MODE_MAGNITUDE
+        set(value) = prefs.edit().putString(SENSOR_DISPLAY_MODE, value).apply()
+
     var soundOnKeypress: Int
         get() = prefs.getInt(SOUND_ON_KEYPRESS, SOUND_SYSTEM)
         set(soundOnKeypress) = prefs.edit().putInt(SOUND_ON_KEYPRESS, soundOnKeypress).apply()

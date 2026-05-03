@@ -28,6 +28,13 @@ const val RETENTION_DAYS_DEFAULT = 30
 const val RETENTION_DAYS_60 = 60
 const val RETENTION_DAYS_90 = 90
 
+// Sensor display mode: "MAGNITUDE" (one scalar per sample, default) or
+// "AXES" (raw X/Y/Z, the legacy view). Magnitude is derived in Kotlin at
+// read time and never persisted to the DB.
+const val SENSOR_DISPLAY_MODE = "ikd_sensor_display_mode"
+const val SENSOR_DISPLAY_MODE_MAGNITUDE = "MAGNITUDE"
+const val SENSOR_DISPLAY_MODE_AXES = "AXES"
+
 const val SOUND_ON_KEYPRESS = "sound_on_keypress"
 const val SOUND_NONE = 0
 const val SOUND_SYSTEM = 1

@@ -422,32 +422,54 @@
                     android:textStyle="bold"
                     android:textSize="@dimen/smaller_text_size" />
 
-                <org.fossify.commons.views.MyTextView
+                <!-- Per-axis header (visible in AXES mode) -->
+                <LinearLayout
+                    android:id="@+id/event_feed_sensor_header_axes"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end"
-                    android:text="@string/event_feed_header_x"
-                    android:textStyle="bold"
-                    android:textSize="@dimen/smaller_text_size" />
+                    android:layout_weight="3"
+                    android:orientation="horizontal">
 
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end"
-                    android:text="@string/event_feed_header_y"
-                    android:textStyle="bold"
-                    android:textSize="@dimen/smaller_text_size" />
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="@string/event_feed_header_x"
+                        android:textStyle="bold"
+                        android:textSize="@dimen/smaller_text_size" />
 
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="@string/event_feed_header_y"
+                        android:textStyle="bold"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="@string/event_feed_header_z"
+                        android:textStyle="bold"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
+                <!-- Magnitude header (visible in MAGNITUDE mode) -->
                 <org.fossify.commons.views.MyTextView
+                    android:id="@+id/event_feed_sensor_header_magnitude"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="3"
                     android:gravity="end"
-                    android:text="@string/event_feed_header_z"
+                    android:text="@string/sensor_header_magnitude"
                     android:textStyle="bold"
-                    android:textSize="@dimen/smaller_text_size" />
+                    android:textSize="@dimen/smaller_text_size"
+                    android:visibility="gone" />
 
             </LinearLayout>
 

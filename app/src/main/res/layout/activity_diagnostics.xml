@@ -219,56 +219,135 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Gyro X -->
+                <!-- Per-axis (X / Y / Z) bars — visible in AXES mode -->
                 <LinearLayout
+                    android:id="@+id/diagnostics_gyro_axes_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="@dimen/small_margin">
+                    android:orientation="vertical">
 
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="16dp"
+                    <!-- Gyro X -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="X"
-                        android:textStyle="bold" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="@dimen/small_margin">
 
-                    <ProgressBar
-                        android:id="@+id/diagnostics_gyro_x_bar"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="@dimen/small_margin"
-                        android:layout_marginEnd="@dimen/small_margin"
-                        android:max="100"
-                        android:progress="50" />
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="16dp"
+                            android:layout_height="wrap_content"
+                            android:text="X"
+                            android:textStyle="bold" />
 
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/diagnostics_gyro_x_value"
-                        android:layout_width="60dp"
+                        <ProgressBar
+                            android:id="@+id/diagnostics_gyro_x_bar"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="@dimen/small_margin"
+                            android:layout_marginEnd="@dimen/small_margin"
+                            android:max="100"
+                            android:progress="50" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/diagnostics_gyro_x_value"
+                            android:layout_width="60dp"
+                            android:layout_height="wrap_content"
+                            android:text="0.00"
+                            android:gravity="end" />
+
+                    </LinearLayout>
+
+                    <!-- Gyro Y -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="0.00"
-                        android:gravity="end" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="@dimen/small_margin">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="16dp"
+                            android:layout_height="wrap_content"
+                            android:text="Y"
+                            android:textStyle="bold" />
+
+                        <ProgressBar
+                            android:id="@+id/diagnostics_gyro_y_bar"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="@dimen/small_margin"
+                            android:layout_marginEnd="@dimen/small_margin"
+                            android:max="100"
+                            android:progress="50" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/diagnostics_gyro_y_value"
+                            android:layout_width="60dp"
+                            android:layout_height="wrap_content"
+                            android:text="0.00"
+                            android:gravity="end" />
+
+                    </LinearLayout>
+
+                    <!-- Gyro Z -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="@dimen/small_margin">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="16dp"
+                            android:layout_height="wrap_content"
+                            android:text="Z"
+                            android:textStyle="bold" />
+
+                        <ProgressBar
+                            android:id="@+id/diagnostics_gyro_z_bar"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="@dimen/small_margin"
+                            android:layout_marginEnd="@dimen/small_margin"
+                            android:max="100"
+                            android:progress="50" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/diagnostics_gyro_z_value"
+                            android:layout_width="60dp"
+                            android:layout_height="wrap_content"
+                            android:text="0.00"
+                            android:gravity="end" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
-                <!-- Gyro Y -->
+                <!-- Magnitude bar — visible in MAGNITUDE mode -->
                 <LinearLayout
+                    android:id="@+id/diagnostics_gyro_magnitude_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginTop="@dimen/small_margin">
+                    android:layout_marginTop="@dimen/small_margin"
+                    android:visibility="gone">
 
                     <org.fossify.commons.views.MyTextView
                         android:layout_width="16dp"
                         android:layout_height="wrap_content"
-                        android:text="Y"
+                        android:text="|v|"
                         android:textStyle="bold" />
 
                     <ProgressBar
-                        android:id="@+id/diagnostics_gyro_y_bar"
+                        android:id="@+id/diagnostics_gyro_magnitude_bar"
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -276,44 +355,10 @@
                         android:layout_marginStart="@dimen/small_margin"
                         android:layout_marginEnd="@dimen/small_margin"
                         android:max="100"
-                        android:progress="50" />
+                        android:progress="0" />
 
                     <org.fossify.commons.views.MyTextView
-                        android:id="@+id/diagnostics_gyro_y_value"
-                        android:layout_width="60dp"
-                        android:layout_height="wrap_content"
-                        android:text="0.00"
-                        android:gravity="end" />
-
-                </LinearLayout>
-
-                <!-- Gyro Z -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="16dp"
-                        android:layout_height="wrap_content"
-                        android:text="Z"
-                        android:textStyle="bold" />
-
-                    <ProgressBar
-                        android:id="@+id/diagnostics_gyro_z_bar"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="@dimen/small_margin"
-                        android:layout_marginEnd="@dimen/small_margin"
-                        android:max="100"
-                        android:progress="50" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/diagnostics_gyro_z_value"
+                        android:id="@+id/diagnostics_gyro_magnitude_value"
                         android:layout_width="60dp"
                         android:layout_height="wrap_content"
                         android:text="0.00"
@@ -332,91 +377,135 @@
                 android:layout_marginTop="@dimen/normal_margin"
                 android:text="@string/diagnostics_accelerometer_section" />
 
-            <!-- Accel X -->
+            <!-- Per-axis (X / Y / Z) bars — visible in AXES mode -->
             <LinearLayout
+                android:id="@+id/diagnostics_accel_axes_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="@dimen/small_margin">
+                android:orientation="vertical">
 
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="16dp"
+                <!-- Accel X -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="X"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="@dimen/small_margin">
 
-                <ProgressBar
-                    android:id="@+id/diagnostics_accel_x_bar"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="@dimen/small_margin"
-                    android:layout_marginEnd="@dimen/small_margin"
-                    android:max="100"
-                    android:progress="50" />
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="16dp"
+                        android:layout_height="wrap_content"
+                        android:text="X"
+                        android:textStyle="bold" />
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/diagnostics_accel_x_value"
-                    android:layout_width="60dp"
+                    <ProgressBar
+                        android:id="@+id/diagnostics_accel_x_bar"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:layout_marginEnd="@dimen/small_margin"
+                        android:max="100"
+                        android:progress="50" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/diagnostics_accel_x_value"
+                        android:layout_width="60dp"
+                        android:layout_height="wrap_content"
+                        android:text="0.00"
+                        android:gravity="end" />
+
+                </LinearLayout>
+
+                <!-- Accel Y -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="0.00"
-                    android:gravity="end" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="16dp"
+                        android:layout_height="wrap_content"
+                        android:text="Y"
+                        android:textStyle="bold" />
+
+                    <ProgressBar
+                        android:id="@+id/diagnostics_accel_y_bar"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:layout_marginEnd="@dimen/small_margin"
+                        android:max="100"
+                        android:progress="50" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/diagnostics_accel_y_value"
+                        android:layout_width="60dp"
+                        android:layout_height="wrap_content"
+                        android:text="0.00"
+                        android:gravity="end" />
+
+                </LinearLayout>
+
+                <!-- Accel Z -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="@dimen/small_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="16dp"
+                        android:layout_height="wrap_content"
+                        android:text="Z"
+                        android:textStyle="bold" />
+
+                    <ProgressBar
+                        android:id="@+id/diagnostics_accel_z_bar"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:layout_marginEnd="@dimen/small_margin"
+                        android:max="100"
+                        android:progress="50" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/diagnostics_accel_z_value"
+                        android:layout_width="60dp"
+                        android:layout_height="wrap_content"
+                        android:text="0.00"
+                        android:gravity="end" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
-            <!-- Accel Y -->
+            <!-- Magnitude bar — visible in MAGNITUDE mode -->
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="@dimen/small_margin">
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="16dp"
-                    android:layout_height="wrap_content"
-                    android:text="Y"
-                    android:textStyle="bold" />
-
-                <ProgressBar
-                    android:id="@+id/diagnostics_accel_y_bar"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="@dimen/small_margin"
-                    android:layout_marginEnd="@dimen/small_margin"
-                    android:max="100"
-                    android:progress="50" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/diagnostics_accel_y_value"
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    android:text="0.00"
-                    android:gravity="end" />
-
-            </LinearLayout>
-
-            <!-- Accel Z -->
-            <LinearLayout
+                android:id="@+id/diagnostics_accel_magnitude_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:layout_marginTop="@dimen/small_margin"
-                android:layout_marginBottom="@dimen/activity_margin">
+                android:visibility="gone">
 
                 <org.fossify.commons.views.MyTextView
                     android:layout_width="16dp"
                     android:layout_height="wrap_content"
-                    android:text="Z"
+                    android:text="|v|"
                     android:textStyle="bold" />
 
                 <ProgressBar
-                    android:id="@+id/diagnostics_accel_z_bar"
+                    android:id="@+id/diagnostics_accel_magnitude_bar"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -424,10 +513,10 @@
                     android:layout_marginStart="@dimen/small_margin"
                     android:layout_marginEnd="@dimen/small_margin"
                     android:max="100"
-                    android:progress="50" />
+                    android:progress="0" />
 
                 <org.fossify.commons.views.MyTextView
-                    android:id="@+id/diagnostics_accel_z_value"
+                    android:id="@+id/diagnostics_accel_magnitude_value"
                     android:layout_width="60dp"
                     android:layout_height="wrap_content"
                     android:text="0.00"

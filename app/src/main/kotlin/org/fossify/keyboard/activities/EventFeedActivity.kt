@@ -3,6 +3,7 @@ package org.fossify.keyboard.activities
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,13 +21,17 @@ import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityEventFeedBinding
 import org.fossify.keyboard.databinding.ItemSensorReadingBinding
 import org.fossify.keyboard.databinding.ItemTimingEventBinding
+import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.extensions.ikdDB
 import org.fossify.keyboard.extensions.ikdSessionStatsLoader
 import org.fossify.keyboard.helpers.IkdFormatters
 import org.fossify.keyboard.helpers.IkdSessionStatsLoader
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
+import org.fossify.keyboard.helpers.SENSOR_DISPLAY_MODE_AXES
+import org.fossify.keyboard.helpers.SENSOR_DISPLAY_MODE_MAGNITUDE
 import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.models.SensorReadingEvent
+import org.fossify.keyboard.models.magnitude
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -77,7 +82,21 @@ class EventFeedActivity : SimpleActivity() {
         }
 
         binding.eventFeedToolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == R.id.event_feed_refresh) { loadData(); true } else false
+            when (item.itemId) {
+                R.id.event_feed_refresh -> { loadData(); true }
+                R.id.event_feed_toggle_sensor_view -> {
+                    val next = if (config.sensorDisplayMode == SENSOR_DISPLAY_MODE_MAGNITUDE) {
+                        SENSOR_DISPLAY_MODE_AXES
+                    } else {
+                        SENSOR_DISPLAY_MODE_MAGNITUDE
+                    }
+                    config.sensorDisplayMode = next
+                    applySensorDisplayMode(next)
+                    sensorAdapter.notifyDataSetChanged()
+                    true
+                }
+                else -> false
+            }
         }
 
         setupEdgeToEdge(padBottomSystem = listOf(binding.eventFeedNestedScrollview))
@@ -88,7 +107,33 @@ class EventFeedActivity : SimpleActivity() {
         super.onResume()
         setupTopAppBar(binding.eventFeedAppbar, NavigationIcon.Arrow)
         applyThemeColors()
+        applySensorDisplayMode(config.sensorDisplayMode)
         loadData()
+    }
+
+    private fun applySensorDisplayMode(mode: String) {
+        val isMagnitude = mode == SENSOR_DISPLAY_MODE_MAGNITUDE
+        sensorAdapter.displayMode = mode
+        binding.eventFeedSensorHeaderAxes.visibility =
+            if (isMagnitude) View.GONE else View.VISIBLE
+        binding.eventFeedSensorHeaderMagnitude.visibility =
+            if (isMagnitude) View.VISIBLE else View.GONE
+
+        val toggle = binding.eventFeedToolbar.menu.findItem(R.id.event_feed_toggle_sensor_view)
+        if (toggle != null) {
+            val iconRes = if (isMagnitude) {
+                R.drawable.ic_view_axes_vector
+            } else {
+                R.drawable.ic_view_magnitude_vector
+            }
+            val cdRes = if (isMagnitude) {
+                R.string.sensor_view_magnitude_cd
+            } else {
+                R.string.sensor_view_axes_cd
+            }
+            toggle.setIcon(iconRes)
+            toggle.contentDescription = getString(cdRes)
+        }
     }
 
     private fun applyThemeColors() {
@@ -255,6 +300,7 @@ class EventFeedActivity : SimpleActivity() {
 
     private inner class SensorAdapter : RecyclerView.Adapter<SensorAdapter.VH>() {
         private val readings = mutableListOf<SensorReadingEvent>()
+        var displayMode: String = SENSOR_DISPLAY_MODE_MAGNITUDE
 
         fun setReadings(newReadings: List<SensorReadingEvent>) {
             readings.clear()
@@ -265,9 +311,16 @@ class EventFeedActivity : SimpleActivity() {
         inner class VH(private val b: ItemSensorReadingBinding) : RecyclerView.ViewHolder(b.root) {
             fun bind(reading: SensorReadingEvent) {
                 b.sensorType.text = reading.sensorType
-                b.sensorX.text = "%.3f".format(reading.x)
-                b.sensorY.text = "%.3f".format(reading.y)
-                b.sensorZ.text = "%.3f".format(reading.z)
+                val isMagnitude = displayMode == SENSOR_DISPLAY_MODE_MAGNITUDE
+                b.sensorAxesContainer.visibility = if (isMagnitude) View.GONE else View.VISIBLE
+                b.sensorMagnitude.visibility = if (isMagnitude) View.VISIBLE else View.GONE
+                if (isMagnitude) {
+                    b.sensorMagnitude.text = "%.3f".format(reading.magnitude())
+                } else {
+                    b.sensorX.text = "%.3f".format(reading.x)
+                    b.sensorY.text = "%.3f".format(reading.y)
+                    b.sensorZ.text = "%.3f".format(reading.z)
+                }
             }
         }
 

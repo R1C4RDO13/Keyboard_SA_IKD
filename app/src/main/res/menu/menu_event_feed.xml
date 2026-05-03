@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/event_feed_toggle_sensor_view"
+        android:icon="@drawable/ic_view_axes_vector"
+        android:title="@string/sensor_view_toggle"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/event_feed_refresh"
         android:title="@string/event_feed_refresh"
         app:showAsAction="never" />

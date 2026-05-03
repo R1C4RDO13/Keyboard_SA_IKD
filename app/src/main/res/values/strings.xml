@@ -207,6 +207,12 @@
     <string name="session_detail_wpm_format">%1$.1f</string>
     <string name="session_detail_error_rate_format">%1$.1f%%</string>
 
+    <!-- Sensor magnitude toggle (Phase 4) -->
+    <string name="sensor_view_toggle">Toggle sensor view</string>
+    <string name="sensor_view_magnitude_cd">Showing magnitude. Tap to view X / Y / Z.</string>
+    <string name="sensor_view_axes_cd">Showing X / Y / Z. Tap to view magnitude.</string>
+    <string name="sensor_header_magnitude">Magnitude</string>
+
     <!--
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res

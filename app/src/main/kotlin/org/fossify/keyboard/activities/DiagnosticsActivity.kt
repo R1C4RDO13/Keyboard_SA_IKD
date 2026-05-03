@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.getProperPrimaryColor
@@ -14,13 +15,28 @@ import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityDiagnosticsBinding
+import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.helpers.IkdCsvWriter
 import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
 import org.fossify.keyboard.helpers.KinematicSensorHelper
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
+import org.fossify.keyboard.helpers.SENSOR_DISPLAY_MODE_AXES
+import org.fossify.keyboard.helpers.SENSOR_DISPLAY_MODE_MAGNITUDE
 import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.models.SensorReadingEvent
+import org.fossify.keyboard.models.magnitude
+
+private const val GYRO_MAGNITUDE_RANGE = 10f
+private const val ACCEL_MAGNITUDE_RANGE = 20f
+private const val PERCENT_MAX = 100
+
+// Magnitude bars are one-sided (always >= 0). Range stays 0–10 rad/s for gyro
+// and 0–20 m/s² for accel — same upper bound as the per-axis mapping.
+private fun gyroMagnitudeProgress(mag: Float): Int =
+    (mag / GYRO_MAGNITUDE_RANGE * PERCENT_MAX).toInt().coerceIn(0, PERCENT_MAX)
+private fun accelMagnitudeProgress(mag: Float): Int =
+    (mag / ACCEL_MAGNITUDE_RANGE * PERCENT_MAX).toInt().coerceIn(0, PERCENT_MAX)
 
 class DiagnosticsActivity : SimpleActivity() {
     private val binding by viewBinding(ActivityDiagnosticsBinding::inflate)
@@ -80,6 +96,7 @@ class DiagnosticsActivity : SimpleActivity() {
         super.onResume()
         setupTopAppBar(binding.diagnosticsAppbar, NavigationIcon.Arrow)
         applyThemeColors()
+        applySensorDisplayMode(config.sensorDisplayMode)
         sensorHelper.start()
         LiveCaptureSessionStore.setTimingEventListener { event ->
             runOnUiThread { onNewTimingEvent(event) }
@@ -114,8 +131,44 @@ class DiagnosticsActivity : SimpleActivity() {
         binding.diagnosticsToolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.diagnostics_save_csv -> { saveAsCsv(); true }
+                R.id.diagnostics_toggle_sensor_view -> {
+                    val next = if (config.sensorDisplayMode == SENSOR_DISPLAY_MODE_MAGNITUDE) {
+                        SENSOR_DISPLAY_MODE_AXES
+                    } else {
+                        SENSOR_DISPLAY_MODE_MAGNITUDE
+                    }
+                    config.sensorDisplayMode = next
+                    applySensorDisplayMode(next)
+                    true
+                }
                 else -> false
             }
+        }
+    }
+
+    private fun applySensorDisplayMode(mode: String) {
+        val isMagnitude = mode == SENSOR_DISPLAY_MODE_MAGNITUDE
+        val axesVis = if (isMagnitude) View.GONE else View.VISIBLE
+        val magVis = if (isMagnitude) View.VISIBLE else View.GONE
+        binding.diagnosticsGyroAxesContainer.visibility = axesVis
+        binding.diagnosticsGyroMagnitudeContainer.visibility = magVis
+        binding.diagnosticsAccelAxesContainer.visibility = axesVis
+        binding.diagnosticsAccelMagnitudeContainer.visibility = magVis
+
+        val toggle = binding.diagnosticsToolbar.menu.findItem(R.id.diagnostics_toggle_sensor_view)
+        if (toggle != null) {
+            val iconRes = if (isMagnitude) {
+                R.drawable.ic_view_axes_vector
+            } else {
+                R.drawable.ic_view_magnitude_vector
+            }
+            val cdRes = if (isMagnitude) {
+                R.string.sensor_view_magnitude_cd
+            } else {
+                R.string.sensor_view_axes_cd
+            }
+            toggle.setIcon(iconRes)
+            toggle.contentDescription = getString(cdRes)
         }
     }
 
@@ -209,6 +262,9 @@ class DiagnosticsActivity : SimpleActivity() {
     }
 
     private fun updateSensorDisplay(event: SensorReadingEvent) {
+        // Always update both per-axis values and the magnitude — the visibility
+        // flip handles which is shown. Cheap (~1 sqrt + 6 setText per ~50Hz tick).
+        val mag = event.magnitude()
         when (event.sensorType) {
             "GYRO" -> {
                 binding.diagnosticsGyroXBar.progress = toGyroProgress(event.x)
@@ -217,6 +273,8 @@ class DiagnosticsActivity : SimpleActivity() {
                 binding.diagnosticsGyroXValue.text = "%.2f".format(event.x)
                 binding.diagnosticsGyroYValue.text = "%.2f".format(event.y)
                 binding.diagnosticsGyroZValue.text = "%.2f".format(event.z)
+                binding.diagnosticsGyroMagnitudeBar.progress = gyroMagnitudeProgress(mag)
+                binding.diagnosticsGyroMagnitudeValue.text = "%.2f".format(mag)
             }
             "ACCEL" -> {
                 binding.diagnosticsAccelXBar.progress = toAccelProgress(event.x)
@@ -225,6 +283,8 @@ class DiagnosticsActivity : SimpleActivity() {
                 binding.diagnosticsAccelXValue.text = "%.2f".format(event.x)
                 binding.diagnosticsAccelYValue.text = "%.2f".format(event.y)
                 binding.diagnosticsAccelZValue.text = "%.2f".format(event.z)
+                binding.diagnosticsAccelMagnitudeBar.progress = accelMagnitudeProgress(mag)
+                binding.diagnosticsAccelMagnitudeValue.text = "%.2f".format(mag)
             }
         }
     }

@@ -14,31 +14,55 @@
         android:textSize="@dimen/smaller_text_size"
         android:fontFamily="monospace" />
 
-    <org.fossify.commons.views.MyTextView
-        android:id="@+id/sensor_x"
+    <!-- Per-axis (X / Y / Z) container — visible only when display mode is AXES.
+         Three weighted columns sum to 3 so the row keeps its existing weights. -->
+    <LinearLayout
+        android:id="@+id/sensor_axes_container"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="end"
-        android:textSize="@dimen/smaller_text_size"
-        android:fontFamily="monospace" />
+        android:layout_weight="3"
+        android:orientation="horizontal">
 
-    <org.fossify.commons.views.MyTextView
-        android:id="@+id/sensor_y"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="end"
-        android:textSize="@dimen/smaller_text_size"
-        android:fontFamily="monospace" />
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/sensor_x"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:textSize="@dimen/smaller_text_size"
+            android:fontFamily="monospace" />
 
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/sensor_y"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:textSize="@dimen/smaller_text_size"
+            android:fontFamily="monospace" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/sensor_z"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:textSize="@dimen/smaller_text_size"
+            android:fontFamily="monospace" />
+
+    </LinearLayout>
+
+    <!-- Magnitude column — visible only when display mode is MAGNITUDE.
+         Same weight (3) as the axes container so the column under the
+         magnitude header lines up perfectly. -->
     <org.fossify.commons.views.MyTextView
-        android:id="@+id/sensor_z"
+        android:id="@+id/sensor_magnitude"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_weight="3"
         android:gravity="end"
         android:textSize="@dimen/smaller_text_size"
-        android:fontFamily="monospace" />
+        android:fontFamily="monospace"
+        android:visibility="gone" />
 
 </LinearLayout>
