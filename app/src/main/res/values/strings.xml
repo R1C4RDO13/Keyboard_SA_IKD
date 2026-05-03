@@ -180,7 +180,7 @@
     <string name="dashboard_chart_error">Error rate (%)</string>
     <string name="dashboard_empty_message">Type with privacy mode off and your trends will appear here. Open Data Collection &amp; Privacy and toggle Privacy mode.</string>
     <string name="dashboard_value_placeholder">—</string>
-    <string name="dashboard_action_view">View Dashboard</string>
+    <string name="dashboard_action_view">Insights</string>
     <string name="dashboard_menu_refresh">Refresh</string>
     <!-- Format strings: KPI values -->
     <string name="dashboard_kpi_typing_time_value">%1$s min</string>
