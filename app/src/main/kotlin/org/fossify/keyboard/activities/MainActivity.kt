@@ -11,7 +11,6 @@ import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.hideKeyboard
-import org.fossify.commons.extensions.launchMoreAppsFromUsIntent
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.LICENSE_GSON
@@ -69,9 +68,9 @@ class MainActivity : SimpleActivity() {
     private fun setupOptionsMenu() {
         binding.mainToolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.more_apps_from_us -> launchMoreAppsFromUsIntent()
                 R.id.settings -> launchSettings()
                 R.id.dashboard -> startActivity(Intent(this, DashboardActivity::class.java))
+                R.id.sessions_history -> startActivity(Intent(this, SessionsListActivity::class.java))
                 R.id.about -> launchAbout()
                 else -> return@setOnMenuItemClickListener false
             }
@@ -80,10 +79,6 @@ class MainActivity : SimpleActivity() {
     }
 
     private fun refreshMenuItems() {
-        binding.mainToolbar.menu.apply {
-            findItem(R.id.more_apps_from_us).isVisible =
-                !resources.getBoolean(R.bool.hide_google_relations)
-        }
     }
 
     private fun launchSettings() {

@@ -11,8 +11,8 @@
         android:title="@string/dashboard_title"
         app:showAsAction="never" />
     <item
-        android:id="@+id/more_apps_from_us"
-        android:title="@string/more_fossify_apps"
+        android:id="@+id/sessions_history"
+        android:title="@string/sessions_list_title"
         app:showAsAction="never" />
     <item
         android:id="@+id/about"
