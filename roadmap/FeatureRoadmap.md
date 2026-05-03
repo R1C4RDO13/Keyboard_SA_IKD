@@ -167,7 +167,7 @@ Like Phase 3, Phase 4 is a read-side refresh: zero edits to the keyboard / captu
 ---
 
 ## Phase 5: Session Dashboard — Charts Replace Raw Lists
-**Status: Planned**
+**Status: Implemented**
 
 Detailed scope: [`Phase5/Phase5_Plan.md`](Phase5/Phase5_Plan.md)
 

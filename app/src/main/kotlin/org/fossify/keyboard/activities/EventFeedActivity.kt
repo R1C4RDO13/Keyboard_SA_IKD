@@ -17,6 +17,7 @@ import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
+import org.fossify.commons.views.MyTextView
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityEventFeedBinding
 import org.fossify.keyboard.databinding.ItemSensorReadingBinding
@@ -34,6 +35,7 @@ import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.models.SensorReadingEvent
 import org.fossify.keyboard.models.SessionRecord
 import org.fossify.keyboard.models.magnitude
+import org.fossify.keyboard.views.IkdLineChartView
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -195,6 +197,29 @@ class EventFeedActivity : SimpleActivity() {
         binding.sessionDashboardAccelTitle.setTextColor(primary)
     }
 
+    /**
+     * Binds chart data onto an [org.fossify.keyboard.views.IkdLineChartView],
+     * or hides the chart and shows an "No data" overlay when the data is
+     * empty / null. The overlay sits inside the same `MaterialCardView` as
+     * the chart so the card retains its silhouette either way.
+     */
+    private fun bindChartOrEmpty(
+        chart: IkdLineChartView,
+        empty: MyTextView,
+        labels: List<String>?,
+        values: List<Float?>?,
+        yAxisLabel: String,
+    ) {
+        if (labels.isNullOrEmpty() || values.isNullOrEmpty()) {
+            chart.beGone()
+            empty.beVisible()
+            return
+        }
+        chart.beVisible()
+        empty.beGone()
+        chart.setData(labels, values, yAxisLabel)
+    }
+
     private fun loadDataFromLiveStore() {
         val timingEvents = LiveCaptureSessionStore.getTimingEvents().asReversed()
         val sensorReadings = LiveCaptureSessionStore.getSensorReadings().asReversed()
@@ -251,25 +276,29 @@ class EventFeedActivity : SimpleActivity() {
         binding.sessionDashboardMetadataLine.text = buildSessionMetadataLine(stats.record, separator)
 
         // Three single-series charts — IKD over time, gyro magnitude, accel magnitude.
-        // Null buckets fall through to MPAndroidChart line breaks (no fake zeros);
-        // fully-empty lists are handled by the empty-state pass in 5.4.
-        if (chartData != null) {
-            binding.sessionDashboardIkdChart.setData(
-                labels = chartData.timing.map { it.label },
-                values = chartData.timing.map { it.avgIkdMs?.toFloat() },
-                yAxisLabel = getString(R.string.session_dashboard_chart_ikd),
-            )
-            binding.sessionDashboardGyroChart.setData(
-                labels = chartData.gyro.map { it.label },
-                values = chartData.gyro.map { it.avgMagnitude },
-                yAxisLabel = getString(R.string.session_dashboard_chart_gyro),
-            )
-            binding.sessionDashboardAccelChart.setData(
-                labels = chartData.accel.map { it.label },
-                values = chartData.accel.map { it.avgMagnitude },
-                yAxisLabel = getString(R.string.session_dashboard_chart_accel),
-            )
-        }
+        // Null buckets render as line breaks (no fake zeros); empty lists swap the
+        // chart for a centered "No data" MyTextView inside the same MaterialCardView.
+        bindChartOrEmpty(
+            chart = binding.sessionDashboardIkdChart,
+            empty = binding.sessionDashboardIkdEmpty,
+            labels = chartData?.timing?.map { it.label },
+            values = chartData?.timing?.map { it.avgIkdMs?.toFloat() },
+            yAxisLabel = getString(R.string.session_dashboard_chart_ikd),
+        )
+        bindChartOrEmpty(
+            chart = binding.sessionDashboardGyroChart,
+            empty = binding.sessionDashboardGyroEmpty,
+            labels = chartData?.gyro?.map { it.label },
+            values = chartData?.gyro?.map { it.avgMagnitude },
+            yAxisLabel = getString(R.string.session_dashboard_chart_gyro),
+        )
+        bindChartOrEmpty(
+            chart = binding.sessionDashboardAccelChart,
+            empty = binding.sessionDashboardAccelEmpty,
+            labels = chartData?.accel?.map { it.label },
+            values = chartData?.accel?.map { it.avgMagnitude },
+            yAxisLabel = getString(R.string.session_dashboard_chart_accel),
+        )
 
         // Re-apply text colors on the freshly-shown subtree.
         updateTextColors(binding.eventFeedSessionDashboard)
