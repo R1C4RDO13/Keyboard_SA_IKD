@@ -250,11 +250,26 @@ class EventFeedActivity : SimpleActivity() {
         val separator = getString(R.string.session_dashboard_metadata_separator)
         binding.sessionDashboardMetadataLine.text = buildSessionMetadataLine(stats.record, separator)
 
-        // Chart wiring lands in 5.3 — placeholders remain empty until then.
-        // The chartData payload is loaded on the same background hop so 5.3
-        // can render synchronously after this call returns.
-        @Suppress("UNUSED_VARIABLE")
-        val pendingChartData = chartData
+        // Three single-series charts — IKD over time, gyro magnitude, accel magnitude.
+        // Null buckets fall through to MPAndroidChart line breaks (no fake zeros);
+        // fully-empty lists are handled by the empty-state pass in 5.4.
+        if (chartData != null) {
+            binding.sessionDashboardIkdChart.setData(
+                labels = chartData.timing.map { it.label },
+                values = chartData.timing.map { it.avgIkdMs?.toFloat() },
+                yAxisLabel = getString(R.string.session_dashboard_chart_ikd),
+            )
+            binding.sessionDashboardGyroChart.setData(
+                labels = chartData.gyro.map { it.label },
+                values = chartData.gyro.map { it.avgMagnitude },
+                yAxisLabel = getString(R.string.session_dashboard_chart_gyro),
+            )
+            binding.sessionDashboardAccelChart.setData(
+                labels = chartData.accel.map { it.label },
+                values = chartData.accel.map { it.avgMagnitude },
+                yAxisLabel = getString(R.string.session_dashboard_chart_accel),
+            )
+        }
 
         // Re-apply text colors on the freshly-shown subtree.
         updateTextColors(binding.eventFeedSessionDashboard)
