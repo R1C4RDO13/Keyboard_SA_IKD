@@ -129,6 +129,15 @@ object LiveCaptureSessionStore {
             try {
                 flushPending()
                 val dao = appContext.ikdDB.SessionDao()
+                if (finalEventCount == 0) {
+                    // Empty session — keyboard opened and closed without a keypress.
+                    // Drop the SessionRecord rather than persist a zero-event row that
+                    // clutters the sessions browser and inflates dashboard counts.
+                    // FK CASCADE removes any sensor samples that flushed during the
+                    // session.
+                    dao.deleteSession(finishedSessionId)
+                    return@submit
+                }
                 val existing = dao.getSession(finishedSessionId)
                 if (existing != null) {
                     existing.endedAt = System.currentTimeMillis()
