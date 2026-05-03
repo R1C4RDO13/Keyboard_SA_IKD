@@ -137,7 +137,7 @@ The shipped Phase 3 deliberately scoped down to the minimum useful dashboard: th
 ---
 
 ## Phase 4: Session Detail Refresh — Magnitude-First Sensors + Rich Session Metadata
-**Status: Planned**
+**Status: Implemented**
 
 Detailed scope: [`Phase4/Phase4_Plan.md`](Phase4/Phase4_Plan.md)
 
@@ -145,10 +145,10 @@ Detailed scope: [`Phase4/Phase4_Plan.md`](Phase4/Phase4_Plan.md)
 
 Like Phase 3, Phase 4 is a read-side refresh: zero edits to the keyboard / capture layer, no schema migration, no new dependencies.
 
-*   **Session Metadata Header:**
+*   **Session Metadata Header:** **(Shipped — `event_feed_session_header` LinearLayout in `activity_event_feed.xml`, populated from `IkdSessionStatsLoader.load(sessionId)`.)**
     *   New header card on the session detail screen (`EventFeedActivity` when launched with a session ID) showing started / ended / duration, orientation, locale, event and sensor counts, plus the four derived metrics (WPM, error rate, avg IKD, avg dwell, avg flight).
     *   Powered by one additive `IkdEventDao.getSessionStats(sessionId)` query — averages and counts in a single SQL round-trip — joined in Kotlin with the existing `SessionRecord` row.
-*   **Magnitude-First Sensor Display:**
+*   **Magnitude-First Sensor Display:** **(Shipped — toolbar action in both `EventFeedActivity` and `DiagnosticsActivity`, default mode `MAGNITUDE`.)**
     *   Sensor list rows and Diagnostics live bars default to a single magnitude value (`sqrt(x² + y² + z²)`) instead of three per-axis values.
     *   A single toolbar action toggles between `MAGNITUDE` and `AXES` modes; the choice persists via a new `Config.sensorDisplayMode` preference.
     *   Magnitude is derived in Kotlin at read time — never stored in the DB and never added to the CSV export, so the experiment's data contract stays frozen.
