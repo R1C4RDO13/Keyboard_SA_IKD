@@ -10,40 +10,39 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
-import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityEventFeedBinding
 import org.fossify.keyboard.databinding.ItemSensorReadingBinding
 import org.fossify.keyboard.databinding.ItemTimingEventBinding
 import org.fossify.keyboard.extensions.config
-import org.fossify.keyboard.extensions.ikdDB
+import org.fossify.keyboard.extensions.ikdSessionChartLoader
 import org.fossify.keyboard.extensions.ikdSessionStatsLoader
 import org.fossify.keyboard.helpers.IkdFormatters
+import org.fossify.keyboard.helpers.IkdSessionChartLoader
 import org.fossify.keyboard.helpers.IkdSessionStatsLoader
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 import org.fossify.keyboard.helpers.SENSOR_DISPLAY_MODE_AXES
 import org.fossify.keyboard.helpers.SENSOR_DISPLAY_MODE_MAGNITUDE
 import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.models.SensorReadingEvent
+import org.fossify.keyboard.models.SessionRecord
 import org.fossify.keyboard.models.magnitude
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private const val HEADER_DATE_PATTERN = "MMM d yyyy, HH:mm:ss"
+private const val HEADER_DATE_PATTERN = "MMM d yyyy, HH:mm"
 
 private val headerDateFormatter = SimpleDateFormat(HEADER_DATE_PATTERN, Locale.getDefault())
 
 private fun Context.placeholder(): String = getString(R.string.session_detail_value_placeholder)
-
-private fun Context.formatNullableDate(timestampMs: Long?): String =
-    timestampMs?.let { headerDateFormatter.format(Date(it)) } ?: placeholder()
 
 private fun Context.formatNullableDuration(durationMs: Long?): String =
     durationMs?.let { IkdFormatters.formatDuration(it) } ?: placeholder()
@@ -51,8 +50,28 @@ private fun Context.formatNullableDuration(durationMs: Long?): String =
 private fun Context.formatNullableValue(value: Double?, formatRes: Int): String =
     value?.let { getString(formatRes, it) } ?: placeholder()
 
-private fun Context.formatLocale(locale: String): String =
-    if (locale.isNotEmpty()) locale else placeholder()
+/**
+ * Compact one-liner for the session dashboard's metadata chip:
+ * `Started · Duration · Orientation · Locale`. Sentinel `-1` orientation
+ * (capture disabled) and empty locales are dropped from the line rather
+ * than rendered as "—" — matches plan section 3.
+ */
+private fun Context.buildSessionMetadataLine(record: SessionRecord, separator: String): String {
+    val parts = mutableListOf<String>()
+    parts += headerDateFormatter.format(Date(record.startedAt))
+
+    val durationMs = record.endedAt?.let { it - record.startedAt }
+    if (durationMs != null && durationMs > 0L) {
+        parts += IkdFormatters.formatDuration(durationMs)
+    }
+    if (record.deviceOrientation >= 0) {
+        parts += IkdFormatters.orientationLabel(this, record.deviceOrientation)
+    }
+    if (record.locale.isNotEmpty()) {
+        parts += record.locale
+    }
+    return parts.joinToString(separator)
+}
 
 class EventFeedActivity : SimpleActivity() {
     companion object {
@@ -64,6 +83,9 @@ class EventFeedActivity : SimpleActivity() {
 
     private lateinit var timingAdapter: TimingAdapter
     private lateinit var sensorAdapter: SensorAdapter
+
+    private val isDbBackedMode: Boolean
+        get() = intent.hasExtra(EXTRA_SESSION_ID)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,6 +121,17 @@ class EventFeedActivity : SimpleActivity() {
             }
         }
 
+        // Pre-flip container visibility so the very first frame shows the
+        // correct layout — avoids a flash of the wrong content while the
+        // data hop is in flight.
+        if (isDbBackedMode) {
+            binding.eventFeedSessionDashboard.beVisible()
+            binding.eventFeedLiveContainer.beGone()
+        } else {
+            binding.eventFeedSessionDashboard.beGone()
+            binding.eventFeedLiveContainer.beVisible()
+        }
+
         setupEdgeToEdge(padBottomSystem = listOf(binding.eventFeedNestedScrollview))
         setupMaterialScrollListener(binding.eventFeedNestedScrollview, binding.eventFeedAppbar)
     }
@@ -106,12 +139,28 @@ class EventFeedActivity : SimpleActivity() {
     override fun onResume() {
         super.onResume()
         setupTopAppBar(binding.eventFeedAppbar, NavigationIcon.Arrow)
+        // Hide the live-mode-only sensor toggle when in DB-backed dashboard mode.
+        binding.eventFeedToolbar.menu.findItem(R.id.event_feed_toggle_sensor_view)
+            ?.isVisible = !isDbBackedMode
         applyThemeColors()
         applySensorDisplayMode(config.sensorDisplayMode)
         loadData()
     }
 
+    private fun loadData() {
+        val sessionId = intent.getStringExtra(EXTRA_SESSION_ID)
+        if (sessionId != null) {
+            loadDataFromDb(sessionId)
+        } else {
+            loadDataFromLiveStore()
+        }
+    }
+
     private fun applySensorDisplayMode(mode: String) {
+        // Only the live-mode raw lists honor this toggle; the dashboard charts
+        // always show magnitude in v1 (Phase 6 design call to overlay axes).
+        if (isDbBackedMode) return
+
         val isMagnitude = mode == SENSOR_DISPLAY_MODE_MAGNITUDE
         sensorAdapter.displayMode = mode
         binding.eventFeedSensorHeaderAxes.visibility =
@@ -141,106 +190,83 @@ class EventFeedActivity : SimpleActivity() {
         val primary = getProperPrimaryColor()
         binding.eventFeedTimingLabel.setTextColor(primary)
         binding.eventFeedSensorLabel.setTextColor(primary)
-        binding.sessionDetailSectionLabel.setTextColor(primary)
-    }
-
-    private fun loadData() {
-        val sessionId = intent.getStringExtra(EXTRA_SESSION_ID)
-        if (sessionId != null) {
-            loadDataFromDb(sessionId)
-        } else {
-            loadDataFromLiveStore()
-        }
+        binding.sessionDashboardIkdTitle.setTextColor(primary)
+        binding.sessionDashboardGyroTitle.setTextColor(primary)
+        binding.sessionDashboardAccelTitle.setTextColor(primary)
     }
 
     private fun loadDataFromLiveStore() {
         val timingEvents = LiveCaptureSessionStore.getTimingEvents().asReversed()
         val sensorReadings = LiveCaptureSessionStore.getSensorReadings().asReversed()
-        // Live mode never shows the session detail header — the data is in flux
-        // and there is no canonical SessionRecord to query.
-        binding.eventFeedSessionHeader.beGone()
         binding.eventFeedNotFoundText.beGone()
-        populateUI(timingEvents, sensorReadings)
+        populateLiveLists(timingEvents, sensorReadings)
     }
 
     private fun loadDataFromDb(sessionId: String) {
-        ensureBackgroundThread {
-            val events = ikdDB.IkdEventDao().getEventsForSession(sessionId)
-            val samples = ikdDB.SensorSampleDao().getSamplesForSession(sessionId)
-            val timingEvents = events.map { e ->
-                KeyTimingEvent(
-                    sessionId = e.sessionId,
-                    timestamp = e.timestamp,
-                    eventCategory = e.eventCategory,
-                    ikdMs = e.ikdMs,
-                    holdTimeMs = e.holdTimeMs,
-                    flightTimeMs = e.flightTimeMs,
-                    isCorrection = e.isCorrection,
-                )
-            }.asReversed()
-            val sensorReadings = samples.map { s ->
-                SensorReadingEvent(
-                    sessionId = s.sessionId,
-                    timestamp = s.timestamp,
-                    sensorType = s.sensorType,
-                    x = s.x,
-                    y = s.y,
-                    z = s.z,
-                )
-            }.asReversed()
-            val label = "Session ${sessionId.takeLast(SESSION_ID_SHORT_LENGTH)} (${timingEvents.size})"
-            runOnUiThread {
-                populateUI(timingEvents, sensorReadings, label)
-            }
-        }
-        // Loader handles its own background hop via Dispatchers.IO.
-        loadSessionStats(sessionId)
-    }
-
-    private fun loadSessionStats(sessionId: String) {
-        val loader = ikdSessionStatsLoader
+        val statsLoader = ikdSessionStatsLoader
+        val chartLoader = ikdSessionChartLoader
+        // One background hop covers both Room reads — keeps StrictMode quiet
+        // and gives us a single round-trip per onResume.
         CoroutineScope(Dispatchers.Main).launch {
-            val stats = loader.load(sessionId)
-            renderSessionHeader(stats)
+            val (stats, chartData) = withContext(Dispatchers.IO) {
+                val stats = statsLoader.load(sessionId)
+                val chartData = chartLoader.load(sessionId)
+                stats to chartData
+            }
+            renderSessionDashboard(sessionId, stats, chartData)
         }
     }
 
-    private fun renderSessionHeader(stats: IkdSessionStatsLoader.SessionStats?) {
+    private fun renderSessionDashboard(
+        sessionId: String,
+        stats: IkdSessionStatsLoader.SessionStats?,
+        chartData: IkdSessionChartLoader.SessionChartData?,
+    ) {
+        val titleSuffix = sessionId.takeLast(SESSION_ID_SHORT_LENGTH)
+        binding.eventFeedToolbar.title = "Session $titleSuffix"
+
         if (stats == null) {
-            binding.eventFeedSessionHeader.beGone()
+            binding.eventFeedSessionDashboard.beGone()
             binding.eventFeedNotFoundText.beVisible()
             return
         }
         binding.eventFeedNotFoundText.beGone()
-        binding.eventFeedSessionHeader.beVisible()
+        binding.eventFeedEmptyText.beGone()
+        binding.eventFeedSessionDashboard.beVisible()
 
-        val record = stats.record
+        // KPI strip (4 headline cells + 3 secondary chips).
         val msFmt = R.string.session_detail_ms_format
-        binding.sessionDetailStartedAtValue.text = formatNullableDate(record.startedAt)
-        binding.sessionDetailEndedAtValue.text = formatNullableDate(record.endedAt)
-        binding.sessionDetailDurationValue.text = formatNullableDuration(stats.durationMs)
-        binding.sessionDetailOrientationValue.text =
-            IkdFormatters.orientationLabel(this, record.deviceOrientation)
-        binding.sessionDetailLocaleValue.text = formatLocale(record.locale)
-        binding.sessionDetailEventsValue.text = record.eventCount.toString()
-        binding.sessionDetailSensorsValue.text = record.sensorCount.toString()
-        binding.sessionDetailWpmValue.text =
+        binding.sessionDashboardEventsValue.text = stats.record.eventCount.toString()
+        binding.sessionDashboardTypingTimeValue.text = formatNullableDuration(stats.durationMs)
+        binding.sessionDashboardWpmValue.text =
             formatNullableValue(stats.wpm, R.string.session_detail_wpm_format)
-        binding.sessionDetailErrorRateValue.text =
+        binding.sessionDashboardErrorRateValue.text =
             formatNullableValue(stats.errorRatePct, R.string.session_detail_error_rate_format)
-        binding.sessionDetailAvgIkdValue.text = formatNullableValue(stats.avgIkdMs, msFmt)
-        binding.sessionDetailAvgDwellValue.text = formatNullableValue(stats.avgHoldMs, msFmt)
-        binding.sessionDetailAvgFlightValue.text = formatNullableValue(stats.avgFlightMs, msFmt)
+        binding.sessionDashboardAvgIkdValue.text = formatNullableValue(stats.avgIkdMs, msFmt)
+        binding.sessionDashboardAvgDwellValue.text = formatNullableValue(stats.avgHoldMs, msFmt)
+        binding.sessionDashboardAvgFlightValue.text = formatNullableValue(stats.avgFlightMs, msFmt)
 
-        // Re-apply theme colors to the freshly-shown header.
-        updateTextColors(binding.eventFeedSessionHeader)
-        binding.sessionDetailSectionLabel.setTextColor(getProperPrimaryColor())
+        // Metadata one-liner.
+        val separator = getString(R.string.session_dashboard_metadata_separator)
+        binding.sessionDashboardMetadataLine.text = buildSessionMetadataLine(stats.record, separator)
+
+        // Chart wiring lands in 5.3 — placeholders remain empty until then.
+        // The chartData payload is loaded on the same background hop so 5.3
+        // can render synchronously after this call returns.
+        @Suppress("UNUSED_VARIABLE")
+        val pendingChartData = chartData
+
+        // Re-apply text colors on the freshly-shown subtree.
+        updateTextColors(binding.eventFeedSessionDashboard)
+        val primary = getProperPrimaryColor()
+        binding.sessionDashboardIkdTitle.setTextColor(primary)
+        binding.sessionDashboardGyroTitle.setTextColor(primary)
+        binding.sessionDashboardAccelTitle.setTextColor(primary)
     }
 
-    private fun populateUI(
+    private fun populateLiveLists(
         timingEvents: List<KeyTimingEvent>,
         sensorReadings: List<SensorReadingEvent>,
-        sessionLabel: String? = null,
     ) {
         val hasAnyData = timingEvents.isNotEmpty() || sensorReadings.isNotEmpty()
 
@@ -258,10 +284,10 @@ class EventFeedActivity : SimpleActivity() {
             binding.eventFeedSensorHeader.beGone()
         }
 
-        binding.eventFeedToolbar.title = when {
-            sessionLabel != null -> sessionLabel
-            timingEvents.isNotEmpty() -> "${getString(R.string.event_feed_title)} (${timingEvents.size})"
-            else -> getString(R.string.event_feed_title)
+        binding.eventFeedToolbar.title = if (timingEvents.isNotEmpty()) {
+            "${getString(R.string.event_feed_title)} (${timingEvents.size})"
+        } else {
+            getString(R.string.event_feed_title)
         }
 
         timingAdapter.setEvents(timingEvents)

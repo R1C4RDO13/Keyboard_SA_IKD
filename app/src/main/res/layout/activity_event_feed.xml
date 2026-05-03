@@ -34,7 +34,7 @@
             android:orientation="vertical"
             android:padding="@dimen/activity_margin">
 
-            <!-- No data placeholder -->
+            <!-- No data placeholder (live mode and DB-mode share this) -->
             <org.fossify.commons.views.MyTextView
                 android:id="@+id/event_feed_empty_text"
                 android:layout_width="match_parent"
@@ -54,388 +54,369 @@
                 android:text="@string/session_detail_not_found"
                 android:visibility="gone" />
 
-            <!-- Session detail header card (Phase 4) -->
+            <!-- ============================================================== -->
+            <!-- DB-backed session dashboard (Phase 5) — visible only when      -->
+            <!-- EventFeedActivity was launched with EXTRA_SESSION_ID.          -->
+            <!-- ============================================================== -->
             <LinearLayout
-                android:id="@+id/event_feed_session_header"
+                android:id="@+id/event_feed_session_dashboard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginBottom="@dimen/normal_margin"
                 android:visibility="gone">
 
+                <!-- KPI strip card (4 headline cells) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/session_dashboard_kpi_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/card_elevation">
+
+                    <LinearLayout
+                        android:id="@+id/session_dashboard_kpi_strip"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="@dimen/normal_margin"
+                        android:weightSum="4">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/session_dashboard_events_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/session_detail_value_placeholder"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
+
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/session_dashboard_kpi_events"
+                                android:textSize="@dimen/smaller_text_size" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/session_dashboard_typing_time_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/session_detail_value_placeholder"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
+
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/session_dashboard_kpi_typing_time"
+                                android:textSize="@dimen/smaller_text_size" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/session_dashboard_wpm_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/session_detail_value_placeholder"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
+
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/session_dashboard_kpi_wpm"
+                                android:textSize="@dimen/smaller_text_size" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/session_dashboard_error_rate_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/session_detail_value_placeholder"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
+
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/session_dashboard_kpi_error_rate"
+                                android:textSize="@dimen/smaller_text_size" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Secondary chip row (3 smaller cells: avg IKD / dwell / flight) -->
+                <LinearLayout
+                    android:id="@+id/session_dashboard_chip_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/small_margin"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/session_dashboard_avg_ikd_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/session_detail_value_placeholder"
+                            android:textStyle="bold" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/session_dashboard_avg_ikd"
+                            android:textSize="@dimen/smaller_text_size" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/session_dashboard_avg_dwell_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/session_detail_value_placeholder"
+                            android:textStyle="bold" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/session_dashboard_avg_dwell"
+                            android:textSize="@dimen/smaller_text_size" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/session_dashboard_avg_flight_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/session_detail_value_placeholder"
+                            android:textStyle="bold" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/session_dashboard_avg_flight"
+                            android:textSize="@dimen/smaller_text_size" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Metadata one-liner: started · duration · orientation · locale -->
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/session_dashboard_metadata_line"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/small_margin"
+                    android:gravity="center"
+                    android:textSize="@dimen/smaller_text_size" />
+
+                <!-- IKD chart card -->
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/session_dashboard_ikd_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/normal_margin"
+                    android:text="@string/session_dashboard_chart_ikd"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/session_dashboard_ikd_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/small_margin"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/card_elevation">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <view
+                            android:id="@+id/session_dashboard_ikd_chart"
+                            class="org.fossify.keyboard.views.IkdLineChartView"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/session_dashboard_chart_height"
+                            android:padding="@dimen/small_margin" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/session_dashboard_ikd_empty"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/session_dashboard_chart_height"
+                            android:gravity="center"
+                            android:text="@string/session_dashboard_chart_no_data"
+                            android:visibility="gone" />
+
+                    </FrameLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Gyro chart card -->
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/session_dashboard_gyro_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/normal_margin"
+                    android:text="@string/session_dashboard_chart_gyro"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/session_dashboard_gyro_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/small_margin"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/card_elevation">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <view
+                            android:id="@+id/session_dashboard_gyro_chart"
+                            class="org.fossify.keyboard.views.IkdLineChartView"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/session_dashboard_chart_height"
+                            android:padding="@dimen/small_margin" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/session_dashboard_gyro_empty"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/session_dashboard_chart_height"
+                            android:gravity="center"
+                            android:text="@string/session_dashboard_chart_no_data"
+                            android:visibility="gone" />
+
+                    </FrameLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Accel chart card -->
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/session_dashboard_accel_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/normal_margin"
+                    android:text="@string/session_dashboard_chart_accel"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/session_dashboard_accel_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/small_margin"
+                    android:layout_marginBottom="@dimen/normal_margin"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/card_elevation">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <view
+                            android:id="@+id/session_dashboard_accel_chart"
+                            class="org.fossify.keyboard.views.IkdLineChartView"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/session_dashboard_chart_height"
+                            android:padding="@dimen/small_margin" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/session_dashboard_accel_empty"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/session_dashboard_chart_height"
+                            android:gravity="center"
+                            android:text="@string/session_dashboard_chart_no_data"
+                            android:visibility="gone" />
+
+                    </FrameLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+            <!-- ============================================================== -->
+            <!-- Live-mode container (preserved verbatim from Phase 1.1 / 4)    -->
+            <!-- visible only when EXTRA_SESSION_ID is NOT supplied.            -->
+            <!-- ============================================================== -->
+            <LinearLayout
+                android:id="@+id/event_feed_live_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Key Events section -->
                 <TextView
-                    android:id="@+id/session_detail_section_label"
+                    android:id="@+id/event_feed_timing_label"
                     style="@style/SettingsSectionLabelStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/session_detail_section" />
+                    android:text="@string/event_feed_timing_section" />
 
                 <LinearLayout
+                    android:id="@+id/event_feed_timing_header"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
+                    android:layout_marginTop="@dimen/tiny_margin"
+                    android:paddingHorizontal="4dp">
 
                     <org.fossify.commons.views.MyTextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/session_detail_started_at"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_started_at_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_ended_at"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_ended_at_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_duration"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_duration_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_orientation"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_orientation_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_locale"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_locale_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_events"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_events_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_sensors"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_sensors_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_wpm"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_wpm_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_error_rate"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_error_rate_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_avg_ikd"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_avg_ikd_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_avg_dwell"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_avg_dwell_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="@dimen/small_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/session_detail_avg_flight"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/session_detail_avg_flight_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="@string/session_detail_value_placeholder" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <!-- Key Events section -->
-            <TextView
-                android:id="@+id/event_feed_timing_label"
-                style="@style/SettingsSectionLabelStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/event_feed_timing_section" />
-
-            <LinearLayout
-                android:id="@+id/event_feed_timing_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="@dimen/tiny_margin"
-                android:paddingHorizontal="4dp">
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/event_feed_header_category"
-                    android:textStyle="bold"
-                    android:textSize="@dimen/smaller_text_size" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end"
-                    android:text="@string/event_feed_header_ikd"
-                    android:textStyle="bold"
-                    android:textSize="@dimen/smaller_text_size" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end"
-                    android:text="@string/event_feed_header_hold"
-                    android:textStyle="bold"
-                    android:textSize="@dimen/smaller_text_size" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end"
-                    android:text="@string/event_feed_header_flight"
-                    android:textStyle="bold"
-                    android:textSize="@dimen/smaller_text_size" />
-
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/event_feed_timing_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/tiny_margin"
-                android:nestedScrollingEnabled="false"
-                android:overScrollMode="never" />
-
-            <!-- Sensor Readings section -->
-            <TextView
-                android:id="@+id/event_feed_sensor_label"
-                style="@style/SettingsSectionLabelStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/event_feed_sensor_section" />
-
-            <LinearLayout
-                android:id="@+id/event_feed_sensor_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="@dimen/tiny_margin"
-                android:paddingHorizontal="4dp">
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/event_feed_header_sensor"
-                    android:textStyle="bold"
-                    android:textSize="@dimen/smaller_text_size" />
-
-                <!-- Per-axis header (visible in AXES mode) -->
-                <LinearLayout
-                    android:id="@+id/event_feed_sensor_header_axes"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="3"
-                    android:orientation="horizontal">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="end"
-                        android:text="@string/event_feed_header_x"
+                        android:text="@string/event_feed_header_category"
                         android:textStyle="bold"
                         android:textSize="@dimen/smaller_text_size" />
 
@@ -444,7 +425,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="end"
-                        android:text="@string/event_feed_header_y"
+                        android:text="@string/event_feed_header_ikd"
                         android:textStyle="bold"
                         android:textSize="@dimen/smaller_text_size" />
 
@@ -453,34 +434,115 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="end"
-                        android:text="@string/event_feed_header_z"
+                        android:text="@string/event_feed_header_hold"
+                        android:textStyle="bold"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="@string/event_feed_header_flight"
                         android:textStyle="bold"
                         android:textSize="@dimen/smaller_text_size" />
 
                 </LinearLayout>
 
-                <!-- Magnitude header (visible in MAGNITUDE mode) -->
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/event_feed_sensor_header_magnitude"
-                    android:layout_width="0dp"
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/event_feed_timing_list"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="3"
-                    android:gravity="end"
-                    android:text="@string/sensor_header_magnitude"
-                    android:textStyle="bold"
-                    android:textSize="@dimen/smaller_text_size"
-                    android:visibility="gone" />
+                    android:layout_marginTop="@dimen/tiny_margin"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never" />
+
+                <!-- Sensor Readings section -->
+                <TextView
+                    android:id="@+id/event_feed_sensor_label"
+                    style="@style/SettingsSectionLabelStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/normal_margin"
+                    android:text="@string/event_feed_sensor_section" />
+
+                <LinearLayout
+                    android:id="@+id/event_feed_sensor_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/tiny_margin"
+                    android:paddingHorizontal="4dp">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/event_feed_header_sensor"
+                        android:textStyle="bold"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                    <!-- Per-axis header (visible in AXES mode) -->
+                    <LinearLayout
+                        android:id="@+id/event_feed_sensor_header_axes"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="3"
+                        android:orientation="horizontal">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="end"
+                            android:text="@string/event_feed_header_x"
+                            android:textStyle="bold"
+                            android:textSize="@dimen/smaller_text_size" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="end"
+                            android:text="@string/event_feed_header_y"
+                            android:textStyle="bold"
+                            android:textSize="@dimen/smaller_text_size" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="end"
+                            android:text="@string/event_feed_header_z"
+                            android:textStyle="bold"
+                            android:textSize="@dimen/smaller_text_size" />
+
+                    </LinearLayout>
+
+                    <!-- Magnitude header (visible in MAGNITUDE mode) -->
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/event_feed_sensor_header_magnitude"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="3"
+                        android:gravity="end"
+                        android:text="@string/sensor_header_magnitude"
+                        android:textStyle="bold"
+                        android:textSize="@dimen/smaller_text_size"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/event_feed_sensor_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/tiny_margin"
+                    android:layout_marginBottom="@dimen/activity_margin"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never" />
 
             </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/event_feed_sensor_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/tiny_margin"
-                android:layout_marginBottom="@dimen/activity_margin"
-                android:nestedScrollingEnabled="false"
-                android:overScrollMode="never" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

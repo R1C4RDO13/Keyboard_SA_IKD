@@ -213,6 +213,20 @@
     <string name="sensor_view_axes_cd">Showing X / Y / Z. Tap to view magnitude.</string>
     <string name="sensor_header_magnitude">Magnitude</string>
 
+    <!-- Per-session dashboard (Phase 5) -->
+    <string name="session_dashboard_kpi_events">Events</string>
+    <string name="session_dashboard_kpi_typing_time">Typing time</string>
+    <string name="session_dashboard_kpi_wpm">WPM</string>
+    <string name="session_dashboard_kpi_error_rate">Error rate</string>
+    <string name="session_dashboard_avg_ikd">Avg IKD</string>
+    <string name="session_dashboard_avg_dwell">Avg dwell</string>
+    <string name="session_dashboard_avg_flight">Avg flight</string>
+    <string name="session_dashboard_metadata_separator"> · </string>
+    <string name="session_dashboard_chart_ikd">IKD over time (ms)</string>
+    <string name="session_dashboard_chart_gyro">Gyro magnitude (rad/s)</string>
+    <string name="session_dashboard_chart_accel">Accel magnitude (m/s²)</string>
+    <string name="session_dashboard_chart_no_data">No data</string>
+
     <!--
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res
