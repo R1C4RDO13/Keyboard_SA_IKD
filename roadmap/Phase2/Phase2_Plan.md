@@ -242,8 +242,7 @@ A dedicated screen consolidating all data-collection controls in one place. Reac
 5. **Session metadata to capture** — checkboxes:
    - "Device orientation" (`captureOrientation`, default `true`)
    - "Locale" (`captureLocale`, default `true`)
-   - "Battery level" (`captureBatteryLevel`, default `false`)
-   - Note: app/package context is intentionally not offered (privacy-sensitive)
+   - Note: app/package context is intentionally not offered (privacy-sensitive). Battery level was originally proposed here and has been dropped — not in scope for this project.
 
 6. **Retention period** — dropdown / radio:
    - Forever, 7, 14, 30 (default), 60, 90 days
@@ -266,7 +265,6 @@ const val COLLECT_ACCEL = "ikd_collect_accel"                // default: true
 const val SENSOR_SAMPLING_RATE = "ikd_sensor_sampling_rate"  // default: SENSOR_DELAY_GAME
 const val CAPTURE_ORIENTATION = "ikd_capture_orientation"    // default: true
 const val CAPTURE_LOCALE = "ikd_capture_locale"              // default: true
-const val CAPTURE_BATTERY = "ikd_capture_battery"            // default: false
 const val RETENTION_DAYS = "ikd_retention_days"              // default: 30, -1 = forever
 ```
 
@@ -382,7 +380,7 @@ The retention period is **configurable** via the IKD Settings page (sub-phase 2.
 
 | File | Sub-phase | Change |
 |---|---|---|
-| `helpers/Constants.kt` | 2.2, 2.3, 2.6 | Add `PRIVACY_MODE_ENABLED`, `COLLECT_GYRO`, `COLLECT_ACCEL`, `SENSOR_SAMPLING_RATE`, `CAPTURE_ORIENTATION`, `CAPTURE_LOCALE`, `CAPTURE_BATTERY`, `RETENTION_DAYS` |
+| `helpers/Constants.kt` | 2.2, 2.3, 2.6 | Add `PRIVACY_MODE_ENABLED`, `COLLECT_GYRO`, `COLLECT_ACCEL`, `SENSOR_SAMPLING_RATE`, `CAPTURE_ORIENTATION`, `CAPTURE_LOCALE`, `RETENTION_DAYS` |
 | `helpers/Config.kt` | 2.2, 2.3, 2.6 | Add corresponding properties (privacy default `true`; retention default `30`; sensor enables default `true`) |
 | `helpers/LiveCaptureSessionStore.kt` | 2.1 | Add write-behind buffer + batch flusher; add Room-backed reads for past sessions |
 | `helpers/KinematicSensorHelper.kt` | 2.3 | Read `collectGyro`/`collectAccel`/`sensorSamplingRate` from Config when registering listeners |
@@ -463,7 +461,7 @@ The retention period is **configurable** via the IKD Settings page (sub-phase 2.
 | 1 | Privacy mode default on first install | **ON** — no data is collected until the user explicitly toggles it off via the keyboard switch or IKD Settings |
 | 2 | First-launch consent screen | **Deferred** — not required at this stage; the on-device disclaimer in the IKD Settings page (sub-phase 2.3) is the user-facing notice |
 | 3 | Sensor sampling rate | **User-configurable** in the IKD Settings page (sub-phase 2.3). Options: Fastest / Game / UI / Normal. Default: Game (~50Hz). Research need drives the per-device choice |
-| 4 | Session metadata to capture | **User-selectable** in the IKD Settings page. Independent toggles for orientation, locale, battery level. App/package context is intentionally not offered (privacy) |
+| 4 | Session metadata to capture | **User-selectable** in the IKD Settings page. Independent toggles for orientation and locale. Battery level was dropped from scope (not a research target). App/package context is intentionally not offered (privacy) |
 | 5 | Keyboard shortcut to Sessions browser | **None** — the keyboard's existing settings cog already routes the user to main Settings, from which the IKD Settings page → Sessions History is one tap deeper. No additional toolbar icon |
 | 6 | Default retention period | **User-configurable** in the IKD Settings page. Options: Forever, 7, 14, 30, 60, 90 days. Default: 30 days |
 | 7 | Bulk export format | **Single mega-CSV** with `session_id` column on every row. Two-block format (`#sensor_readings` separator) preserved. No ZIP wrapping |

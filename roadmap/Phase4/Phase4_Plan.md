@@ -52,7 +52,6 @@ Phase 4 fixes both problems on the same screen:
 
 - Rendering session metrics as a mini chart on the detail screen (sparklines)
 - Per-session "compare to baseline" strings
-- Battery-level metadata (still requires the schema migration deferred from Phase 2)
 - App-context capture (which app/IME field the session came from)
 - Mood / energy overlay row
 - CSV export schema bump to include magnitude
@@ -478,7 +477,6 @@ The whole phase is done when **all** of these are green on `feat/phase4-session-
 These are tempting Phase 4 scope creep. Listing them so we don't relitigate scope mid-phase.
 
 - Per-session sparkline / mini-chart on the detail screen (rolling IKD by minute)
-- Battery-level metadata (still requires the schema migration deferred from Phase 2; would land here if/when `SessionRecord` gets a battery field)
 - App-context capture (which app the session was typed into) — privacy implications reopen the Phase 2 disclaimer scope
 - Magnitude column added to CSV export — keep CSV stable
 - "Compare to baseline" strings on the header (e.g., "▲ 12 ms slower than your week average") — needs the rolling-baseline work that's already deferred from Phase 3

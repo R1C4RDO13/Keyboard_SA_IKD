@@ -474,7 +474,6 @@ These were in the earlier Phase 3 draft and are now Phase 4 candidates. Listing 
 - ISO-8601 week boundaries (vs. SQLite's `%W` Sunday-first)
 - Day / 3-Months range options
 - Accessibility pass beyond the project's defaults
-- Battery-trend metric (depends on the Phase 2 follow-up that adds a battery field to `SessionRecord`)
 - Daily digest notifications, anomaly detection, multi-device sync
 
 Anything from this list earns its own focused mini-plan in `roadmap/Phase4/` if and when the user wants it.
