@@ -245,7 +245,9 @@ Like Phases 3 and 4, Phase 5 is a read-side refresh: zero edits to the keyboard 
 ---
 
 ## Phase 6: Diagnostics Screen Improvements
-**Status: Planned**
+**Status: Implemented (reworked).** Initial implementation in commit `797e8239` shipped the structural changes (status chip, two metric cards, collapsible sensor card, Session Insights toolbar action, additive `SessionDao.getMostRecentSession()`). The rework on `feat/phase6-rework` (see [`Phase6/Phase6_Plan.md`](Phase6/Phase6_Plan.md)) finishes the polish: theme-aware status-chip palette in `res/values{,-night}/colors.xml`, every `MaterialCardView` tinted via `setCardBackgroundColor(getProperBackgroundColor())`, both metric cards using a 3-cell KPI grid that mirrors the Phase 5 session dashboard, persisted sensor-card collapse state, animated chevron, and dimen-referenced paddings.
+
+Detailed scope: [`Phase6/Phase6_Plan.md`](Phase6/Phase6_Plan.md)
 
 **Objective:** Upgrade `DiagnosticsActivity` from a raw-data debug panel into a polished developer screen, and add a one-tap shortcut that surfaces the current (or most recent) keyboard session as a full chart dashboard. This phase is read-side only: zero edits to the keyboard / capture layer, no schema migration, and no new dependencies — all session data already exists in `ikd.db`.
 Make it similar in style to the session insights.
@@ -264,6 +266,16 @@ Make it similar in style to the session insights.
     *   The **"View Log"** row at the bottom is relabelled **"View Event Log"** for clarity now that the toolbar action handles the "quick jump to last session" use case.
     *   Typography and spacing are harmonised with the Phase 5 session dashboard cards (`card_corner_radius = 12 dp`, `card_elevation = 2 dp` from `dimens.xml`).
     *   All layout changes are confined to `res/layout/activity_diagnostics.xml` and `DiagnosticsActivity.kt`; no change to any other activity, helper, or data class.
+
+*   **Rework Polish (Phase 6 rework on `feat/phase6-rework`):**
+    *   **Theme-aware status chip** — three hardcoded `Color.parseColor("#…")` literals replaced with per-state colour resources in `res/values/colors.xml` (light) and `res/values-night/colors.xml` (dark). The base `bg_status_chip.xml` drawable now uses `?attr/colorControlNormal` so a chip without a runtime tint still renders something theme-appropriate. Per-state foreground colour means the amber "Privacy On" state now uses black text (white failed AA contrast).
+    *   **Card backgrounds tinted** — `applyThemeColors()` mirrors Phase 5's `EventFeedActivity.applyThemeColors()` and calls `setCardBackgroundColor(getProperBackgroundColor())` on the timing card, count card, sensor card, and the new view-log card so they no longer render as unthemed `?attr/colorSurface` slabs on dark themes.
+    *   **Count metrics card** gains a "Count Metrics" section label tinted with `getProperPrimaryColor()`, matching the timing card.
+    *   **View Event Log row** is wrapped in a `MaterialCardView` matching the metric cards' silhouette.
+    *   **KPI-style metric grid** — both metric cards switch from "label : value" rows to a 3-cell horizontal KPI grid (big bold value, small label) identical to Phase 5's session-dashboard KPI strip.
+    *   **Persisted sensor-card collapse** — `Config.diagnosticsSensorCardExpanded` (default `true`) survives navigation away from the screen.
+    *   **Animated chevron** — 150 ms rotation animation instead of an instantaneous flip.
+    *   **Inline `12dp` / `4dp` paddings** replaced with `@dimen/normal_margin` and `@dimen/small_margin`.
 
 ---
 
