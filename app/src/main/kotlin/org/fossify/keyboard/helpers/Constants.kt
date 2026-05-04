@@ -35,6 +35,11 @@ const val SENSOR_DISPLAY_MODE = "ikd_sensor_display_mode"
 const val SENSOR_DISPLAY_MODE_MAGNITUDE = "MAGNITUDE"
 const val SENSOR_DISPLAY_MODE_AXES = "AXES"
 
+// Phase 6: persists whether the diagnostics-screen Sensor Readings card
+// is expanded across re-entries. Default is true (expanded) so first-time
+// users see the sensor bars.
+const val DIAGNOSTICS_SENSOR_CARD_EXPANDED = "ikd_diagnostics_sensor_card_expanded"
+
 const val SOUND_ON_KEYPRESS = "sound_on_keypress"
 const val SOUND_NONE = 0
 const val SOUND_SYSTEM = 1

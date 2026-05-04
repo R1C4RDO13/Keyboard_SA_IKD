@@ -36,6 +36,10 @@ private const val GYRO_MAGNITUDE_RANGE = 10f
 private const val ACCEL_MAGNITUDE_RANGE = 20f
 private const val PERCENT_MAX = 100
 
+private const val SENSOR_CHEVRON_EXPANDED_DEG = 0f
+private const val SENSOR_CHEVRON_COLLAPSED_DEG = -90f
+private const val SENSOR_CHEVRON_ANIM_MS = 150L
+
 // Magnitude bars are one-sided (always >= 0). Range stays 0–10 rad/s for gyro
 // and 0–20 m/s² for accel — same upper bound as the per-axis mapping.
 private fun gyroMagnitudeProgress(mag: Float): Int =
@@ -48,7 +52,6 @@ class DiagnosticsActivity : SimpleActivity() {
 
     private lateinit var sensorHelper: KinematicSensorHelper
     private var displayedSessionId = ""
-    private var isSensorExpanded = true
 
     private val statusRefreshHandler = Handler(Looper.getMainLooper())
     private val statusRefreshRunnable = object : Runnable {
@@ -106,6 +109,9 @@ class DiagnosticsActivity : SimpleActivity() {
         setupTopAppBar(binding.diagnosticsAppbar, NavigationIcon.Arrow)
         applyThemeColors()
         applySensorDisplayMode(config.sensorDisplayMode)
+        // Restore the sensor card's collapse state without animating — running
+        // the animation on first paint would just look like a flicker.
+        applySensorExpansion(config.diagnosticsSensorCardExpanded, animate = false)
         sensorHelper.start()
         LiveCaptureSessionStore.setTimingEventListener { event ->
             runOnUiThread { onNewTimingEvent(event) }
@@ -188,11 +194,25 @@ class DiagnosticsActivity : SimpleActivity() {
     }
 
     private fun toggleSensorCard() {
-        isSensorExpanded = !isSensorExpanded
+        val nextExpanded = !config.diagnosticsSensorCardExpanded
+        config.diagnosticsSensorCardExpanded = nextExpanded
+        applySensorExpansion(nextExpanded, animate = true)
+    }
+
+    private fun applySensorExpansion(expanded: Boolean, animate: Boolean) {
         binding.diagnosticsSensorReadingsContent.visibility =
-            if (isSensorExpanded) View.VISIBLE else View.GONE
-        binding.diagnosticsSensorReadingsChevron.rotation =
-            if (isSensorExpanded) 0f else -90f
+            if (expanded) View.VISIBLE else View.GONE
+        val targetRotation =
+            if (expanded) SENSOR_CHEVRON_EXPANDED_DEG else SENSOR_CHEVRON_COLLAPSED_DEG
+        val chevron = binding.diagnosticsSensorReadingsChevron
+        if (animate) {
+            chevron.animate()
+                .rotation(targetRotation)
+                .setDuration(SENSOR_CHEVRON_ANIM_MS)
+                .start()
+        } else {
+            chevron.rotation = targetRotation
+        }
     }
 
     private fun applySensorDisplayMode(mode: String) {
