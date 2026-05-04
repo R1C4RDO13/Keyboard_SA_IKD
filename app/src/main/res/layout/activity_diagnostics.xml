@@ -89,66 +89,84 @@
                         android:layout_height="wrap_content"
                         android:text="@string/diagnostics_keystroke_timing" />
 
+                    <!-- KPI-style 3-cell grid: big bold value + small label.
+                         Mirrors the Phase 5 session dashboard's KPI strip
+                         (event_feed_session_dashboard / kpi_strip). -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginTop="@dimen/small_margin">
+                        android:layout_marginTop="@dimen/small_margin"
+                        android:weightSum="3">
 
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_ikd_label"
-                            android:textStyle="bold"
-                            android:minWidth="100dp" />
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
 
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/diagnostics_ikd_value"
-                            android:layout_width="wrap_content"
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/diagnostics_ikd_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_value_none"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
+
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_kpi_ikd"
+                                android:textSize="@dimen/smaller_text_size" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_value_none" />
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
 
-                    </LinearLayout>
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/diagnostics_dwell_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_value_none"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="@dimen/small_margin">
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_kpi_dwell"
+                                android:textSize="@dimen/smaller_text_size" />
 
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_dwell_label"
-                            android:textStyle="bold"
-                            android:minWidth="100dp" />
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
 
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/diagnostics_dwell_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_value_none" />
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/diagnostics_flight_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_value_none"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
 
-                    </LinearLayout>
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_kpi_flight"
+                                android:textSize="@dimen/smaller_text_size" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="@dimen/small_margin">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_flight_label"
-                            android:textStyle="bold"
-                            android:minWidth="100dp" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/diagnostics_flight_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_value_none" />
+                        </LinearLayout>
 
                     </LinearLayout>
 
@@ -178,66 +196,82 @@
                         android:layout_height="wrap_content"
                         android:text="@string/diagnostics_count_metrics" />
 
+                    <!-- KPI-style 3-cell grid: Events / Speed / Error rate. -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginTop="@dimen/small_margin">
+                        android:layout_marginTop="@dimen/small_margin"
+                        android:weightSum="3">
 
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_event_count_label"
-                            android:textStyle="bold"
-                            android:minWidth="100dp" />
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
 
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/diagnostics_event_count_value"
-                            android:layout_width="wrap_content"
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/diagnostics_event_count_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
+
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_kpi_events"
+                                android:textSize="@dimen/smaller_text_size" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="0" />
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
 
-                    </LinearLayout>
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/diagnostics_typing_speed_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_value_none"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="@dimen/small_margin">
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_kpi_speed"
+                                android:textSize="@dimen/smaller_text_size" />
 
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_typing_speed_label"
-                            android:textStyle="bold"
-                            android:minWidth="100dp" />
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
 
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/diagnostics_typing_speed_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_value_none" />
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/diagnostics_error_rate_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_value_none"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
 
-                    </LinearLayout>
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_kpi_error_rate"
+                                android:textSize="@dimen/smaller_text_size" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="@dimen/small_margin">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_error_rate_label"
-                            android:textStyle="bold"
-                            android:minWidth="100dp" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/diagnostics_error_rate_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/diagnostics_value_none" />
+                        </LinearLayout>
 
                     </LinearLayout>
 

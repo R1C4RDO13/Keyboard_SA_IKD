@@ -94,6 +94,13 @@
     <string name="diagnostics_sensor_readings_section">Sensor Readings</string>
     <string name="diagnostics_capture_status_privacy">Privacy On</string>
     <string name="diagnostics_count_metrics">Count Metrics</string>
+    <!-- Phase 6 rework: short KPI labels for the 3-cell metric grids -->
+    <string name="diagnostics_kpi_ikd">IKD</string>
+    <string name="diagnostics_kpi_dwell">Dwell</string>
+    <string name="diagnostics_kpi_flight">Flight</string>
+    <string name="diagnostics_kpi_events">Events</string>
+    <string name="diagnostics_kpi_speed">Speed</string>
+    <string name="diagnostics_kpi_error_rate">Errors</string>
 
     <!-- Event Feed Activity -->
     <string name="event_feed_title">Event Log</string>
