@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import org.fossify.commons.extensions.beGone
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.updateTextColors
@@ -117,9 +118,20 @@ class DiagnosticsActivity : SimpleActivity() {
         updateTextColors(binding.diagnosticsNestedScrollview)
         val primary = getProperPrimaryColor()
         binding.diagnosticsTimingSectionLabel.setTextColor(primary)
+        binding.diagnosticsCountSectionLabel.setTextColor(primary)
         binding.diagnosticsGyroSectionLabel.setTextColor(primary)
         binding.diagnosticsAccelSectionLabel.setTextColor(primary)
         binding.diagnosticsSensorReadingsLabel.setTextColor(primary)
+        // MaterialCardView's default ?attr/colorSurface does not track Fossify's
+        // runtime background color, so on a custom theme the cards stand out as
+        // unthemed slabs. Tint each card to the activity's background color and
+        // let cardElevation's shadow demarcate the card silhouette — same
+        // pattern as EventFeedActivity.applyThemeColors() (Phase 5).
+        val background = getProperBackgroundColor()
+        binding.diagnosticsTimingCard.setCardBackgroundColor(background)
+        binding.diagnosticsCountCard.setCardBackgroundColor(background)
+        binding.diagnosticsSensorCard.setCardBackgroundColor(background)
+        binding.diagnosticsViewLogCard.setCardBackgroundColor(background)
     }
 
     override fun onPause() {

@@ -69,6 +69,7 @@
 
             <!-- Timing metrics card (IKD / Dwell / Flight) -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/diagnostics_timing_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/normal_margin"
@@ -157,6 +158,7 @@
 
             <!-- Count metrics card (Events / Speed / Error Rate) -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/diagnostics_count_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/small_margin"
@@ -169,10 +171,18 @@
                     android:orientation="vertical"
                     android:padding="@dimen/normal_margin">
 
+                    <TextView
+                        android:id="@+id/diagnostics_count_section_label"
+                        style="@style/SettingsSectionLabelStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/diagnostics_count_metrics" />
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:layout_marginTop="@dimen/small_margin">
 
                         <org.fossify.commons.views.MyTextView
                             android:layout_width="wrap_content"
@@ -237,6 +247,7 @@
 
             <!-- Sensor Readings collapsible card -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/diagnostics_sensor_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/small_margin"
@@ -611,36 +622,48 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- View Event Log row -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/diagnostics_view_log_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
+            <!-- View Event Log card — wraps the existing settings-row in a
+                 MaterialCardView so it shares the screen's overall card
+                 aesthetic (Phase 6 rework). The inner ConstraintLayout
+                 keeps the existing label/value style for back-compat. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/diagnostics_view_log_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/normal_margin"
-                android:layout_marginBottom="@dimen/activity_margin">
+                android:layout_marginBottom="@dimen/activity_margin"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation">
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/diagnostics_view_log_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/diagnostics_view_event_log"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent" />
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/diagnostics_view_log_holder"
+                    style="@style/SettingsHolderTextViewOneLinerStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/diagnostics_view_log_count"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/diagnostics_value_none"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent" />
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/diagnostics_view_log_label"
+                        style="@style/SettingsTextLabelStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/diagnostics_view_event_log"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/diagnostics_view_log_count"
+                        style="@style/SettingsTextValueStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/diagnostics_value_none"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
