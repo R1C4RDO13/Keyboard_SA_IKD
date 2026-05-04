@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Phase 6 rework: dark-mode counterpart for the diagnostics status chip
+  palette. Uses lighter, less-saturated variants so the chip reads as a
+  coloured pill on dark backgrounds without screaming. Matches the
+  colour names in res/values/colors.xml so ContextCompat.getColor()
+  resolves the right value automatically.
+-->
+<resources>
+    <color name="ikd_status_active">#66BB6A</color>
+    <color name="ikd_status_active_text">#FF000000</color>
+    <color name="ikd_status_idle">#BDBDBD</color>
+    <color name="ikd_status_idle_text">#FF000000</color>
+    <color name="ikd_status_privacy">#FFB300</color>
+    <color name="ikd_status_privacy_text">#FF000000</color>
+    <color name="ikd_status_no_data">#757575</color>
+    <color name="ikd_status_no_data_text">#FFFFFFFF</color>
+</resources>

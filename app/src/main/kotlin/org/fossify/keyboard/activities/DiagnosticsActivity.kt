@@ -2,12 +2,13 @@ package org.fossify.keyboard.activities
 
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.ColorRes
+import androidx.core.content.ContextCompat
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.toast
@@ -247,27 +248,38 @@ class DiagnosticsActivity : SimpleActivity() {
         val privacyOn = config.privacyModeEnabled
         val isCapturing = LiveCaptureSessionStore.isCapturing
         val hasData = LiveCaptureSessionStore.hasData()
-        val (statusText, chipColor) = when {
-            privacyOn -> Pair(
-                getString(R.string.diagnostics_capture_status_privacy),
-                Color.parseColor("#FFC107")
+        // Each state resolves its background and foreground colour from the
+        // res/values{,-night}/colors.xml palette so the chip stays legible on
+        // both Fossify light and dark themes. No Color.parseColor literals.
+        val (statusTextRes, bgColorRes, textColorRes) = when {
+            privacyOn -> Triple(
+                R.string.diagnostics_capture_status_privacy,
+                R.color.ikd_status_privacy,
+                R.color.ikd_status_privacy_text,
             )
-            isCapturing -> Pair(
-                getString(R.string.diagnostics_capture_status_capturing),
-                Color.parseColor("#4CAF50")
+            isCapturing -> Triple(
+                R.string.diagnostics_capture_status_capturing,
+                R.color.ikd_status_active,
+                R.color.ikd_status_active_text,
             )
-            hasData -> Pair(
-                getString(R.string.diagnostics_capture_status_stopped),
-                Color.parseColor("#9E9E9E")
+            hasData -> Triple(
+                R.string.diagnostics_capture_status_stopped,
+                R.color.ikd_status_idle,
+                R.color.ikd_status_idle_text,
             )
-            else -> Pair(
-                getString(R.string.diagnostics_capture_status_no_data),
-                Color.parseColor("#9E9E9E")
+            else -> Triple(
+                R.string.diagnostics_capture_status_no_data,
+                R.color.ikd_status_no_data,
+                R.color.ikd_status_no_data_text,
             )
         }
-        binding.diagnosticsStatusChip.text = statusText
-        binding.diagnosticsStatusChip.backgroundTintList = ColorStateList.valueOf(chipColor)
+        binding.diagnosticsStatusChip.text = getString(statusTextRes)
+        binding.diagnosticsStatusChip.backgroundTintList = colorStateListFor(bgColorRes)
+        binding.diagnosticsStatusChip.setTextColor(ContextCompat.getColor(this, textColorRes))
     }
+
+    private fun colorStateListFor(@ColorRes colorRes: Int): ColorStateList =
+        ColorStateList.valueOf(ContextCompat.getColor(this, colorRes))
 
     private fun resetMetricsDisplay() {
         binding.diagnosticsIkdValue.text = getString(R.string.diagnostics_value_none)
