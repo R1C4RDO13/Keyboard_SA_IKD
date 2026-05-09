@@ -19,22 +19,30 @@ class IkdAggregatorTest {
     /**
      * Helper that defaults `keystrokeCount` to `eventCount` so tests that
      * predate Phase 7's AUTOCORRECT-exclusion split don't have to spell out
-     * the redundant value on every row. Tests that exercise the exclusion
-     * pass `keystrokeCount` explicitly.
+     * the redundant value on every row.
+     *
+     * Phase 7.1: `errorRatePct` is gone from `EventBucketRow` (computed in
+     * Kotlin now); `correctionWeight` replaces it. The helper takes the old
+     * fixture's `errorRatePct` and reverse-engineers a matching weight by
+     * `round(rate * keystrokeCount / 100)` so existing tests that still pass
+     * an `errorRatePct` literal continue to assert the same numeric outcome
+     * without re-stating their fixtures. New tests pass `correctionWeight`
+     * directly.
      */
     private fun eventBucket(
         bucket: String,
         avgIkdMs: Double?,
-        errorRatePct: Double,
+        errorRatePct: Double = 0.0,
         eventCount: Int,
         sessionCount: Int = 1,
         keystrokeCount: Int = eventCount,
+        correctionWeight: Int = ((errorRatePct * eventCount + PCT_HALF) / PCT).toInt(),
     ) = EventBucketRow(
         bucket = bucket,
         avgIkdMs = avgIkdMs,
-        errorRatePct = errorRatePct,
         eventCount = eventCount,
         keystrokeCount = keystrokeCount,
+        correctionWeight = correctionWeight,
         sessionCount = sessionCount,
     )
 
@@ -219,16 +227,22 @@ class IkdAggregatorTest {
     @Test
     fun wpm_excludesAutocorrects_whenSessionMixesAlphaAndAutocorrect() {
         // 100 ALPHA + 5 AUTOCORRECT over 60s. eventCount = 105, but
-        // keystrokeCount = 100 (autocorrects excluded). WPM should match
-        // the keystroke-only formula (20 wpm), not 21 wpm.
-        // Error rate is unchanged: 5 corrections / 105 events ~= 4.76%.
+        // keystrokeCount = 100 (autocorrects excluded). WPM matches the
+        // keystroke-only formula (20 wpm), not 21 wpm.
+        //
+        // Phase 7.1: error rate is now `100 * correctionWeight / keystrokeCount`.
+        // Under the legacy backfill (each AUTOCORRECT carries weight 1),
+        // correctionWeight = 5 over keystrokeCount = 100 → 5.0%. The pre-7.1
+        // formula reported 4.76% (5 corrections / 105 events); the Phase 7
+        // plan accepted that small denominator inconsistency, and Phase 7.1
+        // resolves it by aligning the denominator with WPM's.
         val eventBuckets = listOf(
             eventBucket(
                 bucket = "2026-04-25",
                 avgIkdMs = 200.0,
-                errorRatePct = AUTOCORRECT_ERROR_RATE,
                 eventCount = 105,
                 keystrokeCount = 100,
+                correctionWeight = AUTOCORRECT_LEGACY_WEIGHT,
             ),
         )
         val sessionBuckets = listOf(
@@ -240,9 +254,8 @@ class IkdAggregatorTest {
         assertEquals(20.0, snap.buckets[0].wpm!!, 0.01)
         // Overall WPM at the snapshot level uses the same exclusion.
         assertEquals(20.0, snap.avgWpm!!, 0.01)
-        // Error rate naturally includes autocorrects via the existing
-        // is_correction-weighted SQL aggregation.
-        assertEquals(AUTOCORRECT_ERROR_RATE, snap.avgErrorRatePct!!, 0.01)
+        // Phase 7.1 weighted error rate: 5 / 100 = 5.0%.
+        assertEquals(AUTOCORRECT_LEGACY_ERROR_RATE_PCT, snap.avgErrorRatePct!!, 0.01)
     }
 
     @Test
@@ -284,12 +297,125 @@ class IkdAggregatorTest {
         assertEquals(20.0, snap.buckets[0].wpm!!, 0.01)
     }
 
+    // ------------------------------------------------------------------ //
+    // Phase 7.1: weighted error-rate formula                              //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    fun errorRate_isWeightedByCorrectionWeight_overKeystrokeCount() {
+        // The canonical Phase 7.1 case: typing `ocasdasda<space>` and the
+        // system replaces it with `october`. 9 ALPHA + 1 SPACE + 1
+        // AUTOCORRECT(weight=9) → eventCount = 11, keystrokeCount = 10,
+        // correctionWeight = 9. Expected weighted error rate: 90%.
+        val eventBuckets = listOf(
+            eventBucket(
+                bucket = "2026-04-25",
+                avgIkdMs = 200.0,
+                eventCount = OCASDASDA_EVENT_COUNT,
+                keystrokeCount = OCASDASDA_KEYSTROKES,
+                correctionWeight = OCASDASDA_WEIGHT,
+            ),
+        )
+        val sessionBuckets = listOf(
+            SessionBucketRow("2026-04-25", totalDurationMs = 60_000L, sessionCount = 1),
+        )
+
+        val snap = IkdAggregator.buildSnapshot(IkdAggregator.Range.WEEK, eventBuckets, sessionBuckets)
+
+        assertEquals(OCASDASDA_ERROR_RATE_PCT, snap.buckets[0].errorRatePct!!, 0.01)
+        assertEquals(OCASDASDA_ERROR_RATE_PCT, snap.avgErrorRatePct!!, 0.01)
+    }
+
+    @Test
+    fun errorRate_isNull_whenKeystrokeCountIsZero() {
+        // Hypothetical AUTOCORRECT-only bucket. The keyboard cannot produce
+        // this in real life (every autocorrect must be preceded by a
+        // keystroke), but the formula must still be defensively null-safe.
+        val eventBuckets = listOf(
+            eventBucket(
+                bucket = "2026-04-25",
+                avgIkdMs = null,
+                eventCount = 5,
+                keystrokeCount = 0,
+                correctionWeight = 5,
+            ),
+        )
+        val sessionBuckets = listOf(
+            SessionBucketRow("2026-04-25", totalDurationMs = 60_000L, sessionCount = 1),
+        )
+
+        val snap = IkdAggregator.buildSnapshot(IkdAggregator.Range.WEEK, eventBuckets, sessionBuckets)
+
+        assertNull(snap.buckets[0].errorRatePct)
+        assertNull(snap.avgErrorRatePct)
+    }
+
+    @Test
+    fun errorRate_legacyBackfillSession_remainsConsistent() {
+        // Pre-Phase-7.1 sessions migrate with weight 1 on every
+        // is_correction = true row. So a session of 10 ALPHA + 1 BACKSPACE
+        // (legacy weight 1) + 1 AUTOCORRECT (legacy backfilled to weight 1):
+        //   eventCount = 12
+        //   keystrokeCount = 11
+        //   correctionWeight = 2
+        // Expected weighted error rate: 2 / 11 ≈ 18.18%.
+        val eventBuckets = listOf(
+            eventBucket(
+                bucket = "2026-04-25",
+                avgIkdMs = 200.0,
+                eventCount = LEGACY_EVENT_COUNT,
+                keystrokeCount = LEGACY_KEYSTROKES,
+                correctionWeight = LEGACY_WEIGHT,
+            ),
+        )
+        val sessionBuckets = listOf(
+            SessionBucketRow("2026-04-25", totalDurationMs = 60_000L, sessionCount = 1),
+        )
+
+        val snap = IkdAggregator.buildSnapshot(IkdAggregator.Range.WEEK, eventBuckets, sessionBuckets)
+
+        assertEquals(LEGACY_ERROR_RATE_PCT, snap.buckets[0].errorRatePct!!, 0.01)
+    }
+
     companion object {
-        // 10 corrections / 150 events -> 6.666...% overall.
+        // Phase 7.1: weighted-formula rewrite of the overall error-rate
+        // expectation. Pre-7.1 it was 10 corrections / 150 events ≈ 6.667%
+        // (corrections counted as rows, denominator was eventCount). Post-
+        // 7.1 it's 10 weight units / 150 keystrokes ≈ 6.667% (sessions
+        // without autocorrects are byte-identical between the two formulas
+        // because keystrokeCount == eventCount in that case).
         private const val EXPECTED_OVERALL_ERROR_RATE = 6.6667
 
-        // 5 corrections / 105 events -> 4.7619% (the canonical mixed
-        // ALPHA+AUTOCORRECT fixture from the Phase 7 plan, Section 6.3).
-        private const val AUTOCORRECT_ERROR_RATE = 4.7619
+        // Phase 7.1: 5 weight units / 100 keystrokes = 5.0% under the
+        // weighted formula (was 4.76% pre-7.1 because of the 105-event
+        // denominator).
+        private const val AUTOCORRECT_LEGACY_WEIGHT = 5
+        private const val AUTOCORRECT_LEGACY_ERROR_RATE_PCT = 5.0
+
+        // Phase 7.1: the canonical `ocasdasda` case from Phase7.1_Plan.md.
+        // 9 ALPHA + 1 SPACE + 1 AUTOCORRECT(weight=9) → 90% weighted error
+        // rate (9 weight units / 10 keystrokes). The pre-7.1 formula would
+        // have reported 9.1% (1 correction / 11 events) — the magnitude is
+        // restored by the new formula.
+        private const val OCASDASDA_KEYSTROKES = 10
+        private const val OCASDASDA_EVENT_COUNT = 11
+        private const val OCASDASDA_WEIGHT = 9
+        private const val OCASDASDA_ERROR_RATE_PCT = 90.0
+
+        // Phase 7.1: legacy backfill fixture. Mirrors a session captured
+        // before the v2 → v3 migration, where each is_correction = 1 row
+        // backfilled to weight = 1.
+        private const val LEGACY_EVENT_COUNT = 12
+        private const val LEGACY_KEYSTROKES = 11
+        private const val LEGACY_WEIGHT = 2
+        // 2 / 11 * 100 ≈ 18.18%.
+        private const val LEGACY_ERROR_RATE_PCT = 18.1818
+
+        // Helper for `eventBucket(...)` to translate a legacy `errorRatePct`
+        // into the equivalent `correctionWeight` so existing fixtures stay
+        // numerically valid without restating every literal. Rounds to the
+        // nearest integer (`+ PCT_HALF` then `/ PCT`).
+        private const val PCT = 100.0
+        private const val PCT_HALF = 50.0
     }
 }

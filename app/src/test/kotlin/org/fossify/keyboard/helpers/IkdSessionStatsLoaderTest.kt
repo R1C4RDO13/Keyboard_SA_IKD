@@ -144,7 +144,12 @@ class IkdSessionStatsLoaderTest {
         // 100 ALPHA + 5 AUTOCORRECT in 60s. eventCount = 105,
         // keystrokeCount = 100 (autocorrects excluded). WPM should be
         // 20.0 (the pre-Phase 7 figure for 100 keystrokes), not 21.0.
-        // Error rate uses eventCount + correctionCount: 5/105 ~= 4.76%.
+        //
+        // Phase 7.1: error rate is now `100 * correctionWeight / keystrokeCount`.
+        // With each AUTOCORRECT carrying weight 1 (legacy backfill default):
+        //   correctionWeight = 5, keystrokeCount = 100 → 5.0%.
+        // The Phase 7 plan reported this as 4.76% (corrections / events);
+        // 7.1 aligns the denominator with WPM's.
         val record = sessionRecord(
             startedAt = SESSION_START,
             endedAt = SESSION_START + ONE_MINUTE_MS,
@@ -161,14 +166,15 @@ class IkdSessionStatsLoaderTest {
         val stats = IkdSessionStatsLoader.compute(record, statsRow)
 
         assertEquals(EXPECTED_WPM, stats.wpm!!, 0.01)
-        assertEquals(AUTOCORRECT_ERROR_RATE_PCT, stats.errorRatePct!!, 0.01)
+        assertEquals(AUTOCORRECT_LEGACY_RATE_PCT, stats.errorRatePct!!, 0.01)
     }
 
     @Test
     fun wpm_isNull_whenSessionHasOnlyAutocorrectEvents() {
-        // 5 AUTOCORRECT events, no real keystrokes. keystrokeCount = 0
-        // means computeWpm short-circuits to null even though the session
-        // has events and a duration.
+        // 5 AUTOCORRECT events, no real keystrokes. keystrokeCount = 0.
+        // Phase 7.1: both WPM and the new weighted error rate are null in
+        // this hypothetical case (the keyboard cannot generate it — every
+        // autocorrect is preceded by a keystroke).
         val record = sessionRecord(
             startedAt = SESSION_START,
             endedAt = SESSION_START + ONE_MINUTE_MS,
@@ -184,9 +190,81 @@ class IkdSessionStatsLoaderTest {
         val stats = IkdSessionStatsLoader.compute(record, statsRow)
 
         assertNull(stats.wpm)
-        // Error rate stays well-defined (5 / 5 = 100%) — autocorrects
-        // are corrections from the error-rate perspective.
-        assertEquals(100.0, stats.errorRatePct!!, 0.01)
+        assertNull(stats.errorRatePct)
+    }
+
+    // ------------------------------------------------------------------ //
+    // Phase 7.1: weighted error-rate fixtures                             //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    fun errorRate_isWeightedByCorrectionWeight() {
+        // The canonical Phase 7.1 case from `Phase7.1_Plan.md` Section 1:
+        // typing `ocasdasda<space>` and the system replaces it with `october`.
+        // 9 ALPHA + 1 SPACE + 1 AUTOCORRECT(weight=9) → eventCount = 11,
+        // keystrokeCount = 10, correctionWeight = 9. Expected: 90%.
+        val record = sessionRecord(
+            startedAt = SESSION_START,
+            endedAt = SESSION_START + ONE_MINUTE_MS,
+            eventCount = OCASDASDA_EVENT_COUNT,
+            sensorCount = 0,
+        )
+        val statsRow = statsRow(
+            eventCount = OCASDASDA_EVENT_COUNT,
+            keystrokeCount = OCASDASDA_KEYSTROKES,
+            correctionCount = 1,
+            correctionWeight = OCASDASDA_WEIGHT,
+        )
+
+        val stats = IkdSessionStatsLoader.compute(record, statsRow)
+
+        assertEquals(OCASDASDA_ERROR_RATE_PCT, stats.errorRatePct!!, 0.01)
+    }
+
+    @Test
+    fun errorRate_isNull_whenKeystrokeCountIsZero() {
+        // Defensive null-safety check.
+        val record = sessionRecord(
+            startedAt = SESSION_START,
+            endedAt = SESSION_START + ONE_MINUTE_MS,
+            eventCount = 0,
+            sensorCount = 0,
+        )
+        val statsRow = statsRow(
+            eventCount = 0,
+            keystrokeCount = 0,
+            correctionCount = 0,
+            correctionWeight = 0,
+        )
+
+        val stats = IkdSessionStatsLoader.compute(record, statsRow)
+
+        assertNull(stats.errorRatePct)
+    }
+
+    @Test
+    fun errorRate_legacyBackfillSession_remainsConsistent() {
+        // Pre-Phase-7.1 session migrating up: each is_correction = 1 row
+        // backfills to weight = 1. So a session of 10 ALPHA + 1 BACKSPACE +
+        // 1 AUTOCORRECT (legacy):
+        //   eventCount = 12, keystrokeCount = 11, correctionWeight = 2
+        //   → 2 / 11 ≈ 18.18%.
+        val record = sessionRecord(
+            startedAt = SESSION_START,
+            endedAt = SESSION_START + ONE_MINUTE_MS,
+            eventCount = LEGACY_EVENT_COUNT,
+            sensorCount = 0,
+        )
+        val statsRow = statsRow(
+            eventCount = LEGACY_EVENT_COUNT,
+            keystrokeCount = LEGACY_KEYSTROKES,
+            correctionCount = LEGACY_WEIGHT,
+            correctionWeight = LEGACY_WEIGHT,
+        )
+
+        val stats = IkdSessionStatsLoader.compute(record, statsRow)
+
+        assertEquals(LEGACY_ERROR_RATE_PCT, stats.errorRatePct!!, 0.01)
     }
 
     private fun sessionRecord(
@@ -210,6 +288,11 @@ class IkdSessionStatsLoaderTest {
         eventCount: Int,
         correctionCount: Int,
         keystrokeCount: Int = eventCount,
+        // Phase 7.1: defaults to `correctionCount` so existing fixtures
+        // (one weight unit per backspace; legacy backfill semantics) keep
+        // their previously-asserted percentages without restating every
+        // literal. New tests pass `correctionWeight` explicitly.
+        correctionWeight: Int = correctionCount,
         avgIkdMs: Double? = null,
         avgHoldMs: Double? = null,
         avgFlightMs: Double? = null,
@@ -219,6 +302,7 @@ class IkdSessionStatsLoaderTest {
         eventCount = eventCount,
         keystrokeCount = keystrokeCount,
         correctionCount = correctionCount,
+        correctionWeight = correctionWeight,
         avgIkdMs = avgIkdMs,
         avgHoldMs = avgHoldMs,
         avgFlightMs = avgFlightMs,
@@ -241,7 +325,22 @@ class IkdSessionStatsLoaderTest {
 
         // Phase 7: 5 autocorrects on top of 100 alphas.
         private const val AUTOCORRECT_COUNT = 5
-        // 5 / 105 * 100 ~= 4.7619% (autocorrects count as corrections).
-        private const val AUTOCORRECT_ERROR_RATE_PCT = 4.7619
+        // Phase 7.1: 5 weight units / 100 keystrokes = 5.0% (was 4.7619%
+        // pre-7.1 because of the 105-event denominator).
+        private const val AUTOCORRECT_LEGACY_RATE_PCT = 5.0
+
+        // Phase 7.1: the canonical `ocasdasda` case from
+        // `Phase7.1_Plan.md` Section 1.
+        private const val OCASDASDA_KEYSTROKES = 10
+        private const val OCASDASDA_EVENT_COUNT = 11
+        private const val OCASDASDA_WEIGHT = 9
+        private const val OCASDASDA_ERROR_RATE_PCT = 90.0
+
+        // Phase 7.1: legacy backfill fixture. 10 ALPHA + 1 BACKSPACE +
+        // 1 AUTOCORRECT (each correction = weight 1 by backfill).
+        private const val LEGACY_EVENT_COUNT = 12
+        private const val LEGACY_KEYSTROKES = 11
+        private const val LEGACY_WEIGHT = 2
+        private const val LEGACY_ERROR_RATE_PCT = 18.1818
     }
 }
