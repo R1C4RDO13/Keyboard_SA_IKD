@@ -185,6 +185,17 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
     private var expectedCursorPosition: Int = -1
     private var lastImeEditTimestamp: Long = 0L
     private var lastKnownTextLength: Int = -1
+    private var lastKnownSelStart: Int = -1
+    private var lastKnownSelEnd: Int = -1
+    // Set true by `markImeEdit()` when our IME commits while the field has a
+    // user-selected range. The next `onUpdateSelection` whose `oldSel` is that
+    // range and `newSel` is a cursor is then *our* commit replacing the
+    // selection (not an external autocorrect), so we consume the flag and
+    // skip recording. Without this, the canonical spell-check pattern
+    // (selectRange → commitText) would be indistinguishable from a regular
+    // commit-onto-selection — both surface the same `wasSelectionRange &&
+    // isCollapsed` signature.
+    private var pendingOurSelectionReplacement: Boolean = false
 
     override fun onInitializeInterface() {
         super.onInitializeInterface()
@@ -237,6 +248,9 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         expectedCursorPosition = -1
         lastImeEditTimestamp = 0L
         lastKnownTextLength = -1
+        lastKnownSelStart = -1
+        lastKnownSelEnd = -1
+        pendingOurSelectionReplacement = false
 
         if (!config.privacyModeEnabled) {
             sensorHelper?.start()
@@ -348,6 +362,7 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
             lastKeyUpTimestamp = now
             pendingFlightTime = -1L
 
+            val isBackspace = code == MyKeyboard.KEYCODE_DELETE
             val event = KeyTimingEvent(
                 sessionId = LiveCaptureSessionStore.currentSessionId,
                 timestamp = nowWall,
@@ -355,7 +370,12 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
                 ikdMs = ikd,
                 holdTimeMs = holdTime,
                 flightTimeMs = flightTime,
-                isCorrection = code == MyKeyboard.KEYCODE_DELETE
+                isCorrection = isBackspace,
+                // Phase 7.1: BACKSPACE always carries weight 1; the
+                // symmetric "deletion magnitude" follow-up (BACKSPACE-on-
+                // selection -> selection length) is documented in
+                // Phase7.1_Plan.md Section 10 and deliberately deferred.
+                correctionWeight = if (isBackspace) 1 else 0,
             )
 
             // recordTimingEvent only appends to in-memory lists under a write lock.
@@ -671,10 +691,14 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         // Phase 7: detect external text replacements (system spell-check accepts,
         // VN Telex `setComposingText`, inline-autofill commits) by looking for an
         // unexpected cursor / field-length delta that did not originate inside
-        // the IME's own commit path. Anything inside `IME_EDIT_GRACE_MS` of our
-        // last commit is treated as the downstream notification of *our* edit
-        // and skipped. Heuristic must run before any state is mutated below so
-        // it can compare against the IME's own tracker.
+        // the IME's own commit path. The select-range-then-collapse pattern is
+        // treated as our own commit only when the IME committed onto a
+        // user-made selection (tracked by `pendingOurSelectionReplacement`);
+        // any other instance of that pattern is unambiguously external,
+        // regardless of timing. Length-change detection still uses
+        // `IME_EDIT_GRACE_MS` to suppress single-character commit echoes.
+        // Heuristic must run before any state is mutated below so it can
+        // compare against the IME's own tracker.
         maybeRecordExternalReplacement(oldSelStart, oldSelEnd, newSelStart, newSelEnd)
 
         if (newSelStart == newSelEnd) {
@@ -686,21 +710,33 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
     /**
      * Phase 7: classify an `onUpdateSelection` delta and, if it matches the
      * external-replacement signature, append an `AUTOCORRECT` row to the live
-     * capture store. False-positive paths (user manually moved the cursor,
-     * IME's own commit echoing back) are filtered by the grace window and the
-     * field-length-change check; see Section 5.2 of `Phase7_Plan.md` for the
-     * full decision matrix.
+     * capture store. False-positive paths:
+     *  - IME's own single-character / backspace commit echoing back: filtered
+     *    by the `IME_EDIT_GRACE_MS` window for the cursor-and-length condition.
+     *  - IME's own commit replacing a user-made selection: filtered by the
+     *    `pendingOurSelectionReplacement` flag set in `markImeEdit()` whenever
+     *    the field had a non-empty selection at the moment of our commit.
+     *
+     * This deliberately drops the grace-window gate from the
+     * select-range-collapsed condition so that the canonical spell-check
+     * pattern (selectRange → commitText) is detected immediately even when it
+     * arrives within ~50 ms of our keystroke; before, the user saw the
+     * AUTOCORRECT row appear delayed by one keypress. See Section 5.2 of
+     * `Phase7_Plan.md` for the decision matrix.
      */
     private fun maybeRecordExternalReplacement(
         oldSelStart: Int,
         oldSelEnd: Int,
         newSelStart: Int,
-        @Suppress("UNUSED_PARAMETER") newSelEnd: Int,
+        newSelEnd: Int,
     ) {
         if (!LiveCaptureSessionStore.isCapturing) {
             // Still update the tracker so the next session opens with sane state.
             expectedCursorPosition = newSelStart
             lastKnownTextLength = currentFieldLength()
+            lastKnownSelStart = newSelStart
+            lastKnownSelEnd = newSelEnd
+            pendingOurSelectionReplacement = false
             return
         }
 
@@ -713,26 +749,56 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         val fieldLengthChanged = lastKnownTextLength >= 0 && newLength >= 0 &&
             newLength != lastKnownTextLength
 
+        // If the field had a user-made selection when our IME committed, the
+        // resulting `wasSelectionRange && isCollapsed` callback is the echo of
+        // *our* commit replacing that selection — not an external edit. Consume
+        // the flag exactly once, here, to keep this update from masking a real
+        // autocorrect that happens to arrive next.
+        val isOurSelectionReplacement = pendingOurSelectionReplacement &&
+            wasSelectionRange && isCollapsed && withinGrace
+        if (isOurSelectionReplacement) {
+            pendingOurSelectionReplacement = false
+        }
+
         // External replacement signature:
         //   1. A selection range collapsed to a cursor (canonical spell-check
         //      accept: the system selected the misspelled word, then committed
-        //      the replacement which lands as a single cursor); OR
-        //   2. The cursor moved by a non-zero amount and the field length
-        //      changed, but neither happened inside the IME's commit grace
-        //      window (rules out our own edits echoing back).
-        val externalReplacement = !withinGrace && (
+        //      the replacement which lands as a single cursor). Our IME never
+        //      generates this pattern on its own typing path *unless* the user
+        //      had a manual selection — handled by `isOurSelectionReplacement`.
+        //      Anywhere else this pattern is unambiguously external, so the
+        //      grace window is the wrong gate (it incorrectly suppressed
+        //      spell-check edits arriving within ~50 ms of our keystroke,
+        //      causing the AUTOCORRECT row to appear delayed by one keypress).
+        //   2. The cursor moved by a non-zero amount AND the field length
+        //      changed, but only outside the grace window — same-cursor /
+        //      same-length echoes inside the window are our own commits.
+        val externalReplacement = !isOurSelectionReplacement && (
             (wasSelectionRange && isCollapsed) ||
-                (cursorDelta != 0 && fieldLengthChanged)
+                (!withinGrace && cursorDelta != 0 && fieldLengthChanged)
             )
 
         if (externalReplacement) {
-            recordAutocorrectEvent()
+            // Phase 7.1: the replaced span is the magnitude of the typing
+            // error. For the canonical select-then-collapse pattern this is
+            // `oldSelEnd - oldSelStart`. For the cursor+length-changed
+            // fallback we don't have the original span, so weight 1 (a
+            // single conceptual "correction action") is the conservative
+            // floor — same behavior as the v1 backfill.
+            val replacedLength = if (wasSelectionRange) {
+                (oldSelEnd - oldSelStart).coerceAtLeast(1)
+            } else {
+                1
+            }
+            recordAutocorrectEvent(replacedLength)
         }
 
         // Update tracker for the next call. This is also where the field
         // length is first observed for a fresh field.
         expectedCursorPosition = newSelStart
         lastKnownTextLength = newLength
+        lastKnownSelStart = newSelStart
+        lastKnownSelEnd = newSelEnd
     }
 
     /**
@@ -742,8 +808,15 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
      * `lastKeyUpTimestamp` so it carries a meaningful "time-since-last-keystroke"
      * value. `is_correction = true` so the existing error-rate metric folds
      * autocorrects in for free.
+     *
+     * Phase 7.1: [replacedLength] is the magnitude of the typing error — the
+     * length of the span the system selected before committing the
+     * replacement. Used by the new weighted error-rate formula so a single
+     * autocorrect of a long misspelled word contributes its replaced span
+     * length to the metric instead of a flat 1. Always ≥ 1; the caller
+     * coerces.
      */
-    private fun recordAutocorrectEvent() {
+    private fun recordAutocorrectEvent(replacedLength: Int) {
         val now = SystemClock.uptimeMillis()
         val nowWall = System.currentTimeMillis()
         val ikd = if (lastKeyUpTimestamp > 0L) now - lastKeyUpTimestamp else -1L
@@ -756,7 +829,8 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
             ikdMs = ikd,
             holdTimeMs = -1L,
             flightTimeMs = -1L,
-            isCorrection = true
+            isCorrection = true,
+            correctionWeight = replacedLength,
         )
         LiveCaptureSessionStore.recordTimingEvent(event)
     }
@@ -777,9 +851,20 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
      * Phase 7: stamp the IME's last-edit timestamp so the next
      * `onUpdateSelection` can be classified as our own commit echo (within the
      * grace window) rather than an external replacement.
+     *
+     * If the field had a user-made selection at this moment (per the most
+     * recent `onUpdateSelection`), our `commitText` / `deleteSurroundingText`
+     * is about to replace it. The next callback will surface the
+     * `wasSelectionRange && isCollapsed` signature — same shape as the system
+     * spell-check's select-then-commit pattern — so we set
+     * `pendingOurSelectionReplacement` to suppress that detection path for
+     * exactly one update.
      */
     private fun markImeEdit() {
         lastImeEditTimestamp = SystemClock.uptimeMillis()
+        if (lastKnownSelStart >= 0 && lastKnownSelStart != lastKnownSelEnd) {
+            pendingOurSelectionReplacement = true
+        }
     }
 
     override fun onUpdateCursorAnchorInfo(cursorAnchorInfo: CursorAnchorInfo?) {

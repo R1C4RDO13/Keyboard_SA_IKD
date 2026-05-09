@@ -6,6 +6,7 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.fossify.keyboard.databases.IkdDatabase.Companion.MIGRATION_1_2
+import org.fossify.keyboard.databases.IkdDatabase.Companion.MIGRATION_2_3
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -14,19 +15,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Phase 8: Room migration test for `IkdDatabase` v1 → v2.
+ * Room migration tests for `IkdDatabase`.
  *
- * This test exercises the only schema bump shipped in Phase 8. It opens the
- * database at version 1, seeds one row in each pre-existing table, runs
- * `MIGRATION_1_2`, and asserts:
- *  1. The new `mood_entries` table exists with the right columns + the
- *     partial unique index on `session_id`.
- *  2. The original three tables retain their seed rows untouched (no data
- *     loss / no schema rewrite).
- *  3. Two `INSERT`s into `mood_entries` with the same non-null `session_id`
- *     fail (partial unique index honoured).
- *  4. Two `INSERT`s into `mood_entries` with `session_id = NULL` succeed
- *     (the partial constraint correctly excludes NULL rows).
+ * Two schema bumps so far:
+ *  - v1 → v2 (Phase 8): adds `mood_entries` table.
+ *  - v2 → v3 (Phase 7.1): adds `correction_weight INTEGER NOT NULL DEFAULT 0`
+ *    column to `ikd_events` and backfills weight 1 onto every legacy
+ *    `is_correction = 1` row so historical error rates are continuous.
  *
  * Runs on a connected device or emulator via
  * `./gradlew connectedCoreDebugAndroidTest`.
@@ -47,7 +42,7 @@ class IkdDatabaseMigrationTest {
         helper.createDatabase(TEST_DB, 1).apply {
             // Seed one session, one event, one sample. Use raw SQL to keep
             // the test independent of the Room-generated DAO surface (which
-            // ships v2 schemas only after the bump).
+            // ships v3 schemas only after the latest bump).
             execSQL(
                 "INSERT INTO sessions (session_id, started_at, ended_at, " +
                     "event_count, sensor_count, device_orientation, locale) " +
@@ -101,7 +96,7 @@ class IkdDatabaseMigrationTest {
 
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val db = Room.databaseBuilder(context, IkdDatabase::class.java, TEST_DB)
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .build()
 
         try {
@@ -161,6 +156,98 @@ class IkdDatabaseMigrationTest {
         } finally {
             db.close()
             context.deleteDatabase(TEST_DB)
+        }
+    }
+
+    /**
+     * Phase 7.1: v2 → v3 migration adds the `correction_weight` column to
+     * `ikd_events` and backfills weight 1 on every existing
+     * `is_correction = 1` row. New rows default the column to 0 unless the
+     * caller specifies otherwise.
+     */
+    @Test
+    fun migrate_2_to_3_addsCorrectionWeightColumnAndBackfillsCorrections() {
+        // Seed at v2 (already includes mood_entries from v1 → v2).
+        helper.createDatabase(TEST_DB, 2).apply {
+            execSQL(
+                "INSERT INTO sessions (session_id, started_at, ended_at, " +
+                    "event_count, sensor_count, device_orientation, locale) " +
+                    "VALUES ('s1', 1000, 2000, 3, 0, 0, 'en-US')"
+            )
+            // Three events: one ALPHA (no correction), one BACKSPACE
+            // (is_correction = 1 → backfilled to weight 1), one
+            // AUTOCORRECT (is_correction = 1 → backfilled to weight 1
+            // because we don't know the original replaced length).
+            execSQL(
+                "INSERT INTO ikd_events (session_id, timestamp, event_category, " +
+                    "ikd_ms, hold_time_ms, flight_time_ms, is_correction) " +
+                    "VALUES ('s1', 1100, 'ALPHA', 100, 80, 20, 0)"
+            )
+            execSQL(
+                "INSERT INTO ikd_events (session_id, timestamp, event_category, " +
+                    "ikd_ms, hold_time_ms, flight_time_ms, is_correction) " +
+                    "VALUES ('s1', 1200, 'BACKSPACE', 80, 60, 20, 1)"
+            )
+            execSQL(
+                "INSERT INTO ikd_events (session_id, timestamp, event_category, " +
+                    "ikd_ms, hold_time_ms, flight_time_ms, is_correction) " +
+                    "VALUES ('s1', 1300, 'AUTOCORRECT', -1, -1, -1, 1)"
+            )
+            close()
+        }
+
+        val migrated = helper.runMigrationsAndValidate(
+            name = TEST_DB,
+            version = 3,
+            validateDroppedTables = true,
+            MIGRATION_2_3,
+        )
+
+        // ALPHA row stays at weight 0 (column default).
+        migrated.query(
+            "SELECT correction_weight FROM ikd_events WHERE event_category = 'ALPHA'"
+        ).use {
+            assertTrue(it.moveToFirst())
+            assertEquals(0, it.getInt(0))
+        }
+        // BACKSPACE row backfilled to weight 1.
+        migrated.query(
+            "SELECT correction_weight FROM ikd_events WHERE event_category = 'BACKSPACE'"
+        ).use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
+        // AUTOCORRECT (legacy) row backfilled to weight 1 — we don't know the
+        // real replaced span on rows captured before Phase 7.1.
+        migrated.query(
+            "SELECT correction_weight FROM ikd_events WHERE event_category = 'AUTOCORRECT'"
+        ).use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
+
+        // Original three events still present (no orphaned rows from the bump).
+        migrated.query("SELECT count(*) FROM ikd_events").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(3, it.getInt(0))
+        }
+        migrated.query("SELECT count(*) FROM sessions").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
+
+        // New rows respect the v3 column shape.
+        migrated.execSQL(
+            "INSERT INTO ikd_events (session_id, timestamp, event_category, " +
+                "ikd_ms, hold_time_ms, flight_time_ms, is_correction, " +
+                "correction_weight) " +
+                "VALUES ('s1', 1400, 'AUTOCORRECT', -1, -1, -1, 1, 9)"
+        )
+        migrated.query(
+            "SELECT correction_weight FROM ikd_events WHERE timestamp = 1400"
+        ).use {
+            assertTrue(it.moveToFirst())
+            assertEquals(9, it.getInt(0))
         }
     }
 

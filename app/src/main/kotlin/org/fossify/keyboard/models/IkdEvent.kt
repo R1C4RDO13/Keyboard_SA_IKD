@@ -29,5 +29,18 @@ data class IkdEvent(
     @ColumnInfo(name = "ikd_ms") var ikdMs: Long,
     @ColumnInfo(name = "hold_time_ms") var holdTimeMs: Long,
     @ColumnInfo(name = "flight_time_ms") var flightTimeMs: Long,
-    @ColumnInfo(name = "is_correction") var isCorrection: Boolean
+    @ColumnInfo(name = "is_correction") var isCorrection: Boolean,
+    /**
+     * Phase 7.1: per-event "weight" of a correction.
+     * - `BACKSPACE` rows: 1 (one keystroke = one correction action).
+     * - `AUTOCORRECT` rows: replaced span length (`oldSelEnd - oldSelStart`,
+     *   coerced to ≥ 1).
+     * - Everything else (ALPHA / DIGIT / SPACE / ENTER / OTHER / EMOJI): 0.
+     *
+     * Used by the weighted error-rate formula `100 * SUM(correction_weight)
+     * / keystrokeCount` (where `keystrokeCount` = `COUNT(*) - COUNT(AUTOCORRECT)`).
+     * Sessions with no autocorrects are byte-identical between the row-count
+     * formula and this one.
+     */
+    @ColumnInfo(name = "correction_weight", defaultValue = "0") var correctionWeight: Int = 0
 )

@@ -254,6 +254,9 @@ object LiveCaptureSessionStore {
                         holdTimeMs = ev.holdTimeMs,
                         flightTimeMs = ev.flightTimeMs,
                         isCorrection = ev.isCorrection,
+                        // Phase 7.1: forward the per-event correction weight
+                        // verbatim. Buffer / flusher logic is otherwise unchanged.
+                        correctionWeight = ev.correctionWeight,
                     )
                 }
                 appContext.ikdDB.IkdEventDao().insertAll(ikdEvents)
