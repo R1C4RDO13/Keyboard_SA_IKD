@@ -197,4 +197,82 @@ interface IkdEventDao {
         toMs: Long,
         moodScore: Int?,
     ): List<DailyBucketRow>
+
+    /**
+     * Phase 9.6: 24-hour keystroke distribution within the selected range.
+     * Returns ≤ 24 rows, one per hour-of-day with at least one keystroke.
+     * AUTOCORRECT rows excluded.
+     */
+    @Query(
+        """
+        SELECT
+            CAST(strftime('%H', timestamp / 1000, 'unixepoch', 'localtime') AS INTEGER) AS hour,
+            COUNT(*) AS keystrokeCount
+        FROM ikd_events
+        WHERE event_category != 'AUTOCORRECT'
+          AND timestamp >= :fromMs
+          AND timestamp <  :toMs
+          AND (:moodScore IS NULL
+               OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+        GROUP BY hour
+        ORDER BY hour
+        """
+    )
+    fun getHourlyKeystrokes(
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int?,
+    ): List<HourlyBucketRow>
+
+    /**
+     * Phase 9.6: hour × day-of-week aggregation across **all-time** data.
+     * Returns ≤ 168 rows. The `dow` column is SQLite's native 0=Sunday;
+     * the heatmap renderer reorders columns to start at Monday.
+     *
+     * Range-independent — Phase 9 orchestrator Decision #18 (a single
+     * week is too sparse for a circadian pattern).
+     */
+    @Query(
+        """
+        SELECT
+            CAST(strftime('%w', timestamp / 1000, 'unixepoch', 'localtime') AS INTEGER) AS dow,
+            CAST(strftime('%H', timestamp / 1000, 'unixepoch', 'localtime') AS INTEGER) AS hour,
+            COUNT(*) AS keystrokeCount
+        FROM ikd_events
+        WHERE event_category != 'AUTOCORRECT'
+          AND (:moodScore IS NULL
+               OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+        GROUP BY dow, hour
+        ORDER BY dow, hour
+        """
+    )
+    fun getHourByWeekday(moodScore: Int?): List<HourWeekdayRow>
+
+    /**
+     * Phase 9.6 / 9.9: per-`(day, hour)` keystroke aggregation. Worst case
+     * 30d × 24h = 720 rows for Month range, 90 × 24 = 2160 at default
+     * retention but typical sparse activity keeps it well under that.
+     * AUTOCORRECT rows excluded.
+     */
+    @Query(
+        """
+        SELECT
+            strftime('%Y-%m-%d', timestamp / 1000, 'unixepoch', 'localtime') AS day,
+            CAST(strftime('%H', timestamp / 1000, 'unixepoch', 'localtime') AS INTEGER) AS hour,
+            COUNT(*) AS keystrokeCount
+        FROM ikd_events
+        WHERE event_category != 'AUTOCORRECT'
+          AND timestamp >= :fromMs
+          AND timestamp <  :toMs
+          AND (:moodScore IS NULL
+               OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+        GROUP BY day, hour
+        ORDER BY day, hour
+        """
+    )
+    fun getDayHourBuckets(
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int?,
+    ): List<DayHourBucketRow>
 }

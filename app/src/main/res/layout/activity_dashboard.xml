@@ -337,6 +337,80 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Phase 9.6: 24-hour bar chart card. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dashboard_hourly_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:visibility="gone"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/normal_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_chart_hourly_title"
+                        android:textStyle="bold" />
+
+                    <org.fossify.keyboard.views.IkdLineChartView
+                        android:id="@+id/dashboard_hourly_chart"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:layout_marginTop="@dimen/small_margin" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Phase 9.6: Circadian (hour×weekday) heatmap card.
+                 Always all-time per orchestrator Decision #18 — subtitle
+                 documents the static scope. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dashboard_circadian_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:visibility="gone"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/normal_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_chart_circadian_title"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_circadian_subtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_circadian_subtitle"
+                        android:textSize="@dimen/smaller_text_size"
+                        android:textStyle="italic" />
+
+                    <org.fossify.keyboard.views.IkdHeatmapView
+                        android:id="@+id/dashboard_circadian_heatmap"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/small_margin" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Phase 9.1: Mood section header (primary-coloured). Hidden
                  when both child mood cards are gone. -->
             <org.fossify.commons.views.MyTextView

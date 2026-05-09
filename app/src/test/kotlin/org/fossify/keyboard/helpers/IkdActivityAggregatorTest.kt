@@ -65,6 +65,27 @@ class IkdActivityAggregatorTest {
     }
 
     @Test
+    fun circadian_168Cells_arePreserved() {
+        // 7 weekdays × 24 hours = 168 max rows.
+        val rows = (0 until 7).flatMap { dow ->
+            (0 until 24).map { hour ->
+                HourWeekdayRow(dow = dow, hour = hour, keystrokeCount = dow * 100 + hour)
+            }
+        }
+        val snap = IkdActivityAggregator.buildSnapshot(
+            range = Range.ALL_TIME,
+            daily = emptyList(),
+            hourly = emptyList(),
+            dayHour = emptyList(),
+            circadian = rows,
+        )
+        assertEquals(168, snap.circadianCells.size)
+        // Spot check one cell: (dow=3, hour=15) → count 315.
+        val sample = snap.circadianCells.first { it.dow == 3 && it.hour == 15 }
+        assertEquals(315, sample.keystrokeCount)
+    }
+
+    @Test
     fun hourlyAndDayHour_propagateUnchanged() {
         // Phase 9.6 + 9.9 fixture.
         val snap = IkdActivityAggregator.buildSnapshot(

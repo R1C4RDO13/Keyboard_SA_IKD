@@ -107,6 +107,9 @@ class DashboardActivity : SimpleActivity() {
         val backgroundColor = getProperBackgroundColor()
         binding.dashboardCalendarHeatmapCard.setCardBackgroundColor(backgroundColor)
         binding.dashboardDailyKeypressCard.setCardBackgroundColor(backgroundColor)
+        // Phase 9.6: hourly + circadian cards.
+        binding.dashboardHourlyCard.setCardBackgroundColor(backgroundColor)
+        binding.dashboardCircadianCard.setCardBackgroundColor(backgroundColor)
     }
 
     private fun applyRangeToggleColors() {
@@ -422,13 +425,122 @@ class DashboardActivity : SimpleActivity() {
      */
     private fun renderDailyActivitySection(activity: IkdActivityAggregator.ActivitySnapshot) {
         val hasDaily = activity.dailyBuckets.isNotEmpty()
+        val hasHourly = activity.hourlyBuckets.isNotEmpty()
+        val hasCircadian = activity.circadianCells.isNotEmpty()
+        // Phase 9.6: section is visible whenever any of its widgets has data.
+        val anyVisible = hasDaily || hasHourly || hasCircadian
+        binding.dashboardSectionHeaderDailyActivity.beVisibleIf(anyVisible)
+
         binding.dashboardCalendarHeatmapCard.beVisibleIf(hasDaily)
         binding.dashboardDailyKeypressCard.beVisibleIf(hasDaily)
-        binding.dashboardSectionHeaderDailyActivity.beVisibleIf(hasDaily)
-        if (!hasDaily) return
+        if (hasDaily) {
+            bindCalendarHeatmap(activity.dailyBuckets)
+            bindDailyKeypressBar(activity.dailyBuckets)
+        }
 
-        bindCalendarHeatmap(activity.dailyBuckets)
-        bindDailyKeypressBar(activity.dailyBuckets)
+        binding.dashboardHourlyCard.beVisibleIf(hasHourly)
+        if (hasHourly) {
+            bindHourlyBar(activity.hourlyBuckets)
+        }
+
+        binding.dashboardCircadianCard.beVisibleIf(hasCircadian)
+        if (hasCircadian) {
+            bindCircadianHeatmap(activity.circadianCells)
+        }
+    }
+
+    /**
+     * Phase 9.6: 24-hour bar chart. Reuses [IkdLineChartView]; X axis
+     * labels every 6 hours (00 / 06 / 12 / 18). Sparse hours are
+     * propagated as zero-count entries so the X axis stays aligned at
+     * 0..23 — empty hour rows from the SQL are zero-filled here.
+     */
+    private fun bindHourlyBar(hourly: List<IkdActivityAggregator.HourlyBucket>) {
+        val byHour = hourly.associateBy { it.hour }
+        val labels = (0 until HOURS_PER_DAY).map { hour ->
+            when (hour) {
+                HOUR_LABEL_0 -> getString(R.string.dashboard_hour_label_00)
+                HOUR_LABEL_6 -> getString(R.string.dashboard_hour_label_06)
+                HOUR_LABEL_12 -> getString(R.string.dashboard_hour_label_12)
+                HOUR_LABEL_18 -> getString(R.string.dashboard_hour_label_18)
+                else -> ""
+            }
+        }
+        val values = (0 until HOURS_PER_DAY).map { (byHour[it]?.keystrokeCount ?: 0).toFloat() }
+        binding.dashboardHourlyChart.setData(
+            labels,
+            values,
+            getString(R.string.dashboard_chart_hourly_y_label),
+        )
+    }
+
+    /**
+     * Phase 9.6: hour × weekday circadian heatmap. SQL returns `dow` as
+     * `0=Sun..6=Sat`; this helper reorders to Mon..Sun (rows 0..6) for
+     * Western convention and lays out 24 hour columns.
+     */
+    private fun bindCircadianHeatmap(rows: List<org.fossify.keyboard.interfaces.HourWeekdayRow>) {
+        if (rows.isEmpty()) return
+        val maxCount = rows.maxOf { it.keystrokeCount }
+        val cells = rows.map { row ->
+            // SQLite %w: 0=Sun..6=Sat. Map to Mon=0..Sun=6.
+            val rowIdx = (row.dow + DOW_SQL_TO_MON_OFFSET) % DOW_COUNT
+            val weekdayLabel = weekdayLabelForRow(rowIdx)
+            IkdHeatmapView.Cell(
+                column = row.hour,
+                row = rowIdx,
+                count = row.keystrokeCount,
+                label = "$weekdayLabel ${row.hour}",
+            )
+        }
+        val heatmap = binding.dashboardCircadianHeatmap
+        heatmap.setData(cells, columns = HOURS_PER_DAY, rows = DOW_COUNT, maxIntensity = maxCount)
+        // X axis: hour labels every 6 hours.
+        val xLabels = (0 until HOURS_PER_DAY).map { hour ->
+            when (hour) {
+                HOUR_LABEL_0 -> getString(R.string.dashboard_hour_label_00)
+                HOUR_LABEL_6 -> getString(R.string.dashboard_hour_label_06)
+                HOUR_LABEL_12 -> getString(R.string.dashboard_hour_label_12)
+                HOUR_LABEL_18 -> getString(R.string.dashboard_hour_label_18)
+                else -> ""
+            }
+        }
+        val yLabels = listOf(
+            getString(R.string.dashboard_dow_mon),
+            getString(R.string.dashboard_dow_tue),
+            getString(R.string.dashboard_dow_wed),
+            getString(R.string.dashboard_dow_thu),
+            getString(R.string.dashboard_dow_fri),
+            getString(R.string.dashboard_dow_sat),
+            getString(R.string.dashboard_dow_sun),
+        )
+        heatmap.setAxisLabels(x = xLabels, y = yLabels)
+        heatmap.setOnCellClickListener { cell ->
+            if (cell.count > 0) {
+                val weekdayLabel = weekdayLabelForRow(cell.row)
+                Toast.makeText(
+                    this,
+                    getString(
+                        R.string.dashboard_circadian_cell_toast,
+                        weekdayLabel,
+                        cell.column,
+                        cell.count,
+                    ),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        }
+    }
+
+    private fun weekdayLabelForRow(row: Int): String = when (row) {
+        DOW_ROW_MON -> getString(R.string.dashboard_dow_mon)
+        DOW_ROW_TUE -> getString(R.string.dashboard_dow_tue)
+        DOW_ROW_WED -> getString(R.string.dashboard_dow_wed)
+        DOW_ROW_THU -> getString(R.string.dashboard_dow_thu)
+        DOW_ROW_FRI -> getString(R.string.dashboard_dow_fri)
+        DOW_ROW_SAT -> getString(R.string.dashboard_dow_sat)
+        DOW_ROW_SUN -> getString(R.string.dashboard_dow_sun)
+        else -> ""
     }
 
     /**
@@ -653,6 +765,22 @@ class DashboardActivity : SimpleActivity() {
         private const val DOW_COUNT = 7
         private const val DOW_MON_OFFSET = 5 // (DAY_OF_WEEK + 5) % 7 → Mon=0, Sun=6
         private const val MAX_HEATMAP_ROWS = 53
+
+        // Phase 9.6: 24-hour bar / circadian heatmap constants.
+        private const val HOURS_PER_DAY = 24
+        private const val HOUR_LABEL_0 = 0
+        private const val HOUR_LABEL_6 = 6
+        private const val HOUR_LABEL_12 = 12
+        private const val HOUR_LABEL_18 = 18
+        // SQLite %w: 0=Sun..6=Sat. Map to Mon=0..Sun=6 → (dow + 6) % 7.
+        private const val DOW_SQL_TO_MON_OFFSET = 6
+        private const val DOW_ROW_MON = 0
+        private const val DOW_ROW_TUE = 1
+        private const val DOW_ROW_WED = 2
+        private const val DOW_ROW_THU = 3
+        private const val DOW_ROW_FRI = 4
+        private const val DOW_ROW_SAT = 5
+        private const val DOW_ROW_SUN = 6
 
         // Phase 8: Distribution-panel ProgressBar tops out at 100 (`max`
         // attribute on the row layout). Each row's progress is its share

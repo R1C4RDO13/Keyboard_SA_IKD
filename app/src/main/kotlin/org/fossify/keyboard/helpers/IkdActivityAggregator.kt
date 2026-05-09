@@ -78,12 +78,11 @@ class IkdActivityAggregator(private val db: IkdDatabase) {
             val (fromMs, toMs) = computeRangeWindow(range, nowMs)
 
             val daily = db.IkdEventDao().getDailyKeystrokes(fromMs, toMs, moodFilter)
-            // Phase 9.6 fills in hourly + circadian; 9.9 fills in dayHour.
-            // 9.5 ships with empty placeholders — DashboardActivity hides
-            // the matching widgets when their list is empty.
-            val hourly = emptyList<HourlyBucketRow>()
-            val dayHour = emptyList<DayHourBucketRow>()
-            val circadian = emptyList<HourWeekdayRow>()
+            val hourly = db.IkdEventDao().getHourlyKeystrokes(fromMs, toMs, moodFilter)
+            val dayHour = db.IkdEventDao().getDayHourBuckets(fromMs, toMs, moodFilter)
+            // Circadian heatmap is range-independent (Decision #18) — never
+            // pass `fromMs`/`toMs` so it always returns the all-time fold.
+            val circadian = db.IkdEventDao().getHourByWeekday(moodFilter)
 
             result = Companion.buildSnapshot(range, daily, hourly, dayHour, circadian)
         }

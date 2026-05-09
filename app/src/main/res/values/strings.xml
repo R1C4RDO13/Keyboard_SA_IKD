@@ -150,6 +150,17 @@
     <string name="dashboard_dow_sat">S</string>
     <string name="dashboard_dow_sun">S</string>
 
+    <!-- Phase 9.6: Hourly Activity widgets -->
+    <string name="dashboard_chart_hourly_title">Hourly keypresses</string>
+    <string name="dashboard_chart_hourly_y_label">Keystrokes</string>
+    <string name="dashboard_chart_circadian_title">When you type</string>
+    <string name="dashboard_circadian_subtitle">Across all your sessions</string>
+    <string name="dashboard_hour_label_00">00</string>
+    <string name="dashboard_hour_label_06">06</string>
+    <string name="dashboard_hour_label_12">12</string>
+    <string name="dashboard_hour_label_18">18</string>
+    <string name="dashboard_circadian_cell_toast">%1$s %2$02d:00 — %3$d keystrokes</string>
+
     <!-- Phase 9.3: Typing Habits section -->
     <string name="dashboard_section_habits">Habits</string>
     <string name="dashboard_habits_kpi_sessions">Sessions</string>
