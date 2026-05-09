@@ -124,6 +124,13 @@
     <string name="session_mood_kpi_label">Mood</string>
     <string name="session_mood_chip_format">Mood: %1$s %2$s</string>
 
+    <!-- Phase 8: global dashboard mood widgets -->
+    <string name="dashboard_chart_mood_title">Mood over Time</string>
+    <string name="dashboard_chart_mood_y_label">Mood (1=Happiness → 6=Anger)</string>
+    <string name="dashboard_mood_distribution_title">Mood Distribution</string>
+    <string name="dashboard_kpi_avg_mood_label">Avg Mood</string>
+    <string name="dashboard_avg_mood_value_format">%1$s %2$.1f</string>
+
     <!-- Phase 8: emotion bar (Ekman 6, valence-ordered) -->
     <string name="mood_label_happiness">Happiness</string>
     <string name="mood_label_surprise">Surprise</string>

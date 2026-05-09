@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Phase 8: one row in the global dashboard's Mood Distribution panel.
+  Six instances are inflated via <include> with distinct ids; the
+  activity sets the emoji / label / progress / count programmatically.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/small_margin"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/mood_row_emoji"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/big_text_size"
+        tools:text="😊" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/mood_row_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/normal_margin"
+        android:layout_weight="1"
+        tools:text="Happiness" />
+
+    <ProgressBar
+        android:id="@+id/mood_row_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/small_margin"
+        android:max="100" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/mood_row_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/small_margin"
+        android:textStyle="bold"
+        tools:text="12" />
+
+</LinearLayout>
