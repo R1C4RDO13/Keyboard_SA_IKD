@@ -55,4 +55,41 @@ interface SensorSampleDao {
         startMs: Long,
         bucketWidthMs: Long,
     ): List<SensorBucketRow>
+
+    /**
+     * Phase 9.2: bucketed *global* sensor aggregation for the dashboard
+     * Trends section. One row per `(bucket, sensorType)` pair.
+     *
+     * `:moodScore` is `IS NULL`-parameterised so the same query covers both
+     * the unfiltered case (`null`) and a mood-scoped recompute. Sensors are a
+     * lower-frequency table than `ikd_events`, so the parameterised path is
+     * acceptable here — see Phase 9 orchestrator Decision #14.
+     *
+     * @param bucketFormat strftime pattern ("%Y-%m-%d" daily, "%Y-%W" weekly).
+     * @param fromMs inclusive lower bound on `timestamp` (epoch millis).
+     * @param toMs exclusive upper bound on `timestamp` (epoch millis).
+     * @param moodScore optional mood-filter scope; null disables filtering.
+     */
+    @Query(
+        """
+        SELECT
+            strftime(:bucketFormat, timestamp / 1000, 'unixepoch', 'localtime') AS bucket,
+            sensor_type AS sensorType,
+            AVG(x * x + y * y + z * z) AS avgSquaredMagnitude,
+            COUNT(*) AS sampleCount
+        FROM sensor_samples
+        WHERE timestamp >= :fromMs
+          AND timestamp <  :toMs
+          AND (:moodScore IS NULL
+               OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+        GROUP BY bucket, sensor_type
+        ORDER BY sensor_type, bucket
+        """
+    )
+    fun getSensorBuckets(
+        bucketFormat: String,
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int?,
+    ): List<SensorBucketAggregateRow>
 }

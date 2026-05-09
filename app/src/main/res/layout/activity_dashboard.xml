@@ -227,6 +227,40 @@
                 android:layout_height="200dp"
                 android:layout_marginTop="@dimen/small_margin" />
 
+            <!-- Phase 9.2: Gyro magnitude trend chart -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_gyro_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_chart_gyro_title"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <org.fossify.keyboard.views.IkdLineChartView
+                android:id="@+id/dashboard_chart_gyro"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="@dimen/small_margin"
+                android:visibility="gone" />
+
+            <!-- Phase 9.2: Accel magnitude trend chart -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_accel_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_chart_accel_title"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <org.fossify.keyboard.views.IkdLineChartView
+                android:id="@+id/dashboard_chart_accel"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="@dimen/small_margin"
+                android:visibility="gone" />
+
             <!-- Phase 9.1: Mood section header (primary-coloured). Hidden
                  when both child mood cards are gone. -->
             <org.fossify.commons.views.MyTextView

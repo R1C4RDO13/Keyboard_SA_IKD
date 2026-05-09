@@ -28,8 +28,10 @@ import org.fossify.keyboard.databinding.ItemMoodDistributionRowBinding
 import org.fossify.keyboard.databinding.ItemMoodLegendSwatchBinding
 import org.fossify.keyboard.extensions.ikdAggregator
 import org.fossify.keyboard.extensions.ikdMoodAggregator
+import org.fossify.keyboard.extensions.ikdSensorAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
+import org.fossify.keyboard.helpers.IkdSensorAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.views.IkdStackedBarChartView
 import java.text.SimpleDateFormat
@@ -152,24 +154,35 @@ class DashboardActivity : SimpleActivity() {
             // a single round-trip per range.
             // Phase 8.3: also fold in the new per-bucket-per-category mix
             // snapshot for the stacked-bar chart.
+            // Phase 9.2: add the sensor magnitude aggregator on the same hop.
             val agg = ikdAggregator
             val moodAgg = ikdMoodAggregator
+            val sensorAgg = ikdSensorAggregator
             val range = currentRange
-            val triple = withContext(Dispatchers.IO) {
-                Triple(
-                    agg.snapshot(range),
-                    moodAgg.snapshot(range),
-                    moodAgg.mixSnapshot(range),
+            val payload = withContext(Dispatchers.IO) {
+                DashboardPayload(
+                    ikd = agg.snapshot(range),
+                    mood = moodAgg.snapshot(range),
+                    moodMix = moodAgg.mixSnapshot(range),
+                    sensor = sensorAgg.snapshot(range),
                 )
             }
-            render(triple.first, triple.second, triple.third)
+            render(payload.ikd, payload.mood, payload.moodMix, payload.sensor)
         }
     }
+
+    private data class DashboardPayload(
+        val ikd: IkdAggregator.Snapshot,
+        val mood: IkdMoodAggregator.MoodSnapshot,
+        val moodMix: IkdMoodAggregator.MoodMixSnapshot,
+        val sensor: IkdSensorAggregator.Snapshot,
+    )
 
     private fun render(
         snap: IkdAggregator.Snapshot,
         moodSnap: IkdMoodAggregator.MoodSnapshot,
         moodMix: IkdMoodAggregator.MoodMixSnapshot,
+        sensor: IkdSensorAggregator.Snapshot,
     ) {
         val isEmpty = snap.totalSessions == 0
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
@@ -190,6 +203,7 @@ class DashboardActivity : SimpleActivity() {
             ?.let { getString(R.string.dashboard_kpi_error_rate_value, it) } ?: placeholder
 
         renderCharts(snap)
+        renderSensorTrendCharts(sensor)
         renderMoodSection(snap, moodSnap, moodMix)
     }
 
@@ -202,6 +216,42 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardChartSpeed.setData(labels, wpmValues, getString(R.string.dashboard_chart_speed))
         binding.dashboardChartIkd.setData(labels, ikdValues, getString(R.string.dashboard_chart_ikd))
         binding.dashboardChartError.setData(labels, errorValues, getString(R.string.dashboard_chart_error))
+    }
+
+    /**
+     * Phase 9.2: bind the gyro and accel global trend charts. Each chart
+     * is hidden along with its title when no buckets carry that sensor
+     * (e.g., user disabled gyro or all sessions in range are sensor-free).
+     * Empty buckets render as line breaks via `IkdLineChartView`'s null
+     * convention from Phase 5.
+     */
+    private fun renderSensorTrendCharts(sensor: IkdSensorAggregator.Snapshot) {
+        val labels = sensor.buckets.map { formatBucketLabel(it.label, sensor.range) }
+        val gyroValues = sensor.buckets.map { it.gyroMag?.toFloat() }
+        val accelValues = sensor.buckets.map { it.accelMag?.toFloat() }
+
+        val hasGyro = gyroValues.any { it != null }
+        val hasAccel = accelValues.any { it != null }
+
+        binding.dashboardChartGyroTitle.beVisibleIf(hasGyro)
+        binding.dashboardChartGyro.beVisibleIf(hasGyro)
+        if (hasGyro) {
+            binding.dashboardChartGyro.setData(
+                labels,
+                gyroValues,
+                getString(R.string.dashboard_chart_gyro_y_label),
+            )
+        }
+
+        binding.dashboardChartAccelTitle.beVisibleIf(hasAccel)
+        binding.dashboardChartAccel.beVisibleIf(hasAccel)
+        if (hasAccel) {
+            binding.dashboardChartAccel.setData(
+                labels,
+                accelValues,
+                getString(R.string.dashboard_chart_accel_y_label),
+            )
+        }
     }
 
     /**

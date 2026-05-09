@@ -128,6 +128,12 @@
     <string name="dashboard_section_trends">Trends</string>
     <string name="dashboard_section_mood">Mood</string>
 
+    <!-- Phase 9.2: gyro / accel global trend charts -->
+    <string name="dashboard_chart_gyro_title">Gyro magnitude over time</string>
+    <string name="dashboard_chart_accel_title">Accel magnitude over time</string>
+    <string name="dashboard_chart_gyro_y_label">Avg gyro magnitude (rad/s)</string>
+    <string name="dashboard_chart_accel_y_label">Avg accel magnitude (m/s²)</string>
+
     <!-- Phase 8: global dashboard mood widgets -->
     <string name="dashboard_mood_distribution_title">Mood Distribution</string>
 
