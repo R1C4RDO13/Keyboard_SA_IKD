@@ -26,6 +26,6 @@
     <dimen name="session_dashboard_chart_height">200dp</dimen>
 
     <!-- Phase 8 — keyboard mood bar -->
-    <dimen name="mood_bar_button_size">32dp</dimen>
-    <dimen name="mood_bar_button_text_size">18sp</dimen>
+    <dimen name="mood_bar_button_size">36dp</dimen>
+    <dimen name="mood_bar_button_text_size">22sp</dimen>
 </resources>
