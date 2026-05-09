@@ -78,6 +78,36 @@
                 android:text="@string/ikd_privacy_mode_description"
                 android:textSize="@dimen/smaller_text_size" />
 
+            <!-- Phase 8: settings-screen affordance for the keyboard's 🛡️
+                 button. Backed by the same Config.privacyModeEnabled flag
+                 (Decision #25 — no new pref key). Two UI affordances over
+                 the same persisted boolean: this row, and the keyboard
+                 mood bar's leftmost slot. -->
+            <RelativeLayout
+                android:id="@+id/ikd_privacy_default_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/ikd_privacy_default_switch"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_settings_privacy_default" />
+
+            </RelativeLayout>
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/ikd_privacy_default_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/normal_margin"
+                android:layout_marginTop="@dimen/tiny_margin"
+                android:text="@string/ikd_settings_privacy_default_summary"
+                android:textSize="@dimen/smaller_text_size" />
+
             <!-- Sensor collection section -->
             <TextView
                 android:id="@+id/ikd_section_sensors_label"
