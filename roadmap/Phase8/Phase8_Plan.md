@@ -5,6 +5,17 @@
 **Branch:** `feat/phase8-mood-bar` — cut from `main` after Phase 7 has been merged. Polish landed on `fix/phase8-ui-polish` in a follow-up merge.
 **Scope (one sentence):** Replace the standalone privacy-toggle button with a seven-button integrated emotion bar — privacy shield + Ekman's six basic emotions ordered best-to-worst by valence (`🛡️ 😊 😲 🤢 😢 😨 😠`) — on the keyboard toolbar, surface the existing `Config.privacyModeEnabled` flag in `IkdSettingsActivity` as a "Privacy mode on by default" toggle, persist the chosen emotion as a per-session `MoodEntry` row in `ikd.db`, and surface that signal as a new dimension on both the per-session dashboard (`EventFeedActivity`) and the global insights dashboard (`DashboardActivity`) — without touching the IKD capture path.
 
+> **Migration version note.** This plan is written against the original
+> phase ordering, in which Phase 8 was the first migration on `ikd.db`
+> (1 → 2). In practice, Phase 8 shipped first and Phase 7.1 — the
+> AUTOCORRECT replacement-weight phase — landed afterwards, adding its
+> own `Migration(2, 3)` for the `correction_weight` column. So while the
+> body of this plan refers throughout to `Migration(1, 2)` and
+> "first-ever migration", the live `IkdDatabase.version` is now `3`, and
+> `MIGRATION_1_2` here is one of two registered migrations alongside
+> `MIGRATION_2_3` from Phase 7.1. The schema bytes added by this phase
+> are unchanged.
+
 This is the **first phase to bump `IkdDatabase.version`** (1 → 2). The `mood_entries` table is added via a strictly additive `Migration(1, 2)` — no existing column or row is rewritten. It is also the first phase since Phase 7 to reopen `MyKeyboardView.kt`, but only to add the emotion bar and remove the now-redundant standalone `privacy_toggle_button` from Phase 2; the existing key-press / key-up / emoji code paths are not edited. Capture (`SimpleKeyboardIME`, `LiveCaptureSessionStore`, `KinematicSensorHelper`, the `IkdEvent` / `SensorSample` entities, `IkdRetentionWorker`) is fully frozen.
 
 The six emotion categories are **Ekman's basic emotions** [1, 2] — anger, disgust, fear, happiness, sadness, surprise. The Ekman list is research-grounded; the **best-to-worst valence ordering** of the score id (1 = Happiness, 6 = Anger) is a deliberate Phase 8 product choice, not part of Ekman's discrete-emotions framework — see Decision #4 and Section 11 for what's sourced and what's a product call. The ordinal scoring means `AVG(mood_score)` is mathematically meaningful, so the global dashboard supports both an "Avg Mood" KPI and a "Mood over Time" line chart.

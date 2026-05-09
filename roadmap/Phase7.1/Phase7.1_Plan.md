@@ -1,10 +1,20 @@
 # Phase 7.1 — AUTOCORRECT Replacement Weight
 
-**Status:** Planned
+**Status:** Implemented (landed directly on `main` after Phase 8 had merged)
 **Depends on:** Phase 7 (the `AUTOCORRECT` capture path; the `keystrokeCount` SQL projection added there is reused as the new error-rate denominator)
-**Blocks:** Phase 8 (Phase 8's `Migration(1, 2)` becomes `Migration(2, 3)` once Phase 7.1 lands its own `Migration(1, 2)`)
-**Branch:** `feat/phase7.1-autocorrect-weight` — cut from `main` after this plan is reviewed.
+**Blocks:** none
+**Branch:** Implementation landed directly on `main` (sub-phase commits 7.1.1 → 7.1.3) — the per-plan branch hygiene was overridden by the user.
 **Scope (one sentence):** Capture the **replaced character count** for every `AUTOCORRECT` event so that a single autocorrect of a long misspelled word (e.g. typing `ocasdasda` and the editor replacing it with `october`) contributes nine units of error to the metric instead of one — fixing the surprising 9.1% reading the user observed and bringing the formula in line with the WPM denominator chosen in Phase 7.
+
+> **Migration order pivot.** This plan was written assuming Phase 7.1
+> would be the first migration on `ikd.db` (`Migration(1, 2)`). In
+> practice, Phase 8 shipped first and bumped the schema 1 → 2 for
+> `mood_entries`, so Phase 7.1 ended up shipping `Migration(2, 3)`
+> instead — the `correction_weight` column is added on top of the v2
+> schema. The semantics are otherwise unchanged: column shape, backfill
+> SQL, capture wiring, and tests all match this plan. References to
+> `Migration(1, 2)` and "first ever migration" elsewhere in this file
+> reflect the original ordering and remain for historical context.
 
 This is the **first phase to bump `IkdDatabase.version`** (1 → 2), via a strictly additive `Migration(1, 2)` that adds a single column to `ikd_events` and backfills it from the existing `is_correction` flag. It is also a tightly-scoped capture-layer reopen — only `recordAutocorrectEvent(...)` and the BACKSPACE branch of `onKey()` change inside `SimpleKeyboardIME.kt`; nothing else in the IME, `LiveCaptureSessionStore`, the sensor helper, or the retention worker is touched.
 

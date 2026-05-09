@@ -302,6 +302,22 @@ Detailed scope: [`Phase7/Phase7_Plan.md`](Phase7/Phase7_Plan.md)
 
 ---
 
+## Phase 7.1: AUTOCORRECT Replacement Weight
+**Status: Implemented**
+
+Detailed scope: [`Phase7.1/Phase7.1_Plan.md`](Phase7.1/Phase7.1_Plan.md)
+
+**Objective:** Capture the **replaced character count** for every `AUTOCORRECT` event so a single autocorrect of a long misspelled word (the user's `ocasdasda` → `october` test case) contributes 9 units of error to the metric instead of 1 — fixing the surprising 9.1% reading and aligning the error-rate denominator with WPM's keystroke-only denominator from Phase 7.
+
+*   **New `correction_weight INTEGER NOT NULL DEFAULT 0` column on `ikd_events`** with a strictly-additive `Migration(2, 3)` that backfills weight 1 onto every existing `is_correction = 1` row so dashboards over historical data are continuous across the upgrade. (Phase 8 had already shipped its own `Migration(1, 2)` for `mood_entries` by the time Phase 7.1 landed, so the schema bump is 2 → 3, not the original 1 → 2 the plan describes.)
+*   **Capture wiring:** `recordAutocorrectEvent(replacedLength)` carries the new field; `BACKSPACE` rows always set weight 1; the `AUTOCORRECT` heuristic in `maybeRecordExternalReplacement` passes `(oldSelEnd - oldSelStart).coerceAtLeast(1)`.
+*   **New error-rate formula** in both `IkdAggregator` and `IkdSessionStatsLoader`: `100 * SUM(correction_weight) / keystrokeCount` (was `100 * COUNT(is_correction) / eventCount`). Sessions without autocorrects are byte-identical between the two formulas.
+*   **CSV** gains a trailing `correction_weight` column on the timing block; strictly additive, parsers reading the original seven columns ignore the eighth.
+*   **Live diagnostics** (`DiagnosticsActivity.updateComputedMetrics`) mirrors the same formula on the in-memory event list, with a defensive `effectiveWeight()` fallback for events captured just before the migration.
+*   **Folded in:** the Phase 7 follow-up fix for the autocorrect false-positive when the IME commits onto a user-selected range (`pendingOurSelectionReplacement` flag in `SimpleKeyboardIME`). Same heuristic, more accurate.
+
+---
+
 ## Phase 8: Mood Bar & Contextual Overlay
 **Status: Implemented (incl. 8.1 UI polish — see [`Phase8/Phase8_Plan.md`](Phase8/Phase8_Plan.md#12-post-merge-ui-polish-phase-81))**
 
@@ -338,7 +354,7 @@ Detailed scope: [`Phase8/Phase8_Plan.md`](Phase8/Phase8_Plan.md)
 ---
 
 ## Phase 8.3: Mood Distribution over Time (Stacked Bar) on Insights
-**Status: Planned**
+**Status: Implemented**
 
 Detailed scope: [`Phase8/Phase8.3_Plan.md`](Phase8/Phase8.3_Plan.md)
 
