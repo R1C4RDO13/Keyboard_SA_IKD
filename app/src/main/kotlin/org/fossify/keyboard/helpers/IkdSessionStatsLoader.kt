@@ -66,10 +66,12 @@ class IkdSessionStatsLoader(private val db: IkdDatabase) {
          * without standing up a Room DB.
          *
          * - `durationMs` is `null` when the session is in-flight (no `endedAt`).
-         * - `wpm` is `null` when there are not enough events (≤ 1) or the
+         * - `wpm` is `null` when there are not enough keystrokes (≤ 1) or the
          *   duration is unknown / non-positive.
-         * - `errorRatePct` is `null` when there are no events, otherwise it's
-         *   `100 * correctionCount / eventCount`.
+         * - Phase 7.1: `errorRatePct` is `100 * correctionWeight / keystrokeCount`.
+         *   Returns `null` when `keystrokeCount == 0` (a hypothetical session
+         *   with only AUTOCORRECT rows). Sessions with no autocorrects yield
+         *   the same value as the pre-Phase-7.1 row-count formula.
          */
         internal fun compute(record: SessionRecord, statsRow: SessionStatsRow): SessionStats {
             val durationMs = record.endedAt?.let { it - record.startedAt }
@@ -79,7 +81,10 @@ class IkdSessionStatsLoader(private val db: IkdDatabase) {
             // `eventCount` as the "events" count so the user sees every
             // captured row, including autocorrects.
             val wpm = computeWpm(statsRow.keystrokeCount, durationMs)
-            val errorRatePct = computeErrorRate(statsRow.eventCount, statsRow.correctionCount)
+            val errorRatePct = computeErrorRate(
+                statsRow.keystrokeCount,
+                statsRow.correctionWeight,
+            )
             return SessionStats(
                 record = record,
                 durationMs = durationMs,
@@ -99,9 +104,13 @@ class IkdSessionStatsLoader(private val db: IkdDatabase) {
                 MS_PER_MINUTE / durationMs.toDouble()
         }
 
-        private fun computeErrorRate(eventCount: Int, correctionCount: Int): Double? {
-            if (eventCount <= 0) return null
-            return PCT_MULTIPLIER * correctionCount / eventCount
+        private fun computeErrorRate(keystrokeCount: Int, correctionWeight: Int): Double? {
+            // Phase 7.1: hypothetical AUTOCORRECT-only session => null (the KPI
+            // cell shows the existing "—" placeholder). Real sessions always
+            // have ≥ 1 keystroke since the keyboard cannot generate an
+            // autocorrect without a prior keystroke.
+            if (keystrokeCount <= 0) return null
+            return PCT_MULTIPLIER * correctionWeight / keystrokeCount.toDouble()
         }
     }
 }

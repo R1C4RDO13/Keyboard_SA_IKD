@@ -13,14 +13,20 @@ import androidx.room.ColumnInfo
  * Phase 7: `keystrokeCount` is a sibling of `eventCount` that excludes
  * `AUTOCORRECT` rows. The WPM formula uses it as the keystroke denominator
  * (autocorrects are corrections, not new typing); `eventCount` stays a
- * `COUNT(*)` of every event so other consumers (KPI strip "events" cell,
- * error-rate weighting) do not silently drop rows.
+ * `COUNT(*)` of every event so other consumers (KPI strip "events" cell)
+ * do not silently drop rows.
+ *
+ * Phase 7.1: `correctionWeight` is the per-bucket sum of the new
+ * `correction_weight` column on `ikd_events`. Used as the new error-rate
+ * numerator: `errorRatePct = 100 * correctionWeight / keystrokeCount`.
+ * The pre-Phase-7.1 inline `errorRatePct` SQL projection is gone — the
+ * percentage is computed in Kotlin so the formula lives in one place.
  */
 data class EventBucketRow(
     @ColumnInfo(name = "bucket") val bucket: String,
     @ColumnInfo(name = "avgIkdMs") val avgIkdMs: Double?,
-    @ColumnInfo(name = "errorRatePct") val errorRatePct: Double,
     @ColumnInfo(name = "eventCount") val eventCount: Int,
     @ColumnInfo(name = "keystrokeCount") val keystrokeCount: Int,
+    @ColumnInfo(name = "correctionWeight") val correctionWeight: Int,
     @ColumnInfo(name = "sessionCount") val sessionCount: Int,
 )

@@ -10,11 +10,19 @@ import androidx.room.ColumnInfo
  * containing only its first keypress). Callers must surface that as `"—"`
  * rather than zero. `firstTimestamp` / `lastTimestamp` are nullable for the
  * same reason: a session may have its row in `sessions` but no event rows yet.
+ *
+ * Phase 7.1: `correctionWeight` is the per-session sum of the new
+ * `correction_weight` column on `ikd_events`. The new weighted error-rate
+ * formula is `100 * correctionWeight / keystrokeCount`. The legacy
+ * `correctionCount` field is kept alongside for debugging visibility — it
+ * answers "how many correction *rows* are in this session" while
+ * `correctionWeight` answers "what's the magnitude of the typing error".
  */
 data class SessionStatsRow(
     @ColumnInfo(name = "eventCount") val eventCount: Int,
     @ColumnInfo(name = "keystrokeCount") val keystrokeCount: Int,
     @ColumnInfo(name = "correctionCount") val correctionCount: Int,
+    @ColumnInfo(name = "correctionWeight") val correctionWeight: Int,
     @ColumnInfo(name = "avgIkdMs") val avgIkdMs: Double?,
     @ColumnInfo(name = "avgHoldMs") val avgHoldMs: Double?,
     @ColumnInfo(name = "avgFlightMs") val avgFlightMs: Double?,

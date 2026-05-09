@@ -21,6 +21,7 @@ import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityDiagnosticsBinding
 import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.extensions.ikdDB
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_AUTOCORRECT
 import org.fossify.keyboard.helpers.IkdCsvWriter
 import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
@@ -341,9 +342,18 @@ class DiagnosticsActivity : SimpleActivity() {
             } else getString(R.string.diagnostics_value_none)
         } else getString(R.string.diagnostics_value_none)
 
-        // Error rate as % of backspace events
-        binding.diagnosticsErrorRateValue.text = if (events.isNotEmpty()) {
-            val rate = events.count { it.isCorrection } * 100.0 / events.size
+        // Phase 7.1: weighted error rate. Numerator is the sum of per-event
+        // correction weights (BACKSPACE = 1; AUTOCORRECT = replaced span
+        // length); denominator is the keystroke count (events excluding
+        // AUTOCORRECT, matching the WPM denominator). Defensive fallback:
+        // if `is_correction` is true but `correctionWeight == 0`, treat as
+        // weight 1 — covers events captured before the v2 → v3 migration
+        // that may briefly land in the in-memory list with the default-zero
+        // weight (Decision #10 in Phase7.1_Plan.md).
+        val keystrokeCount = events.count { it.eventCategory != EVENT_CATEGORY_AUTOCORRECT }
+        binding.diagnosticsErrorRateValue.text = if (keystrokeCount > 0) {
+            val weight = events.sumOf { effectiveWeight(it).toLong() }
+            val rate = weight * 100.0 / keystrokeCount
             getString(R.string.diagnostics_error_rate_format, rate)
         } else getString(R.string.diagnostics_value_none)
 
@@ -366,6 +376,18 @@ class DiagnosticsActivity : SimpleActivity() {
     }
 
     private fun isValidTiming(value: Long): Boolean = value >= 0
+
+    /**
+     * Phase 7.1: per-event "weight" of a correction, with a defensive
+     * fallback for in-flight events captured before the v2 → v3 migration
+     * (where the column defaulted to 0 even though `is_correction` was
+     * true). Real post-migration events carry the proper weight already.
+     */
+    private fun effectiveWeight(event: KeyTimingEvent): Int = when {
+        event.correctionWeight > 0 -> event.correctionWeight
+        event.isCorrection -> 1
+        else -> 0
+    }
 
     private fun updateViewLogCount(count: Int) {
         binding.diagnosticsViewLogCount.text = if (count > 0) {

@@ -20,7 +20,7 @@ import java.io.IOException
  *
  * Format:
  * ```
- * session_id,timestamp_ms,event_category,ikd_ms,hold_time_ms,flight_time_ms,is_correction
+ * session_id,timestamp_ms,event_category,ikd_ms,hold_time_ms,flight_time_ms,is_correction,correction_weight
  * <timing rows>
  *
  * #sensor_readings
@@ -43,6 +43,10 @@ import java.io.IOException
  * (in-memory store or Room). Parsers reading only the first two blocks
  * remain backwards-compatible — the `#mood_entries` header is treated as
  * trailing content by the existing parser.
+ *
+ * Phase 7.1: timing block gains an eighth `correction_weight` column.
+ * Strictly additive — parsers reading the original seven columns ignore
+ * the eighth.
  */
 object IkdCsvWriter {
 
@@ -56,7 +60,8 @@ object IkdCsvWriter {
         for (row in timingRows) {
             writer.write(
                 "${row.sessionId},${row.timestamp},${row.eventCategory}," +
-                    "${row.ikdMs},${row.holdTimeMs},${row.flightTimeMs},${row.isCorrection}\n"
+                    "${row.ikdMs},${row.holdTimeMs},${row.flightTimeMs}," +
+                    "${row.isCorrection},${row.correctionWeight}\n"
             )
         }
         writer.write("\n#sensor_readings\n")
@@ -78,7 +83,8 @@ object IkdCsvWriter {
     }
 
     private const val TIMING_HEADER =
-        "session_id,timestamp_ms,event_category,ikd_ms,hold_time_ms,flight_time_ms,is_correction\n"
+        "session_id,timestamp_ms,event_category,ikd_ms,hold_time_ms,flight_time_ms," +
+            "is_correction,correction_weight\n"
     private const val SENSOR_HEADER = "session_id,timestamp_ms,sensor_type,x,y,z\n"
     private const val MOOD_HEADER = "session_id,timestamp_ms,mood_score\n"
 
@@ -89,7 +95,8 @@ object IkdCsvWriter {
         val ikdMs: Long,
         val holdTimeMs: Long,
         val flightTimeMs: Long,
-        val isCorrection: Boolean
+        val isCorrection: Boolean,
+        val correctionWeight: Int,
     )
 
     data class SensorRow(
@@ -126,6 +133,7 @@ object IkdCsvWriter {
         holdTimeMs = holdTimeMs,
         flightTimeMs = flightTimeMs,
         isCorrection = isCorrection,
+        correctionWeight = correctionWeight,
     )
 
     fun IkdEvent.asTimingRow() = TimingRow(
@@ -136,6 +144,7 @@ object IkdCsvWriter {
         holdTimeMs = holdTimeMs,
         flightTimeMs = flightTimeMs,
         isCorrection = isCorrection,
+        correctionWeight = correctionWeight,
     )
 
     fun SensorReadingEvent.asSensorRow() = SensorRow(
