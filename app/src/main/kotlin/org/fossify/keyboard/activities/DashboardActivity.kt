@@ -37,6 +37,7 @@ import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
 import org.fossify.keyboard.helpers.IkdSensorAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
+import org.fossify.keyboard.views.IkdBubbleMapView
 import org.fossify.keyboard.views.IkdHeatmapView
 import android.widget.Toast
 import org.fossify.keyboard.views.IkdStackedBarChartView
@@ -110,6 +111,8 @@ class DashboardActivity : SimpleActivity() {
         // Phase 9.6: hourly + circadian cards.
         binding.dashboardHourlyCard.setCardBackgroundColor(backgroundColor)
         binding.dashboardCircadianCard.setCardBackgroundColor(backgroundColor)
+        // Phase 9.9: usage-map card.
+        binding.dashboardUsageMapCard.setCardBackgroundColor(backgroundColor)
     }
 
     private fun applyRangeToggleColors() {
@@ -427,8 +430,9 @@ class DashboardActivity : SimpleActivity() {
         val hasDaily = activity.dailyBuckets.isNotEmpty()
         val hasHourly = activity.hourlyBuckets.isNotEmpty()
         val hasCircadian = activity.circadianCells.isNotEmpty()
-        // Phase 9.6: section is visible whenever any of its widgets has data.
-        val anyVisible = hasDaily || hasHourly || hasCircadian
+        val hasDayHour = activity.dayHourCells.isNotEmpty()
+        // Phase 9.6 / 9.9: section is visible whenever any of its widgets has data.
+        val anyVisible = hasDaily || hasHourly || hasCircadian || hasDayHour
         binding.dashboardSectionHeaderDailyActivity.beVisibleIf(anyVisible)
 
         binding.dashboardCalendarHeatmapCard.beVisibleIf(hasDaily)
@@ -446,6 +450,37 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardCircadianCard.beVisibleIf(hasCircadian)
         if (hasCircadian) {
             bindCircadianHeatmap(activity.circadianCells)
+        }
+
+        binding.dashboardUsageMapCard.beVisibleIf(hasDayHour)
+        if (hasDayHour) {
+            bindUsageMap(activity.dayHourCells)
+        }
+    }
+
+    /**
+     * Phase 9.9: bind the Usage Map bubble chart. Each `(day, hour)` cell
+     * becomes one bubble whose radius scales linearly between min and
+     * max dimens based on `count / max`. Tap-to-toast surfaces the
+     * formatted tooltip.
+     */
+    private fun bindUsageMap(cells: List<IkdActivityAggregator.DayHourCell>) {
+        val bubbles = cells.map {
+            IkdBubbleMapView.Bubble(day = it.day, hour = it.hour, count = it.keystrokeCount)
+        }
+        val view = binding.dashboardUsageMap
+        view.setData(bubbles)
+        view.setOnBubbleClickListener { bubble ->
+            Toast.makeText(
+                this,
+                getString(
+                    R.string.dashboard_usage_map_tooltip_format,
+                    bubble.day,
+                    bubble.hour,
+                    bubble.count,
+                ),
+                Toast.LENGTH_SHORT,
+            ).show()
         }
     }
 

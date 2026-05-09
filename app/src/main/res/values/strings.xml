@@ -161,6 +161,10 @@
     <string name="dashboard_hour_label_18">18</string>
     <string name="dashboard_circadian_cell_toast">%1$s %2$02d:00 — %3$d keystrokes</string>
 
+    <!-- Phase 9.9: Usage Map bubble chart -->
+    <string name="dashboard_chart_usage_map_title">Usage Map</string>
+    <string name="dashboard_usage_map_tooltip_format">%1$s %2$02d:00 — %3$d keystrokes</string>
+
     <!-- Phase 9.3: Typing Habits section -->
     <string name="dashboard_section_habits">Habits</string>
     <string name="dashboard_habits_kpi_sessions">Sessions</string>
