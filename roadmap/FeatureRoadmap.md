@@ -305,6 +305,8 @@ Detailed scope: [`Phase7/Phase7_Plan.md`](Phase7/Phase7_Plan.md)
 ## Phase 8: Mood Bar & Contextual Overlay
 **Status: Planned**
 
+Detailed scope: [`Phase8/Phase8_Plan.md`](Phase8/Phase8_Plan.md)
+
 **Objective:** Let the user annotate their current emotional state with a single tap before or during a typing session. That one-tap signal becomes a first-class dimension in both per-session and global dashboards, realising the "Subjective Context Overlay" deferred at the end of Phase 3.
 
 *   **Mood Bar on the Keyboard Toolbar:**
@@ -327,7 +329,7 @@ Detailed scope: [`Phase7/Phase7_Plan.md`](Phase7/Phase7_Plan.md)
     *   The KPI strip gains an **Average Mood** chip when at least one mood entry exists in the selected range.
     *   `IkdAggregator` is extended with an additive `getMoodBuckets(bucketFormat, fromMs, toMs)` query; `MoodDao` is the new DAO.
 
-> **Schema change required.** Phase 7 bumps `IkdDatabase.version` to 2 and adds the `mood_entries` table via a `Migration(1, 2)`. The migration is non-destructive: it only adds a new table and leaves all existing tables untouched.
+> **Schema change required.** Phase 8 bumps `IkdDatabase.version` to 2 and adds the `mood_entries` table via a `Migration(1, 2)`. The migration is non-destructive: it only adds a new table and leaves all existing tables untouched.
 
 ---
 
@@ -336,12 +338,12 @@ Detailed scope: [`Phase7/Phase7_Plan.md`](Phase7/Phase7_Plan.md)
 
 **Depends on:** Phase 8 (mood entries must exist in `ikd.db` before mood aggregation can be surfaced globally)
 
-**Objective:** Expand `DashboardActivity` from a single scrollable page of three charts into a rich, multi-section insights hub. Three new sections are added: a mood summary (picking up the Phase 7 mood data), gyro and accelerometer global trend charts parallel to the per-session charts introduced in Phase 5, and a new **Typing Habits** section that surfaces session-level statistics over time.
+**Objective:** Expand `DashboardActivity` from a single scrollable page of three charts into a rich, multi-section insights hub. Three new sections are added: a mood summary (picking up the Phase 8 mood data), gyro and accelerometer global trend charts parallel to the per-session charts introduced in Phase 5, and a new **Typing Habits** section that surfaces session-level statistics over time.
 
 All work is read-side only: no capture changes, no schema migration, no new dependencies. The existing `IkdLineChartView` wrapper and `IkdAggregator` pattern are extended additively.
 
 *   **Mood Integration in Global Insights:**
-    *   The Phase 7 Mood Trend chart (already planned as a single line chart) is promoted to a full **Mood Section** with two sub-cards: the average-mood line chart (already specced) and a new **Mood Distribution bar chart** showing how many sessions fell into each of the five mood scores over the selected range.
+    *   The Phase 8 Mood Trend chart (already planned as a single line chart) is promoted to a full **Mood Section** with two sub-cards: the average-mood line chart (already specced) and a new **Mood Distribution bar chart** showing how many sessions fell into each of the five mood scores over the selected range.
     *   The global KPI strip gains an **Average Mood** cell (emoji + numeric score, 1 decimal place) when at least one rated session exists in the range. Missing-mood sessions are always excluded from the average — they do not pull the score toward neutral.
     *   A `getMoodDistribution(fromMs, toMs)` query is added to `MoodDao`, returning a 5-row count projection (one row per score). The bar chart renders horizontally with emoji labels on the Y axis.
 
