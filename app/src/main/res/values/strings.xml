@@ -120,6 +120,10 @@
     <string name="privacy_toggle_content_description">Toggle data collection</string>
     <string name="privacy_label_on">Privacy mode</string>
 
+    <!-- Phase 8: per-session dashboard mood overlay -->
+    <string name="session_mood_kpi_label">Mood</string>
+    <string name="session_mood_chip_format">Mood: %1$s %2$s</string>
+
     <!-- Phase 8: emotion bar (Ekman 6, valence-ordered) -->
     <string name="mood_label_happiness">Happiness</string>
     <string name="mood_label_surprise">Surprise</string>

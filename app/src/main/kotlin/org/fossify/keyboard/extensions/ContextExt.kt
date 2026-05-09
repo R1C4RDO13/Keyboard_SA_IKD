@@ -36,6 +36,7 @@ import org.fossify.keyboard.databases.IkdDatabase
 import org.fossify.keyboard.helpers.Config
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdMoodBarController
+import org.fossify.keyboard.helpers.IkdMoodLoader
 import org.fossify.keyboard.helpers.IkdSessionChartLoader
 import org.fossify.keyboard.helpers.IkdSessionStatsLoader
 import org.fossify.keyboard.helpers.INPUT_METHOD_SUBTYPE_VOICE
@@ -85,6 +86,9 @@ val Context.moodDB: org.fossify.keyboard.interfaces.MoodDao
 
 val Context.ikdMoodBarController: IkdMoodBarController
     get() = IkdMoodBarController(applicationContext, ikdDB)
+
+val Context.ikdMoodLoader: IkdMoodLoader
+    get() = IkdMoodLoader(ikdDB)
 
 fun Context.getCurrentClip(): String? {
     val clipboardManager = (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
