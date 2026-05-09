@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 9.8: one entry of the Orientation breakdown legend. Inflated
+    once per slice by `DashboardActivity.bindOrientationDonut(...)`.
+    The swatch is tinted at runtime with the matching `orientation_color_*`
+    resource so light/dark themes stay consistent with the donut slices.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingEnd="@dimen/normal_margin"
+    android:paddingStart="0dp">
+
+    <View
+        android:id="@+id/orientation_legend_swatch"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:background="@drawable/mood_legend_swatch_circle" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/orientation_legend_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/small_margin"
+        android:textSize="@dimen/smaller_text_size" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/orientation_legend_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/small_margin"
+        android:textSize="@dimen/smaller_text_size"
+        android:textStyle="bold" />
+
+</LinearLayout>

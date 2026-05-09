@@ -27,4 +27,12 @@
     <color name="mood_color_sadness">#1565C0</color>
     <color name="mood_color_fear">#6A1B9A</color>
     <color name="mood_color_anger">#C62828</color>
+
+    <!-- Phase 9.8: orientation donut palette (light mode).
+         Five tints distinct from the mood-mix palette. -->
+    <color name="orientation_color_portrait">#1976D2</color>
+    <color name="orientation_color_landscape">#388E3C</color>
+    <color name="orientation_color_face_up">#7B1FA2</color>
+    <color name="orientation_color_face_down">#0097A7</color>
+    <color name="orientation_color_unknown">#9E9E9E</color>
 </resources>

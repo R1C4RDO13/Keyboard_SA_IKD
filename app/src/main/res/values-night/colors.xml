@@ -26,4 +26,11 @@
     <color name="mood_color_sadness">#42A5F5</color>
     <color name="mood_color_fear">#AB47BC</color>
     <color name="mood_color_anger">#EF5350</color>
+
+    <!-- Phase 9.8: orientation donut palette (dark mode). -->
+    <color name="orientation_color_portrait">#42A5F5</color>
+    <color name="orientation_color_landscape">#66BB6A</color>
+    <color name="orientation_color_face_up">#AB47BC</color>
+    <color name="orientation_color_face_down">#26C6DA</color>
+    <color name="orientation_color_unknown">#BDBDBD</color>
 </resources>

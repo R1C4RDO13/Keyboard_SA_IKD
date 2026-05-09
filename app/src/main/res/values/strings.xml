@@ -172,6 +172,17 @@
     <string name="dashboard_chart_flight_distribution_title">Flight-time distribution</string>
     <string name="dashboard_distribution_outliers_label">+ %1$d outliers</string>
 
+    <!-- Phase 9.8: Orientation breakdown donut -->
+    <string name="dashboard_chart_orientation_title">Orientation</string>
+    <string name="dashboard_orientation_center_sessions">%1$d sessions</string>
+    <string name="dashboard_orientation_center_minutes">%1$.1f min</string>
+    <string name="orientation_portrait">Portrait</string>
+    <string name="orientation_landscape">Landscape</string>
+    <string name="orientation_face_up">Face up</string>
+    <string name="orientation_face_down">Face down</string>
+    <string name="orientation_unknown">Unknown</string>
+    <string name="orientation_not_captured">Not captured</string>
+
     <!-- Phase 9.3: Typing Habits section -->
     <string name="dashboard_section_habits">Habits</string>
     <string name="dashboard_habits_kpi_sessions">Sessions</string>

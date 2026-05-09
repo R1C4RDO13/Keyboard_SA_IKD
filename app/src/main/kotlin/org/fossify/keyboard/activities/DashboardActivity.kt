@@ -31,14 +31,21 @@ import org.fossify.keyboard.extensions.ikdAggregator
 import org.fossify.keyboard.extensions.ikdDistributionAggregator
 import org.fossify.keyboard.extensions.ikdHabitsAggregator
 import org.fossify.keyboard.extensions.ikdMoodAggregator
+import org.fossify.keyboard.extensions.ikdOrientationAggregator
 import org.fossify.keyboard.extensions.ikdSensorAggregator
 import org.fossify.keyboard.helpers.IkdActivityAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdDistributionAggregator
 import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
+import org.fossify.keyboard.helpers.IkdOrientationAggregator
 import org.fossify.keyboard.helpers.IkdSensorAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
+import org.fossify.keyboard.databinding.ItemOrientationLegendBinding
+import com.github.mikephil.charting.data.PieData
+import com.github.mikephil.charting.data.PieDataSet
+import com.github.mikephil.charting.data.PieEntry
+import android.content.res.Configuration
 import org.fossify.keyboard.views.IkdBubbleMapView
 import org.fossify.keyboard.views.IkdHeatmapView
 import android.widget.Toast
@@ -120,6 +127,8 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardIkdDistributionCard.setCardBackgroundColor(backgroundColor)
         binding.dashboardDwellDistributionCard.setCardBackgroundColor(backgroundColor)
         binding.dashboardFlightDistributionCard.setCardBackgroundColor(backgroundColor)
+        // Phase 9.8: orientation donut card.
+        binding.dashboardOrientationCard.setCardBackgroundColor(backgroundColor)
     }
 
     private fun applyRangeToggleColors() {
@@ -184,12 +193,14 @@ class DashboardActivity : SimpleActivity() {
             // Phase 9.3: add the habits aggregator on the same hop.
             // Phase 9.5: add the activity aggregator on the same hop.
             // Phase 9.7: add the distribution aggregator on the same hop.
+            // Phase 9.8: add the orientation aggregator on the same hop.
             val agg = ikdAggregator
             val moodAgg = ikdMoodAggregator
             val sensorAgg = ikdSensorAggregator
             val habitsAgg = ikdHabitsAggregator
             val activityAgg = ikdActivityAggregator
             val distAgg = ikdDistributionAggregator
+            val orientationAgg = ikdOrientationAggregator
             val range = currentRange
             val payload = withContext(Dispatchers.IO) {
                 DashboardPayload(
@@ -200,6 +211,7 @@ class DashboardActivity : SimpleActivity() {
                     habits = habitsAgg.snapshot(range),
                     activity = activityAgg.snapshot(range),
                     distribution = distAgg.snapshot(range),
+                    orientation = orientationAgg.snapshot(range),
                 )
             }
             render(
@@ -210,6 +222,7 @@ class DashboardActivity : SimpleActivity() {
                 payload.habits,
                 payload.activity,
                 payload.distribution,
+                payload.orientation,
             )
         }
     }
@@ -222,6 +235,7 @@ class DashboardActivity : SimpleActivity() {
         val habits: IkdHabitsAggregator.HabitsSnapshot,
         val activity: IkdActivityAggregator.ActivitySnapshot,
         val distribution: IkdDistributionAggregator.DistributionSnapshot,
+        val orientation: IkdOrientationAggregator.OrientationSnapshot,
     )
 
     private fun render(
@@ -232,6 +246,7 @@ class DashboardActivity : SimpleActivity() {
         habits: IkdHabitsAggregator.HabitsSnapshot,
         activity: IkdActivityAggregator.ActivitySnapshot,
         distribution: IkdDistributionAggregator.DistributionSnapshot,
+        orientation: IkdOrientationAggregator.OrientationSnapshot,
     ) {
         val isEmpty = snap.totalSessions == 0
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
@@ -255,7 +270,7 @@ class DashboardActivity : SimpleActivity() {
         renderSensorTrendCharts(sensor)
         renderDailyActivitySection(activity)
         renderMoodSection(snap, moodSnap, moodMix)
-        renderKeystrokeDynamicsSection(distribution)
+        renderKeystrokeDynamicsSection(distribution, orientation)
         renderHabitsSection(habits)
     }
 
@@ -672,13 +687,17 @@ class DashboardActivity : SimpleActivity() {
      * itself + its outlier label when its histogram is empty; the
      * section header is hidden only when all three histograms are empty.
      */
-    private fun renderKeystrokeDynamicsSection(distribution: IkdDistributionAggregator.DistributionSnapshot) {
+    private fun renderKeystrokeDynamicsSection(
+        distribution: IkdDistributionAggregator.DistributionSnapshot,
+        orientation: IkdOrientationAggregator.OrientationSnapshot,
+    ) {
         val labels = IkdDistributionAggregator.bucketLabels()
         val ikdHasData = distribution.ikdHistogram.buckets.any { it > 0 }
         val dwellHasData = distribution.holdHistogram.buckets.any { it > 0 }
         val flightHasData = distribution.flightHistogram.buckets.any { it > 0 }
+        val orientationHasData = orientation.slices.any { it.sessionCount > 0 }
 
-        val anyHasData = ikdHasData || dwellHasData || flightHasData
+        val anyHasData = ikdHasData || dwellHasData || flightHasData || orientationHasData
         binding.dashboardSectionHeaderKeystrokeDynamics.beVisibleIf(anyHasData)
 
         binding.dashboardIkdDistributionCard.beVisibleIf(ikdHasData)
@@ -698,6 +717,83 @@ class DashboardActivity : SimpleActivity() {
             binding.dashboardFlightDistributionChart.setData(labels, distribution.flightHistogram.buckets)
             bindOutlierLabel(binding.dashboardFlightDistributionOutliers, distribution.flightHistogram.outlierCount)
         }
+
+        binding.dashboardOrientationCard.beVisibleIf(orientationHasData)
+        if (orientationHasData) {
+            bindOrientationDonut(orientation.slices)
+        }
+    }
+
+    /**
+     * Phase 9.8: bind the orientation donut + legend. Slice tints come
+     * from theme-aware `orientation_color_*` resources; the built-in
+     * MPAndroidChart legend is disabled — we draw our own legend rows.
+     */
+    private fun bindOrientationDonut(slices: List<IkdOrientationAggregator.OrientationSlice>) {
+        val chart = binding.dashboardOrientationChart
+        val totalSessions = slices.sumOf { it.sessionCount }
+        val totalDurationMs = slices.sumOf { it.totalDurationMs }
+
+        val visible = slices.filter { it.sessionCount > 0 }
+        val entries = visible.map { slice ->
+            PieEntry(slice.sessionCount.toFloat(), labelForOrientation(slice.orientation))
+        }
+        val colors = visible.map { ContextCompat.getColor(this, colorResForOrientation(it.orientation)) }
+        val dataSet = PieDataSet(entries, "").apply {
+            this.colors = colors
+            sliceSpace = ORIENTATION_SLICE_SPACE_PX
+            setDrawValues(false)
+        }
+        chart.apply {
+            data = PieData(dataSet)
+            description.isEnabled = false
+            legend.isEnabled = false
+            isDrawHoleEnabled = true
+            holeRadius = ORIENTATION_HOLE_RADIUS
+            transparentCircleRadius = 0f
+            setUsePercentValues(false)
+            setEntryLabelColor(getProperTextColor())
+            setEntryLabelTextSize(ORIENTATION_LABEL_TEXT_SIZE_SP)
+            setHoleColor(android.graphics.Color.TRANSPARENT)
+            setCenterTextColor(getProperTextColor())
+            centerText = "${getString(R.string.dashboard_orientation_center_sessions, totalSessions)}\n" +
+                getString(
+                    R.string.dashboard_orientation_center_minutes,
+                    totalDurationMs.toDouble() / MS_PER_MINUTE,
+                )
+            invalidate()
+        }
+
+        val legend = binding.dashboardOrientationLegend
+        legend.removeAllViews()
+        val inflater = LayoutInflater.from(this)
+        val textColor = getProperTextColor()
+        for (slice in visible) {
+            val row = ItemOrientationLegendBinding.inflate(inflater, legend, false)
+            row.orientationLegendSwatch.backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(this, colorResForOrientation(slice.orientation))
+            )
+            row.orientationLegendLabel.text = labelForOrientation(slice.orientation)
+            row.orientationLegendLabel.setTextColor(textColor)
+            row.orientationLegendCount.text = slice.sessionCount.toString()
+            row.orientationLegendCount.setTextColor(textColor)
+            legend.addView(row.root)
+        }
+    }
+
+    private fun labelForOrientation(orientation: Int): String = when (orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> getString(R.string.orientation_portrait)
+        Configuration.ORIENTATION_LANDSCAPE -> getString(R.string.orientation_landscape)
+        ORIENTATION_NOT_CAPTURED -> getString(R.string.orientation_not_captured)
+        else -> getString(R.string.orientation_unknown)
+    }
+
+    @androidx.annotation.ColorRes
+    private fun colorResForOrientation(orientation: Int): Int = when (orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> R.color.orientation_color_portrait
+        Configuration.ORIENTATION_LANDSCAPE -> R.color.orientation_color_landscape
+        ORIENTATION_NOT_CAPTURED -> R.color.orientation_color_unknown
+        else -> R.color.orientation_color_unknown
     }
 
     private fun bindOutlierLabel(label: org.fossify.commons.views.MyTextView, outlierCount: Int) {
@@ -874,6 +970,12 @@ class DashboardActivity : SimpleActivity() {
         private const val DOW_ROW_FRI = 4
         private const val DOW_ROW_SAT = 5
         private const val DOW_ROW_SUN = 6
+
+        // Phase 9.8: orientation donut.
+        private const val ORIENTATION_NOT_CAPTURED = -1
+        private const val ORIENTATION_HOLE_RADIUS = 60f // % of donut radius
+        private const val ORIENTATION_LABEL_TEXT_SIZE_SP = 10f
+        private const val ORIENTATION_SLICE_SPACE_PX = 2f
 
         // Phase 8: Distribution-panel ProgressBar tops out at 100 (`max`
         // attribute on the row layout). Each row's progress is its share

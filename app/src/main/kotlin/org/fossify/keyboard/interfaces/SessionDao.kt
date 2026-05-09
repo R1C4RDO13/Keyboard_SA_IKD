@@ -64,4 +64,34 @@ interface SessionDao {
     /** Returns the most recently started session, or null when the table is empty. */
     @Query("SELECT * FROM sessions ORDER BY started_at DESC LIMIT 1")
     fun getMostRecentSession(): SessionRecord?
+
+    /**
+     * Phase 9.8: per-orientation session counts + total duration for the
+     * dashboard's orientation donut. `:moodScore IS NULL` parameterised so
+     * the unfiltered case and a mood-scoped recompute share the same query.
+     *
+     * @param fromMs inclusive lower bound on `started_at` (epoch millis).
+     * @param toMs exclusive upper bound on `started_at` (epoch millis).
+     * @param moodScore optional mood-filter scope; null disables filtering.
+     */
+    @Query(
+        """
+        SELECT
+            device_orientation AS orientation,
+            COUNT(*) AS sessionCount,
+            SUM(CASE WHEN ended_at IS NOT NULL THEN ended_at - started_at ELSE 0 END) AS totalDurationMs
+        FROM sessions
+        WHERE started_at >= :fromMs
+          AND started_at <  :toMs
+          AND (:moodScore IS NULL
+               OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+        GROUP BY device_orientation
+        ORDER BY device_orientation
+        """
+    )
+    fun getOrientationBreakdown(
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int?,
+    ): List<org.fossify.keyboard.interfaces.OrientationRow>
 }
