@@ -27,9 +27,11 @@ import org.fossify.keyboard.databinding.ActivityDashboardBinding
 import org.fossify.keyboard.databinding.ItemMoodDistributionRowBinding
 import org.fossify.keyboard.databinding.ItemMoodLegendSwatchBinding
 import org.fossify.keyboard.extensions.ikdAggregator
+import org.fossify.keyboard.extensions.ikdHabitsAggregator
 import org.fossify.keyboard.extensions.ikdMoodAggregator
 import org.fossify.keyboard.extensions.ikdSensorAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
+import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
 import org.fossify.keyboard.helpers.IkdSensorAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
@@ -94,6 +96,7 @@ class DashboardActivity : SimpleActivity() {
         val primary = getProperPrimaryColor()
         binding.dashboardSectionHeaderTrends.setTextColor(primary)
         binding.dashboardSectionHeaderMood.setTextColor(primary)
+        binding.dashboardSectionHeaderHabits.setTextColor(primary)
     }
 
     private fun applyRangeToggleColors() {
@@ -155,9 +158,11 @@ class DashboardActivity : SimpleActivity() {
             // Phase 8.3: also fold in the new per-bucket-per-category mix
             // snapshot for the stacked-bar chart.
             // Phase 9.2: add the sensor magnitude aggregator on the same hop.
+            // Phase 9.3: add the habits aggregator on the same hop.
             val agg = ikdAggregator
             val moodAgg = ikdMoodAggregator
             val sensorAgg = ikdSensorAggregator
+            val habitsAgg = ikdHabitsAggregator
             val range = currentRange
             val payload = withContext(Dispatchers.IO) {
                 DashboardPayload(
@@ -165,9 +170,10 @@ class DashboardActivity : SimpleActivity() {
                     mood = moodAgg.snapshot(range),
                     moodMix = moodAgg.mixSnapshot(range),
                     sensor = sensorAgg.snapshot(range),
+                    habits = habitsAgg.snapshot(range),
                 )
             }
-            render(payload.ikd, payload.mood, payload.moodMix, payload.sensor)
+            render(payload.ikd, payload.mood, payload.moodMix, payload.sensor, payload.habits)
         }
     }
 
@@ -176,6 +182,7 @@ class DashboardActivity : SimpleActivity() {
         val mood: IkdMoodAggregator.MoodSnapshot,
         val moodMix: IkdMoodAggregator.MoodMixSnapshot,
         val sensor: IkdSensorAggregator.Snapshot,
+        val habits: IkdHabitsAggregator.HabitsSnapshot,
     )
 
     private fun render(
@@ -183,6 +190,7 @@ class DashboardActivity : SimpleActivity() {
         moodSnap: IkdMoodAggregator.MoodSnapshot,
         moodMix: IkdMoodAggregator.MoodMixSnapshot,
         sensor: IkdSensorAggregator.Snapshot,
+        habits: IkdHabitsAggregator.HabitsSnapshot,
     ) {
         val isEmpty = snap.totalSessions == 0
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
@@ -205,6 +213,7 @@ class DashboardActivity : SimpleActivity() {
         renderCharts(snap)
         renderSensorTrendCharts(sensor)
         renderMoodSection(snap, moodSnap, moodMix)
+        renderHabitsSection(habits)
     }
 
     private fun renderCharts(snap: IkdAggregator.Snapshot) {
@@ -383,6 +392,110 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
+     * Phase 9.3: render the Habits KPI strip + four trend charts. The
+     * entire section is hidden when `totalSessions == 0` (no data to show).
+     * Each chart's title and view are visibility-flipped together so the
+     * "no data" state is one chart hiding (not a header floating above an
+     * empty card).
+     */
+    private fun renderHabitsSection(habits: IkdHabitsAggregator.HabitsSnapshot) {
+        val visible = habits.totalSessions > 0
+        binding.dashboardSectionHeaderHabits.beVisibleIf(visible)
+        binding.dashboardHabitsKpiStrip.beVisibleIf(visible)
+        if (!visible) {
+            // Hide every chart card alongside the section header.
+            binding.dashboardChartHabitsSessionDurationTitle.beGone()
+            binding.dashboardChartHabitsSessionDuration.beGone()
+            binding.dashboardChartHabitsSessionsTitle.beGone()
+            binding.dashboardChartHabitsSessions.beGone()
+            binding.dashboardChartHabitsErrorRateTitle.beGone()
+            binding.dashboardChartHabitsErrorRate.beGone()
+            binding.dashboardChartHabitsFlightTitle.beGone()
+            binding.dashboardChartHabitsFlight.beGone()
+            return
+        }
+
+        // KPI strip
+        val placeholder = getString(R.string.dashboard_value_placeholder)
+        val locale = Locale.getDefault()
+        binding.dashboardHabitsKpiSessionsValue.text = habits.totalSessions.toString()
+        val typingMinutes = habits.totalTypingTimeMs.toDouble() / MS_PER_MINUTE
+        binding.dashboardHabitsKpiTypingTimeValue.text = if (habits.totalTypingTimeMs <= 0L) {
+            placeholder
+        } else {
+            getString(R.string.dashboard_kpi_typing_time_value, String.format(locale, "%.1f", typingMinutes))
+        }
+        binding.dashboardHabitsKpiAvgSessionValue.text = habits.avgSessionDurationMs?.let {
+            getString(R.string.dashboard_habits_avg_session_value, it / MS_PER_SECOND)
+        } ?: placeholder
+        val streakSuffixRes = when (habits.streakUnit) {
+            IkdHabitsAggregator.StreakUnit.DAYS -> R.string.dashboard_habits_streak_days
+            IkdHabitsAggregator.StreakUnit.WEEKS -> R.string.dashboard_habits_streak_weeks
+        }
+        binding.dashboardHabitsKpiStreakValue.text = getString(streakSuffixRes, habits.longestStreak)
+
+        // Charts
+        val labels = habits.buckets.map { formatBucketLabel(it.label, habits.range) }
+        val durationMinutes = habits.buckets.map { it.avgSessionDurationMs?.toFloat()?.div(MS_PER_MINUTE) }
+        // sessionCount: zero is meaningful (Phase 9.3 plan §"Chart-empty rules"), render as zeros not nulls.
+        val sessionCounts = habits.buckets.map { it.sessionCount.toFloat() }
+        val errorPct = habits.buckets.map { it.errorRatePct?.toFloat() }
+        val flightMs = habits.buckets.map { it.avgFlightMs?.toFloat() }
+
+        bindHabitsChart(
+            title = binding.dashboardChartHabitsSessionDurationTitle,
+            chart = binding.dashboardChartHabitsSessionDuration,
+            labels = labels,
+            values = durationMinutes,
+            yLabel = getString(R.string.dashboard_chart_habits_session_duration_y_label),
+        )
+        bindHabitsChart(
+            title = binding.dashboardChartHabitsSessionsTitle,
+            chart = binding.dashboardChartHabitsSessions,
+            labels = labels,
+            values = sessionCounts,
+            yLabel = getString(R.string.dashboard_chart_habits_sessions_y_label),
+            // sessions chart: zeros are meaningful; show whenever any bucket exists.
+            showAsZeros = true,
+        )
+        bindHabitsChart(
+            title = binding.dashboardChartHabitsErrorRateTitle,
+            chart = binding.dashboardChartHabitsErrorRate,
+            labels = labels,
+            values = errorPct,
+            yLabel = getString(R.string.dashboard_chart_habits_error_rate_y_label),
+        )
+        bindHabitsChart(
+            title = binding.dashboardChartHabitsFlightTitle,
+            chart = binding.dashboardChartHabitsFlight,
+            labels = labels,
+            values = flightMs,
+            yLabel = getString(R.string.dashboard_chart_habits_flight_y_label),
+        )
+    }
+
+    /**
+     * Phase 9.3: bind a Habits trend chart. When all values are null and
+     * `showAsZeros == false`, hide the chart + its title so the section
+     * doesn't show a label above an empty card.
+     */
+    private fun bindHabitsChart(
+        title: org.fossify.commons.views.MyTextView,
+        chart: org.fossify.keyboard.views.IkdLineChartView,
+        labels: List<String>,
+        values: List<Float?>,
+        yLabel: String,
+        showAsZeros: Boolean = false,
+    ) {
+        val hasData = showAsZeros && labels.isNotEmpty() || values.any { it != null }
+        title.beVisibleIf(hasData)
+        chart.beVisibleIf(hasData)
+        if (hasData) {
+            chart.setData(labels, values, yLabel)
+        }
+    }
+
+    /**
      * Bucket labels arrive as raw `strftime` keys (e.g., `2026-05-02` or `2026-18`).
      * Reformat them to something readable on a tight X axis. Falls back to the raw
      * key when parsing fails — no crash, just less prettiness.
@@ -419,6 +532,7 @@ class DashboardActivity : SimpleActivity() {
     companion object {
         private const val STATE_RANGE = "dashboard_range"
         private const val MS_PER_MINUTE = 60_000L
+        private const val MS_PER_SECOND = 1_000.0
 
         // Phase 8: Distribution-panel ProgressBar tops out at 100 (`max`
         // attribute on the row layout). Each row's progress is its share

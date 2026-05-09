@@ -106,4 +106,64 @@ interface IkdEventDao {
         startMs: Long,
         bucketWidthMs: Long,
     ): List<TimingBucketRow>
+
+    /**
+     * Phase 9.3: bucketed Habits aggregation. One row per `strftime` bucket,
+     * joining session-side counts / total duration with event-side
+     * keystroke / correction counts and average flight time. Single
+     * round-trip via two SQLite subqueries `LEFT JOIN`-ed on the bucket key.
+     *
+     * `:moodScore` `IS NULL` parameterised so the same query covers the
+     * unfiltered case and a mood-scoped recompute (Phase 9.4 wires the
+     * non-null path).
+     *
+     * @param bucketFormat strftime pattern ("%Y-%m-%d" daily, "%Y-%W" weekly).
+     * @param fromMs inclusive lower bound on `started_at` / `timestamp` (epoch millis).
+     * @param toMs exclusive upper bound on `started_at` / `timestamp` (epoch millis).
+     * @param moodScore optional mood-filter scope; null disables filtering.
+     */
+    @Query(
+        """
+        SELECT
+            COALESCE(s.bucket, e.bucket) AS bucket,
+            COALESCE(s.sessionCount, 0) AS sessionCount,
+            COALESCE(s.totalDurationMs, 0) AS totalDurationMs,
+            e.avgFlightMs AS avgFlightMs,
+            COALESCE(e.correctionWeight, 0) AS correctionWeight,
+            COALESCE(e.keystrokeCount, 0) AS keystrokeCount
+        FROM (
+            SELECT
+                strftime(:bucketFormat, started_at / 1000, 'unixepoch', 'localtime') AS bucket,
+                COUNT(*) AS sessionCount,
+                SUM(CASE WHEN ended_at IS NOT NULL THEN ended_at - started_at ELSE 0 END) AS totalDurationMs
+            FROM sessions
+            WHERE started_at >= :fromMs
+              AND started_at <  :toMs
+              AND (:moodScore IS NULL
+                   OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+            GROUP BY bucket
+        ) AS s
+        LEFT JOIN (
+            SELECT
+                strftime(:bucketFormat, timestamp / 1000, 'unixepoch', 'localtime') AS bucket,
+                AVG(CASE WHEN flight_time_ms >= 0 THEN flight_time_ms END) AS avgFlightMs,
+                SUM(correction_weight) AS correctionWeight,
+                SUM(CASE WHEN event_category != 'AUTOCORRECT' THEN 1 ELSE 0 END) AS keystrokeCount
+            FROM ikd_events
+            WHERE timestamp >= :fromMs
+              AND timestamp <  :toMs
+              AND (:moodScore IS NULL
+                   OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+            GROUP BY bucket
+        ) AS e
+        ON s.bucket = e.bucket
+        ORDER BY bucket
+        """
+    )
+    fun getHabitsBuckets(
+        bucketFormat: String,
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int?,
+    ): List<HabitsBucketRow>
 }

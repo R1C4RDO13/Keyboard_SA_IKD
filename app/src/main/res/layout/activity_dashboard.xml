@@ -384,6 +384,188 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Phase 9.3: Habits section header (primary-coloured). Hidden
+                 when totalSessions == 0. -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_section_header_habits"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_section_habits"
+                android:textSize="@dimen/bigger_text_size"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <!-- Phase 9.3: Habits KPI strip (matches the top KPI strip's
+                 4-cell layout). -->
+            <LinearLayout
+                android:id="@+id/dashboard_habits_kpi_strip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/small_margin"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:weightSum="4">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_habits_kpi_sessions_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_value_placeholder"
+                        android:textSize="@dimen/bigger_text_size"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_habits_kpi_sessions"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_habits_kpi_typing_time_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_value_placeholder"
+                        android:textSize="@dimen/bigger_text_size"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_habits_kpi_typing_time"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_habits_kpi_avg_session_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_value_placeholder"
+                        android:textSize="@dimen/bigger_text_size"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_habits_kpi_avg_session"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_habits_kpi_streak_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_value_placeholder"
+                        android:textSize="@dimen/bigger_text_size"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_habits_kpi_streak"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Phase 9.3: Habits trend charts. -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_habits_session_duration_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_chart_habits_session_duration_title"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <org.fossify.keyboard.views.IkdLineChartView
+                android:id="@+id/dashboard_chart_habits_session_duration"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="@dimen/small_margin"
+                android:visibility="gone" />
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_habits_sessions_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_chart_habits_sessions_title"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <org.fossify.keyboard.views.IkdLineChartView
+                android:id="@+id/dashboard_chart_habits_sessions"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="@dimen/small_margin"
+                android:visibility="gone" />
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_habits_error_rate_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_chart_habits_error_rate_title"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <org.fossify.keyboard.views.IkdLineChartView
+                android:id="@+id/dashboard_chart_habits_error_rate"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="@dimen/small_margin"
+                android:visibility="gone" />
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_habits_flight_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_chart_habits_flight_title"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <org.fossify.keyboard.views.IkdLineChartView
+                android:id="@+id/dashboard_chart_habits_flight"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="@dimen/small_margin"
+                android:visibility="gone" />
+
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

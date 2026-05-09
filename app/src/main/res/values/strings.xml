@@ -134,6 +134,24 @@
     <string name="dashboard_chart_gyro_y_label">Avg gyro magnitude (rad/s)</string>
     <string name="dashboard_chart_accel_y_label">Avg accel magnitude (m/s²)</string>
 
+    <!-- Phase 9.3: Typing Habits section -->
+    <string name="dashboard_section_habits">Habits</string>
+    <string name="dashboard_habits_kpi_sessions">Sessions</string>
+    <string name="dashboard_habits_kpi_typing_time">Typing time</string>
+    <string name="dashboard_habits_kpi_avg_session">Avg session</string>
+    <string name="dashboard_habits_kpi_streak">Longest streak</string>
+    <string name="dashboard_habits_streak_days">%1$d days</string>
+    <string name="dashboard_habits_streak_weeks">%1$d weeks</string>
+    <string name="dashboard_habits_avg_session_value">%1$.1f s</string>
+    <string name="dashboard_chart_habits_session_duration_title">Avg session duration</string>
+    <string name="dashboard_chart_habits_session_duration_y_label">Minutes</string>
+    <string name="dashboard_chart_habits_sessions_title">Sessions per bucket</string>
+    <string name="dashboard_chart_habits_sessions_y_label">Sessions</string>
+    <string name="dashboard_chart_habits_error_rate_title">Avg error rate</string>
+    <string name="dashboard_chart_habits_error_rate_y_label">Error rate (%)</string>
+    <string name="dashboard_chart_habits_flight_title">Avg flight time</string>
+    <string name="dashboard_chart_habits_flight_y_label">Avg flight (ms)</string>
+
     <!-- Phase 8: global dashboard mood widgets -->
     <string name="dashboard_mood_distribution_title">Mood Distribution</string>
 

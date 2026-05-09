@@ -37,6 +37,7 @@ import org.fossify.keyboard.helpers.Config
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
 import org.fossify.keyboard.helpers.IkdMoodBarController
+import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.IkdMoodLoader
 import org.fossify.keyboard.helpers.IkdSensorAggregator
 import org.fossify.keyboard.helpers.IkdSessionChartLoader
@@ -97,6 +98,9 @@ val Context.ikdMoodAggregator: IkdMoodAggregator
 
 val Context.ikdSensorAggregator: IkdSensorAggregator
     get() = IkdSensorAggregator(ikdDB)
+
+val Context.ikdHabitsAggregator: IkdHabitsAggregator
+    get() = IkdHabitsAggregator(ikdDB)
 
 fun Context.getCurrentClip(): String? {
     val clipboardManager = (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
