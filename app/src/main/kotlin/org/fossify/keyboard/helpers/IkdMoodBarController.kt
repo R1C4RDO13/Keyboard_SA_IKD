@@ -137,6 +137,38 @@ class IkdMoodBarController(
         db.MoodDao().getForSession(sessionId)
     }
 
+    /**
+     * Phase 8.2: tap the highlighted 🛡️ a second time. Flips privacy off
+     * without selecting a mood — capture is on, no rating. Inverse of
+     * `enablePrivacyAndClearMood()` minus the session-stop path: capture
+     * starts naturally on the next IME open via the existing Phase 2
+     * `Config.privacyModeEnabled` gate in `SimpleKeyboardIME`.
+     */
+    suspend fun disablePrivacy() = withContext(Dispatchers.IO) {
+        if (context.config.privacyModeEnabled) {
+            context.config.privacyModeEnabled = false
+        }
+    }
+
+    /**
+     * Phase 8.2: tap a highlighted emotion a second time. Deletes the
+     * `MoodEntry` row for the in-flight session — privacy stays off, the
+     * session keeps recording, the user just retracts their rating.
+     * No-op if no session is in flight (the bar's optimistic highlight is
+     * the only state that flips, no row exists to remove).
+     */
+    suspend fun clearMoodForActiveSession() = withContext(Dispatchers.IO) {
+        val sessionId = LiveCaptureSessionStore.currentSessionId
+        if (sessionId.isEmpty()) return@withContext
+        try {
+            db.MoodDao().clearForSession(sessionId)
+        } catch (e: android.database.SQLException) {
+            Log.w(TAG, "clearForSession($sessionId) failed", e)
+        } catch (e: IllegalStateException) {
+            Log.w(TAG, "clearForSession($sessionId) failed (db closed?)", e)
+        }
+    }
+
     companion object {
         private const val TAG = "IkdMoodBarController"
     }

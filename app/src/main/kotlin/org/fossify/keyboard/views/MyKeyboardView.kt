@@ -276,7 +276,18 @@ class MyKeyboardView @JvmOverloads constructor(
         // emotion slots use their stored ordinal valence id (1..6).
         private const val MOOD_SLOT_PRIVACY = 0
         private const val MOOD_BAR_ALPHA_SELECTED = 1.0f
-        private const val MOOD_BAR_ALPHA_DIMMED = 0.6f
+        // Phase 8.2: stronger dim on unselected slots so the scale-up on the
+        // selected one reads as a clear hierarchy step rather than a subtle
+        // alpha tweak.
+        private const val MOOD_BAR_ALPHA_DIMMED = 0.45f
+        // Phase 8.2: render the selected emoji 25% bigger than the others.
+        // Combined with the alpha contrast this gives the "selected" state a
+        // distinct visual lift without changing the layout (scaleX/scaleY
+        // affects rendering only, so adjacent buttons keep their tap area).
+        // Requires `clipChildren="false"` on the mood_bar parent — set in
+        // keyboard_view_keyboard.xml so the scaled glyph isn't cropped.
+        private const val MOOD_BAR_SCALE_SELECTED = 1.25f
+        private const val MOOD_BAR_SCALE_DIMMED = 1.0f
 
         // Phase 8.2: how long the chat-bubble popup stays on screen after a
         // tap before auto-dismissing. Long enough to read the first-person
@@ -653,22 +664,38 @@ class MyKeyboardView @JvmOverloads constructor(
      * stored ordinal valence id). `anchor` is the tapped slot view — used
      * to position the chat-bubble popup directly above it.
      *
-     * Phase 8.2: each tap surfaces a first-person chat bubble
-     * ("I'm feeling happy", "I want privacy", …) anchored above the tapped
-     * slot. `Config.showMoodPopup` gates the visual feedback only — the
-     * underlying state change always runs.
+     * Phase 8.2: every slot is now a toggle. Tapping a slot that's already
+     * highlighted clears it — 🛡️ flips privacy off (capture on, no mood),
+     * an emotion deletes its `MoodEntry` row (capture on, no rating). The
+     * deselect path is silent: it only updates the highlight and dismisses
+     * any in-flight bubble (the highlight change is the feedback). The
+     * select path still surfaces a first-person chat bubble unless the user
+     * has disabled it via `Config.showMoodPopup`.
      */
     private fun onMoodSlotClicked(slot: Int, anchor: View) {
+        val alreadySelected = highlightedMoodSlot == slot
         when (slot) {
             MOOD_SLOT_PRIVACY -> {
-                applyMoodBarHighlight(MOOD_SLOT_PRIVACY)
-                showMoodBubble(anchor, R.string.mood_toast_privacy)
-                moodScope.launch { moodController.enablePrivacyAndClearMood() }
+                if (alreadySelected) {
+                    applyMoodBarHighlight(null)
+                    dismissMoodBubble()
+                    moodScope.launch { moodController.disablePrivacy() }
+                } else {
+                    applyMoodBarHighlight(MOOD_SLOT_PRIVACY)
+                    showMoodBubble(anchor, R.string.mood_toast_privacy)
+                    moodScope.launch { moodController.enablePrivacyAndClearMood() }
+                }
             }
             in MoodEmoji.SCORE_HAPPINESS..MoodEmoji.SCORE_ANGER -> {
-                applyMoodBarHighlight(slot)
-                showMoodBubble(anchor, moodToastResFor(slot))
-                moodScope.launch { moodController.setMoodForActiveSession(slot) }
+                if (alreadySelected) {
+                    applyMoodBarHighlight(null)
+                    dismissMoodBubble()
+                    moodScope.launch { moodController.clearMoodForActiveSession() }
+                } else {
+                    applyMoodBarHighlight(slot)
+                    showMoodBubble(anchor, moodToastResFor(slot))
+                    moodScope.launch { moodController.setMoodForActiveSession(slot) }
+                }
             }
         }
     }
@@ -705,8 +732,7 @@ class MyKeyboardView @JvmOverloads constructor(
      */
     private fun showMoodBubble(anchor: View, textRes: Int) {
         if (!context.config.showMoodPopup) {
-            mMoodBubbleHandler.removeCallbacks(mMoodBubbleDismissRunnable)
-            mMoodBubblePopup?.dismiss()
+            dismissMoodBubble()
             return
         }
         if (mMoodBubblePopup == null) {
@@ -756,6 +782,17 @@ class MyKeyboardView @JvmOverloads constructor(
         }
         mMoodBubbleHandler.removeCallbacks(mMoodBubbleDismissRunnable)
         mMoodBubbleHandler.postDelayed(mMoodBubbleDismissRunnable, MOOD_BUBBLE_AUTO_DISMISS_MS)
+    }
+
+    /**
+     * Phase 8.2: silently tear down any in-flight mood bubble + its pending
+     * auto-dismiss. Used both when the user has disabled the popup via
+     * settings and when a deselect tap should clear the previous bubble
+     * without surfacing a new one.
+     */
+    private fun dismissMoodBubble() {
+        mMoodBubbleHandler.removeCallbacks(mMoodBubbleDismissRunnable)
+        mMoodBubblePopup?.dismiss()
     }
 
     /**
@@ -836,6 +873,9 @@ class MyKeyboardView @JvmOverloads constructor(
         all.forEach { (view, idx) ->
             val isSelected = slot != null && slot == idx
             view.alpha = if (isSelected) MOOD_BAR_ALPHA_SELECTED else MOOD_BAR_ALPHA_DIMMED
+            val scale = if (isSelected) MOOD_BAR_SCALE_SELECTED else MOOD_BAR_SCALE_DIMMED
+            view.scaleX = scale
+            view.scaleY = scale
         }
     }
 
