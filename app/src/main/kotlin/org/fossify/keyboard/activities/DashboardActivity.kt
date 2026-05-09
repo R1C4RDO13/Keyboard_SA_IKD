@@ -4,6 +4,9 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.view.LayoutInflater
+import androidx.annotation.ColorRes
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
@@ -22,14 +25,15 @@ import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityDashboardBinding
 import org.fossify.keyboard.databinding.ItemMoodDistributionRowBinding
+import org.fossify.keyboard.databinding.ItemMoodLegendSwatchBinding
 import org.fossify.keyboard.extensions.ikdAggregator
 import org.fossify.keyboard.extensions.ikdMoodAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
+import org.fossify.keyboard.views.IkdStackedBarChartView
 import java.text.SimpleDateFormat
 import java.util.Locale
-import kotlin.math.roundToInt
 
 class DashboardActivity : SimpleActivity() {
 
@@ -73,10 +77,13 @@ class DashboardActivity : SimpleActivity() {
      * render as unthemed white slabs. Tint them to the activity background
      * and let `cardElevation`'s shadow demarcate the card silhouette — same
      * pattern as `EventFeedActivity.applyThemeColors`.
+     *
+     * Phase 8.3: tints the new stacked-bar card alongside the Distribution
+     * card. The Phase 8 line-chart card is gone.
      */
     private fun applyCardThemeColors() {
         val background = getProperBackgroundColor()
-        binding.dashboardMoodChartCard.setCardBackgroundColor(background)
+        binding.dashboardMoodStackedChartCard.setCardBackgroundColor(background)
         binding.dashboardMoodDistributionCard.setCardBackgroundColor(background)
     }
 
@@ -136,17 +143,27 @@ class DashboardActivity : SimpleActivity() {
             // Phase 8: fold the mood snapshot into the same Dispatchers.IO
             // hop that already serves the IKD snapshot, so onResume runs
             // a single round-trip per range.
+            // Phase 8.3: also fold in the new per-bucket-per-category mix
+            // snapshot for the stacked-bar chart.
             val agg = ikdAggregator
             val moodAgg = ikdMoodAggregator
             val range = currentRange
-            val pair = withContext(Dispatchers.IO) {
-                agg.snapshot(range) to moodAgg.snapshot(range)
+            val triple = withContext(Dispatchers.IO) {
+                Triple(
+                    agg.snapshot(range),
+                    moodAgg.snapshot(range),
+                    moodAgg.mixSnapshot(range),
+                )
             }
-            render(pair.first, pair.second)
+            render(triple.first, triple.second, triple.third)
         }
     }
 
-    private fun render(snap: IkdAggregator.Snapshot, moodSnap: IkdMoodAggregator.MoodSnapshot) {
+    private fun render(
+        snap: IkdAggregator.Snapshot,
+        moodSnap: IkdMoodAggregator.MoodSnapshot,
+        moodMix: IkdMoodAggregator.MoodMixSnapshot,
+    ) {
         val isEmpty = snap.totalSessions == 0
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
         binding.dashboardNestedScrollview.beVisibleIf(!isEmpty)
@@ -166,7 +183,7 @@ class DashboardActivity : SimpleActivity() {
             ?.let { getString(R.string.dashboard_kpi_error_rate_value, it) } ?: placeholder
 
         renderCharts(snap)
-        renderMood(snap, moodSnap)
+        renderMoodSection(snap, moodSnap, moodMix)
     }
 
     private fun renderCharts(snap: IkdAggregator.Snapshot) {
@@ -181,58 +198,104 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
-     * Phase 8: render the Mood-over-Time line chart, the Mood Distribution
-     * panel, and the Avg Mood KPI. All three are gated on `total > 0` —
-     * sessions without a tap stay invisible (no synthetic Neutral, per
-     * Decisions #10 + #11). When `total == 0` the three views are
-     * `View.GONE` and the KPI strip falls back to four cells.
+     * Phase 8.3: render the Mood Mix over Time stacked-bar chart and the
+     * Mood Distribution panel. Both are gated on `total > 0` — sessions
+     * without a tap stay invisible (no synthetic Neutral, per Phase 8
+     * Decisions #10 + #11). When `total == 0` both cards are `View.GONE`.
      *
-     * The Mood-over-Time chart uses the same X-axis bucket labels as the
-     * IKD charts (same `Range.bucketFormat`), so users can correlate
-     * mood with typing speed at a glance.
+     * Phase 8.3 dropped the Phase 8 Avg Mood KPI cell + Mood-over-Time
+     * line chart entirely (averaging an ordinal valence over six
+     * categorical labels produces interpretively vague numbers). The
+     * KPI strip now sits at four cells unconditionally.
      */
-    private fun renderMood(
+    private fun renderMoodSection(
         ikdSnap: IkdAggregator.Snapshot,
         moodSnap: IkdMoodAggregator.MoodSnapshot,
+        moodMix: IkdMoodAggregator.MoodMixSnapshot,
     ) {
         if (moodSnap.total == 0) {
-            binding.dashboardKpiAvgMoodCell.beGone()
-            binding.dashboardMoodChartCard.beGone()
+            binding.dashboardMoodStackedChartCard.beGone()
             binding.dashboardMoodDistributionCard.beGone()
             return
         }
 
-        // Avg Mood KPI: rounded emoji + precise number (e.g. "🤢 3.2"). The
-        // round-to-nearest is clamped to 1..6 so MoodEmoji.emojiFor never
-        // sees an out-of-range score from a value at the edges.
-        val avg = moodSnap.averageScore
-        if (avg != null) {
-            val rounded = avg.roundToInt().coerceIn(MoodEmoji.SCORE_HAPPINESS, MoodEmoji.SCORE_ANGER)
-            val emoji = MoodEmoji.emojiFor(rounded)
-            binding.dashboardKpiAvgMoodValue.text =
-                getString(R.string.dashboard_avg_mood_value_format, emoji, avg)
-            binding.dashboardKpiAvgMoodCell.beVisible()
-        } else {
-            binding.dashboardKpiAvgMoodCell.beGone()
-        }
-
-        // Mood-over-Time line chart. Align bucket keys with the IKD chart's
-        // X axis so the same dates render identically left-to-right.
-        binding.dashboardMoodChartCard.beVisible()
-        val moodByBucket = moodSnap.buckets.associateBy { it.label }
-        val moodLabels = ikdSnap.buckets.map { formatBucketLabel(it.label, ikdSnap.range) }
-        val moodValues = ikdSnap.buckets.map { ikdBucket ->
-            moodByBucket[ikdBucket.label]?.avgScore?.toFloat()
-        }
-        binding.dashboardChartMood.setData(
-            moodLabels,
-            moodValues,
-            getString(R.string.dashboard_chart_mood_y_label),
-        )
+        binding.dashboardMoodStackedChartCard.beVisible()
+        bindStackedChart(ikdSnap, moodMix)
+        bindMoodLegend()
 
         // Distribution panel. Six rows in display order (Happiness → Anger).
+        // Kept verbatim from Phase 8.
         binding.dashboardMoodDistributionCard.beVisible()
         renderMoodDistribution(moodSnap)
+    }
+
+    /**
+     * Phase 8.3: feed the stacked-bar chart. X axis bucket labels are
+     * lifted from the IKD snapshot so the bars align with the existing
+     * IKD charts' columns (same date keys, same `formatBucketLabel`). For
+     * each Ekman category, build a parallel list of percentages
+     * (`count * 100 / bucketTotal`); empty buckets emit zero-height
+     * segments so the X axis stays aligned.
+     */
+    private fun bindStackedChart(
+        ikdSnap: IkdAggregator.Snapshot,
+        moodMix: IkdMoodAggregator.MoodMixSnapshot,
+    ) {
+        val mixByBucket = moodMix.buckets.associateBy { it.label }
+        val labels = ikdSnap.buckets.map { formatBucketLabel(it.label, ikdSnap.range) }
+        val segments = MoodEmoji.displayOrder().map { score ->
+            val values = ikdSnap.buckets.map { ikdBucket ->
+                val mixBucket = mixByBucket[ikdBucket.label]
+                if (mixBucket == null || mixBucket.total <= 0) {
+                    0f
+                } else {
+                    val count = mixBucket.counts[score] ?: 0
+                    count.toFloat() * PCT_MAX_FLOAT / mixBucket.total.toFloat()
+                }
+            }
+            IkdStackedBarChartView.MoodSegment(
+                score = score,
+                label = getString(MoodEmoji.labelResFor(score)),
+                colorInt = ContextCompat.getColor(this, moodColorResFor(score)),
+                values = values,
+            )
+        }
+        binding.dashboardChartMoodStacked.setData(labels, segments)
+    }
+
+    /**
+     * Phase 8.3: build the legend strip below the stacked-bar chart.
+     * Six rows, each emoji + label + tinted swatch. Idempotent — the
+     * legend is rebuilt from scratch on every range switch so theme
+     * changes (light → dark) and locale changes propagate cleanly.
+     */
+    private fun bindMoodLegend() {
+        val legend = binding.dashboardMoodStackedLegend
+        legend.removeAllViews()
+        val inflater = LayoutInflater.from(this)
+        val textColor = getProperTextColor()
+        for (score in MoodEmoji.displayOrder()) {
+            val item = ItemMoodLegendSwatchBinding.inflate(inflater, legend, false)
+            item.moodLegendSwatch.backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(this, moodColorResFor(score))
+            )
+            val emoji = MoodEmoji.emojiFor(score)
+            val label = getString(MoodEmoji.labelResFor(score))
+            item.moodLegendLabel.text = "$emoji $label"
+            item.moodLegendLabel.setTextColor(textColor)
+            legend.addView(item.root)
+        }
+    }
+
+    @ColorRes
+    private fun moodColorResFor(score: Int): Int = when (score) {
+        MoodEmoji.SCORE_HAPPINESS -> R.color.mood_color_happiness
+        MoodEmoji.SCORE_SURPRISE -> R.color.mood_color_surprise
+        MoodEmoji.SCORE_DISGUST -> R.color.mood_color_disgust
+        MoodEmoji.SCORE_SADNESS -> R.color.mood_color_sadness
+        MoodEmoji.SCORE_FEAR -> R.color.mood_color_fear
+        MoodEmoji.SCORE_ANGER -> R.color.mood_color_anger
+        else -> R.color.mood_color_happiness
     }
 
     private fun renderMoodDistribution(moodSnap: IkdMoodAggregator.MoodSnapshot) {
@@ -300,5 +363,10 @@ class DashboardActivity : SimpleActivity() {
         // attribute on the row layout). Each row's progress is its share
         // of the total, scaled to that range.
         private const val PCT_MAX = 100
+
+        // Phase 8.3: same scaling for the stacked-bar chart segments.
+        // Float so the per-bucket percentage stays as a Float through
+        // MPAndroidChart's BarEntry.
+        private const val PCT_MAX_FLOAT = 100f
     }
 }

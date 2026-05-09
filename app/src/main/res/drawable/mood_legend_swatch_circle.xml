@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 8.3: solid circle drawable used as the legend swatch beside each
+    Ekman category label. Tinted at runtime via `View.backgroundTintList`
+    with the matching `mood_color_*` resource.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@android:color/white" />
+</shape>

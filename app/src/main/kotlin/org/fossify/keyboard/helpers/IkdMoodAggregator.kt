@@ -7,6 +7,7 @@ import org.fossify.keyboard.BuildConfig
 import org.fossify.keyboard.databases.IkdDatabase
 import org.fossify.keyboard.helpers.IkdAggregator.Range
 import org.fossify.keyboard.interfaces.MoodBucketRow
+import org.fossify.keyboard.interfaces.MoodCategoryBucketRow
 import org.fossify.keyboard.interfaces.MoodDistributionRow
 import java.util.Calendar
 import java.util.TimeZone
@@ -47,6 +48,13 @@ class IkdMoodAggregator(private val db: IkdDatabase) {
      * Top-level dashboard payload. `total == 0` means no entries in the
      * selected range — DashboardActivity hides the chart card, the
      * Distribution panel, and the Avg Mood KPI in that case.
+     *
+     * Phase 8.3: `averageScore` is no longer surfaced on the global
+     * dashboard (the Avg Mood KPI cell + Mood-over-Time line chart were
+     * dropped — averaging an ordinal valence id over six categorical
+     * labels produces interpretively vague numbers). The field is kept
+     * on the data class for backwards compatibility with the old test
+     * fixtures (Decision #11 of `Phase8.3_Plan.md`).
      */
     data class MoodSnapshot(
         val range: Range,
@@ -55,6 +63,33 @@ class IkdMoodAggregator(private val db: IkdDatabase) {
         val counts: Map<Int, Int>,
         val total: Int,
         val averageScore: Double?,
+    )
+
+    /**
+     * Phase 8.3: one bar on the "Mood Mix over Time" stacked-bar chart.
+     * `counts` is always six entries (one per Ekman score, zero-defaulted)
+     * so the chart layer can iterate in display order without null checks.
+     * `total` is the sum of `counts.values` — used to render percentages
+     * when present, or zero-height bars when absent.
+     */
+    data class MoodMixBucket(
+        val label: String,
+        /** Map of `mood_score (1..6)` → count, always six entries. */
+        val counts: Map<Int, Int>,
+        val total: Int,
+    )
+
+    /**
+     * Phase 8.3: stacked-bar dashboard payload. `total == 0` means no
+     * entries in the selected range — DashboardActivity hides the chart
+     * card and the Distribution panel in that case (the Avg Mood KPI cell
+     * and Mood-over-Time line chart from Phase 8 are gone entirely).
+     */
+    data class MoodMixSnapshot(
+        val range: Range,
+        val buckets: List<MoodMixBucket>,
+        /** Total entries across all buckets — same number `MoodSnapshot.total` produces. */
+        val total: Int,
     )
 
     suspend fun snapshot(range: Range): MoodSnapshot = withContext(Dispatchers.IO) {
@@ -70,6 +105,25 @@ class IkdMoodAggregator(private val db: IkdDatabase) {
         }
         if (BuildConfig.DEBUG) {
             Log.d(LOG_TAG, "snapshot(${range.name}) took ${durationMs}ms")
+        }
+        result!!
+    }
+
+    /**
+     * Phase 8.3: per-bucket-per-category aggregation for the new "Mood Mix
+     * over Time" stacked bar chart. Composed alongside [snapshot] in the
+     * same `Dispatchers.IO` hop on `DashboardActivity.onResume`.
+     */
+    suspend fun mixSnapshot(range: Range): MoodMixSnapshot = withContext(Dispatchers.IO) {
+        var result: MoodMixSnapshot? = null
+        val durationMs = measureTimeMillis {
+            val nowMs = System.currentTimeMillis()
+            val (fromMs, toMs) = computeRangeWindow(range, nowMs)
+            val rows = db.MoodDao().getMoodCategoryBuckets(range.bucketFormat, fromMs, toMs)
+            result = Companion.buildMixSnapshot(range, rows)
+        }
+        if (BuildConfig.DEBUG) {
+            Log.d(LOG_TAG, "mixSnapshot(${range.name}) took ${durationMs}ms")
         }
         result!!
     }
@@ -152,6 +206,51 @@ class IkdMoodAggregator(private val db: IkdDatabase) {
                 counts = counts,
                 total = total,
                 averageScore = averageScore,
+            )
+        }
+
+        /**
+         * Phase 8.3: pure derivation for the stacked-bar chart. Fold the
+         * `(bucket, score)` rows into one `MoodMixBucket` per bucket key,
+         * with the inner `counts` map zero-defaulted across all six
+         * Ekman scores so callers can iterate in display order without
+         * null checks.
+         *
+         * - Out-of-range scores (e.g. a corrupt row with score = 7) are
+         *   silently dropped, matching `buildSnapshot`'s behaviour.
+         * - Buckets are emitted in `bucket` ascending order (the SQL
+         *   already orders this way; `LinkedHashMap` preserves insertion
+         *   order).
+         * - `total` is the sum of bucket totals — equivalent to
+         *   `MoodSnapshot.total` produced from the same time window.
+         */
+        internal fun buildMixSnapshot(
+            range: Range,
+            rows: List<MoodCategoryBucketRow>,
+        ): MoodMixSnapshot {
+            // LinkedHashMap so the bucket-key insertion order survives the
+            // group-by in Kotlin even though we're not relying on the SQL
+            // ordering directly.
+            val grouped = linkedMapOf<String, MutableMap<Int, Int>>()
+            for (row in rows) {
+                if (!MoodEmoji.isValidScore(row.score)) continue
+                val perScore = grouped.getOrPut(row.bucket) {
+                    MoodEmoji.displayOrder().associateWith { 0 }.toMutableMap()
+                }
+                perScore[row.score] = (perScore[row.score] ?: 0) + row.entryCount
+            }
+            val mixBuckets = grouped.map { (label, perScore) ->
+                MoodMixBucket(
+                    label = label,
+                    counts = perScore.toMap(),
+                    total = perScore.values.sum(),
+                )
+            }
+            val total = mixBuckets.sumOf { it.total }
+            return MoodMixSnapshot(
+                range = range,
+                buckets = mixBuckets,
+                total = total,
             )
         }
     }

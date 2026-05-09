@@ -85,4 +85,33 @@ interface MoodDao {
         fromMs: Long,
         toMs: Long,
     ): List<MoodBucketRow>
+
+    /**
+     * Phase 8.3: per-bucket-per-category aggregation. Returns one row per
+     * `(bucket, mood_score)` pair where the bucket has at least one entry
+     * with that score; zero-count pairs are absent and the aggregator
+     * zero-fills them in Kotlin. Powers the "Mood Mix over Time" stacked
+     * bar chart.
+     *
+     * @param bucketFormat strftime pattern ("%Y-%m-%d" daily, "%Y-%W" weekly).
+     * @param fromMs inclusive lower bound on `timestamp` (epoch millis).
+     * @param toMs exclusive upper bound on `timestamp` (epoch millis).
+     */
+    @Query(
+        """
+        SELECT
+            strftime(:bucketFormat, timestamp / 1000, 'unixepoch', 'localtime') AS bucket,
+            mood_score                                                          AS score,
+            COUNT(*)                                                            AS entryCount
+        FROM mood_entries
+        WHERE timestamp >= :fromMs AND timestamp < :toMs
+        GROUP BY bucket, mood_score
+        ORDER BY bucket ASC, mood_score ASC
+        """
+    )
+    fun getMoodCategoryBuckets(
+        bucketFormat: String,
+        fromMs: Long,
+        toMs: Long,
+    ): List<MoodCategoryBucketRow>
 }

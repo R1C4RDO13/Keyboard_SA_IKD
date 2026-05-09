@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 8.3: one entry of the Mood Mix over Time chart's legend.
+    Inflated six times by `DashboardActivity.bindMoodLegend(...)`. The
+    swatch is tinted at runtime with the matching `mood_color_*` resource
+    so light/dark themes stay consistent with the chart bars.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingEnd="@dimen/normal_margin"
+    android:paddingStart="0dp">
+
+    <View
+        android:id="@+id/mood_legend_swatch"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:background="@drawable/mood_legend_swatch_circle" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/mood_legend_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/small_margin"
+        android:textSize="@dimen/smaller_text_size" />
+
+</LinearLayout>

@@ -71,14 +71,15 @@
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            <!-- KPI strip -->
+            <!-- KPI strip — Phase 8.3 drops the fifth Avg Mood cell, so the
+                 strip is back to four cells unconditionally. -->
             <LinearLayout
                 android:id="@+id/dashboard_kpi_strip"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/normal_margin"
                 android:orientation="horizontal"
-                android:weightSum="5">
+                android:weightSum="4">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -172,33 +173,6 @@
 
                 </LinearLayout>
 
-                <!-- Phase 8: fifth KPI cell — Avg Mood (rounded emoji + precise number).
-                     Hidden when no mood entries exist in the selected range. -->
-                <LinearLayout
-                    android:id="@+id/dashboard_kpi_avg_mood_cell"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/dashboard_kpi_avg_mood_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="@dimen/bigger_text_size"
-                        android:textStyle="bold"
-                        tools:text="🤢 3.2" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_kpi_avg_mood_label"
-                        android:textSize="@dimen/smaller_text_size" />
-
-                </LinearLayout>
-
             </LinearLayout>
 
             <!-- Speed chart -->
@@ -243,12 +217,14 @@
                 android:layout_height="200dp"
                 android:layout_marginTop="@dimen/small_margin" />
 
-            <!-- Phase 8: Mood-over-Time chart card. Hidden when the selected
-                 range has no mood entries. Reuses the existing
-                 IkdLineChartView wrapper (frozen at single-series since
-                 Phase 5). -->
+            <!-- Phase 8.3: Mood Mix over Time stacked-bar chart card.
+                 Replaces the Phase 8 Mood-over-Time line chart and the
+                 Avg Mood KPI cell. Each bar is one time bucket; each
+                 stacked segment is the percentage of one Ekman category
+                 in that bucket. X axis aligns with the IKD charts above.
+                 Hidden when the selected range has no mood entries. -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_mood_chart_card"
+                android:id="@+id/dashboard_mood_stacked_chart_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/normal_margin"
@@ -263,17 +239,37 @@
                     android:padding="@dimen/normal_margin">
 
                     <org.fossify.commons.views.MyTextView
-                        android:id="@+id/dashboard_mood_chart_title"
+                        android:id="@+id/dashboard_mood_stacked_chart_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/dashboard_chart_mood_title"
+                        android:text="@string/dashboard_chart_mood_mix_title"
                         android:textStyle="bold" />
 
-                    <org.fossify.keyboard.views.IkdLineChartView
-                        android:id="@+id/dashboard_chart_mood"
+                    <org.fossify.keyboard.views.IkdStackedBarChartView
+                        android:id="@+id/dashboard_chart_mood_stacked"
                         android:layout_width="match_parent"
                         android:layout_height="200dp"
                         android:layout_marginTop="@dimen/small_margin" />
+
+                    <!-- Custom legend below the chart: a horizontally
+                         scrollable strip of six entries. Each entry pairs
+                         a small colour swatch (a tinted circle drawable)
+                         with emoji + label. Activity inflates the
+                         per-entry rows from item_mood_legend_swatch.xml. -->
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/small_margin"
+                        android:fillViewport="false"
+                        android:scrollbars="none">
+
+                        <LinearLayout
+                            android:id="@+id/dashboard_mood_stacked_legend"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal" />
+
+                    </HorizontalScrollView>
 
                 </LinearLayout>
 

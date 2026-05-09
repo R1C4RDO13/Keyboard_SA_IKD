@@ -15,4 +15,15 @@
     <color name="ikd_status_privacy_text">#FF000000</color>
     <color name="ikd_status_no_data">#757575</color>
     <color name="ikd_status_no_data_text">#FFFFFFFF</color>
+
+    <!-- Phase 8.3: mood-mix stacked-bar palette (dark mode).
+         Lighter, less-saturated variants so each band reads cleanly on
+         dark backgrounds without screaming. Same colour names as the
+         light palette so ContextCompat.getColor() resolves automatically. -->
+    <color name="mood_color_happiness">#66BB6A</color>
+    <color name="mood_color_surprise">#4DD0E1</color>
+    <color name="mood_color_disgust">#C0CA33</color>
+    <color name="mood_color_sadness">#42A5F5</color>
+    <color name="mood_color_fear">#AB47BC</color>
+    <color name="mood_color_anger">#EF5350</color>
 </resources>
