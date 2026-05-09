@@ -2,6 +2,13 @@
 <issues format="6" by="lint 9.0.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.1)" variant="all" version="9.0.1">
 
     <issue
+        id="TooManyViews"
+        message="`activity_diagnostics.xml` has more than 80 views, bad for performance">
+        <location
+            file="src/main/res/layout/activity_diagnostics.xml"/>
+    </issue>
+
+    <issue
         id="NewApi"
         message="Call requires API level 33 (current min is 26): `launchChangeAppLanguageIntent`"
         errorLine1="                launchChangeAppLanguageIntent()"

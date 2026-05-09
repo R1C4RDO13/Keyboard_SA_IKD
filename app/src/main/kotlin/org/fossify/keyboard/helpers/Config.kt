@@ -49,6 +49,10 @@ class Config(context: Context) : BaseConfig(context) {
             ?: SENSOR_DISPLAY_MODE_MAGNITUDE
         set(value) = prefs.edit().putString(SENSOR_DISPLAY_MODE, value).apply()
 
+    var diagnosticsSensorCardExpanded: Boolean
+        get() = prefs.getBoolean(DIAGNOSTICS_SENSOR_CARD_EXPANDED, true)
+        set(value) = prefs.edit().putBoolean(DIAGNOSTICS_SENSOR_CARD_EXPANDED, value).apply()
+
     var soundOnKeypress: Int
         get() = prefs.getInt(SOUND_ON_KEYPRESS, SOUND_SYSTEM)
         set(soundOnKeypress) = prefs.edit().putInt(SOUND_ON_KEYPRESS, soundOnKeypress).apply()

@@ -2,13 +2,15 @@ package org.fossify.keyboard.activities
 
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.ColorRes
+import androidx.core.content.ContextCompat
 import org.fossify.commons.extensions.beGone
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.updateTextColors
@@ -34,6 +36,10 @@ private const val GYRO_MAGNITUDE_RANGE = 10f
 private const val ACCEL_MAGNITUDE_RANGE = 20f
 private const val PERCENT_MAX = 100
 
+private const val SENSOR_CHEVRON_EXPANDED_DEG = 0f
+private const val SENSOR_CHEVRON_COLLAPSED_DEG = -90f
+private const val SENSOR_CHEVRON_ANIM_MS = 150L
+
 // Magnitude bars are one-sided (always >= 0). Range stays 0–10 rad/s for gyro
 // and 0–20 m/s² for accel — same upper bound as the per-axis mapping.
 private fun gyroMagnitudeProgress(mag: Float): Int =
@@ -46,7 +52,6 @@ class DiagnosticsActivity : SimpleActivity() {
 
     private lateinit var sensorHelper: KinematicSensorHelper
     private var displayedSessionId = ""
-    private var isSensorExpanded = true
 
     private val statusRefreshHandler = Handler(Looper.getMainLooper())
     private val statusRefreshRunnable = object : Runnable {
@@ -104,6 +109,9 @@ class DiagnosticsActivity : SimpleActivity() {
         setupTopAppBar(binding.diagnosticsAppbar, NavigationIcon.Arrow)
         applyThemeColors()
         applySensorDisplayMode(config.sensorDisplayMode)
+        // Restore the sensor card's collapse state without animating — running
+        // the animation on first paint would just look like a flicker.
+        applySensorExpansion(config.diagnosticsSensorCardExpanded, animate = false)
         sensorHelper.start()
         LiveCaptureSessionStore.setTimingEventListener { event ->
             runOnUiThread { onNewTimingEvent(event) }
@@ -116,9 +124,20 @@ class DiagnosticsActivity : SimpleActivity() {
         updateTextColors(binding.diagnosticsNestedScrollview)
         val primary = getProperPrimaryColor()
         binding.diagnosticsTimingSectionLabel.setTextColor(primary)
+        binding.diagnosticsCountSectionLabel.setTextColor(primary)
         binding.diagnosticsGyroSectionLabel.setTextColor(primary)
         binding.diagnosticsAccelSectionLabel.setTextColor(primary)
         binding.diagnosticsSensorReadingsLabel.setTextColor(primary)
+        // MaterialCardView's default ?attr/colorSurface does not track Fossify's
+        // runtime background color, so on a custom theme the cards stand out as
+        // unthemed slabs. Tint each card to the activity's background color and
+        // let cardElevation's shadow demarcate the card silhouette — same
+        // pattern as EventFeedActivity.applyThemeColors() (Phase 5).
+        val background = getProperBackgroundColor()
+        binding.diagnosticsTimingCard.setCardBackgroundColor(background)
+        binding.diagnosticsCountCard.setCardBackgroundColor(background)
+        binding.diagnosticsSensorCard.setCardBackgroundColor(background)
+        binding.diagnosticsViewLogCard.setCardBackgroundColor(background)
     }
 
     override fun onPause() {
@@ -175,11 +194,25 @@ class DiagnosticsActivity : SimpleActivity() {
     }
 
     private fun toggleSensorCard() {
-        isSensorExpanded = !isSensorExpanded
+        val nextExpanded = !config.diagnosticsSensorCardExpanded
+        config.diagnosticsSensorCardExpanded = nextExpanded
+        applySensorExpansion(nextExpanded, animate = true)
+    }
+
+    private fun applySensorExpansion(expanded: Boolean, animate: Boolean) {
         binding.diagnosticsSensorReadingsContent.visibility =
-            if (isSensorExpanded) View.VISIBLE else View.GONE
-        binding.diagnosticsSensorReadingsChevron.rotation =
-            if (isSensorExpanded) 0f else -90f
+            if (expanded) View.VISIBLE else View.GONE
+        val targetRotation =
+            if (expanded) SENSOR_CHEVRON_EXPANDED_DEG else SENSOR_CHEVRON_COLLAPSED_DEG
+        val chevron = binding.diagnosticsSensorReadingsChevron
+        if (animate) {
+            chevron.animate()
+                .rotation(targetRotation)
+                .setDuration(SENSOR_CHEVRON_ANIM_MS)
+                .start()
+        } else {
+            chevron.rotation = targetRotation
+        }
     }
 
     private fun applySensorDisplayMode(mode: String) {
@@ -247,27 +280,38 @@ class DiagnosticsActivity : SimpleActivity() {
         val privacyOn = config.privacyModeEnabled
         val isCapturing = LiveCaptureSessionStore.isCapturing
         val hasData = LiveCaptureSessionStore.hasData()
-        val (statusText, chipColor) = when {
-            privacyOn -> Pair(
-                getString(R.string.diagnostics_capture_status_privacy),
-                Color.parseColor("#FFC107")
+        // Each state resolves its background and foreground colour from the
+        // res/values{,-night}/colors.xml palette so the chip stays legible on
+        // both Fossify light and dark themes. No Color.parseColor literals.
+        val (statusTextRes, bgColorRes, textColorRes) = when {
+            privacyOn -> Triple(
+                R.string.diagnostics_capture_status_privacy,
+                R.color.ikd_status_privacy,
+                R.color.ikd_status_privacy_text,
             )
-            isCapturing -> Pair(
-                getString(R.string.diagnostics_capture_status_capturing),
-                Color.parseColor("#4CAF50")
+            isCapturing -> Triple(
+                R.string.diagnostics_capture_status_capturing,
+                R.color.ikd_status_active,
+                R.color.ikd_status_active_text,
             )
-            hasData -> Pair(
-                getString(R.string.diagnostics_capture_status_stopped),
-                Color.parseColor("#9E9E9E")
+            hasData -> Triple(
+                R.string.diagnostics_capture_status_stopped,
+                R.color.ikd_status_idle,
+                R.color.ikd_status_idle_text,
             )
-            else -> Pair(
-                getString(R.string.diagnostics_capture_status_no_data),
-                Color.parseColor("#9E9E9E")
+            else -> Triple(
+                R.string.diagnostics_capture_status_no_data,
+                R.color.ikd_status_no_data,
+                R.color.ikd_status_no_data_text,
             )
         }
-        binding.diagnosticsStatusChip.text = statusText
-        binding.diagnosticsStatusChip.backgroundTintList = ColorStateList.valueOf(chipColor)
+        binding.diagnosticsStatusChip.text = getString(statusTextRes)
+        binding.diagnosticsStatusChip.backgroundTintList = colorStateListFor(bgColorRes)
+        binding.diagnosticsStatusChip.setTextColor(ContextCompat.getColor(this, textColorRes))
     }
+
+    private fun colorStateListFor(@ColorRes colorRes: Int): ColorStateList =
+        ColorStateList.valueOf(ContextCompat.getColor(this, colorRes))
 
     private fun resetMetricsDisplay() {
         binding.diagnosticsIkdValue.text = getString(R.string.diagnostics_value_none)

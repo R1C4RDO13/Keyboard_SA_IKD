@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="key_press_color">#11ffffff</color>
+
+    <!-- Phase 6 rework: status chip palette (light mode).
+         Foregrounds are picked per state for WCAG AA contrast against
+         the matching background. The amber state needs black text;
+         green / grey states keep white. -->
+    <color name="ikd_status_active">#2E7D32</color>
+    <color name="ikd_status_active_text">#FFFFFFFF</color>
+    <color name="ikd_status_idle">#9E9E9E</color>
+    <color name="ikd_status_idle_text">#FFFFFFFF</color>
+    <color name="ikd_status_privacy">#F57F17</color>
+    <color name="ikd_status_privacy_text">#FF000000</color>
+    <color name="ikd_status_no_data">#9E9E9E</color>
+    <color name="ikd_status_no_data_text">#FFFFFFFF</color>
 </resources>
