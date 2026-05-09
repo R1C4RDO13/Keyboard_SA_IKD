@@ -175,6 +175,16 @@
 
             </LinearLayout>
 
+            <!-- Phase 9.1: Trends section header (primary-coloured) -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_section_header_trends"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_section_trends"
+                android:textSize="@dimen/bigger_text_size"
+                android:textStyle="bold" />
+
             <!-- Speed chart -->
             <org.fossify.commons.views.MyTextView
                 android:layout_width="match_parent"
@@ -216,6 +226,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:layout_marginTop="@dimen/small_margin" />
+
+            <!-- Phase 9.1: Mood section header (primary-coloured). Hidden
+                 when both child mood cards are gone. -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_section_header_mood"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_section_mood"
+                android:textSize="@dimen/bigger_text_size"
+                android:textStyle="bold"
+                android:visibility="gone" />
 
             <!-- Phase 8.3: Mood Mix over Time stacked-bar chart card.
                  Replaces the Phase 8 Mood-over-Time line chart and the

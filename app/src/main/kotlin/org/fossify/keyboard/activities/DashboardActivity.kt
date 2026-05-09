@@ -80,11 +80,18 @@ class DashboardActivity : SimpleActivity() {
      *
      * Phase 8.3: tints the new stacked-bar card alongside the Distribution
      * card. The Phase 8 line-chart card is gone.
+     *
+     * Phase 9.1: also tints the new section headers with the primary color
+     * so the dashboard reads as labelled sections.
      */
     private fun applyCardThemeColors() {
         val background = getProperBackgroundColor()
         binding.dashboardMoodStackedChartCard.setCardBackgroundColor(background)
         binding.dashboardMoodDistributionCard.setCardBackgroundColor(background)
+
+        val primary = getProperPrimaryColor()
+        binding.dashboardSectionHeaderTrends.setTextColor(primary)
+        binding.dashboardSectionHeaderMood.setTextColor(primary)
     }
 
     private fun applyRangeToggleColors() {
@@ -216,9 +223,13 @@ class DashboardActivity : SimpleActivity() {
         if (moodSnap.total == 0) {
             binding.dashboardMoodStackedChartCard.beGone()
             binding.dashboardMoodDistributionCard.beGone()
+            // Phase 9.1: hide the section header when no mood cards render.
+            binding.dashboardSectionHeaderMood.beGone()
             return
         }
 
+        // Phase 9.1: section header visible alongside the mood widgets.
+        binding.dashboardSectionHeaderMood.beVisible()
         binding.dashboardMoodStackedChartCard.beVisible()
         bindStackedChart(ikdSnap, moodMix)
         bindMoodLegend()

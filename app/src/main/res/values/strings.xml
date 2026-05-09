@@ -124,6 +124,10 @@
     <string name="session_mood_kpi_label">Mood</string>
     <string name="session_mood_chip_format">Mood: %1$s %2$s</string>
 
+    <!-- Phase 9.1: dashboard section headers (primary-coloured labels) -->
+    <string name="dashboard_section_trends">Trends</string>
+    <string name="dashboard_section_mood">Mood</string>
+
     <!-- Phase 8: global dashboard mood widgets -->
     <string name="dashboard_mood_distribution_title">Mood Distribution</string>
 
