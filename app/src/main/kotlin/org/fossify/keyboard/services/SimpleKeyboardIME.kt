@@ -122,6 +122,15 @@ import org.fossify.keyboard.helpers.SHOW_KEY_BORDERS
 import org.fossify.keyboard.helpers.SHOW_NUMBERS_ROW
 import org.fossify.keyboard.helpers.ShiftState
 import org.fossify.keyboard.helpers.VOICE_INPUT_METHOD
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_ALPHA
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_AUTOCORRECT
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_BACKSPACE
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_DIGIT
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_EMOJI
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_ENTER
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_OTHER
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_SPACE
+import org.fossify.keyboard.helpers.IME_EDIT_GRACE_MS
 import org.fossify.keyboard.helpers.cachedVNTelexData
 import org.fossify.keyboard.helpers.KinematicSensorHelper
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
@@ -515,13 +524,13 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
     // Phase 1.1: Categorize key codes for privacy-preserving event capture
     private fun categorizeKeyCode(code: Int): String {
         return when (code) {
-            in 97..122 -> "ALPHA"  // lowercase a-z
-            in 65..90 -> "ALPHA"   // uppercase A-Z
-            in 48..57 -> "DIGIT"   // 0-9
-            MyKeyboard.KEYCODE_SPACE -> "SPACE"
-            MyKeyboard.KEYCODE_DELETE -> "BACKSPACE"
-            MyKeyboard.KEYCODE_ENTER -> "ENTER"
-            else -> "OTHER"
+            in 97..122 -> EVENT_CATEGORY_ALPHA  // lowercase a-z
+            in 65..90 -> EVENT_CATEGORY_ALPHA   // uppercase A-Z
+            in 48..57 -> EVENT_CATEGORY_DIGIT   // 0-9
+            MyKeyboard.KEYCODE_SPACE -> EVENT_CATEGORY_SPACE
+            MyKeyboard.KEYCODE_DELETE -> EVENT_CATEGORY_BACKSPACE
+            MyKeyboard.KEYCODE_ENTER -> EVENT_CATEGORY_ENTER
+            else -> EVENT_CATEGORY_OTHER
         }
     }
 
@@ -554,6 +563,37 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
 
     override fun onText(text: String) {
         currentInputConnection?.commitText(text, 1)
+    }
+
+    /**
+     * Phase 7: emoji palette taps surface here instead of [onText] so the
+     * IKD pipeline can record them as an `EMOJI` event before the text is
+     * committed. Hold time is `-1` because the emoji palette doesn't fire
+     * `onPress`; flight time is derived from `lastKeyUpTimestamp` if it was
+     * set by a prior keystroke. After recording, we delegate to [onText]
+     * so the existing commit path is unchanged.
+     */
+    override fun onEmojiText(text: String) {
+        if (LiveCaptureSessionStore.isCapturing) {
+            val now = SystemClock.uptimeMillis()
+            val nowWall = System.currentTimeMillis()
+            val ikd = if (lastKeyUpTimestamp > 0L) now - lastKeyUpTimestamp else -1L
+            val flightTime = if (lastKeyUpTimestamp > 0L) now - lastKeyUpTimestamp else -1L
+            lastKeyUpTimestamp = now
+            pendingFlightTime = -1L
+
+            val event = KeyTimingEvent(
+                sessionId = LiveCaptureSessionStore.currentSessionId,
+                timestamp = nowWall,
+                eventCategory = EVENT_CATEGORY_EMOJI,
+                ikdMs = ikd,
+                holdTimeMs = -1L,
+                flightTimeMs = flightTime,
+                isCorrection = false
+            )
+            LiveCaptureSessionStore.recordTimingEvent(event)
+        }
+        onText(text)
     }
 
     override fun reloadKeyboard() {
