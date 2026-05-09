@@ -303,7 +303,7 @@ Detailed scope: [`Phase7/Phase7_Plan.md`](Phase7/Phase7_Plan.md)
 ---
 
 ## Phase 8: Mood Bar & Contextual Overlay
-**Status: Implemented**
+**Status: Implemented (incl. 8.1 UI polish — see [`Phase8/Phase8_Plan.md`](Phase8/Phase8_Plan.md#12-post-merge-ui-polish-phase-81))**
 
 Detailed scope: [`Phase8/Phase8_Plan.md`](Phase8/Phase8_Plan.md)
 
@@ -316,11 +316,13 @@ Detailed scope: [`Phase8/Phase8_Plan.md`](Phase8/Phase8_Plan.md)
     *   Tapping 🛡️ enables privacy mode, finalises any in-flight session via the existing `LiveCaptureSessionStore.stopSession()` path (Phase 2 semantics preserved), and deletes any mood row for that session.
     *   **No auto-write** — sessions without an explicit emotion tap have no `MoodEntry` row (Decision #10). This sidesteps the Neutral / no-rating problem entirely (Decision #11).
     *   `IkdSettingsActivity` gains a "Privacy mode on by default" row backed by the existing `Config.privacyModeEnabled` flag (Decision #25 — no new pref key). The keyboard 🛡️ button and the settings row are two affordances over the same flag.
+    *   *(Phase 8.1 polish)* `IkdSettingsActivity` also gains a "Show mood bar in keyboard" toggle backed by the new `Config.showMoodBar` flag (default true). When disabled, the keyboard's seven-button bar is hidden entirely; privacy stays reachable from the settings row above.
     *   Privacy invariant: `MoodEntry` stores only the integer ordinal valence (1–6) and a timestamp — no text, no emoji codepoint. Score → emoji mapping lives in the UI layer only (`helpers/MoodEmoji.kt`).
 
 *   **Mood Overlay on Session Dashboard (`EventFeedActivity`):**
-    *   When a session has a `MoodEntry`, the KPI strip grows from four cells to five (emoji + label) and the metadata one-liner gains a `Mood: 😊 Happiness` chip.
+    *   When a session has a `MoodEntry`, the KPI strip grows from four cells to five (emoji + label).
     *   Sessions without a mood entry keep the original four-cell layout — the fifth cell collapses cleanly.
+    *   *(Phase 8.1 polish)* The originally planned standalone "Mood: 😊 Happiness" line under the metadata was removed — it duplicated the KPI cell. The fifth KPI cell is now the single mood surface on this screen.
 
 *   **Mood widgets on Global Insights (`DashboardActivity`):**
     *   A fourth chart card "Mood over Time" — line chart with Y axis 1 (Happiness) → 6 (Anger), bucketed identically to the existing three charts. Null buckets render as line breaks.

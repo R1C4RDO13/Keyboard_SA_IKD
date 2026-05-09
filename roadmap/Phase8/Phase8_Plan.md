@@ -1,8 +1,8 @@
 # Phase 8 — Mood Bar & Contextual Overlay
 
-**Status:** Planned
+**Status:** Implemented (sub-phases 8.1 → 8.4 merged via `feat/phase8-mood-bar`); UI polish landed via `fix/phase8-ui-polish` — see [Section 12](#12-post-merge-ui-polish-phase-81).
 **Depends on:** Phase 5 (per-session dashboard layout — adds a mood KPI cell), Phase 3 (`DashboardActivity` — adds a mood trend chart, distribution panel, and Avg Mood KPI), Phase 7 (capture-layer reopen pattern that this phase mirrors at smaller scope), Phase 2 (existing privacy-toggle button — subsumed into the new bar; existing `Config.privacyModeEnabled` flag — surfaced in settings)
-**Branch:** `feat/phase8-mood-bar` — cut from `main` after Phase 7 has been merged.
+**Branch:** `feat/phase8-mood-bar` — cut from `main` after Phase 7 has been merged. Polish landed on `fix/phase8-ui-polish` in a follow-up merge.
 **Scope (one sentence):** Replace the standalone privacy-toggle button with a seven-button integrated emotion bar — privacy shield + Ekman's six basic emotions ordered best-to-worst by valence (`🛡️ 😊 😲 🤢 😢 😨 😠`) — on the keyboard toolbar, surface the existing `Config.privacyModeEnabled` flag in `IkdSettingsActivity` as a "Privacy mode on by default" toggle, persist the chosen emotion as a per-session `MoodEntry` row in `ikd.db`, and surface that signal as a new dimension on both the per-session dashboard (`EventFeedActivity`) and the global insights dashboard (`DashboardActivity`) — without touching the IKD capture path.
 
 This is the **first phase to bump `IkdDatabase.version`** (1 → 2). The `mood_entries` table is added via a strictly additive `Migration(1, 2)` — no existing column or row is rewritten. It is also the first phase since Phase 7 to reopen `MyKeyboardView.kt`, but only to add the emotion bar and remove the now-redundant standalone `privacy_toggle_button` from Phase 2; the existing key-press / key-up / emoji code paths are not edited. Capture (`SimpleKeyboardIME`, `LiveCaptureSessionStore`, `KinematicSensorHelper`, the `IkdEvent` / `SensorSample` entities, `IkdRetentionWorker`) is fully frozen.
@@ -30,6 +30,7 @@ The six emotion categories are **Ekman's basic emotions** [1, 2] — anger, disg
 9. [Decisions](#9-decisions)
 10. [Explicitly Deferred to Later Phases](#10-explicitly-deferred-to-later-phases)
 11. [References](#11-references)
+12. [Post-merge UI Polish (Phase 8.1)](#12-post-merge-ui-polish-phase-81)
 
 ---
 
@@ -87,7 +88,7 @@ The integer is an **ordinal valence id**: lower = better, higher = worse. This m
 - **Privacy toggle (now via 🛡️ slot):** Tapping 🛡️ enables privacy mode (same effect as the old shield button — `Config.privacyModeEnabled = true`, in-flight session finalised, any in-flight `MoodEntry` deleted). Tapping any of the six emotion buttons disables privacy mode (`Config.privacyModeEnabled = false`) and writes/replaces the active session's `MoodEntry`. Default highlighted state is 🛡️ when privacy is on (today's Phase 2 default); when privacy is off and the user has not yet tapped an emotion, **no button is highlighted** — this is a valid "capture is on, no rating yet" state.
 - **No auto-write:** the bar does not write any default mood row. A session without a user tap simply has no `MoodEntry` row, regardless of privacy state. This preserves the integrity of the dashboard aggregations (no synthetic entries diluting the signal) — Decision #10.
 - **Privacy-default setting:** `IkdSettingsActivity` gains one new row — "Privacy mode on by default" — that surfaces the existing `Config.privacyModeEnabled` flag from Phase 2 as a settings-screen toggle. Toggling it has the same effect as tapping the keyboard's 🛡️ button. Users who prefer capture-first can flip the flag here once and the state persists. The `Config.privacyModeEnabled` flag itself is unchanged from Phase 2 — only the UI affordance is new. See Decision #25.
-- **Per-session overlay:** `EventFeedActivity` (DB-backed mode only) gets a fifth KPI cell rendering the emotion emoji + label when `MoodEntry` exists for that session; gracefully collapses to four cells otherwise. The metadata one-liner gains a `· Mood: 😊 Happiness` segment when present.
+- **Per-session overlay:** `EventFeedActivity` (DB-backed mode only) gets a fifth KPI cell rendering the emotion emoji + label when `MoodEntry` exists for that session; gracefully collapses to four cells otherwise. *(The originally planned metadata-line "Mood: 😊 Happiness" chip was dropped in the Phase 8.1 polish — see Section 12 — because it duplicated the KPI cell.)*
 - **Global dashboard:** `DashboardActivity` gains three additions when at least one mood entry exists in the selected range:
   - A fourth `IkdLineChartView` card "Mood over Time" rendering daily/weekly avg mood scores (y-axis labelled "Mood (1=Happiness → 6=Anger)"); null buckets render as line breaks.
   - A "Mood Distribution" panel below the line charts (six rows, one per emotion, each with emoji + label + horizontal progress bar + count).
@@ -311,15 +312,14 @@ Selected button: `background = ?attr/colorAccent` (or the existing keyboard-key 
 
 ### Settings
 
-`IkdSettingsActivity` gains one new row in the existing capture/privacy section:
+`IkdSettingsActivity` gains two new rows in the existing capture/privacy section:
 
 | Row | Backing flag | Default | Description |
 |---|---|---|---|
 | Privacy mode on by default | `Config.privacyModeEnabled` (existing Phase 2 flag) | `true` | When enabled, the keyboard starts in privacy mode (no data captured). Tap the keyboard's 🛡️ button or this toggle to change. |
+| Show mood bar in keyboard *(added in Phase 8.1 polish — see Section 12)* | `Config.showMoodBar` (new) | `true` | When disabled, the seven-button bar is `View.GONE` in `MyKeyboardView`. Privacy can still be toggled from the row above. |
 
-The toggle is bidirectional with the keyboard's 🛡️ button — both write to the same flag. There is no separate `Config.privacyOnByDefault` (Decision #25). Toggling the setting to ON while a session is in flight runs the same finalisation path as tapping 🛡️ on the keyboard (see Phase 2 semantics).
-
-The bar itself remains permanent — no `Config.showMoodBar`. Users who want to disable capture entirely use the 🛡️ slot or the new settings row.
+The first toggle is bidirectional with the keyboard's 🛡️ button — both write to the same flag. There is no separate `Config.privacyOnByDefault` (Decision #25). Toggling the setting to ON while a session is in flight runs the same finalisation path as tapping 🛡️ on the keyboard (see Phase 2 semantics).
 
 ---
 
@@ -627,7 +627,7 @@ The whole phase is done when **all** of these are green on `feat/phase8-mood-bar
 | 6 | Mood while privacy mode is on | **Not possible by construction.** The 🛡️ and emotion slots are mutually exclusive on the bar — tapping an emotion implicitly disables privacy mode; opening the keyboard with privacy on simply does not write a row. The schema permits `session_id = NULL` rows but the keyboard never produces them. |
 | 7 | Bar default highlighted state | **🛡️ when `Config.privacyModeEnabled == true`; nothing highlighted when `false` and no `MoodEntry` exists for the active session.** The 🛡️-by-default branch matches today's Phase 2 "privacy on by default" — preserves user expectation. The "nothing highlighted" branch reflects the no-auto-write rule honestly: the bar shows what's stored, and an unrecorded session has no emotion stored. |
 | 8 | Bar position in keyboard | **Top bar, leading-aligned, replaces the standalone privacy-toggle button.** One control surface for "data is/isn't flowing + what's the mood" — fewer top-bar widgets, no duplication. |
-| 9 | Settings toggle for the bar itself | **None.** The bar is always visible because it now houses the privacy toggle — gating it behind a setting would hide the privacy control from users who haven't opted in. |
+| 9 | Settings toggle for the bar itself | **Reversed in Phase 8.1 polish — see Section 12.** Originally **None** (rationale: the bar houses the privacy toggle, so gating it behind a setting would hide the privacy control). The follow-up landed `Config.showMoodBar` (default `true`) plus an `IkdSettingsActivity` row, because users who want to suppress the emoji bar still have a privacy affordance via the same settings screen. |
 | 10 | Auto-write a default mood on session start | **No.** Auto-writing any default emotion on session start would inflate that emotion's count in the Distribution panel and pull the Avg Mood KPI in its direction with passive (non-chosen) entries. An unrecorded session is an honest "user didn't feel a strong enough emotion to label" — that absence is itself signal. |
 | 11 | Neutral / no-rating slot | **Removed.** Earlier iterations of this plan included a Neutral category (or a 🤷 "no rating" slot). Both are made redundant by the no-auto-write rule (Decision #10) — sessions without a `MoodEntry` row already mean "user did not pick an emotion." Adding Neutral back would either need auto-writing (Decision #10 says no) or duplicate the same "no row" semantic with a row, which is worse for the dashboard aggregations. |
 | 12 | Score ordering: arbitrary id vs. ordinal valence | **Ordinal valence (1=best → 6=worst).** Lets us compute meaningful averages (Avg Mood KPI, Mood-over-Time line chart) using existing SQLite `AVG` and the existing `IkdLineChartView` wrapper. The cost is that the ordering is a product-defined valence ranking, not a research-derived axis — explicitly noted in Section 1 and Section 11. |
@@ -662,7 +662,7 @@ These were on the mood-bar wishlist but are out of scope for Phase 8:
 - **Sessionless `MoodEntry` rows from any UI surface** — schema permits it, Phase 8 doesn't produce it (Decision #6). A future journaling surface could write them; the retention worker would then need a sibling deletion query.
 - **`MoodEntry` exposed via the bulk JSON export** (if/when JSON export is added) — out of scope until JSON export ships.
 - **Anomaly markers on the mood charts** — already deferred from Phase 3.
-- **Settings toggle to hide the emotion bar** — explicit decision against (Decision #9). If a user genuinely doesn't want emoji on their keyboard, that's a future concern handled by either an alternate top-bar layout or a deeper rebrand pass.
+- ~~**Settings toggle to hide the emotion bar**~~ — *no longer deferred:* shipped in the Phase 8.1 UI polish (Section 12). Backed by the new `Config.showMoodBar` flag. Decision #9 documents the reversal.
 - **Auto-write a default mood on session start** — Decision #10. Would corrupt the dashboard aggregations.
 - **Neutral / no-rating slot** — Decision #11. Redundant with the no-auto-write rule.
 - **Intensity / strength dimension** (annoyance → anger → rage) — Decision #24. Plutchik adds this; this phase does not. Out of scope.
@@ -704,3 +704,46 @@ The six categories — anger, disgust, fear, happiness, sadness, surprise — ar
 ### Public encyclopaedic overview consulted during taxonomy comparison
 
 9. **Wikipedia.** "Emotion classification." <https://en.wikipedia.org/wiki/Emotion_classification>. — Comparative overview of basic-emotions taxonomies.
+
+---
+
+## 12. Post-merge UI Polish (Phase 8.1)
+
+After the original four sub-phases shipped on `feat/phase8-mood-bar`, on-device review surfaced four UI issues. Fixes landed on `fix/phase8-ui-polish` and were merged into `main` without reopening the schema, the capture path, or any frozen surface beyond what Phase 8 already reopened. This section is the change log for that follow-up so future readers can trace which decisions were revised.
+
+### What changed
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 | Mood bar buttons rendered tiny inside their 32 dp boxes; the bar hugged the clipboard-clear icon. | `mood_bar_button_size` 32 dp → 36 dp; `mood_bar_button_text_size` 18 sp → 22 sp; bar gains `layout_marginStart="@dimen/medium_margin"` and inner `gravity="center"` so emoji glyphs fill their boxes. |
+| 2 | The new `MaterialCardView` cards on `DashboardActivity` (Mood-over-Time and Mood Distribution) rendered as un-themed white slabs on dark themes — their default `?attr/colorSurface` doesn't track Fossify's runtime background colour. | New `applyCardThemeColors()` in `DashboardActivity` calls `setCardBackgroundColor(getProperBackgroundColor())` on both cards on every `onResume`. Same pattern Phase 5 already uses in `EventFeedActivity.applyThemeColors`. |
+| 3 | No way to hide the emotion bar — Decision #9 had explicitly omitted this. Users who don't want emoji on their keyboard had no escape hatch. | Added `Config.showMoodBar` (default `true`) and the `SHOW_MOOD_BAR` constant; new "Show mood bar in keyboard" row in `IkdSettingsActivity`; `MyKeyboardView.applyMoodBarVisibility()` gates the bar's `View.VISIBLE` / `View.GONE` on every refresh. Privacy stays reachable via the existing "Privacy mode on by default" row when the bar is hidden. **This reverses Decision #9.** |
+| 4 | The session dashboard (`EventFeedActivity` DB-backed mode) showed the mood twice: once in the fifth KPI cell and once again as a standalone "Mood: 😊 Happiness" line below the metadata. | Removed the standalone `mood_chip_text` view from `activity_event_feed.xml` and the matching `binding.moodChipText` plumbing in `applyMoodOverlay`. The fifth KPI cell remains as the single mood surface. The `session_mood_chip_format` string in `strings.xml` is retained but unused — harmless. |
+
+### Files touched (Phase 8.1, in addition to the Phase 8 set)
+
+| File | Change |
+|---|---|
+| `app/src/main/res/values/dimens.xml` | Bumped `mood_bar_button_size` and `mood_bar_button_text_size`. |
+| `app/src/main/res/layout/keyboard_view_keyboard.xml` | Added margin and centred inner gravity on the mood bar `LinearLayout`. |
+| `app/src/main/res/layout/activity_event_feed.xml` | Deleted the `mood_chip_text` view. |
+| `app/src/main/res/layout/activity_ikd_settings.xml` | Added the "Show mood bar in keyboard" toggle row. |
+| `app/src/main/res/values/strings.xml` | Added `ikd_settings_show_mood_bar` and its summary. |
+| `app/src/main/kotlin/.../helpers/Constants.kt` | Added `SHOW_MOOD_BAR` pref key. |
+| `app/src/main/kotlin/.../helpers/Config.kt` | Added `var showMoodBar: Boolean`. |
+| `app/src/main/kotlin/.../activities/IkdSettingsActivity.kt` | Wired the new toggle. |
+| `app/src/main/kotlin/.../activities/DashboardActivity.kt` | Added `applyCardThemeColors()`. |
+| `app/src/main/kotlin/.../activities/EventFeedActivity.kt` | Removed the mood-chip plumbing from `applyMoodOverlay`. |
+| `app/src/main/kotlin/.../views/MyKeyboardView.kt` | Added `applyMoodBarVisibility()`, called from `refreshMoodBarFromState`. |
+
+### Decision deltas
+
+- **Decision #9** — reversed: there is now a setting to hide the emotion bar (Issue #3 above).
+- **Decision #11** — unchanged: still no Neutral category, still no auto-write.
+- **Decision #25** — unchanged: the new `Config.showMoodBar` is a **separate** new flag from the existing `Config.privacyModeEnabled`. The "Privacy mode on by default" row continues to be the single surface for the privacy flag.
+- The polish opens **`helpers/Constants.kt` and `helpers/Config.kt`** — both were on the Section 2 forbidden list during the original Phase 8. The Phase 8.1 reversal of Decision #9 made the new pref key unavoidable; the edit is strictly additive (one new constant, one new property).
+
+### Gates re-run after the polish merge
+
+- `./gradlew assembleCoreDebug` — BUILD SUCCESSFUL.
+- `./gradlew testCoreDebugUnitTest` — BUILD SUCCESSFUL (no test changes; existing 38 unit tests still pass).
