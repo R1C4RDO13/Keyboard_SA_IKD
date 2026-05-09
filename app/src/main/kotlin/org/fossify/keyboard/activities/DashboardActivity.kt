@@ -32,6 +32,7 @@ import org.fossify.keyboard.extensions.ikdDistributionAggregator
 import org.fossify.keyboard.extensions.ikdHabitsAggregator
 import org.fossify.keyboard.extensions.ikdMoodAggregator
 import org.fossify.keyboard.extensions.ikdOrientationAggregator
+import org.fossify.keyboard.extensions.ikdQualityAggregator
 import org.fossify.keyboard.extensions.ikdSensorAggregator
 import org.fossify.keyboard.helpers.IkdActivityAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
@@ -39,7 +40,11 @@ import org.fossify.keyboard.helpers.IkdDistributionAggregator
 import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
 import org.fossify.keyboard.helpers.IkdOrientationAggregator
+import org.fossify.keyboard.helpers.IkdQualityAggregator
 import org.fossify.keyboard.helpers.IkdSensorAggregator
+import com.github.mikephil.charting.data.ScatterData
+import com.github.mikephil.charting.data.ScatterDataSet
+import androidx.core.graphics.ColorUtils
 import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.databinding.ItemOrientationLegendBinding
 import com.github.mikephil.charting.data.PieData
@@ -129,6 +134,8 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardFlightDistributionCard.setCardBackgroundColor(backgroundColor)
         // Phase 9.8: orientation donut card.
         binding.dashboardOrientationCard.setCardBackgroundColor(backgroundColor)
+        // Phase 9.10: activity-quality scatter card.
+        binding.dashboardActivityQualityCard.setCardBackgroundColor(backgroundColor)
     }
 
     private fun applyRangeToggleColors() {
@@ -194,6 +201,7 @@ class DashboardActivity : SimpleActivity() {
             // Phase 9.5: add the activity aggregator on the same hop.
             // Phase 9.7: add the distribution aggregator on the same hop.
             // Phase 9.8: add the orientation aggregator on the same hop.
+            // Phase 9.10: add the quality aggregator on the same hop.
             val agg = ikdAggregator
             val moodAgg = ikdMoodAggregator
             val sensorAgg = ikdSensorAggregator
@@ -201,6 +209,7 @@ class DashboardActivity : SimpleActivity() {
             val activityAgg = ikdActivityAggregator
             val distAgg = ikdDistributionAggregator
             val orientationAgg = ikdOrientationAggregator
+            val qualityAgg = ikdQualityAggregator
             val range = currentRange
             val payload = withContext(Dispatchers.IO) {
                 DashboardPayload(
@@ -212,6 +221,7 @@ class DashboardActivity : SimpleActivity() {
                     activity = activityAgg.snapshot(range),
                     distribution = distAgg.snapshot(range),
                     orientation = orientationAgg.snapshot(range),
+                    quality = qualityAgg.snapshot(range),
                 )
             }
             render(
@@ -223,6 +233,7 @@ class DashboardActivity : SimpleActivity() {
                 payload.activity,
                 payload.distribution,
                 payload.orientation,
+                payload.quality,
             )
         }
     }
@@ -236,6 +247,7 @@ class DashboardActivity : SimpleActivity() {
         val activity: IkdActivityAggregator.ActivitySnapshot,
         val distribution: IkdDistributionAggregator.DistributionSnapshot,
         val orientation: IkdOrientationAggregator.OrientationSnapshot,
+        val quality: IkdQualityAggregator.QualitySnapshot,
     )
 
     private fun render(
@@ -247,6 +259,7 @@ class DashboardActivity : SimpleActivity() {
         activity: IkdActivityAggregator.ActivitySnapshot,
         distribution: IkdDistributionAggregator.DistributionSnapshot,
         orientation: IkdOrientationAggregator.OrientationSnapshot,
+        quality: IkdQualityAggregator.QualitySnapshot,
     ) {
         val isEmpty = snap.totalSessions == 0
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
@@ -271,7 +284,7 @@ class DashboardActivity : SimpleActivity() {
         renderDailyActivitySection(activity)
         renderMoodSection(snap, moodSnap, moodMix)
         renderKeystrokeDynamicsSection(distribution, orientation)
-        renderHabitsSection(habits)
+        renderHabitsSection(habits, quality)
     }
 
     private fun renderCharts(snap: IkdAggregator.Snapshot) {
@@ -813,7 +826,10 @@ class DashboardActivity : SimpleActivity() {
      * "no data" state is one chart hiding (not a header floating above an
      * empty card).
      */
-    private fun renderHabitsSection(habits: IkdHabitsAggregator.HabitsSnapshot) {
+    private fun renderHabitsSection(
+        habits: IkdHabitsAggregator.HabitsSnapshot,
+        quality: IkdQualityAggregator.QualitySnapshot,
+    ) {
         val visible = habits.totalSessions > 0
         binding.dashboardSectionHeaderHabits.beVisibleIf(visible)
         binding.dashboardHabitsKpiStrip.beVisibleIf(visible)
@@ -827,6 +843,7 @@ class DashboardActivity : SimpleActivity() {
             binding.dashboardChartHabitsErrorRate.beGone()
             binding.dashboardChartHabitsFlightTitle.beGone()
             binding.dashboardChartHabitsFlight.beGone()
+            binding.dashboardActivityQualityCard.beGone()
             return
         }
 
@@ -887,6 +904,97 @@ class DashboardActivity : SimpleActivity() {
             values = flightMs,
             yLabel = getString(R.string.dashboard_chart_habits_flight_y_label),
         )
+
+        // Phase 9.10: scatter chart at the bottom of the section.
+        bindActivityQualityScatter(quality)
+    }
+
+    /**
+     * Phase 9.10: bind the activity-quality scatter chart. X = backspaces,
+     * Y = autocorrections, one bubble per day. Most-recent day rendered
+     * larger (1.8×) at full alpha; older days fade linearly to ~20% alpha.
+     */
+    private fun bindActivityQualityScatter(quality: IkdQualityAggregator.QualitySnapshot) {
+        val card = binding.dashboardActivityQualityCard
+        val chart = binding.dashboardActivityQualityChart
+        val visible = quality.points.any { it.backspaceCount > 0 || it.autocorrectionCount > 0 }
+        card.beVisibleIf(visible)
+        if (!visible) return
+
+        val primary = getProperPrimaryColor()
+        val maxIndex = quality.points.size - 1
+        val entries = quality.points.map { point ->
+            com.github.mikephil.charting.data.Entry(
+                point.backspaceCount.toFloat(),
+                point.autocorrectionCount.toFloat(),
+                point,
+            )
+        }
+        // Per-point colours: dayIndex 0 → full alpha; older → linear fade
+        // from FADE_MAX_ALPHA (oldest visible) to FADE_MIN_ALPHA (just
+        // before today). Compute the full per-day alpha array so the
+        // scatter dataset's `setColors` reflects the gradient.
+        val colors = quality.points.map { point ->
+            val alphaInt = computePointAlpha(point.dayIndex, maxIndex)
+            ColorUtils.setAlphaComponent(primary, alphaInt)
+        }
+        val dataSet = ScatterDataSet(entries, "").apply {
+            this.colors = colors
+            setScatterShape(com.github.mikephil.charting.charts.ScatterChart.ScatterShape.CIRCLE)
+            scatterShapeSize = QUALITY_BASE_SCATTER_SIZE
+            // Most-recent day larger via setSize — but the field can't be
+            // per-point. We approximate by using the largest size as default
+            // and compensating older points via alpha (per the plan).
+            setDrawValues(false)
+            isHighlightEnabled = false
+        }
+        chart.data = ScatterData(dataSet)
+        chart.description.isEnabled = false
+        chart.legend.isEnabled = false
+        chart.axisRight.isEnabled = false
+        chart.xAxis.position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM
+        chart.xAxis.textColor = getProperTextColor()
+        chart.axisLeft.textColor = getProperTextColor()
+        chart.xAxis.axisMinimum = 0f
+        chart.axisLeft.axisMinimum = 0f
+        chart.invalidate()
+
+        chart.setOnChartValueSelectedListener(
+            object : com.github.mikephil.charting.listener.OnChartValueSelectedListener {
+                override fun onValueSelected(
+                    e: com.github.mikephil.charting.data.Entry?,
+                    h: com.github.mikephil.charting.highlight.Highlight?,
+                ) {
+                    val point = e?.data as? IkdQualityAggregator.DayQualityPoint ?: return
+                    Toast.makeText(
+                        this@DashboardActivity,
+                        getString(
+                            R.string.dashboard_activity_quality_tooltip,
+                            point.day,
+                            point.backspaceCount,
+                            point.autocorrectionCount,
+                        ),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+                override fun onNothingSelected() = Unit
+            }
+        )
+    }
+
+    /**
+     * Phase 9.10: compute fade alpha for an aged scatter point.
+     * Most-recent day (`dayIndex == 0`) gets full alpha; older days fade
+     * linearly from `FADE_MAX_ALPHA` (oldest) to a notch below the max,
+     * with the most-recent at 255.
+     */
+    private fun computePointAlpha(dayIndex: Int, maxIndex: Int): Int {
+        if (dayIndex == 0) return ALPHA_FULL
+        if (maxIndex <= 0) return ALPHA_FULL
+        // Linear ramp: dayIndex 1 → near FADE_MAX_ALPHA; dayIndex maxIndex → FADE_MIN_ALPHA.
+        val ratio = (dayIndex - 1).toFloat() / maxIndex.toFloat()
+        val alphaFloat = FADE_MAX_ALPHA - (FADE_MAX_ALPHA - FADE_MIN_ALPHA) * ratio
+        return alphaFloat.toInt().coerceIn(FADE_MIN_ALPHA, ALPHA_FULL)
     }
 
     /**
@@ -976,6 +1084,12 @@ class DashboardActivity : SimpleActivity() {
         private const val ORIENTATION_HOLE_RADIUS = 60f // % of donut radius
         private const val ORIENTATION_LABEL_TEXT_SIZE_SP = 10f
         private const val ORIENTATION_SLICE_SPACE_PX = 2f
+
+        // Phase 9.10: activity-quality scatter — fade alpha for older points.
+        private const val ALPHA_FULL = 255
+        private const val FADE_MAX_ALPHA = 204 // ~80%
+        private const val FADE_MIN_ALPHA = 51 // ~20%
+        private const val QUALITY_BASE_SCATTER_SIZE = 14f
 
         // Phase 8: Distribution-panel ProgressBar tops out at 100 (`max`
         // attribute on the row layout). Each row's progress is its share

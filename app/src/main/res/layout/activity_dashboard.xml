@@ -948,6 +948,47 @@
                 android:layout_marginTop="@dimen/small_margin"
                 android:visibility="gone" />
 
+            <!-- Phase 9.10: Activity Quality scatter card. Sits at the
+                 bottom of the Habits section. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dashboard_activity_quality_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:visibility="gone"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/normal_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_chart_activity_quality_title"
+                        android:textStyle="bold" />
+
+                    <com.github.mikephil.charting.charts.ScatterChart
+                        android:id="@+id/dashboard_activity_quality_chart"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:layout_marginTop="@dimen/small_margin" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/small_margin"
+                        android:text="@string/dashboard_activity_quality_subtitle"
+                        android:textSize="@dimen/smaller_text_size"
+                        android:textStyle="italic" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

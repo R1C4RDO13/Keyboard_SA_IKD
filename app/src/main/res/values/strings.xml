@@ -183,6 +183,13 @@
     <string name="orientation_unknown">Unknown</string>
     <string name="orientation_not_captured">Not captured</string>
 
+    <!-- Phase 9.10: Activity Quality scatter -->
+    <string name="dashboard_chart_activity_quality_title">Activity Quality</string>
+    <string name="dashboard_activity_quality_subtitle">When our mind is clear we tend to make fewer typing errors and require less backspace usage. On such days, the most recent data point will be closer to the origin.</string>
+    <string name="dashboard_activity_quality_axis_x">Backspaces</string>
+    <string name="dashboard_activity_quality_axis_y">Autocorrections</string>
+    <string name="dashboard_activity_quality_tooltip">%1$s — %2$d backspaces, %3$d autocorrections</string>
+
     <!-- Phase 9.3: Typing Habits section -->
     <string name="dashboard_section_habits">Habits</string>
     <string name="dashboard_habits_kpi_sessions">Sessions</string>

@@ -377,4 +377,34 @@ interface IkdEventDao {
         """
     )
     fun getFlightHistogram(fromMs: Long, toMs: Long, moodScore: Int?): List<HistogramRow>
+
+    /**
+     * Phase 9.10: per-day backspace + autocorrection counts for the
+     * Activity Quality scatter chart. Returned newest-first so the
+     * aggregator's `dayIndex` assignment is a single `mapIndexed`.
+     *
+     * @param fromMs inclusive lower bound on `timestamp` (epoch millis).
+     * @param toMs exclusive upper bound on `timestamp` (epoch millis).
+     * @param moodScore optional mood-filter scope; null disables filtering.
+     */
+    @Query(
+        """
+        SELECT
+            strftime('%Y-%m-%d', timestamp / 1000, 'unixepoch', 'localtime') AS day,
+            SUM(CASE WHEN event_category = 'BACKSPACE'   THEN 1 ELSE 0 END) AS backspaceCount,
+            SUM(CASE WHEN event_category = 'AUTOCORRECT' THEN 1 ELSE 0 END) AS autocorrectionCount
+        FROM ikd_events
+        WHERE timestamp >= :fromMs
+          AND timestamp <  :toMs
+          AND (:moodScore IS NULL
+               OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+        GROUP BY day
+        ORDER BY day DESC
+        """
+    )
+    fun getDailyQuality(
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int?,
+    ): List<DayQualityRow>
 }
