@@ -363,6 +363,15 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
             pendingFlightTime = -1L
 
             val isBackspace = code == MyKeyboard.KEYCODE_DELETE
+            // BACKSPACE weight = the number of characters this keypress is
+            // about to delete (selection length when one exists, else the
+            // grapheme-aware count from `getCountToDelete`). Single-char
+            // backspace stays at weight 1 — same as the legacy backfill —
+            // but a backspace replacing an N-char selection now correctly
+            // counts as N units of error so the metric matches AUTOCORRECT's
+            // span semantics. `getSelectedText` is read-only (length used,
+            // text never stored) so the privacy invariant holds.
+            val backspaceWeight = if (isBackspace) computeBackspaceWeight(inputConnection) else 0
             val event = KeyTimingEvent(
                 sessionId = LiveCaptureSessionStore.currentSessionId,
                 timestamp = nowWall,
@@ -371,11 +380,7 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
                 holdTimeMs = holdTime,
                 flightTimeMs = flightTime,
                 isCorrection = isBackspace,
-                // Phase 7.1: BACKSPACE always carries weight 1; the
-                // symmetric "deletion magnitude" follow-up (BACKSPACE-on-
-                // selection -> selection length) is documented in
-                // Phase7.1_Plan.md Section 10 and deliberately deferred.
-                correctionWeight = if (isBackspace) 1 else 0,
+                correctionWeight = backspaceWeight,
             )
 
             // recordTimingEvent only appends to in-memory lists under a write lock.
@@ -548,6 +553,23 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
                 }
             }
         }
+    }
+
+    /**
+     * Compute the BACKSPACE event's `correction_weight`: the number of
+     * characters this single backspace keypress is about to delete. Mirrors
+     * the BACKSPACE handler's deletion logic without performing the deletion
+     * itself — selection length when one exists, else the grapheme-aware
+     * count from [getCountToDelete] (≥ 1 for combined emoji / surrogate
+     * pairs). The selected text's `length` is read defensively; raw text is
+     * never retained.
+     */
+    private fun computeBackspaceWeight(inputConnection: InputConnection): Int {
+        val selectedText = inputConnection.getSelectedText(0)
+        if (!selectedText.isNullOrEmpty()) {
+            return selectedText.length
+        }
+        return getCountToDelete(inputConnection).coerceAtLeast(1)
     }
 
     private fun getCountToDelete(inputConnection: InputConnection): Int {

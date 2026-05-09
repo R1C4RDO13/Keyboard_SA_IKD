@@ -38,6 +38,7 @@ interface IkdEventDao {
             AVG(CASE WHEN ikd_ms >= 0 THEN ikd_ms END) AS avgIkdMs,
             COUNT(*) AS eventCount,
             SUM(CASE WHEN event_category != 'AUTOCORRECT' THEN 1 ELSE 0 END) AS keystrokeCount,
+            SUM(CASE WHEN is_correction THEN 1 ELSE 0 END) AS correctionCount,
             SUM(correction_weight) AS correctionWeight,
             COUNT(DISTINCT session_id) AS sessionCount
         FROM ikd_events

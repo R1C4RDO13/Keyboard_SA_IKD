@@ -68,23 +68,22 @@ class IkdSessionStatsLoader(private val db: IkdDatabase) {
          * - `durationMs` is `null` when the session is in-flight (no `endedAt`).
          * - `wpm` is `null` when there are not enough keystrokes (≤ 1) or the
          *   duration is unknown / non-positive.
-         * - Phase 7.1: `errorRatePct` is `100 * correctionWeight / keystrokeCount`.
-         *   Returns `null` when `keystrokeCount == 0` (a hypothetical session
-         *   with only AUTOCORRECT rows). Sessions with no autocorrects yield
-         *   the same value as the pre-Phase-7.1 row-count formula.
+         * - `errorRatePct` is `100 * correctionWeight / productiveKeystrokes`
+         *   where `productiveKeystrokes = eventCount - correctionCount`
+         *   (events excluding both BACKSPACE and AUTOCORRECT rows). Returns
+         *   `null` when there are no productive keystrokes. Sessions with no
+         *   corrections at all read 0%.
          */
         internal fun compute(record: SessionRecord, statsRow: SessionStatsRow): SessionStats {
             val durationMs = record.endedAt?.let { it - record.startedAt }
-            // Phase 7: WPM is keystrokes per minute, where AUTOCORRECT rows
-            // are excluded from the keystroke count (autocorrects are
-            // corrections, not new typing). The KPI cell still shows
-            // `eventCount` as the "events" count so the user sees every
-            // captured row, including autocorrects.
+            // WPM is keystrokes per minute. AUTOCORRECT rows are excluded
+            // from the keystroke count (autocorrects are corrections, not
+            // new typing). BACKSPACE keystrokes are still counted as
+            // "typing" for WPM (they're real keypresses); only the error-
+            // rate denominator excludes them.
             val wpm = computeWpm(statsRow.keystrokeCount, durationMs)
-            val errorRatePct = computeErrorRate(
-                statsRow.keystrokeCount,
-                statsRow.correctionWeight,
-            )
+            val productive = (statsRow.eventCount - statsRow.correctionCount).coerceAtLeast(0)
+            val errorRatePct = computeErrorRate(productive, statsRow.correctionWeight)
             return SessionStats(
                 record = record,
                 durationMs = durationMs,
@@ -104,13 +103,14 @@ class IkdSessionStatsLoader(private val db: IkdDatabase) {
                 MS_PER_MINUTE / durationMs.toDouble()
         }
 
-        private fun computeErrorRate(keystrokeCount: Int, correctionWeight: Int): Double? {
-            // Phase 7.1: hypothetical AUTOCORRECT-only session => null (the KPI
-            // cell shows the existing "—" placeholder). Real sessions always
-            // have ≥ 1 keystroke since the keyboard cannot generate an
-            // autocorrect without a prior keystroke.
-            if (keystrokeCount <= 0) return null
-            return PCT_MULTIPLIER * correctionWeight / keystrokeCount.toDouble()
+        private fun computeErrorRate(productiveKeystrokes: Int, correctionWeight: Int): Double? {
+            // Sessions with zero productive keystrokes (e.g. a hypothetical
+            // session of only BACKSPACE / AUTOCORRECT rows) read `null` so
+            // the KPI cell shows the existing "—" placeholder. Real sessions
+            // always have ≥ 1 productive keystroke since corrections require
+            // prior typing.
+            if (productiveKeystrokes <= 0) return null
+            return PCT_MULTIPLIER * correctionWeight / productiveKeystrokes.toDouble()
         }
     }
 }

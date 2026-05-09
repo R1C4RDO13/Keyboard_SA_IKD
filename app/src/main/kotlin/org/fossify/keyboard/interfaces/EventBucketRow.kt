@@ -10,23 +10,29 @@ import androidx.room.ColumnInfo
  * event of a session). Callers must surface that as a missing chart point
  * rather than a zero.
  *
- * Phase 7: `keystrokeCount` is a sibling of `eventCount` that excludes
- * `AUTOCORRECT` rows. The WPM formula uses it as the keystroke denominator
- * (autocorrects are corrections, not new typing); `eventCount` stays a
+ * `keystrokeCount` excludes `AUTOCORRECT` rows; it is the WPM denominator
+ * (autocorrects are corrections, not new typing). `eventCount` stays a
  * `COUNT(*)` of every event so other consumers (KPI strip "events" cell)
  * do not silently drop rows.
  *
- * Phase 7.1: `correctionWeight` is the per-bucket sum of the new
- * `correction_weight` column on `ikd_events`. Used as the new error-rate
- * numerator: `errorRatePct = 100 * correctionWeight / keystrokeCount`.
- * The pre-Phase-7.1 inline `errorRatePct` SQL projection is gone — the
- * percentage is computed in Kotlin so the formula lives in one place.
+ * `correctionCount` is the count of `is_correction = 1` rows (BACKSPACE +
+ * AUTOCORRECT). Used as the error-rate denominator subtractor:
+ * `productiveKeystrokes = eventCount - correctionCount` is the count of
+ * non-correction events (the keystrokes that produced kept text), and the
+ * weighted error rate is `100 * correctionWeight / productiveKeystrokes`.
+ * Without the BACKSPACE exclusion, deleting all your typing would only
+ * report 50% (because BACKSPACE inflated the denominator).
+ *
+ * `correctionWeight` is the per-bucket sum of the `correction_weight`
+ * column. Each `BACKSPACE` row carries the actual deletion count;
+ * each `AUTOCORRECT` row carries the replaced span length.
  */
 data class EventBucketRow(
     @ColumnInfo(name = "bucket") val bucket: String,
     @ColumnInfo(name = "avgIkdMs") val avgIkdMs: Double?,
     @ColumnInfo(name = "eventCount") val eventCount: Int,
     @ColumnInfo(name = "keystrokeCount") val keystrokeCount: Int,
+    @ColumnInfo(name = "correctionCount") val correctionCount: Int,
     @ColumnInfo(name = "correctionWeight") val correctionWeight: Int,
     @ColumnInfo(name = "sessionCount") val sessionCount: Int,
 )

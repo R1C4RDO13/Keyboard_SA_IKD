@@ -136,19 +136,22 @@ class IkdAggregator(private val db: IkdDatabase) {
             val merged = orderedKeys.map { key ->
                 val ev = eventByBucket[key]
                 val sess = sessionByBucket[key]
-                // Phase 7: WPM denominator excludes AUTOCORRECT rows, since
+                // WPM denominator excludes AUTOCORRECT rows since
                 // autocorrects are corrections rather than new typing. EMOJI
                 // rows still count (an emoji is a keystroke equivalent for
                 // typing-speed purposes).
                 val wpm = computeWpm(ev?.keystrokeCount ?: 0, sess?.totalDurationMs ?: 0L)
-                // Phase 7.1: error-rate numerator is the SUM of correction
-                // weights (BACKSPACE = 1; AUTOCORRECT = replaced span length;
-                // everything else = 0). Denominator is the keystroke count
-                // (matches the WPM denominator — autocorrects don't count as
-                // keystrokes, but their replaced-length pulls the numerator).
+                // Error-rate numerator is the SUM of correction weights
+                // (BACKSPACE = chars actually deleted; AUTOCORRECT = replaced
+                // span length; everything else = 0). Denominator is the
+                // *productive* keystroke count — events that produced kept
+                // text. Without subtracting `correctionCount`, deleting all
+                // your typing would only show 50% error (BS keystrokes
+                // inflate the denominator).
+                val productive = productiveKeystrokes(ev)
                 val errorRatePct = computeBucketErrorRate(
                     ev?.correctionWeight ?: 0,
-                    ev?.keystrokeCount ?: 0,
+                    productive,
                 )
                 Bucket(
                     label = key,
@@ -176,18 +179,24 @@ class IkdAggregator(private val db: IkdDatabase) {
 
         private fun computeOverallErrorRate(eventBuckets: List<EventBucketRow>): Double? {
             if (eventBuckets.isEmpty()) return null
-            // Phase 7.1: weighted numerator (sum of correction weights) over
-            // the keystroke denominator (sum of non-AUTOCORRECT events). Both
-            // already excluded sentinel rows in SQL via the same projections.
-            val totalKeystrokes = eventBuckets.sumOf { it.keystrokeCount.toLong() }
-            if (totalKeystrokes == 0L) return null
+            // Weighted numerator (sum of correction weights) over the
+            // *productive* keystroke denominator (events excluding both
+            // BACKSPACE and AUTOCORRECT rows — i.e., the keystrokes whose
+            // output was kept).
+            val totalProductive = eventBuckets.sumOf { productiveKeystrokes(it).toLong() }
+            if (totalProductive == 0L) return null
             val totalWeight = eventBuckets.sumOf { it.correctionWeight.toLong() }
-            return PCT_MULTIPLIER * totalWeight / totalKeystrokes
+            return PCT_MULTIPLIER * totalWeight / totalProductive
         }
 
-        private fun computeBucketErrorRate(correctionWeight: Int, keystrokeCount: Int): Double? {
-            if (keystrokeCount <= 0) return null
-            return PCT_MULTIPLIER * correctionWeight / keystrokeCount.toDouble()
+        private fun computeBucketErrorRate(correctionWeight: Int, productiveKeystrokes: Int): Double? {
+            if (productiveKeystrokes <= 0) return null
+            return PCT_MULTIPLIER * correctionWeight / productiveKeystrokes.toDouble()
+        }
+
+        private fun productiveKeystrokes(row: EventBucketRow?): Int {
+            if (row == null) return 0
+            return (row.eventCount - row.correctionCount).coerceAtLeast(0)
         }
 
         private fun computeWpm(eventCount: Int, totalDurationMs: Long): Double? {

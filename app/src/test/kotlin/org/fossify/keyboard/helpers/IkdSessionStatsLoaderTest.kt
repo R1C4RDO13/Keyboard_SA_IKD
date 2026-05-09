@@ -107,7 +107,9 @@ class IkdSessionStatsLoaderTest {
         assertEquals(ONE_MINUTE_MS, stats.durationMs)
         // 100 events / 5 = 20 words; 60_000ms = 1 minute => 20 WPM.
         assertEquals(EXPECTED_WPM, stats.wpm!!, 0.01)
-        // 7 / 100 * 100 => 7.0 %.
+        // Productive denominator: 100 events - 7 corrections = 93 productive
+        // keystrokes. Weight defaults to correctionCount (1 per BS) = 7.
+        // 7 / 93 ≈ 7.5269%.
         assertEquals(EXPECTED_ERROR_RATE_PCT, stats.errorRatePct!!, 0.01)
         assertEquals(AVG_IKD_MS, stats.avgIkdMs!!, 0.01)
         assertEquals(AVG_HOLD_MS, stats.avgHoldMs!!, 0.01)
@@ -222,8 +224,8 @@ class IkdSessionStatsLoaderTest {
     }
 
     @Test
-    fun errorRate_isNull_whenKeystrokeCountIsZero() {
-        // Defensive null-safety check.
+    fun errorRate_isNull_whenSessionHasNoProductiveKeystrokes() {
+        // Defensive null-safety check: empty session.
         val record = sessionRecord(
             startedAt = SESSION_START,
             endedAt = SESSION_START + ONE_MINUTE_MS,
@@ -243,12 +245,35 @@ class IkdSessionStatsLoaderTest {
     }
 
     @Test
+    fun errorRate_isOneHundredPct_whenAllTypingDeletedByBackspace() {
+        // User-reported case: type `hello world` (11 productive chars) and
+        // press BACKSPACE 11 times. eventCount = 22, correctionCount = 11,
+        // correctionWeight = 11. Productive = 22-11 = 11. Error rate = 100%.
+        val record = sessionRecord(
+            startedAt = SESSION_START,
+            endedAt = SESSION_START + ONE_MINUTE_MS,
+            eventCount = HELLO_WORLD_EVENTS,
+            sensorCount = 0,
+        )
+        val statsRow = statsRow(
+            eventCount = HELLO_WORLD_EVENTS,
+            keystrokeCount = HELLO_WORLD_EVENTS,
+            correctionCount = HELLO_WORLD_BS,
+            correctionWeight = HELLO_WORLD_BS,
+        )
+
+        val stats = IkdSessionStatsLoader.compute(record, statsRow)
+
+        assertEquals(HUNDRED_PCT, stats.errorRatePct!!, 0.01)
+    }
+
+    @Test
     fun errorRate_legacyBackfillSession_remainsConsistent() {
-        // Pre-Phase-7.1 session migrating up: each is_correction = 1 row
-        // backfills to weight = 1. So a session of 10 ALPHA + 1 BACKSPACE +
+        // Pre-7.1 session migrating up: each is_correction = 1 row
+        // backfills to weight = 1. A session of 10 ALPHA + 1 BACKSPACE +
         // 1 AUTOCORRECT (legacy):
-        //   eventCount = 12, keystrokeCount = 11, correctionWeight = 2
-        //   → 2 / 11 ≈ 18.18%.
+        //   eventCount = 12, correctionCount = 2, correctionWeight = 2
+        //   Productive = 12-2 = 10. → 2 / 10 = 20%.
         val record = sessionRecord(
             startedAt = SESSION_START,
             endedAt = SESSION_START + ONE_MINUTE_MS,
@@ -318,15 +343,15 @@ class IkdSessionStatsLoaderTest {
         private const val HUNDRED = 100
         private const val SEVEN_CORRECTIONS = 7
         private const val EXPECTED_WPM = 20.0
-        private const val EXPECTED_ERROR_RATE_PCT = 7.0
+        // 7 weight / (100 - 7 corrections) productive ≈ 7.5269%.
+        private const val EXPECTED_ERROR_RATE_PCT = 7.5269
         private const val AVG_IKD_MS = 250.0
         private const val AVG_HOLD_MS = 100.0
         private const val AVG_FLIGHT_MS = 150.0
 
-        // Phase 7: 5 autocorrects on top of 100 alphas.
+        // 5 autocorrects on top of 100 alphas.
         private const val AUTOCORRECT_COUNT = 5
-        // Phase 7.1: 5 weight units / 100 keystrokes = 5.0% (was 4.7619%
-        // pre-7.1 because of the 105-event denominator).
+        // 5 weight / (105 - 5 corrections) productive = 5.0%.
         private const val AUTOCORRECT_LEGACY_RATE_PCT = 5.0
 
         // Phase 7.1: the canonical `ocasdasda` case from
@@ -336,11 +361,17 @@ class IkdSessionStatsLoaderTest {
         private const val OCASDASDA_WEIGHT = 9
         private const val OCASDASDA_ERROR_RATE_PCT = 90.0
 
-        // Phase 7.1: legacy backfill fixture. 10 ALPHA + 1 BACKSPACE +
-        // 1 AUTOCORRECT (each correction = weight 1 by backfill).
+        // Legacy backfill fixture. 10 ALPHA + 1 BACKSPACE + 1 AUTOCORRECT
+        // (each correction = weight 1 by backfill).
         private const val LEGACY_EVENT_COUNT = 12
         private const val LEGACY_KEYSTROKES = 11
         private const val LEGACY_WEIGHT = 2
-        private const val LEGACY_ERROR_RATE_PCT = 18.1818
+        // 2 weight / (12 - 2 corrections) = 2/10 = 20%.
+        private const val LEGACY_ERROR_RATE_PCT = 20.0
+
+        // User-reported case constants.
+        private const val HELLO_WORLD_EVENTS = 22
+        private const val HELLO_WORLD_BS = 11
+        private const val HUNDRED_PCT = 100.0
     }
 }

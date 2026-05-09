@@ -21,7 +21,6 @@ import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityDiagnosticsBinding
 import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.extensions.ikdDB
-import org.fossify.keyboard.helpers.EVENT_CATEGORY_AUTOCORRECT
 import org.fossify.keyboard.helpers.IkdCsvWriter
 import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
@@ -342,18 +341,20 @@ class DiagnosticsActivity : SimpleActivity() {
             } else getString(R.string.diagnostics_value_none)
         } else getString(R.string.diagnostics_value_none)
 
-        // Phase 7.1: weighted error rate. Numerator is the sum of per-event
-        // correction weights (BACKSPACE = 1; AUTOCORRECT = replaced span
-        // length); denominator is the keystroke count (events excluding
-        // AUTOCORRECT, matching the WPM denominator). Defensive fallback:
-        // if `is_correction` is true but `correctionWeight == 0`, treat as
+        // Weighted error rate. Numerator = sum of per-event correction
+        // weights (BACKSPACE = chars deleted; AUTOCORRECT = replaced span
+        // length). Denominator = productive keystrokes (events excluding
+        // both BACKSPACE and AUTOCORRECT — i.e., the keystrokes whose
+        // output was kept). Without subtracting BACKSPACE, deleting all
+        // your typing only reads 50%. Defensive fallback: if
+        // `is_correction` is true but `correctionWeight == 0`, treat as
         // weight 1 — covers events captured before the v2 → v3 migration
         // that may briefly land in the in-memory list with the default-zero
-        // weight (Decision #10 in Phase7.1_Plan.md).
-        val keystrokeCount = events.count { it.eventCategory != EVENT_CATEGORY_AUTOCORRECT }
-        binding.diagnosticsErrorRateValue.text = if (keystrokeCount > 0) {
+        // weight.
+        val productiveKeystrokes = events.count { !it.isCorrection }
+        binding.diagnosticsErrorRateValue.text = if (productiveKeystrokes > 0) {
             val weight = events.sumOf { effectiveWeight(it).toLong() }
-            val rate = weight * 100.0 / keystrokeCount
+            val rate = weight * 100.0 / productiveKeystrokes
             getString(R.string.diagnostics_error_rate_format, rate)
         } else getString(R.string.diagnostics_value_none)
 
