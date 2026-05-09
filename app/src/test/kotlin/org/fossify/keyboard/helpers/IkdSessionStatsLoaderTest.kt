@@ -114,6 +114,81 @@ class IkdSessionStatsLoaderTest {
         assertEquals(AVG_FLIGHT_MS, stats.avgFlightMs!!, 0.01)
     }
 
+    // ------------------------------------------------------------------ //
+    // Phase 7: AUTOCORRECT exclusion from WPM denominator                 //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    fun wpm_unchanged_whenSessionHasOnlyAlphaEvents() {
+        // 100 ALPHA events, no autocorrects. eventCount == keystrokeCount,
+        // so WPM is the same as it was pre-Phase 7.
+        val record = sessionRecord(
+            startedAt = SESSION_START,
+            endedAt = SESSION_START + ONE_MINUTE_MS,
+            eventCount = HUNDRED,
+            sensorCount = 0,
+        )
+        val statsRow = statsRow(
+            eventCount = HUNDRED,
+            keystrokeCount = HUNDRED,
+            correctionCount = 0,
+        )
+
+        val stats = IkdSessionStatsLoader.compute(record, statsRow)
+
+        assertEquals(EXPECTED_WPM, stats.wpm!!, 0.01)
+    }
+
+    @Test
+    fun wpm_excludesAutocorrects_whenSessionMixesAlphaAndAutocorrect() {
+        // 100 ALPHA + 5 AUTOCORRECT in 60s. eventCount = 105,
+        // keystrokeCount = 100 (autocorrects excluded). WPM should be
+        // 20.0 (the pre-Phase 7 figure for 100 keystrokes), not 21.0.
+        // Error rate uses eventCount + correctionCount: 5/105 ~= 4.76%.
+        val record = sessionRecord(
+            startedAt = SESSION_START,
+            endedAt = SESSION_START + ONE_MINUTE_MS,
+            eventCount = HUNDRED + AUTOCORRECT_COUNT,
+            sensorCount = 0,
+        )
+        val statsRow = statsRow(
+            eventCount = HUNDRED + AUTOCORRECT_COUNT,
+            keystrokeCount = HUNDRED,
+            correctionCount = AUTOCORRECT_COUNT,
+            avgIkdMs = AVG_IKD_MS,
+        )
+
+        val stats = IkdSessionStatsLoader.compute(record, statsRow)
+
+        assertEquals(EXPECTED_WPM, stats.wpm!!, 0.01)
+        assertEquals(AUTOCORRECT_ERROR_RATE_PCT, stats.errorRatePct!!, 0.01)
+    }
+
+    @Test
+    fun wpm_isNull_whenSessionHasOnlyAutocorrectEvents() {
+        // 5 AUTOCORRECT events, no real keystrokes. keystrokeCount = 0
+        // means computeWpm short-circuits to null even though the session
+        // has events and a duration.
+        val record = sessionRecord(
+            startedAt = SESSION_START,
+            endedAt = SESSION_START + ONE_MINUTE_MS,
+            eventCount = AUTOCORRECT_COUNT,
+            sensorCount = 0,
+        )
+        val statsRow = statsRow(
+            eventCount = AUTOCORRECT_COUNT,
+            keystrokeCount = 0,
+            correctionCount = AUTOCORRECT_COUNT,
+        )
+
+        val stats = IkdSessionStatsLoader.compute(record, statsRow)
+
+        assertNull(stats.wpm)
+        // Error rate stays well-defined (5 / 5 = 100%) — autocorrects
+        // are corrections from the error-rate perspective.
+        assertEquals(100.0, stats.errorRatePct!!, 0.01)
+    }
+
     private fun sessionRecord(
         startedAt: Long,
         endedAt: Long?,
@@ -134,6 +209,7 @@ class IkdSessionStatsLoaderTest {
     private fun statsRow(
         eventCount: Int,
         correctionCount: Int,
+        keystrokeCount: Int = eventCount,
         avgIkdMs: Double? = null,
         avgHoldMs: Double? = null,
         avgFlightMs: Double? = null,
@@ -141,6 +217,7 @@ class IkdSessionStatsLoaderTest {
         lastTimestamp: Long? = null,
     ) = SessionStatsRow(
         eventCount = eventCount,
+        keystrokeCount = keystrokeCount,
         correctionCount = correctionCount,
         avgIkdMs = avgIkdMs,
         avgHoldMs = avgHoldMs,
@@ -161,5 +238,10 @@ class IkdSessionStatsLoaderTest {
         private const val AVG_IKD_MS = 250.0
         private const val AVG_HOLD_MS = 100.0
         private const val AVG_FLIGHT_MS = 150.0
+
+        // Phase 7: 5 autocorrects on top of 100 alphas.
+        private const val AUTOCORRECT_COUNT = 5
+        // 5 / 105 * 100 ~= 4.7619% (autocorrects count as corrections).
+        private const val AUTOCORRECT_ERROR_RATE_PCT = 4.7619
     }
 }

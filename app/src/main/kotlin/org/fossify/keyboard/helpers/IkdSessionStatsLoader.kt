@@ -73,7 +73,12 @@ class IkdSessionStatsLoader(private val db: IkdDatabase) {
          */
         internal fun compute(record: SessionRecord, statsRow: SessionStatsRow): SessionStats {
             val durationMs = record.endedAt?.let { it - record.startedAt }
-            val wpm = computeWpm(statsRow.eventCount, durationMs)
+            // Phase 7: WPM is keystrokes per minute, where AUTOCORRECT rows
+            // are excluded from the keystroke count (autocorrects are
+            // corrections, not new typing). The KPI cell still shows
+            // `eventCount` as the "events" count so the user sees every
+            // captured row, including autocorrects.
+            val wpm = computeWpm(statsRow.keystrokeCount, durationMs)
             val errorRatePct = computeErrorRate(statsRow.eventCount, statsRow.correctionCount)
             return SessionStats(
                 record = record,
@@ -86,11 +91,11 @@ class IkdSessionStatsLoader(private val db: IkdDatabase) {
             )
         }
 
-        private fun computeWpm(eventCount: Int, durationMs: Long?): Double? {
-            if (eventCount <= 1) return null
+        private fun computeWpm(keystrokeCount: Int, durationMs: Long?): Double? {
+            if (keystrokeCount <= 1) return null
             if (durationMs == null || durationMs <= 0L) return null
             // WPM convention: 5 keystrokes per word.
-            return eventCount.toDouble() / WORD_KEYSTROKES *
+            return keystrokeCount.toDouble() / WORD_KEYSTROKES *
                 MS_PER_MINUTE / durationMs.toDouble()
         }
 
