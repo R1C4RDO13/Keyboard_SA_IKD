@@ -337,6 +337,21 @@ Detailed scope: [`Phase8/Phase8_Plan.md`](Phase8/Phase8_Plan.md)
 
 ---
 
+## Phase 8.3: Mood Distribution over Time (Stacked Bar) on Insights
+**Status: Planned**
+
+Detailed scope: [`Phase8/Phase8.3_Plan.md`](Phase8/Phase8.3_Plan.md)
+
+**Objective:** Drop the Phase 8 "Avg Mood" KPI cell and "Mood over Time" line chart from `DashboardActivity`, and replace them with a per-bucket **stacked-bar chart** showing the percentage breakdown of each Ekman category in each time bucket. Averaging an ordinal valence across six categorical labels produces numbers that don't correspond to any user-reportable state — `🤢 3.2` ("around Disgust, slightly toward Sadness") is technically valid but interpretively vague, and the line chart inherits the same problem at every bucket. The stacked bar chart preserves the time dimension *without* re-introducing a meaningless average. Reverses Phase 8 Decision #14 and lifts the deferred "Stacked-bar-by-day chart" out of Phase 8 §10.
+
+*   **Remove avg-based mood widgets:** `dashboard_kpi_avg_mood_cell` and `dashboard_mood_chart_card` are deleted from `activity_dashboard.xml`; the matching strings (`dashboard_kpi_avg_mood_label`, `dashboard_avg_mood_value_format`, `dashboard_chart_mood_title`, `dashboard_chart_mood_y_label`) are removed from `strings.xml`. KPI strip falls back to four cells.
+*   **Add Mood Mix over Time stacked bar chart:** new `views/IkdStackedBarChartView.kt` wraps MPAndroidChart's `BarChart` in stacked mode, mirroring the Phase 3 `IkdLineChartView` discipline. Each bar is one time bucket; each segment is one of the six Ekman categories; bars sum to 100%. X axis aligns with the existing IKD charts (same `Range.bucketFormat`). Custom legend below the chart with emoji + colour swatch + label.
+*   **Mood Distribution panel kept verbatim:** counts-per-category for the whole range remains useful — and complementary to the time-distributed stacked chart.
+*   **One additive DAO query:** `MoodDao.getMoodCategoryBuckets(bucketFormat, fromMs, toMs)` returning `List<MoodCategoryBucketRow>`; ≤ 30 buckets × 6 categories = 180 rows worst case for Month range. Pure-Kotlin `IkdMoodAggregator.Companion.buildMixSnapshot(...)` for unit testing, parallel to the existing `buildSnapshot`.
+*   **No schema change.** `IkdDatabase.version` stays at 2. The capture path stays fully frozen. CSV format unchanged.
+
+---
+
 ## Phase 9: Global Insights Expansion
 **Status: Planned**
 
