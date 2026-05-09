@@ -37,6 +37,25 @@
             android:orientation="vertical"
             android:padding="@dimen/activity_margin">
 
+            <!-- Phase 9.4: Mood Filter chip row (gone until first MoodEntry).
+                 Sits above the range selector — outermost filter (sessions
+                 by mood) precedes time-window selection. -->
+            <HorizontalScrollView
+                android:id="@+id/dashboard_mood_filter_strip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fillViewport="false"
+                android:scrollbars="none"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/dashboard_mood_filter_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+
+            </HorizontalScrollView>
+
             <!-- Range selector -->
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/dashboard_range_group"

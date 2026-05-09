@@ -190,6 +190,10 @@
     <string name="dashboard_activity_quality_axis_y">Autocorrections</string>
     <string name="dashboard_activity_quality_tooltip">%1$s — %2$d backspaces, %3$d autocorrections</string>
 
+    <!-- Phase 9.4: Mood filter chip row (above the range selector) -->
+    <string name="dashboard_mood_filter_all">All</string>
+    <string name="dashboard_mood_filter_empty_message">No sessions tagged with this mood yet</string>
+
     <!-- Phase 9.3: Typing Habits section -->
     <string name="dashboard_section_habits">Habits</string>
     <string name="dashboard_habits_kpi_sessions">Sessions</string>

@@ -57,6 +57,32 @@ interface SessionDao {
     )
     fun getSessionBuckets(bucketFormat: String, fromMs: Long, toMs: Long): List<SessionBucketRow>
 
+    /**
+     * Phase 9.4: mood-filtered counterpart to [getSessionBuckets]. Two-query
+     * pattern preferred for `sessions` over an `IS NULL` parameter —
+     * Phase 9 orchestrator Decision #14.
+     */
+    @Query(
+        """
+        SELECT
+            strftime(:bucketFormat, started_at / 1000, 'unixepoch', 'localtime') AS bucket,
+            SUM(CASE WHEN ended_at IS NOT NULL THEN ended_at - started_at ELSE 0 END) AS totalDurationMs,
+            COUNT(*) AS sessionCount
+        FROM sessions
+        WHERE started_at >= :fromMs
+          AND started_at <  :toMs
+          AND session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore)
+        GROUP BY bucket
+        ORDER BY bucket
+        """
+    )
+    fun getSessionBucketsForMood(
+        bucketFormat: String,
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int,
+    ): List<SessionBucketRow>
+
     /** Returns null when the sessions table is empty. Used to size the All Time range. */
     @Query("SELECT MIN(started_at) FROM sessions")
     fun getEarliestSessionStart(): Long?

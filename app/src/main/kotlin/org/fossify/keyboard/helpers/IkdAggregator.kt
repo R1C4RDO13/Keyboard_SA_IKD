@@ -63,19 +63,36 @@ class IkdAggregator(private val db: IkdDatabase) {
      * `Dispatchers.IO`. The returned Snapshot is plain data; callers should
      * marshal it back to the main thread for rendering.
      */
-    suspend fun snapshot(range: Range): Snapshot = withContext(Dispatchers.IO) {
+    /**
+     * Phase 9.4: gains an optional `moodFilter` parameter. When non-null,
+     * the snapshot is restricted to sessions tagged with that mood_score
+     * via the dedicated `*ForMood` queries (two-query path — see Phase 9
+     * orchestrator Decision #14).
+     */
+    suspend fun snapshot(
+        range: Range,
+        moodFilter: Int? = null,
+    ): Snapshot = withContext(Dispatchers.IO) {
         var result: Snapshot? = null
         val durationMs = measureTimeMillis {
             val nowMs = System.currentTimeMillis()
             val (fromMs, toMs) = computeRangeWindow(range, nowMs)
 
-            val eventBuckets = db.IkdEventDao().getEventBuckets(range.bucketFormat, fromMs, toMs)
-            val sessionBuckets = db.SessionDao().getSessionBuckets(range.bucketFormat, fromMs, toMs)
+            val eventBuckets = if (moodFilter != null) {
+                db.IkdEventDao().getEventBucketsForMood(range.bucketFormat, fromMs, toMs, moodFilter)
+            } else {
+                db.IkdEventDao().getEventBuckets(range.bucketFormat, fromMs, toMs)
+            }
+            val sessionBuckets = if (moodFilter != null) {
+                db.SessionDao().getSessionBucketsForMood(range.bucketFormat, fromMs, toMs, moodFilter)
+            } else {
+                db.SessionDao().getSessionBuckets(range.bucketFormat, fromMs, toMs)
+            }
 
             result = Companion.buildSnapshot(range, eventBuckets, sessionBuckets)
         }
         if (BuildConfig.DEBUG) {
-            Log.d(LOG_TAG, "snapshot(${range.name}) took ${durationMs}ms")
+            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter) took ${durationMs}ms")
         }
         result!!
     }

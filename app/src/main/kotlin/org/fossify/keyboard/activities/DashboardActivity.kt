@@ -26,6 +26,7 @@ import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityDashboardBinding
 import org.fossify.keyboard.databinding.ItemMoodDistributionRowBinding
 import org.fossify.keyboard.databinding.ItemMoodLegendSwatchBinding
+import org.fossify.keyboard.extensions.moodDB
 import org.fossify.keyboard.extensions.ikdActivityAggregator
 import org.fossify.keyboard.extensions.ikdAggregator
 import org.fossify.keyboard.extensions.ikdDistributionAggregator
@@ -63,6 +64,13 @@ class DashboardActivity : SimpleActivity() {
 
     private val binding by viewBinding(ActivityDashboardBinding::inflate)
     private var currentRange: IkdAggregator.Range = IkdAggregator.Range.WEEK
+
+    /** Phase 9.4: per-screen-instance state — null means "All". */
+    private var currentMoodFilter: Int? = null
+
+    /** Phase 9.4: handles to the seven chips so the click handler can hand-roll mutual exclusivity. */
+    private val moodFilterChips: MutableList<com.google.android.material.chip.Chip> = mutableListOf()
+
     private val isoDayParser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,12 +81,19 @@ class DashboardActivity : SimpleActivity() {
             ?.let { runCatching { IkdAggregator.Range.valueOf(it) }.getOrNull() }
             ?: IkdAggregator.Range.WEEK
 
+        // Phase 9.4: restore mood filter from instance state. -1 sentinel = null (All).
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_MOOD_FILTER)) {
+            val stored = savedInstanceState.getInt(STATE_MOOD_FILTER, MOOD_FILTER_ALL_SENTINEL)
+            currentMoodFilter = if (stored == MOOD_FILTER_ALL_SENTINEL) null else stored
+        }
+
         binding.apply {
             setupEdgeToEdge(padBottomSystem = listOf(dashboardNestedScrollview))
             setupMaterialScrollListener(dashboardNestedScrollview, dashboardAppbar)
         }
 
         setupListeners()
+        setupMoodFilterChips()
     }
 
     override fun onResume() {
@@ -91,7 +106,11 @@ class DashboardActivity : SimpleActivity() {
         // CoordinatorLayout, so updateTextColors above does not reach it.
         binding.dashboardEmptyMessage.setTextColor(getProperTextColor())
         applyRangeToggleColors()
+        applyChipColors()
         applyCardThemeColors()
+        // Phase 9.4: refresh chip-row visibility on every onResume — the
+        // user may have just recorded their first mood entry.
+        refreshMoodFilterAvailability()
         loadSnapshot()
     }
 
@@ -163,6 +182,9 @@ class DashboardActivity : SimpleActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(STATE_RANGE, currentRange.name)
+        // Phase 9.4: persist the mood filter on configuration change.
+        // -1 sentinel for null (All); reverse on restore.
+        outState.putInt(STATE_MOOD_FILTER, currentMoodFilter ?: MOOD_FILTER_ALL_SENTINEL)
     }
 
     private fun setupListeners() {
@@ -189,6 +211,98 @@ class DashboardActivity : SimpleActivity() {
         }
     }
 
+    /**
+     * Phase 9.4: inflate the seven mood-filter chips (All + six emoji) and
+     * wire their click handlers. Hand-rolled mutual exclusivity. State
+     * machine: tap the active chip to toggle back to All.
+     */
+    private fun setupMoodFilterChips() {
+        val container = binding.dashboardMoodFilterContainer
+        val inflater = LayoutInflater.from(this)
+        moodFilterChips.clear()
+        container.removeAllViews()
+
+        val allChip = inflater.inflate(R.layout.item_mood_filter_chip, container, false)
+            as com.google.android.material.chip.Chip
+        allChip.text = getString(R.string.dashboard_mood_filter_all)
+        allChip.contentDescription = getString(R.string.dashboard_mood_filter_all)
+        allChip.setOnClickListener {
+            if (currentMoodFilter != null) {
+                currentMoodFilter = null
+                refreshChipsCheckedState()
+                applyChipColors()
+                loadSnapshot()
+            } else {
+                allChip.isChecked = true
+            }
+        }
+        container.addView(allChip)
+        moodFilterChips.add(allChip)
+
+        for (score in MoodEmoji.displayOrder()) {
+            val chip = inflater.inflate(R.layout.item_mood_filter_chip, container, false)
+                as com.google.android.material.chip.Chip
+            val emoji = MoodEmoji.emojiFor(score)
+            val label = getString(MoodEmoji.labelResFor(score))
+            chip.text = "$emoji $label"
+            chip.contentDescription = label
+            chip.setOnClickListener {
+                currentMoodFilter = if (currentMoodFilter == score) null else score
+                refreshChipsCheckedState()
+                applyChipColors()
+                loadSnapshot()
+            }
+            container.addView(chip)
+            moodFilterChips.add(chip)
+        }
+        refreshChipsCheckedState()
+    }
+
+    private fun refreshChipsCheckedState() {
+        if (moodFilterChips.isEmpty()) return
+        moodFilterChips[0].isChecked = currentMoodFilter == null
+        val displayOrder = MoodEmoji.displayOrder()
+        for (idx in displayOrder.indices) {
+            val chipIdx = idx + 1
+            if (chipIdx < moodFilterChips.size) {
+                moodFilterChips[chipIdx].isChecked = currentMoodFilter == displayOrder[idx]
+            }
+        }
+    }
+
+    private fun applyChipColors() {
+        val primary = getProperPrimaryColor()
+        val background = getProperBackgroundColor()
+        val onPrimary = primary.getContrastColor()
+        val textColor = getProperTextColor()
+        val checkedState = intArrayOf(android.R.attr.state_checked)
+        val uncheckedState = intArrayOf(-android.R.attr.state_checked)
+        val states = arrayOf(checkedState, uncheckedState)
+
+        val bgColors = ColorStateList(states, intArrayOf(primary, background))
+        val txtColors = ColorStateList(states, intArrayOf(onPrimary, textColor))
+        val strokeColors = ColorStateList(states, intArrayOf(primary, primary))
+        for (chip in moodFilterChips) {
+            chip.chipBackgroundColor = bgColors
+            chip.setTextColor(txtColors)
+            chip.chipStrokeColor = strokeColors
+        }
+    }
+
+    private fun refreshMoodFilterAvailability() {
+        lifecycleScope.launch {
+            val available = withContext(Dispatchers.IO) {
+                moodDB.hasAnyMoodEntry()
+            }
+            binding.dashboardMoodFilterStrip.beVisibleIf(available)
+            if (!available && currentMoodFilter != null) {
+                currentMoodFilter = null
+                refreshChipsCheckedState()
+                loadSnapshot()
+            }
+        }
+    }
+
     private fun loadSnapshot() {
         lifecycleScope.launch {
             // Phase 8: fold the mood snapshot into the same Dispatchers.IO
@@ -211,17 +325,23 @@ class DashboardActivity : SimpleActivity() {
             val orientationAgg = ikdOrientationAggregator
             val qualityAgg = ikdQualityAggregator
             val range = currentRange
+            // Phase 9.4: thread the mood filter through every aggregator
+            // that accepts one. Mood widgets (8.3 IkdMoodAggregator) stay
+            // unfiltered — their degenerate one-row / one-colour rendering
+            // under a non-All filter is the user feedback that the filter
+            // is in effect (orchestrator Decision #13).
+            val moodFilter = currentMoodFilter
             val payload = withContext(Dispatchers.IO) {
                 DashboardPayload(
-                    ikd = agg.snapshot(range),
+                    ikd = agg.snapshot(range, moodFilter),
                     mood = moodAgg.snapshot(range),
                     moodMix = moodAgg.mixSnapshot(range),
-                    sensor = sensorAgg.snapshot(range),
-                    habits = habitsAgg.snapshot(range),
-                    activity = activityAgg.snapshot(range),
-                    distribution = distAgg.snapshot(range),
-                    orientation = orientationAgg.snapshot(range),
-                    quality = qualityAgg.snapshot(range),
+                    sensor = sensorAgg.snapshot(range, moodFilter),
+                    habits = habitsAgg.snapshot(range, moodFilter),
+                    activity = activityAgg.snapshot(range, moodFilter),
+                    distribution = distAgg.snapshot(range, moodFilter),
+                    orientation = orientationAgg.snapshot(range, moodFilter),
+                    quality = qualityAgg.snapshot(range, moodFilter),
                 )
             }
             render(
@@ -1054,6 +1174,10 @@ class DashboardActivity : SimpleActivity() {
 
     companion object {
         private const val STATE_RANGE = "dashboard_range"
+        private const val STATE_MOOD_FILTER = "dashboard_mood_filter"
+        // Phase 9.4: -1 sentinel for null (All) — Bundle.putInt cannot
+        // store null, and we don't want to pull in nullable getInt API.
+        private const val MOOD_FILTER_ALL_SENTINEL = -1
         private const val MS_PER_MINUTE = 60_000L
         private const val MS_PER_SECOND = 1_000.0
 

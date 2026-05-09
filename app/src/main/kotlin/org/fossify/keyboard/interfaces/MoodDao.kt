@@ -35,6 +35,10 @@ interface MoodDao {
     @Query("SELECT COUNT(*) FROM mood_entries")
     fun count(): Int
 
+    /** Phase 9.4: drives the dashboard's Mood Filter chip-row visibility. */
+    @Query("SELECT (SELECT COUNT(*) FROM mood_entries) > 0")
+    fun hasAnyMoodEntry(): Boolean
+
     @Query("SELECT * FROM mood_entries ORDER BY session_id, timestamp")
     fun getAllOrderedBySession(): List<MoodEntry>
 

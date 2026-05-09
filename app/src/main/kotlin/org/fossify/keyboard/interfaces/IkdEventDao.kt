@@ -50,6 +50,36 @@ interface IkdEventDao {
     fun getEventBuckets(bucketFormat: String, fromMs: Long, toMs: Long): List<EventBucketRow>
 
     /**
+     * Phase 9.4: mood-filtered counterpart to [getEventBuckets]. Two-query
+     * pattern preferred for `ikd_events` (highest-frequency table) over
+     * an `IS NULL` parameter — Phase 9 orchestrator Decision #14.
+     */
+    @Query(
+        """
+        SELECT
+            strftime(:bucketFormat, timestamp / 1000, 'unixepoch', 'localtime') AS bucket,
+            AVG(CASE WHEN ikd_ms >= 0 THEN ikd_ms END) AS avgIkdMs,
+            COUNT(*) AS eventCount,
+            SUM(CASE WHEN event_category != 'AUTOCORRECT' THEN 1 ELSE 0 END) AS keystrokeCount,
+            SUM(CASE WHEN is_correction THEN 1 ELSE 0 END) AS correctionCount,
+            SUM(correction_weight) AS correctionWeight,
+            COUNT(DISTINCT session_id) AS sessionCount
+        FROM ikd_events
+        WHERE timestamp >= :fromMs
+          AND timestamp <  :toMs
+          AND session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore)
+        GROUP BY bucket
+        ORDER BY bucket
+        """
+    )
+    fun getEventBucketsForMood(
+        bucketFormat: String,
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int,
+    ): List<EventBucketRow>
+
+    /**
      * Per-session aggregation. Returns exactly one row, even for sessions with
      * no events (`eventCount` will be 0 and the averages / timestamps NULL).
      * Sentinel `-1` rows for `ikd_ms` / `hold_time_ms` / `flight_time_ms`
