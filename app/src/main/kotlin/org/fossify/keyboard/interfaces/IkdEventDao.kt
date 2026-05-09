@@ -166,4 +166,35 @@ interface IkdEventDao {
         toMs: Long,
         moodScore: Int?,
     ): List<HabitsBucketRow>
+
+    /**
+     * Phase 9.5: daily keystroke counts for the calendar heatmap and the
+     * daily keypress bar chart. AUTOCORRECT rows are excluded — matches
+     * the Phase 7 WPM denominator (autocorrects are corrections, not new
+     * typing).
+     *
+     * @param fromMs inclusive lower bound on `timestamp` (epoch millis).
+     * @param toMs exclusive upper bound on `timestamp` (epoch millis).
+     * @param moodScore optional mood-filter scope; null disables filtering.
+     */
+    @Query(
+        """
+        SELECT
+            strftime('%Y-%m-%d', timestamp / 1000, 'unixepoch', 'localtime') AS day,
+            COUNT(*) AS keystrokeCount
+        FROM ikd_events
+        WHERE event_category != 'AUTOCORRECT'
+          AND timestamp >= :fromMs
+          AND timestamp <  :toMs
+          AND (:moodScore IS NULL
+               OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+        GROUP BY day
+        ORDER BY day
+        """
+    )
+    fun getDailyKeystrokes(
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int?,
+    ): List<DailyBucketRow>
 }

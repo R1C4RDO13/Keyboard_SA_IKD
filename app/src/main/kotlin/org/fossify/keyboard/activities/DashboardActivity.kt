@@ -26,17 +26,22 @@ import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityDashboardBinding
 import org.fossify.keyboard.databinding.ItemMoodDistributionRowBinding
 import org.fossify.keyboard.databinding.ItemMoodLegendSwatchBinding
+import org.fossify.keyboard.extensions.ikdActivityAggregator
 import org.fossify.keyboard.extensions.ikdAggregator
 import org.fossify.keyboard.extensions.ikdHabitsAggregator
 import org.fossify.keyboard.extensions.ikdMoodAggregator
 import org.fossify.keyboard.extensions.ikdSensorAggregator
+import org.fossify.keyboard.helpers.IkdActivityAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
 import org.fossify.keyboard.helpers.IkdSensorAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
+import org.fossify.keyboard.views.IkdHeatmapView
+import android.widget.Toast
 import org.fossify.keyboard.views.IkdStackedBarChartView
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Locale
 
 class DashboardActivity : SimpleActivity() {
@@ -97,6 +102,11 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardSectionHeaderTrends.setTextColor(primary)
         binding.dashboardSectionHeaderMood.setTextColor(primary)
         binding.dashboardSectionHeaderHabits.setTextColor(primary)
+        binding.dashboardSectionHeaderDailyActivity.setTextColor(primary)
+        // Phase 9.5: tint the activity-section card backgrounds too.
+        val backgroundColor = getProperBackgroundColor()
+        binding.dashboardCalendarHeatmapCard.setCardBackgroundColor(backgroundColor)
+        binding.dashboardDailyKeypressCard.setCardBackgroundColor(backgroundColor)
     }
 
     private fun applyRangeToggleColors() {
@@ -159,10 +169,12 @@ class DashboardActivity : SimpleActivity() {
             // snapshot for the stacked-bar chart.
             // Phase 9.2: add the sensor magnitude aggregator on the same hop.
             // Phase 9.3: add the habits aggregator on the same hop.
+            // Phase 9.5: add the activity aggregator on the same hop.
             val agg = ikdAggregator
             val moodAgg = ikdMoodAggregator
             val sensorAgg = ikdSensorAggregator
             val habitsAgg = ikdHabitsAggregator
+            val activityAgg = ikdActivityAggregator
             val range = currentRange
             val payload = withContext(Dispatchers.IO) {
                 DashboardPayload(
@@ -171,9 +183,17 @@ class DashboardActivity : SimpleActivity() {
                     moodMix = moodAgg.mixSnapshot(range),
                     sensor = sensorAgg.snapshot(range),
                     habits = habitsAgg.snapshot(range),
+                    activity = activityAgg.snapshot(range),
                 )
             }
-            render(payload.ikd, payload.mood, payload.moodMix, payload.sensor, payload.habits)
+            render(
+                payload.ikd,
+                payload.mood,
+                payload.moodMix,
+                payload.sensor,
+                payload.habits,
+                payload.activity,
+            )
         }
     }
 
@@ -183,6 +203,7 @@ class DashboardActivity : SimpleActivity() {
         val moodMix: IkdMoodAggregator.MoodMixSnapshot,
         val sensor: IkdSensorAggregator.Snapshot,
         val habits: IkdHabitsAggregator.HabitsSnapshot,
+        val activity: IkdActivityAggregator.ActivitySnapshot,
     )
 
     private fun render(
@@ -191,6 +212,7 @@ class DashboardActivity : SimpleActivity() {
         moodMix: IkdMoodAggregator.MoodMixSnapshot,
         sensor: IkdSensorAggregator.Snapshot,
         habits: IkdHabitsAggregator.HabitsSnapshot,
+        activity: IkdActivityAggregator.ActivitySnapshot,
     ) {
         val isEmpty = snap.totalSessions == 0
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
@@ -212,6 +234,7 @@ class DashboardActivity : SimpleActivity() {
 
         renderCharts(snap)
         renderSensorTrendCharts(sensor)
+        renderDailyActivitySection(activity)
         renderMoodSection(snap, moodSnap, moodMix)
         renderHabitsSection(habits)
     }
@@ -392,6 +415,97 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
+     * Phase 9.5: render the Daily Activity section's calendar heatmap +
+     * daily keypress bar chart. Both widgets are hidden when their
+     * respective lists are empty. Section header is hidden when no
+     * widget renders.
+     */
+    private fun renderDailyActivitySection(activity: IkdActivityAggregator.ActivitySnapshot) {
+        val hasDaily = activity.dailyBuckets.isNotEmpty()
+        binding.dashboardCalendarHeatmapCard.beVisibleIf(hasDaily)
+        binding.dashboardDailyKeypressCard.beVisibleIf(hasDaily)
+        binding.dashboardSectionHeaderDailyActivity.beVisibleIf(hasDaily)
+        if (!hasDaily) return
+
+        bindCalendarHeatmap(activity.dailyBuckets)
+        bindDailyKeypressBar(activity.dailyBuckets)
+    }
+
+    /**
+     * Phase 9.5: render the calendar heatmap. Cells laid out by ISO
+     * week-of-year (rows) × day-of-week (columns Mon..Sun). Each non-empty
+     * day contributes a `Cell` at intensity `count / max`. Tap-to-toast
+     * drilldown surfaces the date + count.
+     */
+    private fun bindCalendarHeatmap(daily: List<IkdActivityAggregator.DailyBucket>) {
+        val heatmap = binding.dashboardCalendarHeatmap
+        val parsed = daily.mapNotNull { bucket ->
+            runCatching {
+                val date = isoDayParser.parse(bucket.day) ?: return@mapNotNull null
+                val cal = Calendar.getInstance()
+                cal.time = date
+                Triple(bucket.day, cal, bucket.keystrokeCount)
+            }.getOrNull()
+        }
+        if (parsed.isEmpty()) {
+            binding.dashboardCalendarHeatmapCard.beGone()
+            return
+        }
+        val firstWeek = parsed.minOf { it.second.get(Calendar.WEEK_OF_YEAR) }
+        val lastWeek = parsed.maxOf { it.second.get(Calendar.WEEK_OF_YEAR) }
+        val rows = (lastWeek - firstWeek + 1).coerceIn(1, MAX_HEATMAP_ROWS)
+        val maxCount = daily.maxOf { it.keystrokeCount }
+
+        val cells = parsed.map { (day, cal, count) ->
+            val rowIdx = (cal.get(Calendar.WEEK_OF_YEAR) - firstWeek).coerceIn(0, rows - 1)
+            // Calendar.DAY_OF_WEEK: 1=Sun … 7=Sat. Reorder to Mon..Sun (col 0..6).
+            val dow = cal.get(Calendar.DAY_OF_WEEK)
+            val col = (dow + DOW_MON_OFFSET) % DOW_COUNT // Mon=0, Sun=6
+            IkdHeatmapView.Cell(column = col, row = rowIdx, count = count, label = day)
+        }
+        heatmap.setData(cells, columns = DOW_COUNT, rows = rows, maxIntensity = maxCount)
+        heatmap.setAxisLabels(
+            x = listOf(
+                getString(R.string.dashboard_dow_mon),
+                getString(R.string.dashboard_dow_tue),
+                getString(R.string.dashboard_dow_wed),
+                getString(R.string.dashboard_dow_thu),
+                getString(R.string.dashboard_dow_fri),
+                getString(R.string.dashboard_dow_sat),
+                getString(R.string.dashboard_dow_sun),
+            ),
+            y = emptyList(),
+        )
+        heatmap.setOnCellClickListener { cell ->
+            if (cell.label.isNotEmpty()) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.dashboard_calendar_cell_toast, cell.label, cell.count),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        }
+    }
+
+    /**
+     * Phase 9.5: daily keypress bar chart. Reuses [IkdLineChartView] —
+     * each day is one point. Empty days within the range render as
+     * line breaks (Phase 5 convention) since `setData` skips null entries.
+     * If the daily-buckets list is dense (one row per day) zero-keystroke
+     * days won't appear; this matches the bar-chart spec — the heatmap
+     * covers the empty-day pattern view.
+     */
+    private fun bindDailyKeypressBar(daily: List<IkdActivityAggregator.DailyBucket>) {
+        val labels = daily.map { it.day.substring(it.day.lastIndexOf('-') + 1) } // "DD"
+        val values = daily.map { it.keystrokeCount.toFloat() }
+        binding.dashboardDailyKeypressChart.setData(
+            labels,
+            values,
+            getString(R.string.dashboard_chart_daily_keypress_y_label),
+        )
+    }
+
+    /**
      * Phase 9.3: render the Habits KPI strip + four trend charts. The
      * entire section is hidden when `totalSessions == 0` (no data to show).
      * Each chart's title and view are visibility-flipped together so the
@@ -533,6 +647,12 @@ class DashboardActivity : SimpleActivity() {
         private const val STATE_RANGE = "dashboard_range"
         private const val MS_PER_MINUTE = 60_000L
         private const val MS_PER_SECOND = 1_000.0
+
+        // Phase 9.5: calendar heatmap reorders Calendar.DAY_OF_WEEK
+        // (1=Sun..7=Sat) to Mon..Sun for Western convention.
+        private const val DOW_COUNT = 7
+        private const val DOW_MON_OFFSET = 5 // (DAY_OF_WEEK + 5) % 7 → Mon=0, Sun=6
+        private const val MAX_HEATMAP_ROWS = 53
 
         // Phase 8: Distribution-panel ProgressBar tops out at 100 (`max`
         // attribute on the row layout). Each row's progress is its share

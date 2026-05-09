@@ -134,6 +134,22 @@
     <string name="dashboard_chart_gyro_y_label">Avg gyro magnitude (rad/s)</string>
     <string name="dashboard_chart_accel_y_label">Avg accel magnitude (m/s²)</string>
 
+    <!-- Phase 9.5: Daily Activity section -->
+    <string name="dashboard_section_daily_activity">Daily Activity</string>
+    <string name="dashboard_chart_calendar_heatmap_title">Calendar heatmap</string>
+    <string name="dashboard_chart_daily_keypress_title">Daily keypresses</string>
+    <string name="dashboard_chart_daily_keypress_y_label">Keystrokes</string>
+    <string name="dashboard_calendar_heatmap_legend_low">Less</string>
+    <string name="dashboard_calendar_heatmap_legend_high">More</string>
+    <string name="dashboard_calendar_cell_toast">%1$s: %2$d keystrokes</string>
+    <string name="dashboard_dow_mon">M</string>
+    <string name="dashboard_dow_tue">T</string>
+    <string name="dashboard_dow_wed">W</string>
+    <string name="dashboard_dow_thu">T</string>
+    <string name="dashboard_dow_fri">F</string>
+    <string name="dashboard_dow_sat">S</string>
+    <string name="dashboard_dow_sun">S</string>
+
     <!-- Phase 9.3: Typing Habits section -->
     <string name="dashboard_section_habits">Habits</string>
     <string name="dashboard_habits_kpi_sessions">Sessions</string>

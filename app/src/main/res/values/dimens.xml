@@ -39,4 +39,13 @@
     <dimen name="mood_bubble_horizontal_padding">12dp</dimen>
     <dimen name="mood_bubble_vertical_padding">6dp</dimen>
     <dimen name="mood_bubble_anchor_margin">6dp</dimen>
+
+    <!-- Phase 9.5 — calendar / circadian heatmap cells -->
+    <dimen name="heatmap_cell_min_size_dp">12dp</dimen>
+    <dimen name="heatmap_cell_corner_dp">2dp</dimen>
+    <dimen name="heatmap_cell_margin_dp">2dp</dimen>
+
+    <!-- Phase 9.9 — Usage Map bubbles -->
+    <dimen name="bubble_map_min_radius_dp">1dp</dimen>
+    <dimen name="bubble_map_max_radius_dp">12dp</dimen>
 </resources>
