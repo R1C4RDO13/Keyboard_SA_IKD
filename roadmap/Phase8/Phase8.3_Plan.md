@@ -1,8 +1,8 @@
 # Phase 8.3 — Mood Distribution over Time (Stacked Bar) on Insights
 
-**Status:** Planned
+**Status:** Implemented (landed directly on `main` — per-plan branch hygiene was overridden by the user)
 **Depends on:** Phase 8 (mood entries exist in `ikd.db`), Phase 8.1 polish (current dashboard surface)
-**Branch:** `feat/phase8.3-mood-distribution-stacked-bar` (cut from latest `main` after Phase 8.1 was merged)
+**Branch:** Implementation landed directly on `main` (sub-phase commits and docs).
 **Scope (one sentence):** Drop the "Avg Mood" KPI cell and the "Mood over Time" line chart from `DashboardActivity`, and replace them with a per-bucket **stacked-bar chart** showing the percentage breakdown of each Ekman category in each time bucket (day or week, matching the existing range selector). The Mood Distribution panel — counts per category for the whole range — is kept verbatim.
 
 > **Naming note.** `Phase 8.1` is already used in this repo for the post-merge UI polish that shipped on `fix/phase8-ui-polish` (see [`Phase8_Plan.md` §12](Phase8_Plan.md#12-post-merge-ui-polish-phase-81)). `Phase 8.2` is reserved as a buffer slot for any small follow-up that lands before this rework. This new chart-shape change is therefore numbered **Phase 8.3** at the user's request.
