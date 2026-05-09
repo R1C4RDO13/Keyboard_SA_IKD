@@ -277,6 +277,86 @@
 
                     </LinearLayout>
 
+                    <!-- KPI-style 3-cell grid: Avg IKD / Avg Dwell / Avg Flight. -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:baselineAligned="false"
+                        android:layout_marginTop="@dimen/small_margin"
+                        android:weightSum="3">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/diagnostics_avg_ikd_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_value_none"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
+
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_kpi_avg_ikd"
+                                android:textSize="@dimen/smaller_text_size" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/diagnostics_avg_dwell_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_value_none"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
+
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_kpi_avg_dwell"
+                                android:textSize="@dimen/smaller_text_size" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/diagnostics_avg_flight_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_value_none"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold" />
+
+                            <org.fossify.commons.views.MyTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/diagnostics_kpi_avg_flight"
+                                android:textSize="@dimen/smaller_text_size" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>

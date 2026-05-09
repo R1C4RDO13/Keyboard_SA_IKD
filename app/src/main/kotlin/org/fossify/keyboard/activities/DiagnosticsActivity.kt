@@ -320,6 +320,9 @@ class DiagnosticsActivity : SimpleActivity() {
         binding.diagnosticsEventCountValue.text = "0"
         binding.diagnosticsTypingSpeedValue.text = getString(R.string.diagnostics_value_none)
         binding.diagnosticsErrorRateValue.text = getString(R.string.diagnostics_value_none)
+        binding.diagnosticsAvgIkdValue.text = getString(R.string.diagnostics_value_none)
+        binding.diagnosticsAvgDwellValue.text = getString(R.string.diagnostics_value_none)
+        binding.diagnosticsAvgFlightValue.text = getString(R.string.diagnostics_value_none)
     }
 
     private fun updateTimingDisplay(ikd: Long, dwell: Long, flight: Long) {
@@ -343,7 +346,26 @@ class DiagnosticsActivity : SimpleActivity() {
             val rate = events.count { it.isCorrection } * 100.0 / events.size
             getString(R.string.diagnostics_error_rate_format, rate)
         } else getString(R.string.diagnostics_value_none)
+
+        // Running averages for the three timing dimensions. -1 is the
+        // project-wide sentinel for "first event / unknown" and is filtered
+        // per-dimension (an event may have a real IKD but a sentinel hold /
+        // flight, or vice-versa).
+        binding.diagnosticsAvgIkdValue.text = formatAverage(events.map { it.ikdMs })
+        binding.diagnosticsAvgDwellValue.text = formatAverage(events.map { it.holdTimeMs })
+        binding.diagnosticsAvgFlightValue.text = formatAverage(events.map { it.flightTimeMs })
     }
+
+    private fun formatAverage(values: List<Long>): String {
+        val valid = values.filter(::isValidTiming)
+        return if (valid.isEmpty()) {
+            getString(R.string.diagnostics_value_none)
+        } else {
+            getString(R.string.diagnostics_ms_format, valid.average().toLong())
+        }
+    }
+
+    private fun isValidTiming(value: Long): Boolean = value >= 0
 
     private fun updateViewLogCount(count: Int) {
         binding.diagnosticsViewLogCount.text = if (count > 0) {

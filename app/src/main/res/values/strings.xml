@@ -95,6 +95,9 @@
     <string name="diagnostics_kpi_events">Events</string>
     <string name="diagnostics_kpi_speed">Speed</string>
     <string name="diagnostics_kpi_error_rate">Errors</string>
+    <string name="diagnostics_kpi_avg_ikd">Avg IKD</string>
+    <string name="diagnostics_kpi_avg_dwell">Avg Dwell</string>
+    <string name="diagnostics_kpi_avg_flight">Avg Flight</string>
 
     <!-- Event Feed Activity -->
     <string name="event_feed_title">Event Log</string>
