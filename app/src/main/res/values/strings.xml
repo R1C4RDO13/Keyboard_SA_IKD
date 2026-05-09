@@ -162,6 +162,8 @@
     <string name="ikd_privacy_mode_description">When on, no keyboard data is collected.</string>
     <string name="ikd_settings_privacy_default">Privacy mode on by default</string>
     <string name="ikd_settings_privacy_default_summary">When enabled, the keyboard starts in privacy mode (no data captured). Toggle from the keyboard\'s shield button or here.</string>
+    <string name="ikd_settings_show_mood_bar">Show mood bar in keyboard</string>
+    <string name="ikd_settings_show_mood_bar_summary">When disabled, the seven-button emotion bar is hidden from the keyboard\'s top toolbar. Privacy mode can still be toggled from this settings screen.</string>
     <string name="ikd_collect_gyro">Collect gyroscope data</string>
     <string name="ikd_collect_accel">Collect accelerometer data</string>
     <string name="ikd_sampling_fastest">Fastest (~200 Hz)</string>

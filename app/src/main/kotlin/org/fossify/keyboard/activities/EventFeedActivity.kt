@@ -392,27 +392,21 @@ class EventFeedActivity : SimpleActivity() {
     }
 
     /**
-     * Phase 8: render the optional fifth KPI cell + metadata chip when the
-     * session has a [MoodEntry]. When [mood] is `null` (no row) or the
-     * stored score is out of range (defensive against a corrupt DB), the
-     * cell collapses to `View.GONE` and the chip stays hidden — the four
-     * existing KPI cells redistribute via their `layout_weight=1`.
+     * Phase 8: render the optional fifth KPI cell when the session has a
+     * [MoodEntry]. When [mood] is `null` (no row) or the stored score is
+     * out of range (defensive against a corrupt DB), the cell collapses
+     * to `View.GONE` and the four existing KPI cells redistribute via
+     * their `layout_weight=1`.
      */
     private fun applyMoodOverlay(mood: MoodEntry?) {
         val score = mood?.moodScore
         if (score == null || !MoodEmoji.isValidScore(score)) {
             binding.eventFeedKpiMoodCell.beGone()
-            binding.moodChipText.beGone()
             return
         }
-        val emoji = MoodEmoji.emojiFor(score)
-        val label = getString(MoodEmoji.labelResFor(score))
         binding.eventFeedKpiMoodCell.beVisible()
-        binding.eventFeedKpiMoodEmoji.text = emoji
-        binding.eventFeedKpiMoodLabel.text = label
-
-        binding.moodChipText.text = getString(R.string.session_mood_chip_format, emoji, label)
-        binding.moodChipText.beVisible()
+        binding.eventFeedKpiMoodEmoji.text = MoodEmoji.emojiFor(score)
+        binding.eventFeedKpiMoodLabel.text = getString(MoodEmoji.labelResFor(score))
     }
 
     private fun populateLiveLists(

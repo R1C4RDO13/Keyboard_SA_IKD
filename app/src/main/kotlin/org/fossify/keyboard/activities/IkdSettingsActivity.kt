@@ -120,6 +120,8 @@ class IkdSettingsActivity : SimpleActivity() {
         // affordance over the same persisted flag (Decision #25). Keep
         // both rows in sync on every onResume.
         binding.ikdPrivacyDefaultSwitch.isChecked = config.privacyModeEnabled
+        // Phase 8 follow-up: keyboard mood bar visibility (default true).
+        binding.ikdShowMoodBarSwitch.isChecked = config.showMoodBar
         binding.ikdCollectGyroCheckbox.isChecked = config.collectGyro
         binding.ikdCollectAccelCheckbox.isChecked = config.collectAccel
 
@@ -169,6 +171,15 @@ class IkdSettingsActivity : SimpleActivity() {
     private fun setupListeners() {
         setupPrivacyListeners()
         binding.apply {
+
+            // Phase 8 follow-up: keyboard mood bar visibility toggle. The
+            // keyboard reads `Config.showMoodBar` on every layout pass via
+            // `MyKeyboardView.applyMoodBarVisibility`, so flipping this
+            // here takes effect on the next keyboard open.
+            ikdShowMoodBarHolder.setOnClickListener { ikdShowMoodBarSwitch.toggle() }
+            ikdShowMoodBarSwitch.setOnCheckedChangeListener { _, checked ->
+                config.showMoodBar = checked
+            }
 
             ikdCollectGyroHolder.setOnClickListener { ikdCollectGyroCheckbox.toggle() }
             ikdCollectGyroCheckbox.setOnCheckedChangeListener { _, checked ->

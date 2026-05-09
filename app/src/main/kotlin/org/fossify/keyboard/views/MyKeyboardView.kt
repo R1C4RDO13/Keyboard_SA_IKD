@@ -663,6 +663,7 @@ class MyKeyboardView @JvmOverloads constructor(
      * previously-tapped emotion if there is one.
      */
     fun refreshMoodBarFromState() {
+        applyMoodBarVisibility()
         if (context.config.privacyModeEnabled) {
             applyMoodBarHighlight(MOOD_SLOT_PRIVACY)
             return
@@ -677,6 +678,17 @@ class MyKeyboardView @JvmOverloads constructor(
                 applyMoodBarHighlight(score)
             }
         }
+    }
+
+    /**
+     * Phase 8 follow-up: gate mood-bar visibility on `Config.showMoodBar`
+     * (default true). When false, the entire seven-button bar is `View.GONE`
+     * and `suggestionsHolder` reclaims the freed horizontal space. Privacy
+     * mode is still reachable from `IkdSettingsActivity`.
+     */
+    private fun applyMoodBarVisibility() {
+        val visible = context.config.showMoodBar
+        keyboardViewBinding?.moodBar?.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
     /**

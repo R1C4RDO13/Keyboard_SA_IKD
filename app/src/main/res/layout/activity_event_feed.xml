@@ -294,18 +294,6 @@
                     android:gravity="center"
                     android:textSize="@dimen/smaller_text_size" />
 
-                <!-- Phase 8: mood chip — appended to the metadata one-liner
-                     when a MoodEntry exists for the session ("Mood: 😊 Happiness").
-                     Shown via View.VISIBLE in EventFeedActivity. -->
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/mood_chip_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="@dimen/smaller_text_size"
-                    android:visibility="gone"
-                    tools:text="Mood: 😊 Happiness" />
-
                 <!-- IKD chart card -->
                 <org.fossify.commons.views.MyTextView
                     android:id="@+id/session_dashboard_ikd_title"

@@ -40,6 +40,12 @@ const val SENSOR_DISPLAY_MODE_AXES = "AXES"
 // users see the sensor bars.
 const val DIAGNOSTICS_SENSOR_CARD_EXPANDED = "ikd_diagnostics_sensor_card_expanded"
 
+// Phase 8 follow-up: lets the user hide the keyboard mood bar entirely.
+// Default true (bar visible — matches the as-shipped Phase 8 behaviour).
+// When false, the seven-button bar is `View.GONE` in `MyKeyboardView` and
+// privacy can still be toggled from `IkdSettingsActivity`.
+const val SHOW_MOOD_BAR = "ikd_show_mood_bar"
+
 // IKD event category strings (Phase 1.1 + Phase 7). Persisted as the
 // `event_category` column on `ikd_events`. Centralized here so the IME
 // capture site, the aggregator queries, and the unit tests share the same

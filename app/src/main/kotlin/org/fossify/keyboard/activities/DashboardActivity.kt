@@ -13,6 +13,7 @@ import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getContrastColor
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.updateTextColors
@@ -62,7 +63,21 @@ class DashboardActivity : SimpleActivity() {
         // CoordinatorLayout, so updateTextColors above does not reach it.
         binding.dashboardEmptyMessage.setTextColor(getProperTextColor())
         applyRangeToggleColors()
+        applyCardThemeColors()
         loadSnapshot()
+    }
+
+    /**
+     * MaterialCardView's default `?attr/colorSurface` does not track Fossify's
+     * runtime background color, so on a custom theme the Phase 8 mood cards
+     * render as unthemed white slabs. Tint them to the activity background
+     * and let `cardElevation`'s shadow demarcate the card silhouette — same
+     * pattern as `EventFeedActivity.applyThemeColors`.
+     */
+    private fun applyCardThemeColors() {
+        val background = getProperBackgroundColor()
+        binding.dashboardMoodChartCard.setCardBackgroundColor(background)
+        binding.dashboardMoodDistributionCard.setCardBackgroundColor(background)
     }
 
     private fun applyRangeToggleColors() {
