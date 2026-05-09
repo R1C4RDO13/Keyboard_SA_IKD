@@ -137,7 +137,11 @@ class IkdAggregator(private val db: IkdDatabase) {
             val merged = orderedKeys.map { key ->
                 val ev = eventByBucket[key]
                 val sess = sessionByBucket[key]
-                val wpm = computeWpm(ev?.eventCount ?: 0, sess?.totalDurationMs ?: 0L)
+                // Phase 7: WPM denominator excludes AUTOCORRECT rows, since
+                // autocorrects are corrections rather than new typing. EMOJI
+                // rows still count (an emoji is a keystroke equivalent for
+                // typing-speed purposes).
+                val wpm = computeWpm(ev?.keystrokeCount ?: 0, sess?.totalDurationMs ?: 0L)
                 Bucket(
                     label = key,
                     wpm = wpm,
@@ -148,8 +152,8 @@ class IkdAggregator(private val db: IkdDatabase) {
 
             val totalSessions = sessionBuckets.sumOf { it.sessionCount }
             val totalDurationMs = sessionBuckets.sumOf { it.totalDurationMs }
-            val totalEvents = eventBuckets.sumOf { it.eventCount.toLong() }
-            val avgWpm = computeWpm(totalEvents.toInt(), totalDurationMs)
+            val totalKeystrokes = eventBuckets.sumOf { it.keystrokeCount.toLong() }
+            val avgWpm = computeWpm(totalKeystrokes.toInt(), totalDurationMs)
             val avgErrorRatePct = computeOverallErrorRate(eventBuckets)
 
             return Snapshot(

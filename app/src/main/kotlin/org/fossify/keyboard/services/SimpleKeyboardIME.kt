@@ -122,6 +122,15 @@ import org.fossify.keyboard.helpers.SHOW_KEY_BORDERS
 import org.fossify.keyboard.helpers.SHOW_NUMBERS_ROW
 import org.fossify.keyboard.helpers.ShiftState
 import org.fossify.keyboard.helpers.VOICE_INPUT_METHOD
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_ALPHA
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_AUTOCORRECT
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_BACKSPACE
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_DIGIT
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_EMOJI
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_ENTER
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_OTHER
+import org.fossify.keyboard.helpers.EVENT_CATEGORY_SPACE
+import org.fossify.keyboard.helpers.IME_EDIT_GRACE_MS
 import org.fossify.keyboard.helpers.cachedVNTelexData
 import org.fossify.keyboard.helpers.KinematicSensorHelper
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
@@ -165,6 +174,17 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
     private var lastKeyUpTimestamp = 0L
     private var pendingFlightTime = -1L
     private var sensorHelper: KinematicSensorHelper? = null
+
+    // Phase 7: external-edit detection state. The IME can't see the corrected
+    // text directly when the system spell-check service replaces it via
+    // `InputConnection`; the only signal is `onUpdateSelection`. We track our
+    // own expected cursor position, the timestamp of our last IME-initiated
+    // edit, and the field length after that edit so the heuristic in
+    // `onUpdateSelection` can distinguish "user tapped the field to move the
+    // cursor" from "external actor replaced text behind our back".
+    private var expectedCursorPosition: Int = -1
+    private var lastImeEditTimestamp: Long = 0L
+    private var lastKnownTextLength: Int = -1
 
     override fun onInitializeInterface() {
         super.onInitializeInterface()
@@ -210,6 +230,13 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
             lastKeyUpTimestamp = 0L
             pendingFlightTime = -1L
         }
+
+        // Phase 7: reset external-edit tracker on every fresh field. We don't
+        // know the new field's content (privacy: never read raw text), so the
+        // length stays -1 until the first onUpdateSelection populates it.
+        expectedCursorPosition = -1
+        lastImeEditTimestamp = 0L
+        lastKnownTextLength = -1
 
         if (!config.privacyModeEnabled) {
             sensorHelper?.start()
@@ -346,6 +373,7 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         when (code) {
             MyKeyboard.KEYCODE_DELETE -> {
                 val selectedText = inputConnection.getSelectedText(0)
+                markImeEdit()
                 if (TextUtils.isEmpty(selectedText)) {
                     val count = getCountToDelete(inputConnection)
                     inputConnection.deleteSurroundingText(count, 0)
@@ -451,6 +479,7 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
                 // However, avoid doing that in cases when the EditText for example requires numbers as the input.
                 // We can detect that by the text not changing on pressing Space.
                 if (keyboardMode != KEYBOARD_LETTERS && inputTypeClass == TYPE_CLASS_TEXT && code == MyKeyboard.KEYCODE_SPACE) {
+                    markImeEdit()
                     inputConnection.commitText(codeChar.toString(), 1)
                     val newText = inputConnection.getExtractedText(ExtractedTextRequest(), 0)?.text
                     if (originalText != newText) {
@@ -471,18 +500,27 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
                                     predictWord.append(wordChars[char])
                                     val shouldChangeText = predictWord.reverse().toString()
                                     if (cachedVNTelexData.containsKey(shouldChangeText)) {
+                                        // Phase 7: deliberately do NOT call markImeEdit() here.
+                                        // The VN Telex `setComposingText` substitution is itself
+                                        // an inline replacement that should be captured as an
+                                        // AUTOCORRECT event when the resulting onUpdateSelection
+                                        // arrives. Treating this as a regular IME commit would
+                                        // hide it inside the grace window and silently drop the
+                                        // row.
                                         inputConnection.setComposingRegion(fullText.length - shouldChangeText.length, fullText.length)
                                         inputConnection.setComposingText(cachedVNTelexData[shouldChangeText], fullText.length)
                                         inputConnection.setComposingRegion(fullText.length, fullText.length)
                                         return
                                     }
                                 }
+                                markImeEdit()
                                 inputConnection.commitText(codeChar.toString(), 1)
                                 updateShiftKeyState()
                             }
                         }
 
                         else -> {
+                            markImeEdit()
                             inputConnection.commitText(codeChar.toString(), 1)
                             updateShiftKeyState()
                         }
@@ -515,13 +553,13 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
     // Phase 1.1: Categorize key codes for privacy-preserving event capture
     private fun categorizeKeyCode(code: Int): String {
         return when (code) {
-            in 97..122 -> "ALPHA"  // lowercase a-z
-            in 65..90 -> "ALPHA"   // uppercase A-Z
-            in 48..57 -> "DIGIT"   // 0-9
-            MyKeyboard.KEYCODE_SPACE -> "SPACE"
-            MyKeyboard.KEYCODE_DELETE -> "BACKSPACE"
-            MyKeyboard.KEYCODE_ENTER -> "ENTER"
-            else -> "OTHER"
+            in 97..122 -> EVENT_CATEGORY_ALPHA  // lowercase a-z
+            in 65..90 -> EVENT_CATEGORY_ALPHA   // uppercase A-Z
+            in 48..57 -> EVENT_CATEGORY_DIGIT   // 0-9
+            MyKeyboard.KEYCODE_SPACE -> EVENT_CATEGORY_SPACE
+            MyKeyboard.KEYCODE_DELETE -> EVENT_CATEGORY_BACKSPACE
+            MyKeyboard.KEYCODE_ENTER -> EVENT_CATEGORY_ENTER
+            else -> EVENT_CATEGORY_OTHER
         }
     }
 
@@ -553,7 +591,39 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
     }
 
     override fun onText(text: String) {
+        markImeEdit()
         currentInputConnection?.commitText(text, 1)
+    }
+
+    /**
+     * Phase 7: emoji palette taps surface here instead of [onText] so the
+     * IKD pipeline can record them as an `EMOJI` event before the text is
+     * committed. Hold time is `-1` because the emoji palette doesn't fire
+     * `onPress`; flight time is derived from `lastKeyUpTimestamp` if it was
+     * set by a prior keystroke. After recording, we delegate to [onText]
+     * so the existing commit path is unchanged.
+     */
+    override fun onEmojiText(text: String) {
+        if (LiveCaptureSessionStore.isCapturing) {
+            val now = SystemClock.uptimeMillis()
+            val nowWall = System.currentTimeMillis()
+            val ikd = if (lastKeyUpTimestamp > 0L) now - lastKeyUpTimestamp else -1L
+            val flightTime = if (lastKeyUpTimestamp > 0L) now - lastKeyUpTimestamp else -1L
+            lastKeyUpTimestamp = now
+            pendingFlightTime = -1L
+
+            val event = KeyTimingEvent(
+                sessionId = LiveCaptureSessionStore.currentSessionId,
+                timestamp = nowWall,
+                eventCategory = EVENT_CATEGORY_EMOJI,
+                ikdMs = ikd,
+                holdTimeMs = -1L,
+                flightTimeMs = flightTime,
+                isCorrection = false
+            )
+            LiveCaptureSessionStore.recordTimingEvent(event)
+        }
+        onText(text)
     }
 
     override fun reloadKeyboard() {
@@ -597,10 +667,119 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
 
     override fun onUpdateSelection(oldSelStart: Int, oldSelEnd: Int, newSelStart: Int, newSelEnd: Int, candidatesStart: Int, candidatesEnd: Int) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
+
+        // Phase 7: detect external text replacements (system spell-check accepts,
+        // VN Telex `setComposingText`, inline-autofill commits) by looking for an
+        // unexpected cursor / field-length delta that did not originate inside
+        // the IME's own commit path. Anything inside `IME_EDIT_GRACE_MS` of our
+        // last commit is treated as the downstream notification of *our* edit
+        // and skipped. Heuristic must run before any state is mutated below so
+        // it can compare against the IME's own tracker.
+        maybeRecordExternalReplacement(oldSelStart, oldSelEnd, newSelStart, newSelEnd)
+
         if (newSelStart == newSelEnd) {
             keyboardView?.closeClipboardManager()
         }
         updateShiftKeyState()
+    }
+
+    /**
+     * Phase 7: classify an `onUpdateSelection` delta and, if it matches the
+     * external-replacement signature, append an `AUTOCORRECT` row to the live
+     * capture store. False-positive paths (user manually moved the cursor,
+     * IME's own commit echoing back) are filtered by the grace window and the
+     * field-length-change check; see Section 5.2 of `Phase7_Plan.md` for the
+     * full decision matrix.
+     */
+    private fun maybeRecordExternalReplacement(
+        oldSelStart: Int,
+        oldSelEnd: Int,
+        newSelStart: Int,
+        @Suppress("UNUSED_PARAMETER") newSelEnd: Int,
+    ) {
+        if (!LiveCaptureSessionStore.isCapturing) {
+            // Still update the tracker so the next session opens with sane state.
+            expectedCursorPosition = newSelStart
+            lastKnownTextLength = currentFieldLength()
+            return
+        }
+
+        val timeSinceImeEdit = SystemClock.uptimeMillis() - lastImeEditTimestamp
+        val withinGrace = lastImeEditTimestamp > 0L && timeSinceImeEdit <= IME_EDIT_GRACE_MS
+        val cursorDelta = newSelStart - oldSelStart
+        val wasSelectionRange = oldSelStart != oldSelEnd
+        val isCollapsed = newSelStart == newSelEnd
+        val newLength = currentFieldLength()
+        val fieldLengthChanged = lastKnownTextLength >= 0 && newLength >= 0 &&
+            newLength != lastKnownTextLength
+
+        // External replacement signature:
+        //   1. A selection range collapsed to a cursor (canonical spell-check
+        //      accept: the system selected the misspelled word, then committed
+        //      the replacement which lands as a single cursor); OR
+        //   2. The cursor moved by a non-zero amount and the field length
+        //      changed, but neither happened inside the IME's commit grace
+        //      window (rules out our own edits echoing back).
+        val externalReplacement = !withinGrace && (
+            (wasSelectionRange && isCollapsed) ||
+                (cursorDelta != 0 && fieldLengthChanged)
+            )
+
+        if (externalReplacement) {
+            recordAutocorrectEvent()
+        }
+
+        // Update tracker for the next call. This is also where the field
+        // length is first observed for a fresh field.
+        expectedCursorPosition = newSelStart
+        lastKnownTextLength = newLength
+    }
+
+    /**
+     * Phase 7: record an `AUTOCORRECT` row in the live capture store. Hold and
+     * flight times are `-1` because the IME never saw the replacement happen
+     * (no `onPress`, no preceding key-up); IKD is derived from the previous
+     * `lastKeyUpTimestamp` so it carries a meaningful "time-since-last-keystroke"
+     * value. `is_correction = true` so the existing error-rate metric folds
+     * autocorrects in for free.
+     */
+    private fun recordAutocorrectEvent() {
+        val now = SystemClock.uptimeMillis()
+        val nowWall = System.currentTimeMillis()
+        val ikd = if (lastKeyUpTimestamp > 0L) now - lastKeyUpTimestamp else -1L
+        lastKeyUpTimestamp = now
+
+        val event = KeyTimingEvent(
+            sessionId = LiveCaptureSessionStore.currentSessionId,
+            timestamp = nowWall,
+            eventCategory = EVENT_CATEGORY_AUTOCORRECT,
+            ikdMs = ikd,
+            holdTimeMs = -1L,
+            flightTimeMs = -1L,
+            isCorrection = true
+        )
+        LiveCaptureSessionStore.recordTimingEvent(event)
+    }
+
+    /**
+     * Phase 7: best-effort read of the editor's current text length. Returns
+     * `-1` when the connection is unavailable (between fields, or the editor
+     * refused the request) so callers can short-circuit without fabricating a
+     * length. Privacy: only the `length` field of the extracted text is read;
+     * the raw text is never stored.
+     */
+    private fun currentFieldLength(): Int {
+        val ic = currentInputConnection ?: return -1
+        return ic.getExtractedText(ExtractedTextRequest(), 0)?.text?.length ?: -1
+    }
+
+    /**
+     * Phase 7: stamp the IME's last-edit timestamp so the next
+     * `onUpdateSelection` can be classified as our own commit echo (within the
+     * grace window) rather than an external replacement.
+     */
+    private fun markImeEdit() {
+        lastImeEditTimestamp = SystemClock.uptimeMillis()
     }
 
     override fun onUpdateCursorAnchorInfo(cursorAnchorInfo: CursorAnchorInfo?) {

@@ -40,6 +40,26 @@ const val SENSOR_DISPLAY_MODE_AXES = "AXES"
 // users see the sensor bars.
 const val DIAGNOSTICS_SENSOR_CARD_EXPANDED = "ikd_diagnostics_sensor_card_expanded"
 
+// IKD event category strings (Phase 1.1 + Phase 7). Persisted as the
+// `event_category` column on `ikd_events`. Centralized here so the IME
+// capture site, the aggregator queries, and the unit tests share the same
+// symbolic constants instead of stringly-typed literals.
+const val EVENT_CATEGORY_ALPHA = "ALPHA"
+const val EVENT_CATEGORY_DIGIT = "DIGIT"
+const val EVENT_CATEGORY_SPACE = "SPACE"
+const val EVENT_CATEGORY_BACKSPACE = "BACKSPACE"
+const val EVENT_CATEGORY_ENTER = "ENTER"
+const val EVENT_CATEGORY_OTHER = "OTHER"
+const val EVENT_CATEGORY_EMOJI = "EMOJI"
+const val EVENT_CATEGORY_AUTOCORRECT = "AUTOCORRECT"
+
+// Phase 7: window after the IME's own commitText / deleteSurroundingText
+// inside which an `onUpdateSelection` callback is treated as a downstream
+// notification of *our* edit, not an external replacement. Anything later
+// than this and an unexpected cursor / text-length delta is recorded as
+// AUTOCORRECT.
+const val IME_EDIT_GRACE_MS = 50L
+
 const val SOUND_ON_KEYPRESS = "sound_on_keypress"
 const val SOUND_NONE = 0
 const val SOUND_SYSTEM = 1

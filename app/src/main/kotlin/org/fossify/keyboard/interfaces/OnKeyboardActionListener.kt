@@ -40,6 +40,14 @@ interface OnKeyboardActionListener {
     fun onText(text: String)
 
     /**
+     * Called when text from a structured source (the emoji palette) is committed.
+     * Default delegates to [onText] for backwards compatibility — implementations
+     * that want to distinguish emoji insertions from clipboard / other text taps
+     * can override this method without affecting the existing [onText] callsites.
+     */
+    fun onEmojiText(text: String) = onText(text)
+
+    /**
      * Called to force the KeyboardView to reload the keyboard
      */
     fun reloadKeyboard()

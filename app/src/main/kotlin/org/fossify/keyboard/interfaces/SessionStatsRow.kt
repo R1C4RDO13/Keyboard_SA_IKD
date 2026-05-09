@@ -13,6 +13,7 @@ import androidx.room.ColumnInfo
  */
 data class SessionStatsRow(
     @ColumnInfo(name = "eventCount") val eventCount: Int,
+    @ColumnInfo(name = "keystrokeCount") val keystrokeCount: Int,
     @ColumnInfo(name = "correctionCount") val correctionCount: Int,
     @ColumnInfo(name = "avgIkdMs") val avgIkdMs: Double?,
     @ColumnInfo(name = "avgHoldMs") val avgHoldMs: Double?,

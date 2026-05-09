@@ -280,7 +280,7 @@ Make it similar in style to the session insights.
 ---
 
 ## Phase 7: Emoji & Autocorrect Capture
-**Status: Planned**
+**Status: Implemented**
 
 Detailed scope: [`Phase7/Phase7_Plan.md`](Phase7/Phase7_Plan.md)
 

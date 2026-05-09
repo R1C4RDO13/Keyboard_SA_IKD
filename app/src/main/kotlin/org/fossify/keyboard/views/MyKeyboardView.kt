@@ -1885,7 +1885,7 @@ class MyKeyboardView @JvmOverloads constructor(
         keyboardViewBinding?.emojisList?.apply {
             layoutManager = emojiLayoutManager
             adapter = EmojisAdapter(context = safeStorageContext, items = emojiItems) { emoji ->
-                mOnKeyboardActionListener!!.onText(emoji.emoji)
+                mOnKeyboardActionListener!!.onEmojiText(emoji.emoji)
                 vibrateIfNeeded()
 
                 context.config.addRecentEmoji(emoji.emoji)
