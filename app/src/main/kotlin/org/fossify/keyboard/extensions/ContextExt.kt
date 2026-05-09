@@ -79,6 +79,9 @@ val Context.ikdSessionStatsLoader: IkdSessionStatsLoader
 val Context.ikdSessionChartLoader: IkdSessionChartLoader
     get() = IkdSessionChartLoader(ikdDB)
 
+val Context.moodDB: org.fossify.keyboard.interfaces.MoodDao
+    get() = ikdDB.MoodDao()
+
 fun Context.getCurrentClip(): String? {
     val clipboardManager = (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
     return clipboardManager.primaryClip?.getItemAt(0)?.text?.toString()

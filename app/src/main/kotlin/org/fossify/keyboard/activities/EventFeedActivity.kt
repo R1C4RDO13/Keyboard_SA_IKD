@@ -32,6 +32,7 @@ import org.fossify.keyboard.extensions.ikdDB
 import org.fossify.keyboard.extensions.ikdSessionChartLoader
 import org.fossify.keyboard.extensions.ikdSessionStatsLoader
 import org.fossify.keyboard.helpers.IkdCsvWriter
+import org.fossify.keyboard.helpers.IkdCsvWriter.asMoodRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
 import org.fossify.keyboard.helpers.IkdFormatters
@@ -271,12 +272,18 @@ class EventFeedActivity : SimpleActivity() {
             try {
                 val events = ikdDB.IkdEventDao().getEventsForSession(sessionId)
                 val samples = ikdDB.SensorSampleDao().getSamplesForSession(sessionId)
+                // Phase 8: include the session's mood entry (if any) in
+                // the third CSV block. Empty list when the user did not
+                // tap an emotion — the block header is still emitted.
+                val mood = ikdDB.MoodDao().getForSession(sessionId)
+                val moodRows = mood?.let { listOf(it.asMoodRow()) }.orEmpty()
                 contentResolver.openOutputStream(uri)?.use { stream ->
                     stream.bufferedWriter().use { writer ->
                         IkdCsvWriter.writeSessionCsv(
                             writer,
                             events.map { it.asTimingRow() },
                             samples.map { it.asSensorRow() },
+                            moodRows,
                         )
                     }
                 }
