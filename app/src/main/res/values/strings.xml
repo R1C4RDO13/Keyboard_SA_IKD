@@ -165,6 +165,13 @@
     <string name="dashboard_chart_usage_map_title">Usage Map</string>
     <string name="dashboard_usage_map_tooltip_format">%1$s %2$02d:00 — %3$d keystrokes</string>
 
+    <!-- Phase 9.7: Keystroke Dynamics histograms -->
+    <string name="dashboard_section_keystroke_dynamics">Keystroke Dynamics</string>
+    <string name="dashboard_chart_ikd_distribution_title">IKD distribution</string>
+    <string name="dashboard_chart_dwell_distribution_title">Dwell-time distribution</string>
+    <string name="dashboard_chart_flight_distribution_title">Flight-time distribution</string>
+    <string name="dashboard_distribution_outliers_label">+ %1$d outliers</string>
+
     <!-- Phase 9.3: Typing Habits section -->
     <string name="dashboard_section_habits">Habits</string>
     <string name="dashboard_habits_kpi_sessions">Sessions</string>

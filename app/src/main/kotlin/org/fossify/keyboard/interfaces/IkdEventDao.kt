@@ -275,4 +275,106 @@ interface IkdEventDao {
         toMs: Long,
         moodScore: Int?,
     ): List<DayHourBucketRow>
+
+    /**
+     * Phase 9.7: log-scale IKD distribution histogram. Bucket edges are
+     * hardcoded into the SQL CASE ladder — see
+     * [org.fossify.keyboard.helpers.IkdDistributionAggregator.BUCKET_EDGES_MS].
+     * Outlier overflow (≥ 10240 ms) lands at index 10; sub-10 ms rows are
+     * dropped (the `>= 0` filter excludes the `-1` sentinels).
+     */
+    @Query(
+        """
+        SELECT bucketIndex, COUNT(*) AS count FROM (
+            SELECT
+                CASE
+                    WHEN ikd_ms <  10    THEN -1
+                    WHEN ikd_ms <  20    THEN  0
+                    WHEN ikd_ms <  40    THEN  1
+                    WHEN ikd_ms <  80    THEN  2
+                    WHEN ikd_ms <  160   THEN  3
+                    WHEN ikd_ms <  320   THEN  4
+                    WHEN ikd_ms <  640   THEN  5
+                    WHEN ikd_ms <  1280  THEN  6
+                    WHEN ikd_ms <  2560  THEN  7
+                    WHEN ikd_ms <  5120  THEN  8
+                    WHEN ikd_ms <  10240 THEN  9
+                    ELSE 10
+                END AS bucketIndex
+            FROM ikd_events
+            WHERE ikd_ms >= 0
+              AND timestamp >= :fromMs
+              AND timestamp <  :toMs
+              AND (:moodScore IS NULL
+                   OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+        )
+        GROUP BY bucketIndex
+        ORDER BY bucketIndex
+        """
+    )
+    fun getIkdHistogram(fromMs: Long, toMs: Long, moodScore: Int?): List<HistogramRow>
+
+    /** Phase 9.7: log-scale dwell-time (hold) distribution histogram. */
+    @Query(
+        """
+        SELECT bucketIndex, COUNT(*) AS count FROM (
+            SELECT
+                CASE
+                    WHEN hold_time_ms <  10    THEN -1
+                    WHEN hold_time_ms <  20    THEN  0
+                    WHEN hold_time_ms <  40    THEN  1
+                    WHEN hold_time_ms <  80    THEN  2
+                    WHEN hold_time_ms <  160   THEN  3
+                    WHEN hold_time_ms <  320   THEN  4
+                    WHEN hold_time_ms <  640   THEN  5
+                    WHEN hold_time_ms <  1280  THEN  6
+                    WHEN hold_time_ms <  2560  THEN  7
+                    WHEN hold_time_ms <  5120  THEN  8
+                    WHEN hold_time_ms <  10240 THEN  9
+                    ELSE 10
+                END AS bucketIndex
+            FROM ikd_events
+            WHERE hold_time_ms >= 0
+              AND timestamp >= :fromMs
+              AND timestamp <  :toMs
+              AND (:moodScore IS NULL
+                   OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+        )
+        GROUP BY bucketIndex
+        ORDER BY bucketIndex
+        """
+    )
+    fun getDwellHistogram(fromMs: Long, toMs: Long, moodScore: Int?): List<HistogramRow>
+
+    /** Phase 9.7: log-scale flight-time distribution histogram. */
+    @Query(
+        """
+        SELECT bucketIndex, COUNT(*) AS count FROM (
+            SELECT
+                CASE
+                    WHEN flight_time_ms <  10    THEN -1
+                    WHEN flight_time_ms <  20    THEN  0
+                    WHEN flight_time_ms <  40    THEN  1
+                    WHEN flight_time_ms <  80    THEN  2
+                    WHEN flight_time_ms <  160   THEN  3
+                    WHEN flight_time_ms <  320   THEN  4
+                    WHEN flight_time_ms <  640   THEN  5
+                    WHEN flight_time_ms <  1280  THEN  6
+                    WHEN flight_time_ms <  2560  THEN  7
+                    WHEN flight_time_ms <  5120  THEN  8
+                    WHEN flight_time_ms <  10240 THEN  9
+                    ELSE 10
+                END AS bucketIndex
+            FROM ikd_events
+            WHERE flight_time_ms >= 0
+              AND timestamp >= :fromMs
+              AND timestamp <  :toMs
+              AND (:moodScore IS NULL
+                   OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+        )
+        GROUP BY bucketIndex
+        ORDER BY bucketIndex
+        """
+    )
+    fun getFlightHistogram(fromMs: Long, toMs: Long, moodScore: Int?): List<HistogramRow>
 }

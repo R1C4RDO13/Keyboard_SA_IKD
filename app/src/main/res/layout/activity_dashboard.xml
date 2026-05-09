@@ -568,6 +568,156 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Phase 9.7: Keystroke Dynamics section header (primary-
+                 coloured). Hidden when all three histograms are empty. -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_section_header_keystroke_dynamics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/dashboard_section_keystroke_dynamics"
+                android:textSize="@dimen/bigger_text_size"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <!-- Phase 9.7: IKD distribution histogram -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dashboard_ikd_distribution_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/small_margin"
+                android:visibility="gone"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/normal_margin">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dashboard_chart_ikd_distribution_title"
+                            android:textStyle="bold" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/dashboard_ikd_distribution_outliers"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:textSize="@dimen/smaller_text_size"
+                            android:visibility="gone" />
+
+                    </RelativeLayout>
+
+                    <org.fossify.keyboard.views.IkdHistogramView
+                        android:id="@+id/dashboard_ikd_distribution_chart"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:layout_marginTop="@dimen/small_margin" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Phase 9.7: Dwell histogram -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dashboard_dwell_distribution_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:visibility="gone"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/normal_margin">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dashboard_chart_dwell_distribution_title"
+                            android:textStyle="bold" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/dashboard_dwell_distribution_outliers"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:textSize="@dimen/smaller_text_size"
+                            android:visibility="gone" />
+
+                    </RelativeLayout>
+
+                    <org.fossify.keyboard.views.IkdHistogramView
+                        android:id="@+id/dashboard_dwell_distribution_chart"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:layout_marginTop="@dimen/small_margin" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Phase 9.7: Flight-time histogram -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dashboard_flight_distribution_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:visibility="gone"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/normal_margin">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dashboard_chart_flight_distribution_title"
+                            android:textStyle="bold" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/dashboard_flight_distribution_outliers"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:textSize="@dimen/smaller_text_size"
+                            android:visibility="gone" />
+
+                    </RelativeLayout>
+
+                    <org.fossify.keyboard.views.IkdHistogramView
+                        android:id="@+id/dashboard_flight_distribution_chart"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:layout_marginTop="@dimen/small_margin" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Phase 9.3: Habits section header (primary-coloured). Hidden
                  when totalSessions == 0. -->
             <org.fossify.commons.views.MyTextView

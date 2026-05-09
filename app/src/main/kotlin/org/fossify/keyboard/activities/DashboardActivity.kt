@@ -28,11 +28,13 @@ import org.fossify.keyboard.databinding.ItemMoodDistributionRowBinding
 import org.fossify.keyboard.databinding.ItemMoodLegendSwatchBinding
 import org.fossify.keyboard.extensions.ikdActivityAggregator
 import org.fossify.keyboard.extensions.ikdAggregator
+import org.fossify.keyboard.extensions.ikdDistributionAggregator
 import org.fossify.keyboard.extensions.ikdHabitsAggregator
 import org.fossify.keyboard.extensions.ikdMoodAggregator
 import org.fossify.keyboard.extensions.ikdSensorAggregator
 import org.fossify.keyboard.helpers.IkdActivityAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
+import org.fossify.keyboard.helpers.IkdDistributionAggregator
 import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
 import org.fossify.keyboard.helpers.IkdSensorAggregator
@@ -104,6 +106,7 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardSectionHeaderMood.setTextColor(primary)
         binding.dashboardSectionHeaderHabits.setTextColor(primary)
         binding.dashboardSectionHeaderDailyActivity.setTextColor(primary)
+        binding.dashboardSectionHeaderKeystrokeDynamics.setTextColor(primary)
         // Phase 9.5: tint the activity-section card backgrounds too.
         val backgroundColor = getProperBackgroundColor()
         binding.dashboardCalendarHeatmapCard.setCardBackgroundColor(backgroundColor)
@@ -113,6 +116,10 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardCircadianCard.setCardBackgroundColor(backgroundColor)
         // Phase 9.9: usage-map card.
         binding.dashboardUsageMapCard.setCardBackgroundColor(backgroundColor)
+        // Phase 9.7: keystroke dynamics histogram cards.
+        binding.dashboardIkdDistributionCard.setCardBackgroundColor(backgroundColor)
+        binding.dashboardDwellDistributionCard.setCardBackgroundColor(backgroundColor)
+        binding.dashboardFlightDistributionCard.setCardBackgroundColor(backgroundColor)
     }
 
     private fun applyRangeToggleColors() {
@@ -176,11 +183,13 @@ class DashboardActivity : SimpleActivity() {
             // Phase 9.2: add the sensor magnitude aggregator on the same hop.
             // Phase 9.3: add the habits aggregator on the same hop.
             // Phase 9.5: add the activity aggregator on the same hop.
+            // Phase 9.7: add the distribution aggregator on the same hop.
             val agg = ikdAggregator
             val moodAgg = ikdMoodAggregator
             val sensorAgg = ikdSensorAggregator
             val habitsAgg = ikdHabitsAggregator
             val activityAgg = ikdActivityAggregator
+            val distAgg = ikdDistributionAggregator
             val range = currentRange
             val payload = withContext(Dispatchers.IO) {
                 DashboardPayload(
@@ -190,6 +199,7 @@ class DashboardActivity : SimpleActivity() {
                     sensor = sensorAgg.snapshot(range),
                     habits = habitsAgg.snapshot(range),
                     activity = activityAgg.snapshot(range),
+                    distribution = distAgg.snapshot(range),
                 )
             }
             render(
@@ -199,6 +209,7 @@ class DashboardActivity : SimpleActivity() {
                 payload.sensor,
                 payload.habits,
                 payload.activity,
+                payload.distribution,
             )
         }
     }
@@ -210,6 +221,7 @@ class DashboardActivity : SimpleActivity() {
         val sensor: IkdSensorAggregator.Snapshot,
         val habits: IkdHabitsAggregator.HabitsSnapshot,
         val activity: IkdActivityAggregator.ActivitySnapshot,
+        val distribution: IkdDistributionAggregator.DistributionSnapshot,
     )
 
     private fun render(
@@ -219,6 +231,7 @@ class DashboardActivity : SimpleActivity() {
         sensor: IkdSensorAggregator.Snapshot,
         habits: IkdHabitsAggregator.HabitsSnapshot,
         activity: IkdActivityAggregator.ActivitySnapshot,
+        distribution: IkdDistributionAggregator.DistributionSnapshot,
     ) {
         val isEmpty = snap.totalSessions == 0
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
@@ -242,6 +255,7 @@ class DashboardActivity : SimpleActivity() {
         renderSensorTrendCharts(sensor)
         renderDailyActivitySection(activity)
         renderMoodSection(snap, moodSnap, moodMix)
+        renderKeystrokeDynamicsSection(distribution)
         renderHabitsSection(habits)
     }
 
@@ -650,6 +664,50 @@ class DashboardActivity : SimpleActivity() {
             values,
             getString(R.string.dashboard_chart_daily_keypress_y_label),
         )
+    }
+
+    /**
+     * Phase 9.7: render the Keystroke Dynamics section. Three log-scale
+     * histograms over IKD / dwell / flight times. Each chart hides
+     * itself + its outlier label when its histogram is empty; the
+     * section header is hidden only when all three histograms are empty.
+     */
+    private fun renderKeystrokeDynamicsSection(distribution: IkdDistributionAggregator.DistributionSnapshot) {
+        val labels = IkdDistributionAggregator.bucketLabels()
+        val ikdHasData = distribution.ikdHistogram.buckets.any { it > 0 }
+        val dwellHasData = distribution.holdHistogram.buckets.any { it > 0 }
+        val flightHasData = distribution.flightHistogram.buckets.any { it > 0 }
+
+        val anyHasData = ikdHasData || dwellHasData || flightHasData
+        binding.dashboardSectionHeaderKeystrokeDynamics.beVisibleIf(anyHasData)
+
+        binding.dashboardIkdDistributionCard.beVisibleIf(ikdHasData)
+        if (ikdHasData) {
+            binding.dashboardIkdDistributionChart.setData(labels, distribution.ikdHistogram.buckets)
+            bindOutlierLabel(binding.dashboardIkdDistributionOutliers, distribution.ikdHistogram.outlierCount)
+        }
+
+        binding.dashboardDwellDistributionCard.beVisibleIf(dwellHasData)
+        if (dwellHasData) {
+            binding.dashboardDwellDistributionChart.setData(labels, distribution.holdHistogram.buckets)
+            bindOutlierLabel(binding.dashboardDwellDistributionOutliers, distribution.holdHistogram.outlierCount)
+        }
+
+        binding.dashboardFlightDistributionCard.beVisibleIf(flightHasData)
+        if (flightHasData) {
+            binding.dashboardFlightDistributionChart.setData(labels, distribution.flightHistogram.buckets)
+            bindOutlierLabel(binding.dashboardFlightDistributionOutliers, distribution.flightHistogram.outlierCount)
+        }
+    }
+
+    private fun bindOutlierLabel(label: org.fossify.commons.views.MyTextView, outlierCount: Int) {
+        if (outlierCount <= 0) {
+            label.beGone()
+            return
+        }
+        label.beVisible()
+        label.text = getString(R.string.dashboard_distribution_outliers_label, outlierCount)
+        label.setTextColor(getProperPrimaryColor())
     }
 
     /**
