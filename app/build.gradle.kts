@@ -38,6 +38,7 @@ android {
         versionCode = project.property("VERSION_CODE").toString().toInt()
         multiDexEnabled = true
         vectorDrawables.useSupportLibrary = true
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ksp {
             arg("room.schemaLocation", "$projectDir/schemas")
         }
@@ -94,6 +95,7 @@ android {
 
     sourceSets {
         getByName("main").java.directories.add("src/main/kotlin")
+        getByName("androidTest").java.srcDirs("src/androidTest/kotlin")
     }
 
     compileOptions {
@@ -153,4 +155,8 @@ dependencies {
     detektPlugins(libs.compose.detekt)
 
     testImplementation(libs.junit)
+    androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.room.testing)
 }

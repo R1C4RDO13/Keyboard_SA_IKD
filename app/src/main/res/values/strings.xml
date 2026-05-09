@@ -118,6 +118,36 @@
     <string name="privacy_mode_on_toast">Privacy mode on</string>
     <string name="privacy_mode_off_toast">Data collection on</string>
     <string name="privacy_toggle_content_description">Toggle data collection</string>
+    <string name="privacy_label_on">Privacy mode</string>
+
+    <!-- Phase 8: per-session dashboard mood overlay -->
+    <string name="session_mood_kpi_label">Mood</string>
+    <string name="session_mood_chip_format">Mood: %1$s %2$s</string>
+
+    <!-- Phase 8: global dashboard mood widgets -->
+    <string name="dashboard_chart_mood_title">Mood over Time</string>
+    <string name="dashboard_chart_mood_y_label">Mood (1=Happiness → 6=Anger)</string>
+    <string name="dashboard_mood_distribution_title">Mood Distribution</string>
+    <string name="dashboard_kpi_avg_mood_label">Avg Mood</string>
+    <string name="dashboard_avg_mood_value_format">%1$s %2$.1f</string>
+
+    <!-- Phase 8: emotion bar (Ekman 6, valence-ordered) -->
+    <string name="mood_label_happiness">Happiness</string>
+    <string name="mood_label_surprise">Surprise</string>
+    <string name="mood_label_disgust">Disgust</string>
+    <string name="mood_label_sadness">Sadness</string>
+    <string name="mood_label_fear">Fear</string>
+    <string name="mood_label_anger">Anger</string>
+    <!-- Emoji glyphs for the keyboard mood bar — sourced from a string
+         resource so the layout XML stays free of inline emoji codepoints
+         and lint stops complaining about HardcodedText. -->
+    <string name="mood_bar_privacy_emoji" translatable="false">🛡️</string>
+    <string name="mood_bar_happiness_emoji" translatable="false">😊</string>
+    <string name="mood_bar_surprise_emoji" translatable="false">😲</string>
+    <string name="mood_bar_disgust_emoji" translatable="false">🤢</string>
+    <string name="mood_bar_sadness_emoji" translatable="false">😢</string>
+    <string name="mood_bar_fear_emoji" translatable="false">😨</string>
+    <string name="mood_bar_anger_emoji" translatable="false">😠</string>
 
     <!-- IKD Settings page -->
     <string name="ikd_settings_title">Data Collection &amp; Privacy</string>
@@ -130,6 +160,8 @@
     <string name="ikd_section_storage">Storage usage</string>
     <string name="ikd_privacy_mode_label">Privacy mode</string>
     <string name="ikd_privacy_mode_description">When on, no keyboard data is collected.</string>
+    <string name="ikd_settings_privacy_default">Privacy mode on by default</string>
+    <string name="ikd_settings_privacy_default_summary">When enabled, the keyboard starts in privacy mode (no data captured). Toggle from the keyboard\'s shield button or here.</string>
     <string name="ikd_collect_gyro">Collect gyroscope data</string>
     <string name="ikd_collect_accel">Collect accelerometer data</string>
     <string name="ikd_sampling_fastest">Fastest (~200 Hz)</string>

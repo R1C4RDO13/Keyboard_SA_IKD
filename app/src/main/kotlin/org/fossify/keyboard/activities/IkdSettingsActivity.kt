@@ -16,10 +16,15 @@ import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.keyboard.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.fossify.keyboard.databinding.ActivityIkdSettingsBinding
 import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.extensions.ikdDB
+import org.fossify.keyboard.extensions.ikdMoodBarController
 import org.fossify.keyboard.helpers.KinematicSensorHelper
+import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 import org.fossify.keyboard.helpers.RETENTION_DAYS_14
 import org.fossify.keyboard.helpers.RETENTION_DAYS_60
 import org.fossify.keyboard.helpers.RETENTION_DAYS_7
@@ -111,6 +116,10 @@ class IkdSettingsActivity : SimpleActivity() {
 
     private fun applyControlState() {
         binding.ikdPrivacyModeSwitch.isChecked = config.privacyModeEnabled
+        // Phase 8: the "Privacy mode on by default" row is a second
+        // affordance over the same persisted flag (Decision #25). Keep
+        // both rows in sync on every onResume.
+        binding.ikdPrivacyDefaultSwitch.isChecked = config.privacyModeEnabled
         binding.ikdCollectGyroCheckbox.isChecked = config.collectGyro
         binding.ikdCollectAccelCheckbox.isChecked = config.collectAccel
 
@@ -158,11 +167,8 @@ class IkdSettingsActivity : SimpleActivity() {
     }
 
     private fun setupListeners() {
+        setupPrivacyListeners()
         binding.apply {
-            ikdPrivacyModeHolder.setOnClickListener { ikdPrivacyModeSwitch.toggle() }
-            ikdPrivacyModeSwitch.setOnCheckedChangeListener { _, checked ->
-                config.privacyModeEnabled = checked
-            }
 
             ikdCollectGyroHolder.setOnClickListener { ikdCollectGyroCheckbox.toggle() }
             ikdCollectGyroCheckbox.setOnCheckedChangeListener { _, checked ->
@@ -214,6 +220,61 @@ class IkdSettingsActivity : SimpleActivity() {
             }
             ikdExportAllButton.setOnClickListener { triggerBulkExport() }
             ikdDeleteAllButton.setOnClickListener { confirmDeleteAll() }
+        }
+    }
+
+    /**
+     * Phase 8: wire both privacy-toggle rows. Both write to the same
+     * [Config.privacyModeEnabled] flag (Decision #25); their `setChecked`
+     * listeners keep the two rows in sync without recursion thanks to
+     * the equality guard inside [onPrivacyModeChanged].
+     */
+    private fun setupPrivacyListeners() {
+        binding.apply {
+            ikdPrivacyModeHolder.setOnClickListener { ikdPrivacyModeSwitch.toggle() }
+            ikdPrivacyModeSwitch.setOnCheckedChangeListener { _, checked ->
+                onPrivacyModeChanged(checked)
+                if (ikdPrivacyDefaultSwitch.isChecked != checked) {
+                    ikdPrivacyDefaultSwitch.isChecked = checked
+                }
+            }
+
+            // Second affordance — same flag, same handler, mirrors the
+            // keyboard's 🛡️ slot. Toggling ON mid-session finalises the
+            // in-flight session via IkdMoodBarController.
+            ikdPrivacyDefaultHolder.setOnClickListener { ikdPrivacyDefaultSwitch.toggle() }
+            ikdPrivacyDefaultSwitch.setOnCheckedChangeListener { _, checked ->
+                onPrivacyModeChanged(checked)
+                if (ikdPrivacyModeSwitch.isChecked != checked) {
+                    ikdPrivacyModeSwitch.isChecked = checked
+                }
+            }
+        }
+    }
+
+    /**
+     * Phase 8: shared handler for both privacy toggle rows. Persists the
+     * value first, then delegates the in-flight finalisation path to
+     * [IkdMoodBarController] when toggling to ON — same code path the
+     * keyboard's 🛡️ slot uses, so the two affordances stay equivalent.
+     */
+    private fun onPrivacyModeChanged(privacyOn: Boolean) {
+        // Avoid re-running the finalisation path when the new value
+        // matches the persisted one (the listeners fire on every
+        // programmatic `setChecked` to keep the two rows in sync).
+        if (config.privacyModeEnabled == privacyOn) return
+
+        if (privacyOn && LiveCaptureSessionStore.isCapturing) {
+            // Use the controller so the mood row + session finalisation
+            // run as a single off-thread unit, matching the keyboard 🛡️
+            // path. The controller flips `Config.privacyModeEnabled`
+            // itself, so we don't double-write here.
+            val controller = ikdMoodBarController
+            CoroutineScope(Dispatchers.IO).launch {
+                controller.enablePrivacyAndClearMood()
+            }
+        } else {
+            config.privacyModeEnabled = privacyOn
         }
     }
 

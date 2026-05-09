@@ -46,6 +46,11 @@ import androidx.core.view.updateMarginsRelative
 import androidx.emoji2.text.EmojiCompat
 import androidx.emoji2.text.EmojiCompat.EMOJI_SUPPORTED
 import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
@@ -85,14 +90,17 @@ import org.fossify.keyboard.extensions.getStrokeColor
 import org.fossify.keyboard.extensions.isDeviceLocked
 import org.fossify.keyboard.extensions.onScroll
 import org.fossify.keyboard.extensions.safeStorageContext
+import org.fossify.keyboard.extensions.ikdMoodBarController
 import org.fossify.keyboard.helpers.AccessHelper
 import org.fossify.keyboard.helpers.EMOJI_SPEC_FILE_PATH
 import org.fossify.keyboard.helpers.EmojiData
+import org.fossify.keyboard.helpers.IkdMoodBarController
 import org.fossify.keyboard.helpers.KeyboardFeedbackManager
 import org.fossify.keyboard.helpers.LANGUAGE_TURKISH_Q
 import org.fossify.keyboard.helpers.LANGUAGE_VIETNAMESE_TELEX
 import org.fossify.keyboard.helpers.LANGUAGE_VN_TELEX
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
+import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.helpers.MAX_KEYS_PER_MINI_ROW
 import org.fossify.keyboard.helpers.MyKeyboard
 import org.fossify.keyboard.helpers.MyKeyboard.Companion.KEYCODE_DELETE
@@ -138,6 +146,15 @@ class MyKeyboardView @JvmOverloads constructor(
 
     private var accessHelper: AccessHelper? = null
     private val feedbackManager by lazy { KeyboardFeedbackManager(context) }
+
+    // Phase 8: mood bar plumbing. The controller writes / clears
+    // `mood_entries` rows on `Dispatchers.IO`; this scope is cancelled on
+    // detach so a slow Room write cannot keep the view alive.
+    private val moodScope: CoroutineScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val moodController: IkdMoodBarController by lazy { context.ikdMoodBarController }
+    /** Currently-highlighted mood-bar slot (1..6 for emotions, null for no highlight, 0 for 🛡️). */
+    private var highlightedMoodSlot: Int? = null
 
     private var mKeyboard: MyKeyboard? = null
     private var mCurrentKeyIndex: Int = NOT_A_KEY
@@ -245,6 +262,12 @@ class MyKeyboardView @JvmOverloads constructor(
         private const val REPEAT_INTERVAL = 50 // ~20 keys per second
         private const val REPEAT_START_DELAY = 400
         private val LONGPRESS_TIMEOUT = ViewConfiguration.getLongPressTimeout()
+
+        // Phase 8: mood bar — privacy slot is logically score 0 (no DB row);
+        // emotion slots use their stored ordinal valence id (1..6).
+        private const val MOOD_SLOT_PRIVACY = 0
+        private const val MOOD_BAR_ALPHA_SELECTED = 1.0f
+        private const val MOOD_BAR_ALPHA_DIMMED = 0.6f
     }
 
     init {
@@ -330,6 +353,10 @@ class MyKeyboardView @JvmOverloads constructor(
 
         if (visibility == VISIBLE) {
             setupKeyboard(changedView)
+            // Phase 8: re-derive the mood-bar highlight whenever the view
+            // becomes visible — covers re-open into the same session id
+            // with a previously-tapped emotion (e.g., after rotation).
+            refreshMoodBarFromState()
         }
     }
 
@@ -404,35 +431,10 @@ class MyKeyboardView @JvmOverloads constructor(
                 toggleClipboardVisibility(false)
             }
 
-            privacyToggleButton.setImageResource(
-                if (context.config.privacyModeEnabled) {
-                    R.drawable.ic_privacy_on_vector
-                } else {
-                    R.drawable.ic_privacy_off_vector
-                }
-            )
-            privacyToggleButton.setOnLongClickListener {
-                context.toast(R.string.privacy_toggle_content_description); true
-            }
-            privacyToggleButton.setOnClickListener {
-                vibrateIfNeeded()
-                val newValue = !context.config.privacyModeEnabled
-                context.config.privacyModeEnabled = newValue
-                privacyToggleButton.setImageResource(
-                    if (newValue) {
-                        R.drawable.ic_privacy_on_vector
-                    } else {
-                        R.drawable.ic_privacy_off_vector
-                    }
-                )
-                context.toast(
-                    if (newValue) R.string.privacy_mode_on_toast else R.string.privacy_mode_off_toast
-                )
-                // If toggling to ON mid-session, finalize the in-flight session immediately
-                if (newValue && LiveCaptureSessionStore.isCapturing) {
-                    LiveCaptureSessionStore.stopSession()
-                }
-            }
+            // Phase 8: seven-button valence-ordered emotion bar
+            // (🛡️ 😊 😲 🤢 😢 😨 😠). Subsumes the Phase 2 standalone
+            // privacy_toggle_button — its semantics live on the 🛡️ slot.
+            setupMoodBar(this)
 
             suggestionsHolder.addOnLayoutChangeListener(object : OnLayoutChangeListener {
                 override fun onLayoutChange(
@@ -545,7 +547,11 @@ class MyKeyboardView @JvmOverloads constructor(
             settingsCog.applyColorFilter(mTextColor)
             pinnedClipboardItems.applyColorFilter(mTextColor)
             clipboardClear.applyColorFilter(mTextColor)
-            privacyToggleButton.applyColorFilter(mTextColor)
+            // Phase 8: mood bar buttons are TextViews with emoji glyphs;
+            // applying a color filter on them would tint the emoji.
+            // Highlighted-vs-dim styling is handled per-slot via alpha
+            // and background drawable in `applyMoodBarHighlight()`.
+            applyMoodBarTint()
             voiceInputButton.applyColorFilter(mTextColor)
             voiceInputButton.beGoneIf(mVoiceInputMethod.isEmpty())
 
@@ -575,6 +581,135 @@ class MyKeyboardView @JvmOverloads constructor(
             cachedVNTelexData.clear()
         }
         setupStoredClips()
+    }
+
+    /**
+     * Phase 8: bind click handlers and the initial highlighted slot for the
+     * seven-button mood bar. Called once from `setKeyboardHolder` after the
+     * top-bar binding is materialised; the bar is always visible.
+     *
+     * Click handlers fire `IkdMoodBarController` on `Dispatchers.IO` and
+     * marshal the bar's highlighted slot back to the main thread via the
+     * `moodScope` (`Dispatchers.Main.immediate`). UI state is *optimistic*:
+     * we move the highlight before the DB write completes so the user gets
+     * instant feedback. If the write fails, the highlight is corrected on
+     * the next refresh (`refreshMoodBarFromState`).
+     */
+    private fun setupMoodBar(binding: KeyboardViewKeyboardBinding) {
+        binding.apply {
+            moodBarPrivacy.setOnLongClickListener {
+                context.toast(R.string.privacy_toggle_content_description); true
+            }
+            moodBarPrivacy.setOnClickListener {
+                vibrateIfNeeded()
+                onMoodSlotClicked(MOOD_SLOT_PRIVACY)
+            }
+
+            // Six emotion slots (Ekman 6, valence-ordered). Each click
+            // writes/replaces the in-flight session's `MoodEntry` and
+            // disables privacy mode if it was on.
+            val emotionSlots = listOf(
+                moodBarHappiness to MoodEmoji.SCORE_HAPPINESS,
+                moodBarSurprise to MoodEmoji.SCORE_SURPRISE,
+                moodBarDisgust to MoodEmoji.SCORE_DISGUST,
+                moodBarSadness to MoodEmoji.SCORE_SADNESS,
+                moodBarFear to MoodEmoji.SCORE_FEAR,
+                moodBarAnger to MoodEmoji.SCORE_ANGER,
+            )
+            emotionSlots.forEach { (view, score) ->
+                val labelRes = MoodEmoji.labelResFor(score)
+                view.setOnLongClickListener { context.toast(labelRes); true }
+                view.setOnClickListener {
+                    vibrateIfNeeded()
+                    onMoodSlotClicked(score)
+                }
+            }
+        }
+        // Initial state: 🛡️ highlighted iff privacy is on, no row otherwise.
+        refreshMoodBarFromState()
+    }
+
+    /**
+     * Click dispatcher for the mood bar. `slot` is `MOOD_SLOT_PRIVACY` for
+     * the 🛡️ button or 1..6 for the six emotion buttons (matching the
+     * stored ordinal valence id).
+     */
+    private fun onMoodSlotClicked(slot: Int) {
+        when (slot) {
+            MOOD_SLOT_PRIVACY -> {
+                applyMoodBarHighlight(MOOD_SLOT_PRIVACY)
+                context.toast(R.string.privacy_mode_on_toast)
+                moodScope.launch { moodController.enablePrivacyAndClearMood() }
+            }
+            in MoodEmoji.SCORE_HAPPINESS..MoodEmoji.SCORE_ANGER -> {
+                applyMoodBarHighlight(slot)
+                if (context.config.privacyModeEnabled) {
+                    context.toast(R.string.privacy_mode_off_toast)
+                }
+                moodScope.launch { moodController.setMoodForActiveSession(slot) }
+            }
+        }
+    }
+
+    /**
+     * Re-derive the mood bar's highlighted slot from `Config.privacyModeEnabled`
+     * + the in-flight session's `MoodEntry`. Called on `setKeyboardHolder`,
+     * `setupKeyboard` (after a theme refresh), and `onStartInputView` (via
+     * the IME's existing setup hooks).
+     *
+     * Defensive read: under spec a fresh session has no mood row until the
+     * user taps. The query is still issued so a re-open into the same
+     * session id (which can happen on configuration change) restores the
+     * previously-tapped emotion if there is one.
+     */
+    fun refreshMoodBarFromState() {
+        if (context.config.privacyModeEnabled) {
+            applyMoodBarHighlight(MOOD_SLOT_PRIVACY)
+            return
+        }
+        // Privacy is off — clear the highlight first, then ask the DB if a
+        // mood row exists for the in-flight session and restore it if so.
+        applyMoodBarHighlight(null)
+        moodScope.launch {
+            val mood = moodController.getMoodForActiveSession()
+            val score = mood?.moodScore
+            if (score != null && MoodEmoji.isValidScore(score)) {
+                applyMoodBarHighlight(score)
+            }
+        }
+    }
+
+    /**
+     * Set the highlighted slot. `null` means no slot is highlighted (a valid
+     * "privacy off, user has not yet tapped" state — Decision #7).
+     */
+    private fun applyMoodBarHighlight(slot: Int?) {
+        highlightedMoodSlot = slot
+        val binding = keyboardViewBinding ?: return
+        val all = listOf(
+            binding.moodBarPrivacy to MOOD_SLOT_PRIVACY,
+            binding.moodBarHappiness to MoodEmoji.SCORE_HAPPINESS,
+            binding.moodBarSurprise to MoodEmoji.SCORE_SURPRISE,
+            binding.moodBarDisgust to MoodEmoji.SCORE_DISGUST,
+            binding.moodBarSadness to MoodEmoji.SCORE_SADNESS,
+            binding.moodBarFear to MoodEmoji.SCORE_FEAR,
+            binding.moodBarAnger to MoodEmoji.SCORE_ANGER,
+        )
+        all.forEach { (view, idx) ->
+            val isSelected = slot != null && slot == idx
+            view.alpha = if (isSelected) MOOD_BAR_ALPHA_SELECTED else MOOD_BAR_ALPHA_DIMMED
+        }
+    }
+
+    /**
+     * Refresh the mood bar's text colour after a theme change. The emoji
+     * glyph is colour by font; only the optional underline tint inherits
+     * `mTextColor` — there is no separate per-slot tint to apply yet.
+     */
+    private fun applyMoodBarTint() {
+        // Currently a no-op — the glyphs render in the system emoji font.
+        // Reserved for any future highlight-frame drawable that would need
+        // theme-aware tinting (Decision #17 keeps colours theme-attr-driven).
     }
 
     fun vibrateIfNeeded() {
@@ -1949,6 +2084,13 @@ class MyKeyboardView @JvmOverloads constructor(
     public override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         closing()
+        // Phase 8: cancel any in-flight mood-bar Room writes so we don't
+        // hold the view (and surrounding IME service context) alive past
+        // detach. If the view is ever re-attached (uncommon for an IME
+        // root) the bar is re-bound on next visibility — not a UX
+        // regression because the highlight is derived from
+        // `Config.privacyModeEnabled`, not from the cancelled query.
+        moodScope.coroutineContext[Job]?.cancel()
     }
 
     private fun dismissPopupKeyboard() {

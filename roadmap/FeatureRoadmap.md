@@ -303,33 +303,35 @@ Detailed scope: [`Phase7/Phase7_Plan.md`](Phase7/Phase7_Plan.md)
 ---
 
 ## Phase 8: Mood Bar & Contextual Overlay
-**Status: Planned**
+**Status: Implemented**
 
 Detailed scope: [`Phase8/Phase8_Plan.md`](Phase8/Phase8_Plan.md)
 
-**Objective:** Let the user annotate their current emotional state with a single tap before or during a typing session. That one-tap signal becomes a first-class dimension in both per-session and global dashboards, realising the "Subjective Context Overlay" deferred at the end of Phase 3.
+**Objective:** Let the user annotate their current emotional state with a single tap during a typing session. That one-tap signal becomes a first-class dimension in both per-session and global dashboards, realising the "Subjective Context Overlay" deferred at the end of Phase 3.
 
-*   **Mood Bar on the Keyboard Toolbar:**
-    *   A horizontal strip of six buttons appears in the keyboard top bar, next to the existing privacy-toggle shield: a **neutral "no choice" indicator** ( 🫥 ) followed by five mood emoji ( 😞 😟 😐 😊 😄 ).
-    *   On session start the bar always defaults to the **no-choice state** ( 🫥 highlighted, score = 0 / null). No `MoodEntry` row is written until the user explicitly taps one of the five mood emoji — sessions where the user never taps a mood remain mood-less and are excluded from mood aggregations rather than counted as neutral.
-    *   Tapping an emoji records a `MoodEntry` (sessionId, timestamp, moodScore 1–5) in a new `mood_entries` table in `ikd.db`. The row is associated with the active session at the time of the tap; if no session is active (privacy mode on) the entry is stored without a session ID.
-    *   Tapping the 🫥 button after a mood has been set **clears** the current session's mood (deletes the `MoodEntry` row for that session) and returns the bar to the no-choice state.
-    *   The bar is hidden by default and toggled via a new Config preference (`showMoodBar`); a dedicated toggle in IKD Settings controls visibility.
-    *   The selected button is highlighted for the remainder of the session. Tapping a different mood emoji **replaces** the current session's mood (one mood entry per session; the bar is for quick annotation, not a time-series log).
-    *   Privacy invariant: `MoodEntry` stores only the integer score (1–5) and a timestamp — no text, no raw emoji character. The display mapping (score → emoji) lives in the UI layer only.
+*   **Seven-button Emotion Bar on the Keyboard Toolbar (replaces the Phase 2 standalone privacy shield):**
+    *   A horizontal strip of seven buttons appears in the keyboard top bar — `🛡️ 😊 😲 🤢 😢 😨 😠`. The leftmost shield slot subsumes the Phase 2 privacy-toggle button verbatim; the next six are Ekman's six basic emotions [Ekman 1972, 1992] ordered best-to-worst by valence.
+    *   The buttons are mutually exclusive — at most one is highlighted. With privacy on the shield is highlighted; with privacy off and no tap yet, no slot is highlighted (Decision #7).
+    *   Tapping any of the six emotion buttons disables privacy mode and writes/replaces a `MoodEntry` (sessionId, timestamp, moodScore 1–6) keyed on the active session.
+    *   Tapping 🛡️ enables privacy mode, finalises any in-flight session via the existing `LiveCaptureSessionStore.stopSession()` path (Phase 2 semantics preserved), and deletes any mood row for that session.
+    *   **No auto-write** — sessions without an explicit emotion tap have no `MoodEntry` row (Decision #10). This sidesteps the Neutral / no-rating problem entirely (Decision #11).
+    *   `IkdSettingsActivity` gains a "Privacy mode on by default" row backed by the existing `Config.privacyModeEnabled` flag (Decision #25 — no new pref key). The keyboard 🛡️ button and the settings row are two affordances over the same flag.
+    *   Privacy invariant: `MoodEntry` stores only the integer ordinal valence (1–6) and a timestamp — no text, no emoji codepoint. Score → emoji mapping lives in the UI layer only (`helpers/MoodEmoji.kt`).
 
 *   **Mood Overlay on Session Dashboard (`EventFeedActivity`):**
-    *   When a session has an associated `MoodEntry`, a mood chip is added to the metadata one-liner row (e.g., "😊 Mood: Happy").
-    *   The session KPI card gains a fifth cell: the emoji and its label for that session's recorded mood.
-    *   Sessions without a mood entry show no mood cell (the card gracefully collapses to four cells).
+    *   When a session has a `MoodEntry`, the KPI strip grows from four cells to five (emoji + label) and the metadata one-liner gains a `Mood: 😊 Happiness` chip.
+    *   Sessions without a mood entry keep the original four-cell layout — the fifth cell collapses cleanly.
 
-*   **Mood Trend Chart on Global Insights (`DashboardActivity`):**
-    *   A new fourth chart is added below the existing three in `DashboardActivity`: **Mood over Time** — a line chart with the Y axis labelled 1–5 and emoji tick labels (😞 ↔ 😄), bucketed by the same day/week stride as the other charts.
-    *   Buckets with no mood entries are rendered as gaps (null values, matching the existing `IkdLineChartView` null-break behaviour).
-    *   The KPI strip gains an **Average Mood** chip when at least one mood entry exists in the selected range.
-    *   `IkdAggregator` is extended with an additive `getMoodBuckets(bucketFormat, fromMs, toMs)` query; `MoodDao` is the new DAO.
+*   **Mood widgets on Global Insights (`DashboardActivity`):**
+    *   A fourth chart card "Mood over Time" — line chart with Y axis 1 (Happiness) → 6 (Anger), bucketed identically to the existing three charts. Null buckets render as line breaks.
+    *   A "Mood Distribution" panel below the chart cards — six rows in display order (Happiness → Anger), each emoji + label + horizontal progress bar + count.
+    *   A fifth KPI cell "Avg Mood" showing the rounded emoji + the precise number (e.g. `🤢 3.2`).
+    *   All three are gated on `total > 0` for the selected range; otherwise hidden, and the KPI strip falls back to four cells.
+    *   New `IkdMoodAggregator` (Phase 3 read surface stays frozen); new `MoodDao` with `getMoodBuckets` + `getMoodDistribution` queries.
 
-> **Schema change required.** Phase 8 bumps `IkdDatabase.version` to 2 and adds the `mood_entries` table via a `Migration(1, 2)`. The migration is non-destructive: it only adds a new table and leaves all existing tables untouched.
+*   **CSV export gains a third dual-block segment:** `#mood_entries\nsession_id,timestamp_ms,mood_score`. Strictly additive — parsers reading only the first two blocks remain backwards-compatible.
+
+> **Schema change required.** Phase 8 bumps `IkdDatabase.version` to 2 and adds the `mood_entries` table via `Migration(1, 2)`. The migration is non-destructive: it only adds a new table and leaves all existing tables untouched. The migration test in `app/src/androidTest` covers v1-data preservation, the unique index on `session_id`, and SQLite's NULL-distinctness behaviour for sessionless rows.
 
 ---
 

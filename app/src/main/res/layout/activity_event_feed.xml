@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/event_feed_coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -79,7 +80,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:padding="@dimen/normal_margin"
-                        android:weightSum="4">
+                        android:weightSum="5">
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -173,6 +174,36 @@
 
                         </LinearLayout>
 
+                        <!-- Phase 8: fifth KPI cell — emoji + label, hidden
+                             when no MoodEntry exists for the session. The
+                             remaining cells with layout_weight=1 redistribute
+                             the freed space evenly when this is GONE. -->
+                        <LinearLayout
+                            android:id="@+id/event_feed_kpi_mood_cell"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/event_feed_kpi_mood_emoji"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="@dimen/bigger_text_size"
+                                android:textStyle="bold"
+                                tools:text="😊" />
+
+                            <org.fossify.commons.views.MyTextView
+                                android:id="@+id/event_feed_kpi_mood_label"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="@dimen/smaller_text_size"
+                                tools:text="Happiness" />
+
+                        </LinearLayout>
+
                     </LinearLayout>
 
                 </com.google.android.material.card.MaterialCardView>
@@ -262,6 +293,18 @@
                     android:layout_marginTop="@dimen/small_margin"
                     android:gravity="center"
                     android:textSize="@dimen/smaller_text_size" />
+
+                <!-- Phase 8: mood chip — appended to the metadata one-liner
+                     when a MoodEntry exists for the session ("Mood: 😊 Happiness").
+                     Shown via View.VISIBLE in EventFeedActivity. -->
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/mood_chip_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="@dimen/smaller_text_size"
+                    android:visibility="gone"
+                    tools:text="Mood: 😊 Happiness" />
 
                 <!-- IKD chart card -->
                 <org.fossify.commons.views.MyTextView

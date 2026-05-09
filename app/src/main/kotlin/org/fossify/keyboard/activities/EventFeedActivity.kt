@@ -29,18 +29,22 @@ import org.fossify.keyboard.databinding.ItemSensorReadingBinding
 import org.fossify.keyboard.databinding.ItemTimingEventBinding
 import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.extensions.ikdDB
+import org.fossify.keyboard.extensions.ikdMoodLoader
 import org.fossify.keyboard.extensions.ikdSessionChartLoader
 import org.fossify.keyboard.extensions.ikdSessionStatsLoader
 import org.fossify.keyboard.helpers.IkdCsvWriter
+import org.fossify.keyboard.helpers.IkdCsvWriter.asMoodRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
 import org.fossify.keyboard.helpers.IkdFormatters
 import org.fossify.keyboard.helpers.IkdSessionChartLoader
 import org.fossify.keyboard.helpers.IkdSessionStatsLoader
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
+import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.helpers.SENSOR_DISPLAY_MODE_AXES
 import org.fossify.keyboard.helpers.SENSOR_DISPLAY_MODE_MAGNITUDE
 import org.fossify.keyboard.models.KeyTimingEvent
+import org.fossify.keyboard.models.MoodEntry
 import org.fossify.keyboard.models.SensorReadingEvent
 import org.fossify.keyboard.models.SessionRecord
 import org.fossify.keyboard.models.magnitude
@@ -271,12 +275,18 @@ class EventFeedActivity : SimpleActivity() {
             try {
                 val events = ikdDB.IkdEventDao().getEventsForSession(sessionId)
                 val samples = ikdDB.SensorSampleDao().getSamplesForSession(sessionId)
+                // Phase 8: include the session's mood entry (if any) in
+                // the third CSV block. Empty list when the user did not
+                // tap an emotion — the block header is still emitted.
+                val mood = ikdDB.MoodDao().getForSession(sessionId)
+                val moodRows = mood?.let { listOf(it.asMoodRow()) }.orEmpty()
                 contentResolver.openOutputStream(uri)?.use { stream ->
                     stream.bufferedWriter().use { writer ->
                         IkdCsvWriter.writeSessionCsv(
                             writer,
                             events.map { it.asTimingRow() },
                             samples.map { it.asSensorRow() },
+                            moodRows,
                         )
                     }
                 }
@@ -294,15 +304,18 @@ class EventFeedActivity : SimpleActivity() {
     private fun loadDataFromDb(sessionId: String) {
         val statsLoader = ikdSessionStatsLoader
         val chartLoader = ikdSessionChartLoader
-        // One background hop covers both Room reads — keeps StrictMode quiet
-        // and gives us a single round-trip per onResume.
+        val moodLoader = ikdMoodLoader
+        // One background hop covers all three Room reads — keeps StrictMode
+        // quiet and gives us a single round-trip per onResume. Mood is the
+        // Phase 8 addition; stats + chart are unchanged.
         CoroutineScope(Dispatchers.Main).launch {
-            val (stats, chartData) = withContext(Dispatchers.IO) {
+            val triple = withContext(Dispatchers.IO) {
                 val stats = statsLoader.load(sessionId)
                 val chartData = chartLoader.load(sessionId)
-                stats to chartData
+                val mood = moodLoader.load(sessionId)
+                Triple(stats, chartData, mood)
             }
-            renderSessionDashboard(sessionId, stats, chartData)
+            renderSessionDashboard(sessionId, triple.first, triple.second, triple.third)
         }
     }
 
@@ -310,6 +323,7 @@ class EventFeedActivity : SimpleActivity() {
         sessionId: String,
         stats: IkdSessionStatsLoader.SessionStats?,
         chartData: IkdSessionChartLoader.SessionChartData?,
+        mood: MoodEntry?,
     ) {
         val titleSuffix = sessionId.takeLast(SESSION_ID_SHORT_LENGTH)
         binding.eventFeedToolbar.title = "Session $titleSuffix"
@@ -334,6 +348,11 @@ class EventFeedActivity : SimpleActivity() {
         binding.sessionDashboardAvgIkdValue.text = formatNullableValue(stats.avgIkdMs, msFmt)
         binding.sessionDashboardAvgDwellValue.text = formatNullableValue(stats.avgHoldMs, msFmt)
         binding.sessionDashboardAvgFlightValue.text = formatNullableValue(stats.avgFlightMs, msFmt)
+
+        // Phase 8: fifth KPI cell + metadata chip. Both are gated on a
+        // valid mood row — sessions without a tap stay at the original
+        // four-cell strip with no chip line.
+        applyMoodOverlay(mood)
 
         // Metadata one-liner.
         val separator = getString(R.string.session_dashboard_metadata_separator)
@@ -370,6 +389,30 @@ class EventFeedActivity : SimpleActivity() {
         binding.sessionDashboardIkdTitle.setTextColor(primary)
         binding.sessionDashboardGyroTitle.setTextColor(primary)
         binding.sessionDashboardAccelTitle.setTextColor(primary)
+    }
+
+    /**
+     * Phase 8: render the optional fifth KPI cell + metadata chip when the
+     * session has a [MoodEntry]. When [mood] is `null` (no row) or the
+     * stored score is out of range (defensive against a corrupt DB), the
+     * cell collapses to `View.GONE` and the chip stays hidden — the four
+     * existing KPI cells redistribute via their `layout_weight=1`.
+     */
+    private fun applyMoodOverlay(mood: MoodEntry?) {
+        val score = mood?.moodScore
+        if (score == null || !MoodEmoji.isValidScore(score)) {
+            binding.eventFeedKpiMoodCell.beGone()
+            binding.moodChipText.beGone()
+            return
+        }
+        val emoji = MoodEmoji.emojiFor(score)
+        val label = getString(MoodEmoji.labelResFor(score))
+        binding.eventFeedKpiMoodCell.beVisible()
+        binding.eventFeedKpiMoodEmoji.text = emoji
+        binding.eventFeedKpiMoodLabel.text = label
+
+        binding.moodChipText.text = getString(R.string.session_mood_chip_format, emoji, label)
+        binding.moodChipText.beVisible()
     }
 
     private fun populateLiveLists(

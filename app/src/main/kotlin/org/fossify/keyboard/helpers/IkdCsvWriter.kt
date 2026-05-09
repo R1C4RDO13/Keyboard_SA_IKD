@@ -4,17 +4,19 @@ import android.content.Context
 import android.net.Uri
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.keyboard.extensions.ikdDB
+import org.fossify.keyboard.helpers.IkdCsvWriter.asMoodRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asSensorRow
 import org.fossify.keyboard.helpers.IkdCsvWriter.asTimingRow
 import org.fossify.keyboard.models.IkdEvent
 import org.fossify.keyboard.models.KeyTimingEvent
+import org.fossify.keyboard.models.MoodEntry
 import org.fossify.keyboard.models.SensorReadingEvent
 import org.fossify.keyboard.models.SensorSample
 import java.io.BufferedWriter
 import java.io.IOException
 
 /**
- * Single source of truth for the dual-block IKD CSV format.
+ * Single source of truth for the triple-block IKD CSV format.
  *
  * Format:
  * ```
@@ -24,14 +26,23 @@ import java.io.IOException
  * #sensor_readings
  * session_id,timestamp_ms,sensor_type,x,y,z
  * <sensor rows>
+ *
+ * #mood_entries
+ * session_id,timestamp_ms,mood_score
+ * <mood rows>
  * ```
  *
  * Used by:
- * - Phase 1.1 single-session live export (DiagnosticsActivity)
+ * - Phase 1.1 single-session live export (DiagnosticsActivity) — emits the
+ *   mood block with no rows when no mood is recorded yet.
  * - Phase 2 per-session export from sessions browser (SessionsListActivity)
  * - Phase 2 bulk "export all" (Step 13)
+ * - Phase 8 mood entries (third block, strictly additive)
  *
- * Output is byte-identical for the same input regardless of source (in-memory store or Room).
+ * Output is byte-identical for the same input regardless of source
+ * (in-memory store or Room). Parsers reading only the first two blocks
+ * remain backwards-compatible — the `#mood_entries` header is treated as
+ * trailing content by the existing parser.
  */
 object IkdCsvWriter {
 
@@ -39,6 +50,7 @@ object IkdCsvWriter {
         writer: BufferedWriter,
         timingRows: List<TimingRow>,
         sensorRows: List<SensorRow>,
+        moodRows: List<MoodRow> = emptyList(),
     ) {
         writer.write(TIMING_HEADER)
         for (row in timingRows) {
@@ -55,11 +67,20 @@ object IkdCsvWriter {
                     "${row.x},${row.y},${row.z}\n"
             )
         }
+        // Phase 8: third dual-block segment for mood annotations. The block
+        // header + column header are always emitted (even with zero rows)
+        // so downstream parsers can rely on a stable column shape.
+        writer.write("\n#mood_entries\n")
+        writer.write(MOOD_HEADER)
+        for (row in moodRows) {
+            writer.write("${row.sessionId ?: ""},${row.timestamp},${row.moodScore}\n")
+        }
     }
 
     private const val TIMING_HEADER =
         "session_id,timestamp_ms,event_category,ikd_ms,hold_time_ms,flight_time_ms,is_correction\n"
     private const val SENSOR_HEADER = "session_id,timestamp_ms,sensor_type,x,y,z\n"
+    private const val MOOD_HEADER = "session_id,timestamp_ms,mood_score\n"
 
     data class TimingRow(
         val sessionId: String,
@@ -78,6 +99,23 @@ object IkdCsvWriter {
         val x: Float,
         val y: Float,
         val z: Float
+    )
+
+    /**
+     * Phase 8: per-mood CSV row. `sessionId` is nullable to mirror the DB —
+     * the keyboard always writes a non-null value, but the writer honours
+     * the schema's permissiveness for forward-compat.
+     */
+    data class MoodRow(
+        val sessionId: String?,
+        val timestamp: Long,
+        val moodScore: Int,
+    )
+
+    fun MoodEntry.asMoodRow() = MoodRow(
+        sessionId = sessionId,
+        timestamp = timestamp,
+        moodScore = moodScore,
     )
 
     fun KeyTimingEvent.asTimingRow() = TimingRow(
@@ -136,9 +174,10 @@ fun Context.exportAllIkdSessions(
         try {
             val timingRows = ikdDB.IkdEventDao().getAllOrderedBySession().map { it.asTimingRow() }
             val sensorRows = ikdDB.SensorSampleDao().getAllOrderedBySession().map { it.asSensorRow() }
+            val moodRows = ikdDB.MoodDao().getAllOrderedBySession().map { it.asMoodRow() }
             contentResolver.openOutputStream(uri)?.use { stream ->
                 stream.bufferedWriter().use { writer ->
-                    IkdCsvWriter.writeSessionCsv(writer, timingRows, sensorRows)
+                    IkdCsvWriter.writeSessionCsv(writer, timingRows, sensorRows, moodRows)
                 }
             }
             onSuccess()

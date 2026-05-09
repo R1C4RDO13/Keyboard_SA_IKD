@@ -6,7 +6,11 @@ import android.graphics.Color
 import android.os.Bundle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.fossify.commons.extensions.beGone
+import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperPrimaryColor
@@ -16,10 +20,15 @@ import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityDashboardBinding
+import org.fossify.keyboard.databinding.ItemMoodDistributionRowBinding
 import org.fossify.keyboard.extensions.ikdAggregator
+import org.fossify.keyboard.extensions.ikdMoodAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
+import org.fossify.keyboard.helpers.IkdMoodAggregator
+import org.fossify.keyboard.helpers.MoodEmoji
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.math.roundToInt
 
 class DashboardActivity : SimpleActivity() {
 
@@ -109,12 +118,20 @@ class DashboardActivity : SimpleActivity() {
 
     private fun loadSnapshot() {
         lifecycleScope.launch {
-            val snap = ikdAggregator.snapshot(currentRange)
-            render(snap)
+            // Phase 8: fold the mood snapshot into the same Dispatchers.IO
+            // hop that already serves the IKD snapshot, so onResume runs
+            // a single round-trip per range.
+            val agg = ikdAggregator
+            val moodAgg = ikdMoodAggregator
+            val range = currentRange
+            val pair = withContext(Dispatchers.IO) {
+                agg.snapshot(range) to moodAgg.snapshot(range)
+            }
+            render(pair.first, pair.second)
         }
     }
 
-    private fun render(snap: IkdAggregator.Snapshot) {
+    private fun render(snap: IkdAggregator.Snapshot, moodSnap: IkdMoodAggregator.MoodSnapshot) {
         val isEmpty = snap.totalSessions == 0
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
         binding.dashboardNestedScrollview.beVisibleIf(!isEmpty)
@@ -134,6 +151,7 @@ class DashboardActivity : SimpleActivity() {
             ?.let { getString(R.string.dashboard_kpi_error_rate_value, it) } ?: placeholder
 
         renderCharts(snap)
+        renderMood(snap, moodSnap)
     }
 
     private fun renderCharts(snap: IkdAggregator.Snapshot) {
@@ -145,6 +163,84 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardChartSpeed.setData(labels, wpmValues, getString(R.string.dashboard_chart_speed))
         binding.dashboardChartIkd.setData(labels, ikdValues, getString(R.string.dashboard_chart_ikd))
         binding.dashboardChartError.setData(labels, errorValues, getString(R.string.dashboard_chart_error))
+    }
+
+    /**
+     * Phase 8: render the Mood-over-Time line chart, the Mood Distribution
+     * panel, and the Avg Mood KPI. All three are gated on `total > 0` —
+     * sessions without a tap stay invisible (no synthetic Neutral, per
+     * Decisions #10 + #11). When `total == 0` the three views are
+     * `View.GONE` and the KPI strip falls back to four cells.
+     *
+     * The Mood-over-Time chart uses the same X-axis bucket labels as the
+     * IKD charts (same `Range.bucketFormat`), so users can correlate
+     * mood with typing speed at a glance.
+     */
+    private fun renderMood(
+        ikdSnap: IkdAggregator.Snapshot,
+        moodSnap: IkdMoodAggregator.MoodSnapshot,
+    ) {
+        if (moodSnap.total == 0) {
+            binding.dashboardKpiAvgMoodCell.beGone()
+            binding.dashboardMoodChartCard.beGone()
+            binding.dashboardMoodDistributionCard.beGone()
+            return
+        }
+
+        // Avg Mood KPI: rounded emoji + precise number (e.g. "🤢 3.2"). The
+        // round-to-nearest is clamped to 1..6 so MoodEmoji.emojiFor never
+        // sees an out-of-range score from a value at the edges.
+        val avg = moodSnap.averageScore
+        if (avg != null) {
+            val rounded = avg.roundToInt().coerceIn(MoodEmoji.SCORE_HAPPINESS, MoodEmoji.SCORE_ANGER)
+            val emoji = MoodEmoji.emojiFor(rounded)
+            binding.dashboardKpiAvgMoodValue.text =
+                getString(R.string.dashboard_avg_mood_value_format, emoji, avg)
+            binding.dashboardKpiAvgMoodCell.beVisible()
+        } else {
+            binding.dashboardKpiAvgMoodCell.beGone()
+        }
+
+        // Mood-over-Time line chart. Align bucket keys with the IKD chart's
+        // X axis so the same dates render identically left-to-right.
+        binding.dashboardMoodChartCard.beVisible()
+        val moodByBucket = moodSnap.buckets.associateBy { it.label }
+        val moodLabels = ikdSnap.buckets.map { formatBucketLabel(it.label, ikdSnap.range) }
+        val moodValues = ikdSnap.buckets.map { ikdBucket ->
+            moodByBucket[ikdBucket.label]?.avgScore?.toFloat()
+        }
+        binding.dashboardChartMood.setData(
+            moodLabels,
+            moodValues,
+            getString(R.string.dashboard_chart_mood_y_label),
+        )
+
+        // Distribution panel. Six rows in display order (Happiness → Anger).
+        binding.dashboardMoodDistributionCard.beVisible()
+        renderMoodDistribution(moodSnap)
+    }
+
+    private fun renderMoodDistribution(moodSnap: IkdMoodAggregator.MoodSnapshot) {
+        val rows = listOf(
+            ItemMoodDistributionRowBinding.bind(binding.dashboardMoodRowHappiness.root) to MoodEmoji.SCORE_HAPPINESS,
+            ItemMoodDistributionRowBinding.bind(binding.dashboardMoodRowSurprise.root) to MoodEmoji.SCORE_SURPRISE,
+            ItemMoodDistributionRowBinding.bind(binding.dashboardMoodRowDisgust.root) to MoodEmoji.SCORE_DISGUST,
+            ItemMoodDistributionRowBinding.bind(binding.dashboardMoodRowSadness.root) to MoodEmoji.SCORE_SADNESS,
+            ItemMoodDistributionRowBinding.bind(binding.dashboardMoodRowFear.root) to MoodEmoji.SCORE_FEAR,
+            ItemMoodDistributionRowBinding.bind(binding.dashboardMoodRowAnger.root) to MoodEmoji.SCORE_ANGER,
+        )
+        val total = moodSnap.total
+        for ((rowBinding, score) in rows) {
+            val count = moodSnap.counts[score] ?: 0
+            rowBinding.moodRowEmoji.text = MoodEmoji.emojiFor(score)
+            rowBinding.moodRowLabel.setText(MoodEmoji.labelResFor(score))
+            rowBinding.moodRowCount.text = count.toString()
+            rowBinding.moodRowProgress.progress = if (total <= 0) {
+                0
+            } else {
+                (count * PCT_MAX / total)
+            }
+        }
     }
 
     /**
@@ -184,5 +280,10 @@ class DashboardActivity : SimpleActivity() {
     companion object {
         private const val STATE_RANGE = "dashboard_range"
         private const val MS_PER_MINUTE = 60_000L
+
+        // Phase 8: Distribution-panel ProgressBar tops out at 100 (`max`
+        // attribute on the row layout). Each row's progress is its share
+        // of the total, scaled to that range.
+        private const val PCT_MAX = 100
     }
 }

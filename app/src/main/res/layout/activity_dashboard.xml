@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/dashboard_coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -77,7 +78,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/normal_margin"
                 android:orientation="horizontal"
-                android:weightSum="4">
+                android:weightSum="5">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -171,6 +172,33 @@
 
                 </LinearLayout>
 
+                <!-- Phase 8: fifth KPI cell — Avg Mood (rounded emoji + precise number).
+                     Hidden when no mood entries exist in the selected range. -->
+                <LinearLayout
+                    android:id="@+id/dashboard_kpi_avg_mood_cell"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_kpi_avg_mood_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/bigger_text_size"
+                        android:textStyle="bold"
+                        tools:text="🤢 3.2" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_kpi_avg_mood_label"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
             </LinearLayout>
 
             <!-- Speed chart -->
@@ -214,6 +242,95 @@
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:layout_marginTop="@dimen/small_margin" />
+
+            <!-- Phase 8: Mood-over-Time chart card. Hidden when the selected
+                 range has no mood entries. Reuses the existing
+                 IkdLineChartView wrapper (frozen at single-series since
+                 Phase 5). -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dashboard_mood_chart_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:visibility="gone"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/normal_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_mood_chart_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_chart_mood_title"
+                        android:textStyle="bold" />
+
+                    <org.fossify.keyboard.views.IkdLineChartView
+                        android:id="@+id/dashboard_chart_mood"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:layout_marginTop="@dimen/small_margin" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Phase 8: Mood Distribution panel — six rows in display order
+                 (Happiness → Anger), each emoji + label + horizontal
+                 progress bar + count. Hidden when no entries in range. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dashboard_mood_distribution_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:visibility="gone"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/normal_margin">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/dashboard_mood_distribution_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_mood_distribution_title"
+                        android:textStyle="bold" />
+
+                    <include
+                        android:id="@+id/dashboard_mood_row_happiness"
+                        layout="@layout/item_mood_distribution_row" />
+
+                    <include
+                        android:id="@+id/dashboard_mood_row_surprise"
+                        layout="@layout/item_mood_distribution_row" />
+
+                    <include
+                        android:id="@+id/dashboard_mood_row_disgust"
+                        layout="@layout/item_mood_distribution_row" />
+
+                    <include
+                        android:id="@+id/dashboard_mood_row_sadness"
+                        layout="@layout/item_mood_distribution_row" />
+
+                    <include
+                        android:id="@+id/dashboard_mood_row_fear"
+                        layout="@layout/item_mood_distribution_row" />
+
+                    <include
+                        android:id="@+id/dashboard_mood_row_anger"
+                        layout="@layout/item_mood_distribution_row" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 
