@@ -30,6 +30,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.view.inputmethod.EditorInfo
 import android.widget.ImageButton
@@ -176,6 +177,14 @@ class MyKeyboardView @JvmOverloads constructor(
     private var mPreviewTextSizeLarge = 0
     private var mPreviewHeight = 0
 
+    // Phase 8.2: chat-bubble popup anchored above a tapped mood slot. Lazy
+    // because it's only needed when the mood bar is visible; the inflated
+    // contentView is reused across taps so we never thrash inflation.
+    private var mMoodBubblePopup: PopupWindow? = null
+    private var mMoodBubbleText: TextView? = null
+    private val mMoodBubbleHandler by lazy { Handler(Looper.getMainLooper()) }
+    private val mMoodBubbleDismissRunnable = Runnable { mMoodBubblePopup?.dismiss() }
+
     private val mCoordinates = IntArray(2)
     private val mPopupKeyboard: PopupWindow
     private var mMiniKeyboardContainer: View? = null
@@ -268,6 +277,11 @@ class MyKeyboardView @JvmOverloads constructor(
         private const val MOOD_SLOT_PRIVACY = 0
         private const val MOOD_BAR_ALPHA_SELECTED = 1.0f
         private const val MOOD_BAR_ALPHA_DIMMED = 0.6f
+
+        // Phase 8.2: how long the chat-bubble popup stays on screen after a
+        // tap before auto-dismissing. Long enough to read the first-person
+        // string at a glance; short enough not to obscure typing.
+        private const val MOOD_BUBBLE_AUTO_DISMISS_MS = 1500L
     }
 
     init {
@@ -581,6 +595,10 @@ class MyKeyboardView @JvmOverloads constructor(
             cachedVNTelexData.clear()
         }
         setupStoredClips()
+        // Phase 8.2: re-assert mood-bar visibility — `voiceInputButton.beGoneIf`
+        // above would otherwise un-hide the voice button when the mood bar is
+        // meant to own the toolbar.
+        applyMoodBarVisibility()
     }
 
     /**
@@ -600,9 +618,9 @@ class MyKeyboardView @JvmOverloads constructor(
             moodBarPrivacy.setOnLongClickListener {
                 context.toast(R.string.privacy_toggle_content_description); true
             }
-            moodBarPrivacy.setOnClickListener {
+            moodBarPrivacy.setOnClickListener { view ->
                 vibrateIfNeeded()
-                onMoodSlotClicked(MOOD_SLOT_PRIVACY)
+                onMoodSlotClicked(MOOD_SLOT_PRIVACY, view)
             }
 
             // Six emotion slots (Ekman 6, valence-ordered). Each click
@@ -619,9 +637,9 @@ class MyKeyboardView @JvmOverloads constructor(
             emotionSlots.forEach { (view, score) ->
                 val labelRes = MoodEmoji.labelResFor(score)
                 view.setOnLongClickListener { context.toast(labelRes); true }
-                view.setOnClickListener {
+                view.setOnClickListener { tappedView ->
                     vibrateIfNeeded()
-                    onMoodSlotClicked(score)
+                    onMoodSlotClicked(score, tappedView)
                 }
             }
         }
@@ -632,23 +650,112 @@ class MyKeyboardView @JvmOverloads constructor(
     /**
      * Click dispatcher for the mood bar. `slot` is `MOOD_SLOT_PRIVACY` for
      * the 🛡️ button or 1..6 for the six emotion buttons (matching the
-     * stored ordinal valence id).
+     * stored ordinal valence id). `anchor` is the tapped slot view — used
+     * to position the chat-bubble popup directly above it.
+     *
+     * Phase 8.2: each tap surfaces a first-person chat bubble
+     * ("I'm feeling happy", "I want privacy", …) anchored above the tapped
+     * slot. `Config.showMoodPopup` gates the visual feedback only — the
+     * underlying state change always runs.
      */
-    private fun onMoodSlotClicked(slot: Int) {
+    private fun onMoodSlotClicked(slot: Int, anchor: View) {
         when (slot) {
             MOOD_SLOT_PRIVACY -> {
                 applyMoodBarHighlight(MOOD_SLOT_PRIVACY)
-                context.toast(R.string.privacy_mode_on_toast)
+                showMoodBubble(anchor, R.string.mood_toast_privacy)
                 moodScope.launch { moodController.enablePrivacyAndClearMood() }
             }
             in MoodEmoji.SCORE_HAPPINESS..MoodEmoji.SCORE_ANGER -> {
                 applyMoodBarHighlight(slot)
-                if (context.config.privacyModeEnabled) {
-                    context.toast(R.string.privacy_mode_off_toast)
-                }
+                showMoodBubble(anchor, moodToastResFor(slot))
                 moodScope.launch { moodController.setMoodForActiveSession(slot) }
             }
         }
+    }
+
+    /**
+     * Phase 8.2: map the ordinal mood score (1..6) to its first-person
+     * feedback toast string. Kept private + small so the mapping lives next
+     * to the dispatcher; `MoodEmoji` stays a pure data/labels helper.
+     */
+    private fun moodToastResFor(slot: Int): Int = when (slot) {
+        MoodEmoji.SCORE_HAPPINESS -> R.string.mood_toast_happiness
+        MoodEmoji.SCORE_SURPRISE -> R.string.mood_toast_surprise
+        MoodEmoji.SCORE_DISGUST -> R.string.mood_toast_disgust
+        MoodEmoji.SCORE_SADNESS -> R.string.mood_toast_sadness
+        MoodEmoji.SCORE_FEAR -> R.string.mood_toast_fear
+        MoodEmoji.SCORE_ANGER -> R.string.mood_toast_anger
+        else -> R.string.mood_toast_happiness
+    }
+
+    /**
+     * Phase 8.2: surface a chat-bubble popup above the tapped mood slot.
+     *
+     * - Gated on `Config.showMoodPopup` (the user can disable feedback while
+     *   keeping the underlying state change). Dismisses any in-flight bubble
+     *   before bailing so a leftover bubble does not linger after the toggle.
+     * - Lazily inflates the popup once and reuses the same `PopupWindow` /
+     *   `TextView` for every tap; only the text + theme-tinted layer-list
+     *   background are refreshed per tap.
+     * - Positioned in window coordinates relative to `mPopupParent` (same
+     *   parent the key-preview popup uses), centered horizontally on the
+     *   anchor, clamped to the screen so the bubble never goes off-edge.
+     * - Auto-dismisses after `MOOD_BUBBLE_AUTO_DISMISS_MS`. Consecutive taps
+     *   reset the dismiss timer so the bubble doesn't disappear mid-read.
+     */
+    private fun showMoodBubble(anchor: View, textRes: Int) {
+        if (!context.config.showMoodPopup) {
+            mMoodBubbleHandler.removeCallbacks(mMoodBubbleDismissRunnable)
+            mMoodBubblePopup?.dismiss()
+            return
+        }
+        if (mMoodBubblePopup == null) {
+            val view = LayoutInflater.from(context)
+                .inflate(R.layout.popup_mood_bubble, null, false) as TextView
+            mMoodBubbleText = view
+            mMoodBubblePopup = PopupWindow(view, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                isTouchable = false
+                isFocusable = false
+                isOutsideTouchable = true
+                setBackgroundDrawable(null)
+            }
+        }
+        val popup = mMoodBubblePopup ?: return
+        val text = mMoodBubbleText ?: return
+        text.setText(textRes)
+        text.setTextColor(mTextColor)
+        (text.background as? LayerDrawable)?.let { layered ->
+            layered.findDrawableByLayerId(R.id.mood_bubble_background_shape)
+                ?.applyColorFilter(mKeyColor)
+            layered.findDrawableByLayerId(R.id.mood_bubble_background_stroke)
+                ?.applyColorFilter(mStrokeColor)
+        }
+        text.measure(
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        )
+        val popupWidth = text.measuredWidth
+        val popupHeight = text.measuredHeight
+        val anchorLoc = IntArray(2)
+        anchor.getLocationInWindow(anchorLoc)
+        val anchorMargin = resources.getDimensionPixelSize(R.dimen.mood_bubble_anchor_margin)
+        // Centre on the anchor, then clamp to the keyboard width so the
+        // bubble never spills past the edge on a corner tap.
+        var x = anchorLoc[0] + anchor.width / 2 - popupWidth / 2
+        val rightLimit = width - popupWidth - anchorMargin
+        if (rightLimit > anchorMargin) {
+            x = x.coerceIn(anchorMargin, rightLimit)
+        }
+        val y = anchorLoc[1] - popupHeight - anchorMargin
+        if (popup.isShowing) {
+            popup.update(x, y, popupWidth, popupHeight)
+        } else {
+            popup.width = popupWidth
+            popup.height = popupHeight
+            popup.showAtLocation(mPopupParent, Gravity.NO_GRAVITY, x, y)
+        }
+        mMoodBubbleHandler.removeCallbacks(mMoodBubbleDismissRunnable)
+        mMoodBubbleHandler.postDelayed(mMoodBubbleDismissRunnable, MOOD_BUBBLE_AUTO_DISMISS_MS)
     }
 
     /**
@@ -685,10 +792,29 @@ class MyKeyboardView @JvmOverloads constructor(
      * (default true). When false, the entire seven-button bar is `View.GONE`
      * and `suggestionsHolder` reclaims the freed horizontal space. Privacy
      * mode is still reachable from `IkdSettingsActivity`.
+     *
+     * Phase 8.2: when the bar is visible the centered seven-button row owns
+     * the toolbar's middle. The pinned-clipboard and settings buttons stay
+     * visible on the right edge per user request, but the clipboard chip,
+     * the inline-suggestions area, the clipboard-clear trash icon and the
+     * voice-input button are hidden so the bar gets the spotlight. When the
+     * mood bar is off, every default toolbar item is restored.
      */
     private fun applyMoodBarVisibility() {
+        val binding = keyboardViewBinding ?: return
         val visible = context.config.showMoodBar
-        keyboardViewBinding?.moodBar?.visibility = if (visible) View.VISIBLE else View.GONE
+        binding.moodBar.visibility = if (visible) View.VISIBLE else View.GONE
+        val defaultVisibility = if (visible) View.GONE else View.VISIBLE
+        binding.clipboardClear.visibility = defaultVisibility
+        binding.suggestionsHolder.visibility = defaultVisibility
+        if (visible) {
+            // voiceInputButton is hidden whenever the bar takes over; its
+            // own gating (mVoiceInputMethod.isEmpty) is re-applied below
+            // when the bar is off so we never force-show it incorrectly.
+            binding.voiceInputButton.visibility = View.GONE
+        } else {
+            binding.voiceInputButton.beGoneIf(mVoiceInputMethod.isEmpty())
+        }
     }
 
     /**
@@ -714,14 +840,22 @@ class MyKeyboardView @JvmOverloads constructor(
     }
 
     /**
-     * Refresh the mood bar's text colour after a theme change. The emoji
-     * glyph is colour by font; only the optional underline tint inherits
-     * `mTextColor` — there is no separate per-slot tint to apply yet.
+     * Refresh the mood bar's stretched-key background after a theme change.
+     * The bar's drawable is a layer-list (fill + stroke); each layer is
+     * colour-filtered with the same palette the keys themselves use —
+     * `mKeyColor` for fill so the bar reads as a "big key", `mStrokeColor`
+     * for the border. The emoji glyphs themselves render in the system
+     * emoji font and must NOT be tinted (a color filter on a TextView's
+     * text would clobber the emoji palette); per-slot dim/highlight is
+     * handled by `applyMoodBarHighlight()`.
      */
     private fun applyMoodBarTint() {
-        // Currently a no-op — the glyphs render in the system emoji font.
-        // Reserved for any future highlight-frame drawable that would need
-        // theme-aware tinting (Decision #17 keeps colours theme-attr-driven).
+        val binding = keyboardViewBinding ?: return
+        val drawable = binding.moodBar.background as? LayerDrawable ?: return
+        drawable.findDrawableByLayerId(R.id.mood_bar_background_shape)
+            ?.applyColorFilter(mKeyColor)
+        drawable.findDrawableByLayerId(R.id.mood_bar_background_stroke)
+            ?.applyColorFilter(mStrokeColor)
     }
 
     fun vibrateIfNeeded() {
@@ -1091,6 +1225,13 @@ class MyKeyboardView @JvmOverloads constructor(
     }
 
     private fun handleClipboard() {
+        // Phase 8.2: when the mood bar owns the toolbar, the clipboard chip
+        // and its clear button must stay hidden — animating them in would
+        // defeat the visibility gating in `applyMoodBarVisibility()`.
+        if (context.config.showMoodBar) {
+            hideClipboardViews()
+            return
+        }
         if (mToolbarHolder != null && mPopupParent.id != R.id.mini_keyboard_view && context.config.showClipboardContent) {
             val clipboardContent = context.getCurrentClip()
             if (clipboardContent?.isNotEmpty() == true) {
@@ -2103,6 +2244,10 @@ class MyKeyboardView @JvmOverloads constructor(
         // regression because the highlight is derived from
         // `Config.privacyModeEnabled`, not from the cancelled query.
         moodScope.coroutineContext[Job]?.cancel()
+        // Phase 8.2: drop any in-flight mood-bubble popup + its dismiss
+        // callback so a re-attach doesn't fire on a leaked window token.
+        mMoodBubbleHandler.removeCallbacks(mMoodBubbleDismissRunnable)
+        mMoodBubblePopup?.dismiss()
     }
 
     private fun dismissPopupKeyboard() {

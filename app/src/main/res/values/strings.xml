@@ -138,6 +138,14 @@
     <string name="mood_label_sadness">Sadness</string>
     <string name="mood_label_fear">Fear</string>
     <string name="mood_label_anger">Anger</string>
+    <!-- Phase 8.2: mood bar first-person feedback toasts -->
+    <string name="mood_toast_privacy">I want privacy</string>
+    <string name="mood_toast_happiness">I\'m feeling happy</string>
+    <string name="mood_toast_surprise">I\'m feeling surprised</string>
+    <string name="mood_toast_disgust">I\'m feeling disgusted</string>
+    <string name="mood_toast_sadness">I\'m feeling sad</string>
+    <string name="mood_toast_fear">I\'m feeling afraid</string>
+    <string name="mood_toast_anger">I\'m feeling angry</string>
     <!-- Emoji glyphs for the keyboard mood bar — sourced from a string
          resource so the layout XML stays free of inline emoji codepoints
          and lint stops complaining about HardcodedText. -->
@@ -164,6 +172,8 @@
     <string name="ikd_settings_privacy_default_summary">When enabled, the keyboard starts in privacy mode (no data captured). Toggle from the keyboard\'s shield button or here.</string>
     <string name="ikd_settings_show_mood_bar">Show mood bar in keyboard</string>
     <string name="ikd_settings_show_mood_bar_summary">When disabled, the seven-button emotion bar is hidden from the keyboard\'s top toolbar. Privacy mode can still be toggled from this settings screen.</string>
+    <string name="ikd_settings_show_mood_popup">Show mood popup</string>
+    <string name="ikd_settings_show_mood_popup_summary">When enabled, a small chat bubble (\"I\'m feeling happy\", \"I want privacy\", …) appears above the mood bar after each tap. Disable to keep the keyboard quiet — the underlying state still updates.</string>
     <string name="ikd_collect_gyro">Collect gyroscope data</string>
     <string name="ikd_collect_accel">Collect accelerometer data</string>
     <string name="ikd_sampling_fastest">Fastest (~200 Hz)</string>

@@ -122,6 +122,8 @@ class IkdSettingsActivity : SimpleActivity() {
         binding.ikdPrivacyDefaultSwitch.isChecked = config.privacyModeEnabled
         // Phase 8 follow-up: keyboard mood bar visibility (default true).
         binding.ikdShowMoodBarSwitch.isChecked = config.showMoodBar
+        // Phase 8.2: chat-bubble feedback popup (default true).
+        binding.ikdShowMoodPopupSwitch.isChecked = config.showMoodPopup
         binding.ikdCollectGyroCheckbox.isChecked = config.collectGyro
         binding.ikdCollectAccelCheckbox.isChecked = config.collectAccel
 
@@ -179,6 +181,14 @@ class IkdSettingsActivity : SimpleActivity() {
             ikdShowMoodBarHolder.setOnClickListener { ikdShowMoodBarSwitch.toggle() }
             ikdShowMoodBarSwitch.setOnCheckedChangeListener { _, checked ->
                 config.showMoodBar = checked
+            }
+
+            // Phase 8.2: chat-bubble popup gate. The keyboard reads
+            // `Config.showMoodPopup` at tap time in `MyKeyboardView.showMoodBubble`,
+            // so the toggle takes effect on the very next tap.
+            ikdShowMoodPopupHolder.setOnClickListener { ikdShowMoodPopupSwitch.toggle() }
+            ikdShowMoodPopupSwitch.setOnCheckedChangeListener { _, checked ->
+                config.showMoodPopup = checked
             }
 
             ikdCollectGyroHolder.setOnClickListener { ikdCollectGyroCheckbox.toggle() }

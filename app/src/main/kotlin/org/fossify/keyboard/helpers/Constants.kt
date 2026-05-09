@@ -46,6 +46,12 @@ const val DIAGNOSTICS_SENSOR_CARD_EXPANDED = "ikd_diagnostics_sensor_card_expand
 // privacy can still be toggled from `IkdSettingsActivity`.
 const val SHOW_MOOD_BAR = "ikd_show_mood_bar"
 
+// Phase 8.2: lets the user disable the chat-bubble popup that surfaces
+// above a tapped mood slot ("I'm feeling happy" / "I want privacy"). The
+// underlying state change still happens — only the visual feedback is
+// suppressed when this is false. Default true.
+const val SHOW_MOOD_POPUP = "ikd_show_mood_popup"
+
 // IKD event category strings (Phase 1.1 + Phase 7). Persisted as the
 // `event_category` column on `ikd_events`. Centralized here so the IME
 // capture site, the aggregator queries, and the unit tests share the same

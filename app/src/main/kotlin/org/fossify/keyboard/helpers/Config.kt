@@ -57,6 +57,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(SHOW_MOOD_BAR, true)
         set(value) = prefs.edit().putBoolean(SHOW_MOOD_BAR, value).apply()
 
+    var showMoodPopup: Boolean
+        get() = prefs.getBoolean(SHOW_MOOD_POPUP, true)
+        set(value) = prefs.edit().putBoolean(SHOW_MOOD_POPUP, value).apply()
+
     var soundOnKeypress: Int
         get() = prefs.getInt(SOUND_ON_KEYPRESS, SOUND_SYSTEM)
         set(soundOnKeypress) = prefs.edit().putInt(SOUND_ON_KEYPRESS, soundOnKeypress).apply()

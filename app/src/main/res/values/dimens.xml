@@ -26,6 +26,17 @@
     <dimen name="session_dashboard_chart_height">200dp</dimen>
 
     <!-- Phase 8 — keyboard mood bar -->
+    <dimen name="mood_bar_height">40dp</dimen>
     <dimen name="mood_bar_button_size">36dp</dimen>
-    <dimen name="mood_bar_button_text_size">22sp</dimen>
+    <dimen name="mood_bar_button_text_size">20sp</dimen>
+    <dimen name="mood_bar_button_gap">2dp</dimen>
+    <dimen name="mood_bar_privacy_gap">8dp</dimen>
+    <dimen name="mood_bar_background_corner_radius">20dp</dimen>
+    <dimen name="mood_bar_horizontal_padding">8dp</dimen>
+
+    <!-- Phase 8.2 — chat-bubble popup that surfaces above a tapped mood slot -->
+    <dimen name="mood_bubble_corner_radius">14dp</dimen>
+    <dimen name="mood_bubble_horizontal_padding">12dp</dimen>
+    <dimen name="mood_bubble_vertical_padding">6dp</dimen>
+    <dimen name="mood_bubble_anchor_margin">6dp</dimen>
 </resources>
