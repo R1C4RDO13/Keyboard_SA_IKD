@@ -105,6 +105,7 @@ import org.fossify.keyboard.helpers.LANGUAGE_TURKISH_Q
 import org.fossify.keyboard.helpers.LANGUAGE_VIETNAMESE_TELEX
 import org.fossify.keyboard.helpers.LANGUAGE_VN_TELEX
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
+import org.fossify.keyboard.helpers.MOOD_CURATED_CATEGORY
 import org.fossify.keyboard.helpers.MOOD_INACTIVITY_TIMEOUT_MS
 import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.helpers.MAX_KEYS_PER_MINI_ROW
@@ -2565,12 +2566,58 @@ class MyKeyboardView @JvmOverloads constructor(
 
     private fun prepareEmojiItems(categories: Map<String, List<EmojiData>>): List<EmojisAdapter.Item> {
         val emojiItems = mutableListOf<EmojisAdapter.Item>()
+        // Phase 12: when a standing mood is set, prepend a curated
+        // "Mood: <emoji>" section at the top of the drawer. Read once
+        // at palette-open time — by design (Phase 12 decision #4) the
+        // section does not re-render mid-palette if the user changes
+        // their mood while the drawer is open.
+        addCuratedMoodSection(emojiItems)
         categories.entries.forEach { (category, emojis) ->
             emojiItems.add(EmojisAdapter.Item.Category(category))
             emojiItems.addAll(emojis.map(EmojisAdapter.Item::Emoji))
         }
 
         return emojiItems
+    }
+
+    /**
+     * Phase 12: prepends a curated section of mood-appropriate emojis to
+     * [items] when `Config.lastMoodScore` is a standing rating. The
+     * pseudo-category key is encoded as `mood_curated:<emoji>` so the
+     * adapter's title renderer can split the trailing glyph into the
+     * localized "Mood: %1$s" format. Returns immediately when no mood
+     * is set — the drawer then renders byte-identically to today.
+     *
+     * Privacy invariant: the curated codepoints live in [MoodEmoji] only
+     * and are never written to `ikd.db`. The Phase-7 `onEmojiText`
+     * pipeline records taps as `EMOJI` events without storing the glyph.
+     */
+    private fun addCuratedMoodSection(items: MutableList<EmojisAdapter.Item>) {
+        val score = context.config.lastMoodScore
+        if (!MoodEmoji.isStandingScore(score)) {
+            return
+        }
+        val moodGlyph = MoodEmoji.emojiFor(score)
+        if (moodGlyph.isEmpty()) {
+            return
+        }
+        val curated = MoodEmoji.curatedEmojisFor(score)
+        if (curated.isEmpty()) {
+            return
+        }
+        val categoryKey = "$MOOD_CURATED_CATEGORY:$moodGlyph"
+        items.add(EmojisAdapter.Item.Category(categoryKey))
+        curated.forEach { codepoint ->
+            items.add(
+                EmojisAdapter.Item.Emoji(
+                    EmojiData(
+                        category = categoryKey,
+                        emoji = codepoint,
+                        variants = emptyList(),
+                    )
+                )
+            )
+        }
     }
 
     private fun setupEmojiAdapter(emojis: List<EmojiData>) {
@@ -2654,9 +2701,17 @@ class MyKeyboardView @JvmOverloads constructor(
                             .withIndex()
                             .lastOrNull { it.value is EmojisAdapter.Item.Category && it.index <= firstVisibleIndex }
                             ?.also { activeCategory ->
-                                val id = emojiCategoryIds.entries.first {
-                                    it.value == (activeCategory.value as EmojisAdapter.Item.Category).value
-                                }.key
+                                // Phase 12: the curated "mood_curated:<emoji>"
+                                // pseudo-category has no entry in the
+                                // category strip, so its key is absent
+                                // from `emojiCategoryIds`. Skip the
+                                // highlight update for it instead of
+                                // crashing on `.first { ... }`.
+                                val activeKey =
+                                    (activeCategory.value as EmojisAdapter.Item.Category).value
+                                val id = emojiCategoryIds.entries
+                                    .firstOrNull { it.value == activeKey }
+                                    ?.key ?: return@also
 
                                 keyboardViewBinding
                                     ?.emojiCategoriesStrip

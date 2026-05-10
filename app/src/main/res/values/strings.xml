@@ -48,6 +48,8 @@
     <!-- Emojis -->
     <string name="emojis">Emojis</string>
     <string name="recently_used">Recently used</string>
+    <!-- Phase 12: drawer section title shown above curated mood emojis. %1$s = current mood emoji glyph (e.g. 😊). -->
+    <string name="emoji_section_mood_curated">Mood: %1$s</string>
     <string name="smileys_and_emotions">Smileys and emotions</string>
     <string name="people_and_body">People and body</string>
     <string name="animals_and_nature">Animals and nature</string>

@@ -112,15 +112,38 @@ fun getCategoryIconRes(category: String): Int =
 
 
 fun getCategoryTitleRes(category: String) =
-    when (category) {
-        "smileys_emotion" -> R.string.smileys_and_emotions
-        "people_body" -> R.string.people_and_body
-        "animals_nature" -> R.string.animals_and_nature
-        "food_drink" -> R.string.food_and_drink
-        "travel_places" -> R.string.travel_and_places
-        "activities" -> R.string.activities
-        "objects" -> R.string.objects
-        "symbols" -> R.string.symbols
-        "flags" -> R.string.flags
+    when {
+        category == "smileys_emotion" -> R.string.smileys_and_emotions
+        category == "people_body" -> R.string.people_and_body
+        category == "animals_nature" -> R.string.animals_and_nature
+        category == "food_drink" -> R.string.food_and_drink
+        category == "travel_places" -> R.string.travel_and_places
+        category == "activities" -> R.string.activities
+        category == "objects" -> R.string.objects
+        category == "symbols" -> R.string.symbols
+        category == "flags" -> R.string.flags
+        // Phase 12: curated mood section. The category key is encoded as
+        // "mood_curated:<emoji>" so the strip / index lookups still see a
+        // single string, while [getCategoryTitle] can split out the glyph
+        // for the localized "Mood: %1$s" header.
+        category.startsWith(MOOD_CURATED_PREFIX) -> R.string.emoji_section_mood_curated
         else -> R.string.recently_used
     }
+
+/**
+ * Phase 12: returns the resolved (formatted) section title for the emoji
+ * drawer. For the new `mood_curated:<emoji>` pseudo-category the trailing
+ * emoji is substituted into the localized `Mood: %1$s` template. All other
+ * categories defer to [getCategoryTitleRes].
+ */
+fun getCategoryTitle(context: Context, category: String): String {
+    if (category.startsWith(MOOD_CURATED_PREFIX)) {
+        val moodEmoji = category.removePrefix(MOOD_CURATED_PREFIX)
+        return context.getString(R.string.emoji_section_mood_curated, moodEmoji)
+    }
+    return context.getString(getCategoryTitleRes(category))
+}
+
+/** Phase 12: key prefix used to encode the curated section in `Item.Category.value`. */
+const val MOOD_CURATED_CATEGORY: String = "mood_curated"
+const val MOOD_CURATED_PREFIX: String = "$MOOD_CURATED_CATEGORY:"
