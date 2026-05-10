@@ -4,11 +4,15 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.res.ResourcesCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.fossify.commons.extensions.baseConfig
+import org.fossify.commons.extensions.getColoredDrawableWithColor
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.commons.extensions.isBlackAndWhiteTheme
+import org.fossify.commons.extensions.isDynamicTheme
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.DialogWidgetInfoBinding
 
@@ -66,11 +70,32 @@ fun Context.showWidgetInfo(info: WidgetInfo) {
         primaryColor
     }
 
+    // Build the same theme-aware window background Fossify uses elsewhere
+    // (mirrors `Context.setupKeyboardDialogStuff` in `extensions/ContextExt.kt`):
+    // black-and-white theme → solid black dialog drawable; dynamic theme →
+    // material-you drawable; otherwise the standard `dialog_bg` round-rect
+    // tinted with `baseConfig.backgroundColor`. Without this the
+    // MaterialAlertDialog renders its own pale Material surface behind the
+    // body and the "Got it" button — looks foreign on a Fossify dark theme.
+    val bgDrawable = when {
+        isBlackAndWhiteTheme() -> ResourcesCompat.getDrawable(
+            resources, R.drawable.black_dialog_background, theme
+        )
+        isDynamicTheme() -> ResourcesCompat.getDrawable(
+            resources, R.drawable.dialog_you_background, theme
+        )
+        else -> resources.getColoredDrawableWithColor(
+            drawableId = R.drawable.dialog_bg,
+            color = baseConfig.backgroundColor
+        )
+    }
+
     MaterialAlertDialogBuilder(this)
         .setView(binding.root)
         .setPositiveButton(R.string.widget_info_close, null)
         .show()
         .also { dialog ->
+            dialog.window?.setBackgroundDrawable(bgDrawable)
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(dialogButtonColor)
         }
 }
