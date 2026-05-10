@@ -28,8 +28,12 @@ class IkdHabitsAggregator(private val db: IkdDatabase) {
     /**
      * KPI streak unit suffix. Carried by [HabitsSnapshot] so the activity's
      * KPI label code is one `when` block.
+     *
+     * Phase 9.11: `HOURS` for the new TODAY range. The streak KPI on TODAY
+     * is rendered specially by the activity ("Today" / "—") rather than as
+     * a count + suffix — see `DashboardActivity.renderHabitsSection`.
      */
-    enum class StreakUnit { DAYS, WEEKS }
+    enum class StreakUnit { HOURS, DAYS, WEEKS }
 
     /**
      * One bucket on the four Habits trend charts. All four metric fields
@@ -161,6 +165,7 @@ class IkdHabitsAggregator(private val db: IkdDatabase) {
 
             val streak = computeLongestStreak(buckets)
             val streakUnit = when (range) {
+                Range.TODAY -> StreakUnit.HOURS
                 Range.WEEK, Range.MONTH -> StreakUnit.DAYS
                 Range.ALL_TIME -> StreakUnit.WEEKS
             }

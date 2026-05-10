@@ -26,11 +26,23 @@ class IkdAggregator(private val db: IkdDatabase) {
      * Selectable time range. The `days` field expresses the inclusive lookback
      * window in local-time days; `null` means "from the earliest session in
      * the DB".
+     *
+     * Phase 9.11: `TODAY` adds an hourly-bucketed window — `days = 1` so the
+     * existing `computeRangeWindow` math reduces to `fromMs = startOfLocalDay(now)`.
      */
     enum class Range(val days: Int?, val bucketFormat: String) {
+        TODAY(TODAY_DAYS, "%Y-%m-%d %H"),
         WEEK(WEEK_DAYS, "%Y-%m-%d"),
         MONTH(MONTH_DAYS, "%Y-%m-%d"),
         ALL_TIME(null, "%Y-%W"),
+        ;
+
+        /**
+         * Phase 9.11: returns true when buckets are sub-daily. Aggregators
+         * that only know how to fold daily / weekly buckets (calendar
+         * heatmap, daily keypresses bar) check this and skip rendering.
+         */
+        fun isHourly(): Boolean = this == TODAY
     }
 
     /**
@@ -125,6 +137,7 @@ class IkdAggregator(private val db: IkdDatabase) {
         private const val LOG_TAG = "IkdAggregator"
 
         // Range windows in days. Named to keep detekt's MagicNumber rule quiet.
+        private const val TODAY_DAYS = 1
         private const val WEEK_DAYS = 7
         private const val MONTH_DAYS = 30
 

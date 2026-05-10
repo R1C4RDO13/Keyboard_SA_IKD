@@ -56,13 +56,21 @@
 
             </HorizontalScrollView>
 
-            <!-- Range selector -->
+            <!-- Range selector. Phase 9.11: Today added as the first option. -->
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/dashboard_range_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:singleSelection="true"
                 app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/dashboard_range_today"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/dashboard_range_today" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/dashboard_range_week"

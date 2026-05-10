@@ -94,6 +94,14 @@ class IkdHabitsAggregatorTest {
     }
 
     @Test
+    fun buildSnapshot_today_emitsHoursUnit() {
+        // Phase 9.11: TODAY range carries StreakUnit.HOURS so the activity
+        // can render the streak KPI as "Today" / "—" rather than a count.
+        val snap = IkdHabitsAggregator.buildSnapshot(Range.TODAY, emptyList())
+        assertEquals(StreakUnit.HOURS, snap.streakUnit)
+    }
+
+    @Test
     fun buildSnapshot_perBucketAvgDuration_isComputed() {
         // 3 sessions × 60 s total → 20 s avg.
         val rows = listOf(

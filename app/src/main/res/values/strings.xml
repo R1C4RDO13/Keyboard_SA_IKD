@@ -311,9 +311,14 @@
 
     <!-- Insights dashboard -->
     <string name="dashboard_title">Insights</string>
+    <string name="dashboard_range_today">Today</string>
     <string name="dashboard_range_week">Week</string>
     <string name="dashboard_range_month">Month</string>
     <string name="dashboard_range_all">All Time</string>
+    <!-- Phase 9.11: hourly bucket labels for the TODAY range. -->
+    <string name="dashboard_hour_bucket_label">%1$02d:00</string>
+    <!-- Phase 9.11: streak KPI under TODAY: just "Today" or the placeholder. -->
+    <string name="dashboard_habits_streak_today">Today</string>
     <string name="dashboard_kpi_sessions">Sessions</string>
     <string name="dashboard_kpi_typing_time">Typing time</string>
     <string name="dashboard_kpi_wpm">Avg WPM</string>

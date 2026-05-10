@@ -169,6 +169,8 @@ class DashboardActivity : SimpleActivity() {
         val strokeColors = ColorStateList(states, intArrayOf(primary, primary))
 
         listOf(
+            // Phase 9.11: Today button colored alongside the existing three.
+            binding.dashboardRangeToday,
             binding.dashboardRangeWeek,
             binding.dashboardRangeMonth,
             binding.dashboardRangeAll,
@@ -589,10 +591,16 @@ class DashboardActivity : SimpleActivity() {
      * widget renders.
      */
     private fun renderDailyActivitySection(activity: IkdActivityAggregator.ActivitySnapshot) {
-        val hasDaily = activity.dailyBuckets.isNotEmpty()
+        // Phase 9.11: under the hourly TODAY range, the calendar-heatmap
+        // and daily-keypress bar would degenerate to a single cell / single
+        // bar — hide both. The 24-hour bar and circadian heatmap (always
+        // all-time) stay useful, so they stay subject only to their own
+        // empty-state checks.
+        val isHourly = activity.range.isHourly()
+        val hasDaily = !isHourly && activity.dailyBuckets.isNotEmpty()
         val hasHourly = activity.hourlyBuckets.isNotEmpty()
         val hasCircadian = activity.circadianCells.isNotEmpty()
-        val hasDayHour = activity.dayHourCells.isNotEmpty()
+        val hasDayHour = !isHourly && activity.dayHourCells.isNotEmpty()
         // Phase 9.6 / 9.9: section is visible whenever any of its widgets has data.
         val anyVisible = hasDaily || hasHourly || hasCircadian || hasDayHour
         binding.dashboardSectionHeaderDailyActivity.beVisibleIf(anyVisible)
@@ -980,11 +988,24 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardHabitsKpiAvgSessionValue.text = habits.avgSessionDurationMs?.let {
             getString(R.string.dashboard_habits_avg_session_value, it / MS_PER_SECOND)
         } ?: placeholder
-        val streakSuffixRes = when (habits.streakUnit) {
-            IkdHabitsAggregator.StreakUnit.DAYS -> R.string.dashboard_habits_streak_days
-            IkdHabitsAggregator.StreakUnit.WEEKS -> R.string.dashboard_habits_streak_weeks
+        // Phase 9.11: under TODAY, "streak" reduces to a binary
+        // present/absent on a single calendar day — show "Today" if the
+        // user typed at all today, otherwise the placeholder.
+        binding.dashboardHabitsKpiStreakValue.text = when (habits.streakUnit) {
+            IkdHabitsAggregator.StreakUnit.HOURS -> {
+                if (habits.totalSessions > 0) {
+                    getString(R.string.dashboard_habits_streak_today)
+                } else {
+                    placeholder
+                }
+            }
+            IkdHabitsAggregator.StreakUnit.DAYS -> getString(
+                R.string.dashboard_habits_streak_days, habits.longestStreak,
+            )
+            IkdHabitsAggregator.StreakUnit.WEEKS -> getString(
+                R.string.dashboard_habits_streak_weeks, habits.longestStreak,
+            )
         }
-        binding.dashboardHabitsKpiStreakValue.text = getString(streakSuffixRes, habits.longestStreak)
 
         // Charts
         val labels = habits.buckets.map { formatBucketLabel(it.label, habits.range) }
@@ -1145,6 +1166,19 @@ class DashboardActivity : SimpleActivity() {
      */
     private fun formatBucketLabel(rawKey: String, range: IkdAggregator.Range): String {
         return when (range) {
+            // Phase 9.11: TODAY emits "%Y-%m-%d %H" (e.g. "2026-05-10 09");
+            // render the trailing hour as "HH:00" to match the 24-hour bar
+            // axis. Falls back to the raw key when parsing fails.
+            IkdAggregator.Range.TODAY -> {
+                val hourPart = rawKey.substringAfterLast(' ', missingDelimiterValue = rawKey)
+                val hourInt = hourPart.toIntOrNull()
+                if (hourInt != null) {
+                    getString(R.string.dashboard_hour_bucket_label, hourInt)
+                } else {
+                    rawKey
+                }
+            }
+
             IkdAggregator.Range.WEEK,
             IkdAggregator.Range.MONTH -> runCatching {
                 val date = isoDayParser.parse(rawKey) ?: return@runCatching rawKey
@@ -1160,12 +1194,14 @@ class DashboardActivity : SimpleActivity() {
     }
 
     private fun rangeButtonId(range: IkdAggregator.Range): Int = when (range) {
+        IkdAggregator.Range.TODAY -> R.id.dashboard_range_today
         IkdAggregator.Range.WEEK -> R.id.dashboard_range_week
         IkdAggregator.Range.MONTH -> R.id.dashboard_range_month
         IkdAggregator.Range.ALL_TIME -> R.id.dashboard_range_all
     }
 
     private fun idToRange(id: Int): IkdAggregator.Range = when (id) {
+        R.id.dashboard_range_today -> IkdAggregator.Range.TODAY
         R.id.dashboard_range_week -> IkdAggregator.Range.WEEK
         R.id.dashboard_range_month -> IkdAggregator.Range.MONTH
         R.id.dashboard_range_all -> IkdAggregator.Range.ALL_TIME
