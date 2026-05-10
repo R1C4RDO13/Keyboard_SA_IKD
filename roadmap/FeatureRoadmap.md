@@ -86,6 +86,7 @@ flowchart TD
         F20[Mood Bar on Keyboard Toolbar]:::feature
         F21[Mood Overlay on Session Dashboard]:::feature
         F22[Mood Trend Chart on Global Insights]:::feature
+        F22a[Mood-Bar Dance + Haptic on Select]:::feature
     end
 
     subgraph Phase 9 Features
@@ -110,7 +111,7 @@ flowchart TD
     P5 -.-> F12 & F13 & F14
     P6 -.-> F15 & F16
     P7 -.-> F17 & F18 & F19
-    P8 -.-> F20 & F21 & F22
+    P8 -.-> F20 & F21 & F22 & F22a
     P9 -.-> F23 & F24 & F25 & F25b & F25c & F25d & F25e & F25f & F25g & F25h
     P10 -.-> F26 & F27 & F28
 ```
@@ -314,6 +315,12 @@ Detailed scope: [`Phase7.1/Phase7.1_Plan.md`](Phase7.1/Phase7.1_Plan.md)
 *   **Live diagnostics** (`DiagnosticsActivity.updateComputedMetrics`) mirrors the same formula on the in-memory event list, with a defensive `effectiveWeight()` fallback for events captured just before the migration.
 *   **Folded in:** the Phase 7 follow-up fix for the autocorrect false-positive when the IME commits onto a user-selected range (`pendingOurSelectionReplacement` flag in `SimpleKeyboardIME`). Same heuristic, more accurate.
 
+> **Follow-up fix (commit `569f331b`, post-Phase-8.3):** the Phase 7.1 weighted-error-rate formula had two bugs surfaced by on-device testing.
+> 1. The denominator `keystrokeCount` only excluded `AUTOCORRECT` rows, leaving `BACKSPACE` rows in the denominator. Typing `hello world` (11 chars) and backspacing all 11 read 11/22 = **50 %** instead of the user-expected 100 %. Fixed by switching to *productive keystrokes* — `eventCount - correctionCount` — which excludes both `AUTOCORRECT` and `BACKSPACE`. New `correctionCount` projection on `EventBucketRow`; the `SessionStatsRow` projection was already there.
+> 2. `BACKSPACE` rows always carried `correction_weight = 1`, even when one keypress deleted an N-char selection or word-grapheme. Fixed by reading the selection length (or `getCountToDelete()` for grapheme deletes) before recording the timing event — new `SimpleKeyboardIME.computeBackspaceWeight()` helper.
+>
+> Net effect: `ocasdasda<space>`+autocorrect stays at 90 %; legacy backfill drifts 18.18 % → 20 %; `hello world<BS×11>` now reads 100 %; selecting all and pressing BACKSPACE once also reads 100 % (BACKSPACE-on-selection symmetry with AUTOCORRECT's replaced-span weight). Manual test plan: [`roadmap/ErrorRateFix_TestPlan.md`](ErrorRateFix_TestPlan.md).
+
 ---
 
 ## Phase 8: Mood Bar & Contextual Overlay
@@ -390,12 +397,50 @@ Detailed scope: [`Phase8/Phase8.3_Plan.md`](Phase8/Phase8.3_Plan.md)
 
 ---
 
+## Phase 8.4: Mood-Bar Dance + Haptic on Slot Select
+**Status: Planned**
+
+Detailed scope: [`Phase8/Phase8.4_Plan.md`](Phase8/Phase8.4_Plan.md). Pointer summary in [`Phase8_Plan.md` § 14](Phase8/Phase8_Plan.md#14-mood-bar-dance--haptic-on-slot-select-phase-84).
+
+**Depends on:** Phase 8 (mood bar exists), Phase 8.1 (`clipChildren="false"` on `mood_bar`), Phase 8.2 (selected-glyph scaling at `1.25×`, `vibrateIfNeeded()` already wired into every slot click handler).
+
+**Objective:** Make picking a mood feel rewarding. When the user **selects** a slot on the keyboard's seven-button mood bar (privacy 🛡️ or one of the six emotions), the tapped emoji plays a short pop + wiggle animation while the existing keyboard haptic fires. Deselect taps stay silent — preserves Phase 8.2's "highlight change is the feedback" rule for deselect.
+
+*   **Three-phase animation envelope (~360 ms total):** pop the slot from `1.25×` to `1.6×` over 120 ms (eased), wiggle for 220 ms via parallel rotation (`±12°` keyframes) and horizontal jitter (`±3 dp` keyframes), settle back to `1.25×` over 20 ms (eased). Mirrors the existing clipboard show/hide `AnimatorSet` precedent at `MyKeyboardView.kt:1324–1351`.
+*   **Reuses existing haptic:** `vibrateIfNeeded()` already runs on every mood-slot click handler (`MyKeyboardView.kt:633` + `:652`), gated on `Config.vibrateOnKeypress`. **No new vibration code, no new pref keys.**
+*   **Cancellation-safe:** rapid double-taps and slot switches resolve cleanly via `currentMoodDanceAnimator?.cancel()` + an explicit on-end cleanup that snaps the view to its settled scale, rotation `0`, translationX `0`.
+*   **Single-file change:** `views/MyKeyboardView.kt` only — one private helper, one companion-object constant (`MOOD_BAR_SCALE_DANCE_PEAK = 1.6f`), one nullable animator field, two single-line wires inside `onMoodSlotClicked`. Net diff ~35 LOC. **No XML edits** — `clipChildren="false"` was already set in Phase 8.2. **No new strings, dimens, prefs, schema migration, or capture-layer reopen.**
+
+> **Privacy invariants preserved.** The animation is a pure UI transform on the tapped `TextView`; it observes no captured data, writes nothing, and cannot influence what's stored.
+
+---
+
+## Phase 8.5: Collapsible Mood Bar with Persistent Standing Rating + Inactivity Reset
+**Status: Planned**
+
+Detailed scope: [`Phase8/Phase8.5_Plan.md`](Phase8/Phase8.5_Plan.md). Pointer summary in [`Phase8_Plan.md` § 15](Phase8/Phase8_Plan.md#15-collapsible-mood-bar-with-persistent-standing-rating--inactivity-reset-phase-85).
+
+**Depends on:** Phase 8 (mood bar exists, `mood_entries` table), Phase 8.1 (`Config.showMoodBar` toggle), Phase 8.2 (capsule background, chat-bubble, toggle semantics, `IkdMoodBarController.{disablePrivacy,clearMoodForActiveSession}`). Compose-safe with Phase 8.4 in either landing order (8.5 Decision #11).
+
+**Objective:** Reshape the seven-button mood bar from a centered always-expanded toolbar widget into a **left-anchored, collapsible chip** that remembers the user's last selected mood across sessions and auto-expires that standing rating after one hour of inactivity. Resolves three friction points from the Phase 8 / 8.1 / 8.2 baseline: (a) per-session mood storage means users re-tap their self-rating every keyboard reopen and stop bothering, (b) the always-expanded bar hides clipboard chip / suggestions / voice while it's on, (c) stale ratings linger until manually cleared, diluting the analytical signal.
+
+*   **Display-only standing rating.** New `Config.lastMoodScore: Int` (default `MoodEmoji.SCORE_NONE = 0`) remembers the user's last selected mood across sessions, but only **pre-highlights the chip** — it never auto-writes to `mood_entries`. The Phase 8 invariant "a `mood_entries` row = the user actively annotated this session" is preserved unchanged. A user who reopens the keyboard, sees their persisted 😊 in the chip, and taps it once in the expanded bar gets a row written for the new session — same as today.
+*   **Three-zone collapsible layout** (one container, deterministic widths so `suggestions_holder` doesn't jitter): collapsed indicator `TextView` + expanded slots `LinearLayout` + chevron `ImageView`. The mood bar moves from centered to leading-edge (`start=parent`, `end=startOf(suggestions_holder)`). `clipboard_clear` stays inflated, hidden via `applyMoodBarVisibility()` (no behaviour change vs Phase 8.2). When `Config.showMoodBar == false`, a runtime `ConstraintSet` re-anchors `suggestions_holder.start = endOf(clipboard_clear)` and restores `clipboard_clear`.
+*   **Empty collapsed glyph:** grayed neutral placeholder (`🙂` at alpha 0.45). Distinct from the shield (privacy ON) and from any of the six emotions. The shield was rejected as ambiguous when `Config.privacyModeEnabled == false`.
+*   **Inactivity reset (1 hour):** new `Config.lastMoodActivityTimestamp: Long` updated on **mood selection** + on `SimpleKeyboardIME.onFinishInputView` (best-effort backstop). **Not updated per-keystroke** to avoid `SharedPreferences.edit().commit()` on the IME thread (CLAUDE.md "Critical Constraint"). On-show staleness check fires from both `SimpleKeyboardIME.onStartInputView` (primary) and `MyKeyboardView.refreshMoodBarFromState` (secondary, covers long-attached IME edge case). Reset action: clear `Config.lastMoodScore` only — **does not flip `Config.privacyModeEnabled`** (per user choice "respect Config.privacyModeEnabled default").
+*   **Subtle animations** matching Phase 8.2 / Phase 6 polish (150–200 ms, no overshoot). Switches `applyMoodBarHighlight` from instant transforms to `view.animate().cancel(); view.animate()…` chains with cancel-before-restart. New `applyMoodBarLayout(expanded, animate)` mirrors `DiagnosticsActivity.applySensorExpansion` — chevron rotation + cross-fade between collapsed indicator and expanded slots. Auto-collapses after every slot tap so the user sees their selection echoed in the chip without a second chevron tap.
+*   **Reopened files:** `views/MyKeyboardView.kt` (biggest delta), `res/layout/keyboard_view_keyboard.xml`, `helpers/Constants.kt`, `helpers/Config.kt`, `helpers/MoodEmoji.kt` (`SCORE_NONE` sentinel + `isStandingScore()` helper), `helpers/IkdMoodBarController.kt` (Config writes alongside DAO writes — three method bodies grow; **no new method, no new threading**), `services/SimpleKeyboardIME.kt` (two narrow lifecycle wires), `res/values/strings.xml`. **No schema migration, no DAO changes, no aggregator changes, no capture-path semantic change.** `IkdDatabase.version` stays at 3.
+
+> **Privacy invariants preserved.** `Config.lastMoodScore` is one `Int` in `SharedPreferences`. No new DB rows, no new exported data, no new sensor reads. The Phase 8 third dual-block CSV segment (`#mood_entries`) is unchanged. The 1-hour reset is local-only and clears `Config.lastMoodScore` to `SCORE_NONE`; it does not clear `mood_entries` rows already written (those remain in the DB until the parent session is deleted via Phase 2 retention).
+
+---
+
 ## Phase 9: Global Insights Expansion
-**Status: Planned (next)**
+**Status: Implemented** — 10 sub-phase commits `f2d13b33` … `38ae0d63` landed on `main` (no feature branch — user override). 32 new JVM tests pass; lint clean; detekt +4 issues (LargeClass + TooManyFunctions on `DashboardActivity` / DAOs and ComplexCondition on heatmap/bubble views — scope-acceptable).
 
 **Depends on:** Phase 8 (mood entries in `ikd.db`), Phase 8.1 polish (current dashboard surface), Phase 8.2 (mood bar UX), Phase 8.3 (mood-mix stacked-bar shape)
 
-**Absorbs:** the deferred Phase 11 ("Usage Map & Daily Activity Charts") — every Phase 11 chart is lifted into a Phase 9 sub-phase. Phase 11 is deleted from the roadmap (Phase 9 plan Decision #16).
+**Absorbs:** the deferred Phase 11 ("Usage Map & Daily Activity Charts") — every Phase 11 chart was lifted into a Phase 9 sub-phase. Phase 11 is deleted from the roadmap (Phase 9 plan Decision #16).
 
 Detailed scope:
 
@@ -490,30 +535,35 @@ Detailed scope:
 
 ---
 
-## Phase 11: Usage Map & Daily Activity Charts
-**Status: Planned**
+## Phase 9.11: Insights — TODAY Range + Vertical Tabs
+**Status: Implemented** — three commits on `main`: `eb8454f2` (TODAY range), `f00b5713` (vertical tabs), `be4d98ba` (sub-plan doc).
 
-**Depends on:** Phase 9 (global insights infrastructure) and Phase 10 (rebranded identity to ship under)
+Detailed scope: [`Phase9/sub_plans/9.11_today_filter_and_tabs.md`](Phase9/sub_plans/9.11_today_filter_and_tabs.md)
 
-**Objective:** Add two new visualisation screens to `DashboardActivity` that answer different questions from the existing line charts — *when* the user types and *how accurately* they type each day. Both charts are custom `View` subclasses (MPAndroidChart does not support bubble/scatter plots out of the box at the fidelity required); they are new additions that never touch the capture layer or schema.
+**Objective:** Two follow-up changes to the Insights screen surfaced after Phase 9 landed: (1) add a "Today" entry to the date filter so users can scope every chart and KPI to today's hourly buckets without having to wait for a Week's worth of data; (2) split the five Phase 9 sections (Trends → Daily Activity → Mood → Keystroke Dynamics → Habits) into swipeable tabs so the dashboard stops being a single ~1100-line scrolling page.
 
-*   **Keyboard Usage Map (`UsageMapView`):**
-    *   A **time-vs-date bubble chart** — Y axis = calendar date (newest at top, oldest at bottom, ~30 rows for Month range or ~7 for Week), X axis = time of day (Midnight → 11 PM in 1-hour columns), bubble size = keystroke count in that hour-slot, bubble colour = a configurable dimension (default: locale, which approximates timezone context when the user moves; fallback: single accent colour).
-    *   Each bubble represents one `(date, hour)` bucket: `SELECT strftime('%Y-%m-%d', ...) AS day, strftime('%H', ...) AS hour, COUNT(*) AS keys FROM ikd_events GROUP BY day, hour`. This is a single query returning ≤ 24 × 30 = 720 rows for the Month range — well within SQLite's comfort zone.
-    *   Bubble radius scales linearly between a `MIN_RADIUS_DP` (1 dp — just visible for low-activity slots) and `MAX_RADIUS_DP` (12 dp — densest slot in the current range). The legend shows the min and max keystroke counts for the visible range, matching the reference design.
-    *   Tapping a bubble shows a tooltip: date, hour, keystroke count, and the locale recorded for that session.
-    *   The chart lives in a new `UsageMapActivity` launched from `DashboardActivity` via an "Usage Map" card or overflow menu item — it is too tall to embed inline.
+*   **TODAY range:**
+    *   `IkdAggregator.Range` gains `TODAY(days = 1, bucketFormat = "%Y-%m-%d %H")`. The existing `computeRangeWindow` math covers it for free (`fromMs = startOfLocalDayMillis(now)` because `days - 1 = 0`).
+    *   New "Today" button as the first option in `dashboard_range_toggle_group`. Default selection stays `WEEK`.
+    *   `formatBucketLabel` renders `"YYYY-MM-DD HH"` strings as `"HH:00"` (24-hour).
+    *   Charts that go degenerate under TODAY (single cell / single bar) hide cleanly: Phase 9.5 calendar heatmap and daily-keypress bar disappear; Phase 9.9 Usage Map disappears. The 24-hour bar (9.6) and circadian heatmap (9.6) stay — already hourly. The Habits longest-streak KPI (9.3) gains a `StreakUnit.HOURS` mode that prints "Today" / "—".
 
-*   **Daily Keyboard Activity Scatter Chart (`DailyActivityView`):**
-    *   A **backspaces-vs-autocorrections scatter chart** — X axis = backspace count for the day, Y axis = autocorrection count for the day, one bubble per day in the selected range. The most recent data point is rendered larger and darker; older points fade.
-    *   Subtitle copy (mirroring the reference): *"When our mind is clear we tend to make fewer typing errors and require less backspace usage. On such days, the most recent data point will be closer to the origin."*
-    *   Each bubble represents one `(date)` bucket: `SELECT day, SUM(CASE WHEN event_category='BACKSPACE' THEN 1 ELSE 0 END) AS backspaces, SUM(CASE WHEN is_correction=1 THEN 1 ELSE 0 END) AS autocorrections FROM ikd_events GROUP BY day`. Single query, ≤ 30 rows for Month range.
-    *   The "most recent" bubble uses `colorPrimary` at full opacity and 1.8× radius; older bubbles use `colorPrimary` at decreasing alpha (linear fade from 80% → 20% across the date range), same radius. No legend needed beyond the single callout note.
-    *   Embedded directly in `DashboardActivity` as a fixed-height card (200 dp) below the Usage Map entry point, visible in all range modes.
+*   **Vertical tabs:**
+    *   New `NavigationRailView` on the left edge + horizontal `ViewPager2` for swipe-left/right navigation. Tab order top-to-bottom = page order left-to-right: Trends → Daily Activity → Mood → Keystroke Dynamics → Habits.
+    *   Each section moves into its own `Fragment` (`TrendsFragment`, `DailyActivityFragment`, `MoodFragment`, `KeystrokeDynamicsFragment`, `HabitsFragment` under `activities/dashboard/`). `DashboardActivity` becomes a thin host (~340 LOC, down from ~1100) that owns data loading + global state and dispatches snapshots to the visible fragment.
+    *   Global header above the rail+pager: app bar · 4-cell global KPI strip · Range toggle · Mood Filter chip row (Phase 9.4 — same "GONE until first mood entry" rule). Active tab index persisted in `onSaveInstanceState`.
+    *   Side-effect win: detekt's `LargeClass` warning on `DashboardActivity` is gone; total weighted issues unchanged at 52 vs. baseline.
 
-*   **Time-of-Day Heatmap (`HeatmapView`):**
-    *   A **24-column × 7-row grid** (hour × day-of-week) showing aggregate keystroke intensity across all time, regardless of the range selector. Cells are coloured on a gradient from background (zero activity) to `colorPrimary` (peak activity hour).
-    *   Answers "what hour and day of the week do I type the most?" — a circadian pattern view complementary to the date-scrolling Usage Map.
-    *   Query: `SELECT strftime('%w', ...) AS dow, strftime('%H', ...) AS hour, COUNT(*) AS keys FROM ikd_events GROUP BY dow, hour` — 168 rows maximum, always fast.
-    *   Rendered as a custom `View` using `Canvas.drawRoundRect` per cell; no external charting library needed.
-    *   Embedded in `DashboardActivity` below the Daily Activity scatter chart as a fixed-height card (160 dp).
+> **No schema migration**, no keyboard-layer reopen, no new Gradle dependency (`NavigationRailView` is on the classpath transitively via Material Components 1.13.0).
+
+---
+
+## ~~Phase 11: Usage Map & Daily Activity Charts~~
+
+**Deleted from the roadmap.** Phase 11's three planned views were absorbed into Phase 9's sub-phases:
+
+- The bubble Usage Map → **Phase 9.9** (`IkdBubbleMapView`).
+- The backspaces-vs-autocorrections scatter → **Phase 9.10**.
+- The hour × weekday heatmap → **Phase 9.6** (`IkdHeatmapView`).
+
+See Phase 9 above and the Phase 9 orchestrator's Decision #16 for the rationale.

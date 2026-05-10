@@ -816,3 +816,41 @@ A second on-device review pass after Phase 8.1 surfaced three remaining UX issue
 
 - `./gradlew assembleCoreDebug` — BUILD SUCCESSFUL.
 - `./gradlew testCoreDebugUnitTest` — BUILD SUCCESSFUL (no test changes; existing unit tests still pass).
+
+---
+
+## 14. Mood-Bar Dance + Haptic on Slot Select (Phase 8.4)
+
+**Status: Planned — pointer to standalone plan.**
+
+A short pop + wiggle animation on the tapped emoji when the user **selects** a mood, paired with the existing keyboard haptic. Reuses Phase 8.2's `clipChildren="false"` envelope and `vibrateIfNeeded()` wiring; no new strings, dimens, prefs, or XML edits. Single-file change to `views/MyKeyboardView.kt` (~35 LOC: one helper method, one companion constant, one nullable animator field, two single-line call sites in `onMoodSlotClicked`).
+
+**Standalone plan:** [`Phase8.4_Plan.md`](Phase8.4_Plan.md). Full spec includes the three-phase animation timeline (pop → wiggle → settle), cancellation strategy, decisions log, and manual verification steps.
+
+**Decisions at a glance:**
+- Dance fires **only on the select-path** (privacy-select + emotion-select). Deselect stays silent — preserves §13 Decision-by-implication that "the highlight change is the feedback".
+- **Reuses `vibrateIfNeeded()`** — no new haptic code. Respects `Config.vibrateOnKeypress`.
+- Shake = rotation (±12°) + horizontal jitter (±3 dp), parallel inside the wiggle phase.
+
+Implementation lands as a single commit on `feat/phase8.4-mood-dance`. Roadmap docs (`STATUS.md`, `FeatureRoadmap.md`, `CLAUDE.md`) updated alongside the implementation.
+
+---
+
+## 15. Collapsible Mood Bar with Persistent Standing Rating + Inactivity Reset (Phase 8.5)
+
+**Status: Planned — pointer to standalone plan.**
+
+Reshapes the seven-button mood bar from a centered always-expanded toolbar widget into a **left-anchored, collapsible chip** that remembers the user's last selected mood across sessions and auto-expires that standing rating after one hour of inactivity. Resolves three friction points from the §12 / §13 baseline: per-session `mood_entries` storage means users re-tap their self-rating every keyboard reopen and stop bothering; the always-expanded bar hides clipboard chip / suggestions / voice while it's on; stale ratings linger forever until manually cleared.
+
+The standing rating is a **display-only** `Config.lastMoodScore` — it pre-highlights the chip on re-entry but never auto-writes to `mood_entries`. The §3 invariant "a `mood_entries` row = the user actively annotated this session" is preserved unchanged. A user who reopens the keyboard, sees their persisted 😊 in the chip, and taps it once in the expanded bar gets a row written for the new session — same as today.
+
+**Standalone plan:** [`Phase8.5_Plan.md`](Phase8.5_Plan.md). Full spec includes the persistence-vs-DB-row decision rationale, the dual-check inactivity timer, the three-zone layout restructure, the runtime `ConstraintSet` re-anchor when `Config.showMoodBar == false`, the cancel-before-restart animation discipline, and the Phase 8.4 compose-safety analysis.
+
+**Decisions at a glance:**
+- `Config.lastMoodScore` is **display-only**. Auto-seeding `mood_entries` from the standing rating was rejected (Decision #2) because it would muddy the row semantic and force a schema migration.
+- Inactivity timestamp is updated on **mood selection** + on `onFinishInputView` only — **never per-keystroke** (CLAUDE.md "Critical Constraint" — no `SharedPreferences` writes on the IME thread).
+- Inactivity reset clears `Config.lastMoodScore` only; **does not flip `Config.privacyModeEnabled`** (per user choice "respect Config.privacyModeEnabled default").
+- Default `Config.moodBarExpanded = false` — first-launch users see a compact chip; existing users on upgrade see their bar collapse. The standing rating + chip placeholder makes the collapsed state immediately functional.
+- Compose-safe with §14 Phase 8.4 in either landing order — the two animator graphs do not share state but compose cleanly via `view.animate().cancel()`.
+
+Implementation lands across one focused commit per logical change on `feat/phase8.5-collapsible-mood-bar`. Roadmap docs (`STATUS.md`, `FeatureRoadmap.md`, `CLAUDE.md`) updated alongside the implementation.
