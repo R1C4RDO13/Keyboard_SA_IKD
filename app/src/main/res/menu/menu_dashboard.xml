@@ -14,4 +14,12 @@
         android:title="@string/dashboard_menu_refresh"
         app:showAsAction="never" />
 
+    <!-- Phase 9.16: shortcut to the per-session archive (same activity
+         opened from the MainActivity overflow). Reuses the canonical
+         "Sessions history" label so both entry points read identically. -->
+    <item
+        android:id="@+id/dashboard_sessions_history"
+        android:title="@string/sessions_list_title"
+        app:showAsAction="never" />
+
 </menu>

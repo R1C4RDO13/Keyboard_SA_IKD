@@ -290,6 +290,10 @@ class DashboardActivity : SimpleActivity() {
                     loadSnapshot()
                     true
                 }
+                R.id.dashboard_sessions_history -> {
+                    startActivity(Intent(this, SessionsListActivity::class.java))
+                    true
+                }
                 else -> false
             }
         }
