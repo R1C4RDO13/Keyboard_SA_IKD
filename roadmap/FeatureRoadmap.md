@@ -20,7 +20,6 @@ flowchart TD
     P8[Phase 8: Mood Bar & Contextual Overlay]:::phase
     P9[Phase 9: Global Insights Expansion]:::phase
     P10[Phase 10: Rebranding & New Identity]:::phase
-    P11[Phase 11: Usage Map & Daily Activity Charts]:::phase
 
     P1 --> P1_1
     P1_1 --> P2
@@ -32,7 +31,6 @@ flowchart TD
     P7 --> P8
     P8 --> P9
     P9 --> P10
-    P10 --> P11
 
     subgraph Phase 1 Features
         F1[Real-Time Data Interface]:::feature
@@ -91,9 +89,16 @@ flowchart TD
     end
 
     subgraph Phase 9 Features
-        F23[Mood Integration in Global Insights]:::feature
+        F23[Mood Section Formalisation]:::feature
         F24[Gyro & Accel Global Trend Charts]:::feature
         F25[Typing Habits & Session Statistics]:::feature
+        F25b[Mood Filter on Insights]:::feature
+        F25c[Daily Activity & Calendar Heatmap]:::feature
+        F25d[Hourly Activity & Time-of-Day Heatmap]:::feature
+        F25e[Keystroke Dynamics Distribution Histograms]:::feature
+        F25f[Orientation Breakdown]:::feature
+        F25g[Usage Map Bubble Chart]:::feature
+        F25h[Activity Quality Scatter]:::feature
     end
 
     subgraph Phase 10 Features
@@ -102,19 +107,12 @@ flowchart TD
         F28[Store Listing & Metadata Refresh]:::feature
     end
 
-    subgraph Phase 11 Features
-        F29[Keyboard Usage Map]:::feature
-        F30[Daily Keyboard Activity Scatter Chart]:::feature
-        F31[Time-of-Day Heatmap]:::feature
-    end
-
     P5 -.-> F12 & F13 & F14
     P6 -.-> F15 & F16
     P7 -.-> F17 & F18 & F19
     P8 -.-> F20 & F21 & F22
-    P9 -.-> F23 & F24 & F25
+    P9 -.-> F23 & F24 & F25 & F25b & F25c & F25d & F25e & F25f & F25g & F25h
     P10 -.-> F26 & F27 & F28
-    P11 -.-> F29 & F30 & F31
 ```
 
 ---
@@ -353,6 +351,30 @@ Detailed scope: [`Phase8/Phase8_Plan.md`](Phase8/Phase8_Plan.md)
 
 ---
 
+## Phase 8.2: Mood Bar UX Polish (Toggles, Capsule, Chat-Bubble)
+**Status: Implemented**
+
+Detailed scope: [`Phase8/Phase8_Plan.md` § 13](Phase8/Phase8_Plan.md#13-mood-bar-ux-polish-phase-82)
+
+**Objective:** A second on-device review pass after Phase 8.1 surfaced three more issues with the mood bar — slots that were "click-to-set, but no way to unset"; a transient toast for the only feedback channel; and a bar that visually read as seven floating glyphs rather than one keyboard control. Phase 8.2 makes the bar feel like a first-class keyboard widget without changing what's stored.
+
+*   **Slots are now true toggles:**
+    *   Tapping the highlighted 🛡️ now disables privacy without committing to a mood (closing the gap where the only way out of privacy was picking an emoji).
+    *   Tapping a highlighted emotion deletes the `MoodEntry` row without re-enabling privacy.
+    *   Two new controller methods mirror the existing `enablePrivacyAndClearMood` path: `IkdMoodBarController.disablePrivacy` (flips `Config.privacyModeEnabled` without touching the mood row) and `clearMoodForActiveSession` (deletes the row without touching privacy). Deselect paths are silent — the highlight change *is* the feedback.
+*   **Stretched-key capsule background:**
+    *   The horizontal bar is centred in the toolbar and dressed as one rounded "stretched key" capsule, themed at runtime via `mKeyColor` / `mStrokeColor` so it tracks the active keyboard theme.
+    *   The clipboard chip / inline suggestions / clear / voice buttons are hidden while the bar is on; the pinned-clipboard and settings buttons stay anchored on the right edge.
+    *   Selected glyph rendered at `scaleX/scaleY 1.25` (rendering only — tap area unchanged) so the active emotion lifts above the row. Dimmed alpha tightened from 0.6 → 0.45 to strengthen the selected-vs-unselected hierarchy. `clipChildren=false` on the toolbar holder + mood bar so the scaled glyph isn't cropped.
+*   **Chat-bubble feedback popup:**
+    *   `PopupWindow` anchored above the tapped slot replaces the generic `Toast` calls with first-person feedback ("I'm feeling happy", "I want privacy", …).
+    *   Auto-dismisses after 1500 ms; consecutive taps reset the timer and reuse the same popup so there's no flicker.
+    *   New `Config.showMoodPopup` (default `true`) plus a settings row in `IkdSettingsActivity` lets users silence the bubble without disabling the underlying state change. Strictly additive new flag; `Config.showMoodBar` from Phase 8.1 is unchanged.
+
+> **No schema change.** `IkdDatabase.version` stays at 2. Capture path frozen — the only Kotlin code that runs in this phase lives on the keyboard view + settings layer.
+
+---
+
 ## Phase 8.3: Mood Distribution over Time (Stacked Bar) on Insights
 **Status: Implemented**
 
@@ -369,34 +391,75 @@ Detailed scope: [`Phase8/Phase8.3_Plan.md`](Phase8/Phase8.3_Plan.md)
 ---
 
 ## Phase 9: Global Insights Expansion
-**Status: Planned**
+**Status: Planned (next)**
 
-**Depends on:** Phase 8 (mood entries must exist in `ikd.db` before mood aggregation can be surfaced globally)
+**Depends on:** Phase 8 (mood entries in `ikd.db`), Phase 8.1 polish (current dashboard surface), Phase 8.2 (mood bar UX), Phase 8.3 (mood-mix stacked-bar shape)
 
-**Objective:** Expand `DashboardActivity` from a single scrollable page of three charts into a rich, multi-section insights hub. Three new sections are added: a mood summary (picking up the Phase 8 mood data), gyro and accelerometer global trend charts parallel to the per-session charts introduced in Phase 5, and a new **Typing Habits** section that surfaces session-level statistics over time.
+**Absorbs:** the deferred Phase 11 ("Usage Map & Daily Activity Charts") — every Phase 11 chart is lifted into a Phase 9 sub-phase. Phase 11 is deleted from the roadmap (Phase 9 plan Decision #16).
 
-All work is read-side only: no capture changes, no schema migration, no new dependencies. The existing `IkdLineChartView` wrapper and `IkdAggregator` pattern are extended additively.
+Detailed scope:
 
-*   **Mood Integration in Global Insights:**
-    *   The Phase 8 Mood Trend chart (already planned as a single line chart) is promoted to a full **Mood Section** with two sub-cards: the average-mood line chart (already specced) and a new **Mood Distribution bar chart** showing how many sessions fell into each of the five mood scores over the selected range.
-    *   The global KPI strip gains an **Average Mood** cell (emoji + numeric score, 1 decimal place) when at least one rated session exists in the range. Missing-mood sessions are always excluded from the average — they do not pull the score toward neutral.
-    *   A `getMoodDistribution(fromMs, toMs)` query is added to `MoodDao`, returning a 5-row count projection (one row per score). The bar chart renders horizontally with emoji labels on the Y axis.
+- [`Phase9/Phase9_Plan.md`](Phase9/Phase9_Plan.md) — orchestrator (implementation order, dependency graph, frozen surfaces, cross-cutting decisions).
+- [`Phase9/sub_plans/`](Phase9/sub_plans/) — 10 self-contained sub-plan files, one per sub-phase. Implementer agents load only the orchestrator + their assigned sub-plan to optimise context.
 
-*   **Gyro & Accel Global Trend Charts:**
-    *   Two new line charts added to `DashboardActivity`: **Average Gyro Magnitude over Time** and **Average Accel Magnitude over Time**, bucketed by the same day / week stride as the existing IKD chart.
-    *   Mirrors the per-session sensor charts from Phase 5 but aggregated across all sessions in the selected range. Each bucket value = `AVG(sqrt(x²+y²+z²))` per day/week, computed server-side in SQL (`AVG(x*x+y*y+z*z)` in SQL, `sqrt` in Kotlin — same pattern as Phase 5).
-    *   Additive queries `getSensorBuckets(sensorType, bucketFormat, fromMs, toMs)` added to `SensorSampleDao`. Existing queries are untouched.
-    *   Null buckets (days with no sensor data — e.g., sessions captured with sensors disabled) render as line breaks, matching the existing chart behaviour.
+**Objective:** Expand `DashboardActivity` from a single page of three IKD line charts + a four-cell KPI strip into a multi-section, multi-card global insights hub modelled after the [BiAffect research dashboard](https://www.biaffect.com/8203biaffect-meets-the-world/tracking-mental-health-through-keystroke-dynamics-with-biaffect). Ten sub-phases on a single read-side-only branch — no schema migration (`IkdDatabase.version` stays at 3), no keyboard-layer reopen, no new Gradle dependency. Five labelled dashboard sections after Phase 9 lands: **Trends → Daily Activity → Mood → Keystroke Dynamics → Habits**.
 
-*   **Typing Habits & Session Statistics:**
-    *   A new **Habits Section** added below the existing charts with four trend charts and one KPI strip:
+*   **9.1 Mood Section formalisation:**
+    *   Wrap the existing Phase 8.3 stacked-bar mood-mix card and Phase 8 Mood Distribution panel in a labelled **Mood** section with its own primary-coloured section header, parallel to the new **Habits** section header that 9.3 introduces.
+    *   Add a sibling **Trends** section header above the existing IKD chart group so the dashboard reads as four labelled sections (KPI · Trends · Mood · Habits) rather than nine sibling cards.
+    *   Pure layout pass — no new charts, no aggregator changes, no DAO changes.
+
+*   **9.2 Gyro & Accel Global Trend Charts:**
+    *   Two new aggregate line charts on `DashboardActivity`: **Average Gyro Magnitude over Time** and **Average Accel Magnitude over Time**, bucketed by the same `Range.bucketFormat` as the existing IKD chart so the X axes align.
+    *   Mirrors Phase 5's per-session sensor charts but aggregated across sessions: `AVG(x*x + y*y + z*z)` in SQL, `Math.sqrt` per row in Kotlin (same SQLite-has-no-sqrt workaround). Null buckets render as line breaks.
+    *   New `helpers/IkdSensorAggregator.kt` (sibling of `IkdAggregator`); new additive `SensorSampleDao.getSensorBuckets(sensorType, bucketFormat, fromMs, toMs, moodScore: Int?)` query. The existing per-session `getSessionSensorBuckets` from Phase 5 is untouched.
+
+*   **9.3 Typing Habits & Session Statistics:**
+    *   A new **Habits** section beneath Mood with four trend line charts and a four-cell Habits KPI strip:
         *   **Average Session Duration over Time** (minutes per session, daily/weekly bucketed).
-        *   **Sessions per Day / Week** — a bar-style line chart showing typing frequency, making it easy to spot gaps in usage.
-        *   **Average Error Rate over Time** — daily/weekly average of `is_correction` ratio, separate from the top-level error-rate KPI already in Phase 3.
-        *   **Average Flight Time over Time** — trend of the mean flight-time per day/week, a proxy for hesitation and cognitive load.
-    *   A **Habits KPI strip** above the charts shows four all-time (or range-scoped) numbers: total sessions, total typing time, average session duration, longest streak.
-    *   All queries are additive extensions to `SessionDao` and `IkdEventDao`; no existing queries are modified.
-    *   The `IkdAggregator.Snapshot` data class is extended with the new fields; `buildSnapshot` on the companion gains the new parameters for unit testing.
+        *   **Sessions per Day / Week** — typing frequency over time, makes gaps in usage visible.
+        *   **Average Error Rate over Time** — daily/weekly weighted error rate (matches the Phase 7.1 formula `100 * SUM(correction_weight) / keystrokeCount`).
+        *   **Average Flight Time over Time** — trend of the mean flight-time per day/week, proxy for hesitation and cognitive load.
+    *   Habits KPI strip: total sessions, total typing time, average session duration, longest streak (consecutive days/weeks with at least one session, computed in Kotlin from the existing aggregation output — no extra SQL).
+    *   New `helpers/IkdHabitsAggregator.kt` (sibling of `IkdAggregator`); one additive `IkdEventDao.getHabitsBuckets(...)` query that joins event-side and session-side aggregations on the bucket key in a single round-trip. Pure `Companion.computeLongestStreak(buckets)` for unit testing.
+
+*   **9.4 Mood Filter on Insights:**
+    *   Horizontally scrollable single-select chip row above the range selector — `All` + the six emoji (😊 😲 🤢 😢 😨 😠). Default `All` (current behaviour); the chip row is `View.GONE` until the user records their first `MoodEntry`.
+    *   Selecting a non-`All` chip re-runs every aggregator on the same `Dispatchers.IO` hop and re-renders every chart and every KPI scoped to *sessions whose `session_id` has a `mood_entries` row with `mood_score = X`*. Lets the user ask the new behavioural question: "*what does my typing look like when I'm angry vs happy?*"
+    *   Tapping the active emoji chip toggles back to `All` (mirrors Phase 8.2's mood-bar slot toggles). Filter state is persisted in `onSaveInstanceState`, **not** in `SharedPreferences` — per-screen-instance, not per-user-preference.
+    *   New `MoodDao.hasAnyMoodEntry()` query gates chip-row visibility. `IkdAggregator`, `IkdSensorAggregator`, `IkdHabitsAggregator`, and the four new BiAffect-inspired aggregators (9.5 / 9.7 / 9.8 / 9.10) each gain a `moodFilter: Int? = null` parameter on `snapshot(...)`. The mood widgets (Mood Distribution + stacked-bar mood-mix) intentionally render the degenerate one-row / one-colour result under a non-`All` filter — that's the user feedback that the filter is in effect.
+
+*   **9.5 Daily Activity — Calendar Heatmap + Daily Keypress Bar:** *(BiAffect-inspired.)*
+    *   GitHub-contributions-style calendar heatmap (rows = ISO week-of-year, columns = day-of-week, cell intensity = total keystrokes). Tap a cell → toast with date + count.
+    *   Per-day bar chart of total keypresses across the selected range. Mirrors the BiAffect3 v3.0.2 "Daily keypresses graph" called out in release notes.
+    *   New `helpers/IkdActivityAggregator.kt` (one aggregator covers 9.5, 9.6, 9.9 — the queries share the `(day, hour)` shape). New `views/IkdHeatmapView.kt` custom theme-aware `View` (used in 9.5 and 9.6).
+
+*   **9.6 Hourly Activity — 24-Hour Bar + Hour × Weekday Heatmap:** *(BiAffect-inspired.)*
+    *   24-bar bar chart (one bar per hour-of-day, range-scoped) showing keystrokes accumulated in each hour across the selected range.
+    *   24×7 hour × weekday heatmap rendered using the same `IkdHeatmapView`. **Always all-time** (Decision #18) — single-week data is too sparse to expose a circadian pattern; the chart card subtitle ("Across all your sessions") documents the static range scope to the user.
+    *   Lifts the **Time-of-Day Heatmap** from the deleted Phase 11 spec.
+
+*   **9.7 Keystroke Dynamics Distribution — IKD / Dwell / Flight Histograms:** *(BiAffect-inspired.)*
+    *   Three histograms surfacing the *distribution shape* of inter-key delay, hold-time, and flight-time over the selected range. Log-scale X axis (`10–20 ms`, `20–40 ms`, …, `5120–10240 ms`); count on Y.
+    *   Outliers above the top bucket are clipped into it with a small "+ outliers" annotation.
+    *   New `helpers/IkdDistributionAggregator.kt`; three additive `@Query` methods on `IkdEventDao`. Bucket edges are a hardcoded log-scale `LongArray` shared across the three queries.
+
+*   **9.8 Orientation Breakdown:**
+    *   Donut (or stacked horizontal bar) showing the share of typing sessions by phone orientation across the selected range. Surfaces `SessionRecord.orientation` for the first time since Phase 2 stored it.
+    *   Combined with the 9.4 Mood Filter, answers questions like "*do I type lying down more when I'm sad?*"
+    *   Sentinel `-1` ("Not captured" — orientation capture disabled in settings) shown only when ≥ 1 session in the range has that value.
+
+*   **9.9 Usage Map (Bubble Chart):** *(Lifted from Phase 11.)*
+    *   Time-vs-date bubble chart — Y axis = calendar date, X axis = hour of day in 1-hour columns, bubble area = keystroke count. Tooltip on tap (date / hour / count / locale).
+    *   Bubble radius scales linearly between 1 dp and 12 dp. When more than one locale exists in the range, bubbles are coloured by locale.
+    *   New `views/IkdBubbleMapView.kt` custom `View` with per-bubble hit-test for the tooltip. Reuses the `IkdActivityAggregator` `(day, hour)` payload — zero new queries beyond 9.6.
+
+*   **9.10 Activity Quality Scatter:** *(Lifted from Phase 11.)*
+    *   X = backspaces for the day, Y = autocorrection count, one bubble per day. Most-recent day rendered larger and at full alpha; older days fade to 20% alpha.
+    *   Subtitle preserves the research-led framing: *"When our mind is clear we tend to make fewer typing errors and require less backspace usage. On such days, the most recent data point will be closer to the origin."*
+    *   New `helpers/IkdQualityAggregator.kt`; one additive `IkdEventDao.getDailyQuality(...)` query.
+
+> **Privacy invariants preserved.** Phase 9 reads existing tables only — no new captured data, no new pref keys (`Constants.kt` and `Config.kt` stay frozen), no CSV format change. The mood filter joins on the already-stored `mood_entries.session_id` and `mood_entries.mood_score`; nothing is written.
 
 ---
 

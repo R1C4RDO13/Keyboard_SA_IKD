@@ -42,6 +42,7 @@ The six emotion categories are **Ekman's basic emotions** [1, 2] — anger, disg
 10. [Explicitly Deferred to Later Phases](#10-explicitly-deferred-to-later-phases)
 11. [References](#11-references)
 12. [Post-merge UI Polish (Phase 8.1)](#12-post-merge-ui-polish-phase-81)
+13. [Mood Bar UX Polish (Phase 8.2)](#13-mood-bar-ux-polish-phase-82)
 
 ---
 
@@ -758,3 +759,60 @@ After the original four sub-phases shipped on `feat/phase8-mood-bar`, on-device 
 
 - `./gradlew assembleCoreDebug` — BUILD SUCCESSFUL.
 - `./gradlew testCoreDebugUnitTest` — BUILD SUCCESSFUL (no test changes; existing 38 unit tests still pass).
+
+---
+
+## 13. Mood Bar UX Polish (Phase 8.2)
+
+A second on-device review pass after Phase 8.1 surfaced three remaining UX issues with the mood bar that were not part of the original Phase 8 spec. Fixes landed directly on `main` in commits `44f18f06` (capsule + chat-bubble) and `14be3079` (slot toggles + selected-glyph lift) — no feature branch was cut, at the user's discretion. This section is the change log for those two commits so future readers can trace which Phase 8 decisions were revised. **Schema, capture path, and aggregator surfaces remain frozen.**
+
+### What changed
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 | The seven-button bar visually read as seven floating glyphs detached from the keyboard, not as one keyboard control. The rounded background introduced in Phase 8.1's UX pass hadn't materialised yet — Phase 8 shipped without one. | Added `res/drawable/mood_bar_background.xml`, a rounded "stretched-key" capsule themed at runtime via `mKeyColor` / `mStrokeColor` in `MyKeyboardView` so it tracks the active keyboard theme. The bar is centred horizontally in the toolbar; clipboard chip / inline suggestions / clear / voice are hidden while the bar is on; the pinned-clipboard and settings buttons stay anchored on the right edge. |
+| 2 | The only feedback when tapping a slot was a generic Android `Toast`, which surfaces below the keyboard and has no visual link to the slot that caused it. | Replaced the `Toast` calls with a chat-bubble `PopupWindow` anchored above the tapped slot, surfacing first-person feedback ("I'm feeling happy", "I want privacy", …). Auto-dismisses after 1500 ms; consecutive taps reset the timer and reuse the same popup so there's no flicker. New `Config.showMoodPopup` (default `true`) plus a settings row to silence the bubble without disabling the underlying state change. |
+| 3 | Slots were "click-to-set, but no way to unset." The only path out of privacy was committing to a mood; the only way to clear an emoji was tapping a different emoji or 🛡️. | Every slot is now a true toggle. Tap-highlighted-🛡️ calls a new `IkdMoodBarController.disablePrivacy()` (silent, no bubble). Tap-highlighted-emoji calls a new `clearMoodForActiveSession()` (silent, no bubble). The select path still surfaces the bubble; the deselect path is silent because the highlight change *is* the feedback. |
+| 4 | Selected vs unselected hierarchy was weak — `alpha = 0.6f` for unselected wasn't dim enough, and the selected glyph rendered at the same scale as the others. | Tightened dimmed alpha 0.6 → 0.45. Selected glyph rendered at `scaleX / scaleY 1.25` (rendering only — tap area unchanged) so the active emotion lifts above the row. `clipChildren=false` on the toolbar holder + mood bar so the scaled glyph isn't cropped. |
+
+### Slot toggle semantics (Phase 8.2 vs Phase 8 baseline)
+
+| Action | Phase 8 baseline | Phase 8.2 |
+|---|---|---|
+| Tap unselected emoji | Privacy off, write `MoodEntry`, bubble | Same |
+| Tap **highlighted** emoji | No-op | **Delete `MoodEntry` row, capture stays on, no bubble** |
+| Tap unselected 🛡️ | Privacy on, finalise session, delete mood | Same |
+| Tap **highlighted** 🛡️ | No-op | **Privacy off, no mood, no bubble** |
+
+### Files touched (Phase 8.2, in addition to the Phase 8 + 8.1 set)
+
+| File | Change |
+|---|---|
+| `app/src/main/kotlin/.../helpers/IkdMoodBarController.kt` | Added `suspend fun disablePrivacy()` and `suspend fun clearMoodForActiveSession()`. Both run on `Dispatchers.IO` and mirror the existing `enablePrivacyAndClearMood` shape. |
+| `app/src/main/kotlin/.../views/MyKeyboardView.kt` | Slot click handlers route through the toggle decision tree above. New `showMoodBubble(slotView, message)` helper for the `PopupWindow`. Selected-glyph scale + dim-alpha changes. Capsule background applied via `setBackground(...)` after `mKeyColor` is resolved. Toolbar siblings (clipboard chip, suggestions, clear, voice) toggled `View.GONE` while the bar is on. |
+| `app/src/main/kotlin/.../helpers/Constants.kt` | Added `SHOW_MOOD_POPUP` pref key. |
+| `app/src/main/kotlin/.../helpers/Config.kt` | Added `var showMoodPopup: Boolean` (default `true`). |
+| `app/src/main/kotlin/.../activities/IkdSettingsActivity.kt` | Wired the new "Show mood feedback popup" row. |
+| `app/src/main/res/drawable/mood_bar_background.xml` | New — rounded capsule shape drawable. |
+| `app/src/main/res/drawable/mood_bubble_background.xml` | New — chat-bubble background for the `PopupWindow`. |
+| `app/src/main/res/layout/popup_mood_bubble.xml` | New — single `TextView` inside the bubble drawable. |
+| `app/src/main/res/layout/keyboard_view_keyboard.xml` | Mood bar gains `android:background="@drawable/mood_bar_background"`, `clipChildren="false"` on toolbar + bar, centred horizontally. |
+| `app/src/main/res/layout/activity_ikd_settings.xml` | Added the "Show mood feedback popup" toggle row. |
+| `app/src/main/res/values/dimens.xml` | Added `mood_bar_padding`, `mood_bubble_*` dimens. |
+| `app/src/main/res/values/strings.xml` | Added `ikd_settings_show_mood_popup` + summary, plus the seven first-person bubble messages (`mood_bubble_*`). |
+
+### Decision deltas
+
+- **Decision #7** — extended: slot mutual-exclusivity is preserved, but every slot is now bidirectionally toggleable. The state machine still has at most one highlight at a time; what changed is that all eight transitions out of "highlighted" are now reachable.
+- **Decision #11** — unchanged: still no Neutral category, still no auto-write. Tap-highlighted-emoji deletes the row rather than writing a synthetic Neutral.
+- **Decision #25** — unchanged: privacy is still surfaced in two places (🛡️ slot + settings row) and both paths flip `Config.privacyModeEnabled`. Phase 8.2 only adds a *third* code path to the same flag (the new `disablePrivacy()` for the toggle deselect case), not a third user-facing surface.
+- The polish opens **`helpers/Constants.kt` and `helpers/Config.kt`** again — both were re-frozen after Phase 8.1's strictly-additive opening. The new `Config.showMoodPopup` is again strictly additive (one new constant, one new property), parallel to Phase 8.1's `Config.showMoodBar`.
+
+### Privacy invariants
+
+`MoodEntry` storage is unchanged — integer ordinal valence (1–6) + timestamp only. The two new controller methods (`disablePrivacy`, `clearMoodForActiveSession`) write **no** new data — they only delete existing rows or flip the existing privacy flag. `Config.showMoodPopup` is a UI-only flag; turning it off changes nothing about what gets stored. The bubble messages are static strings shipped in `strings.xml` and never echo any captured content.
+
+### Gates re-run after each commit
+
+- `./gradlew assembleCoreDebug` — BUILD SUCCESSFUL.
+- `./gradlew testCoreDebugUnitTest` — BUILD SUCCESSFUL (no test changes; existing unit tests still pass).
