@@ -452,9 +452,19 @@ class DashboardActivity : SimpleActivity() {
     private fun renderPayload(payload: DashboardPayload) {
         latestPayload = payload
         val isEmpty = payload.ikd.totalSessions == 0
+        // Phase 9.18 follow-up: when a mood filter is active and produces
+        // zero sessions, keep the global header visible so the active-
+        // filter chip ✕ remains usable. Otherwise the user is trapped —
+        // tiles are inside the ViewPager which would also hide. Swap the
+        // empty-state message text to direct them at the chip ✕.
+        val emptyWithFilter = isEmpty && currentMoodFilter != null
+        binding.dashboardEmptyMessage.setText(
+            if (emptyWithFilter) R.string.dashboard_empty_for_mood_filter
+            else R.string.dashboard_empty_message
+        )
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
         binding.dashboardViewPager.beVisibleIf(!isEmpty)
-        binding.dashboardGlobalHeader.beVisibleIf(!isEmpty)
+        binding.dashboardGlobalHeader.beVisibleIf(!isEmpty || emptyWithFilter)
         if (isEmpty) return
 
         // Phase 9.14.1: the global KPI strip is gone — its six cells are

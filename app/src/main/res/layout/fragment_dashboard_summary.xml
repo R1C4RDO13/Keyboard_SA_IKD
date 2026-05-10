@@ -52,45 +52,42 @@
                 android:text="@string/summary_mood_section_title"
                 android:textStyle="bold" />
 
-            <HorizontalScrollView
+            <!-- Phase 9.18 follow-up: tiles distribute evenly across the
+                 available width via layout_weight=1 each. HorizontalScrollView
+                 wrapper dropped — six weighted tiles always fit even at
+                 narrow widths. -->
+            <LinearLayout
+                android:id="@+id/summary_mood_tiles_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fillViewport="false"
-                android:scrollbars="none">
+                android:orientation="horizontal"
+                android:weightSum="6">
 
-                <LinearLayout
-                    android:id="@+id/summary_mood_tiles_row"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                <include
+                    android:id="@+id/summary_mood_tile_happiness"
+                    layout="@layout/item_mood_tile" />
 
-                    <include
-                        android:id="@+id/summary_mood_tile_happiness"
-                        layout="@layout/item_mood_tile" />
+                <include
+                    android:id="@+id/summary_mood_tile_surprise"
+                    layout="@layout/item_mood_tile" />
 
-                    <include
-                        android:id="@+id/summary_mood_tile_surprise"
-                        layout="@layout/item_mood_tile" />
+                <include
+                    android:id="@+id/summary_mood_tile_disgust"
+                    layout="@layout/item_mood_tile" />
 
-                    <include
-                        android:id="@+id/summary_mood_tile_disgust"
-                        layout="@layout/item_mood_tile" />
+                <include
+                    android:id="@+id/summary_mood_tile_sadness"
+                    layout="@layout/item_mood_tile" />
 
-                    <include
-                        android:id="@+id/summary_mood_tile_sadness"
-                        layout="@layout/item_mood_tile" />
+                <include
+                    android:id="@+id/summary_mood_tile_fear"
+                    layout="@layout/item_mood_tile" />
 
-                    <include
-                        android:id="@+id/summary_mood_tile_fear"
-                        layout="@layout/item_mood_tile" />
+                <include
+                    android:id="@+id/summary_mood_tile_anger"
+                    layout="@layout/item_mood_tile" />
 
-                    <include
-                        android:id="@+id/summary_mood_tile_anger"
-                        layout="@layout/item_mood_tile" />
-
-                </LinearLayout>
-
-            </HorizontalScrollView>
+            </LinearLayout>
 
         </LinearLayout>
 
