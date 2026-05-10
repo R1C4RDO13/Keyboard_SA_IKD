@@ -331,6 +331,10 @@
          (e.g. user disabled gyro/accel and Trends has no sensor data, or
          the calendar heatmap card is hidden under TODAY). -->
     <string name="dashboard_tab_empty_message">No data for this view in the selected range.</string>
+    <!-- Phase 9.12: shorter tab labels for the top toggle group when the
+         section names overflow narrow widths. -->
+    <string name="dashboard_tab_label_daily_activity">Activity</string>
+    <string name="dashboard_tab_label_keystroke_dynamics">Keystrokes</string>
     <string name="dashboard_value_placeholder">—</string>
     <string name="dashboard_action_view">Insights</string>
     <string name="dashboard_menu_refresh">Refresh</string>

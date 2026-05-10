@@ -11,6 +11,7 @@ import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.commons.extensions.updateTextColors
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.FragmentDashboardMoodBinding
 import org.fossify.keyboard.databinding.ItemMoodDistributionRowBinding
@@ -74,6 +75,9 @@ class MoodFragment : DashboardFragment() {
     private fun applyCardThemeColors() {
         val ctx = context ?: return
         val view = _binding ?: return
+        // Phase 9.12: re-theme TextViews (legend labels, distribution
+        // counts, etc.) so the Mood tab tracks the user's Fossify theme.
+        activity?.updateTextColors(view.root)
         val bg = ctx.getProperBackgroundColor()
         view.dashboardMoodStackedChartCard.setCardBackgroundColor(bg)
         view.dashboardMoodDistributionCard.setCardBackgroundColor(bg)

@@ -19,21 +19,22 @@ import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.views.MyTextView
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.FragmentDashboardHabitsBinding
-import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.IkdQualityAggregator
 import org.fossify.keyboard.views.IkdLineChartView
-import java.util.Locale
 
 /**
- * Phase 9.11: Habits tab. Phase 9.3 KPI strip + four trend charts plus
- * the Phase 9.10 backspaces-vs-autocorrects scatter.
+ * Phase 9.11/9.12: Habits tab. Phase 9.12 dropped the internal Habits
+ * KPI strip — all four cells now live on the global KPI strip at the
+ * activity level (Avg session and Longest streak were the new additions;
+ * Sessions and Typing time were already there). The tab now contains
+ * only the four Phase 9.3 trend charts and the Phase 9.10 backspaces-
+ * vs-autocorrects scatter.
  *
- * The entire section is hidden when `totalSessions == 0`. The streak
- * KPI under TODAY collapses to "Today" / "—" via a new
- * `StreakUnit.HOURS` enum carried by `HabitsSnapshot`.
+ * The entire section is hidden when `totalSessions == 0`.
  */
 class HabitsFragment : DashboardFragment() {
 
@@ -60,10 +61,9 @@ class HabitsFragment : DashboardFragment() {
         val habits = payload.habits
         val quality = payload.quality
 
-        applyCardThemeColors()
+        applyThemeColors()
 
         val visible = habits.totalSessions > 0
-        view.dashboardHabitsKpiStrip.beVisibleIf(visible)
         if (!visible) {
             view.dashboardChartHabitsSessionDurationTitle.beGone()
             view.dashboardChartHabitsSessionDuration.beGone()
@@ -78,37 +78,6 @@ class HabitsFragment : DashboardFragment() {
             return
         }
         view.fragmentHabitsEmptyMessage.beGone()
-
-        val placeholder = getString(R.string.dashboard_value_placeholder)
-        val locale = Locale.getDefault()
-        view.dashboardHabitsKpiSessionsValue.text = habits.totalSessions.toString()
-        val typingMinutes = habits.totalTypingTimeMs.toDouble() / MS_PER_MINUTE
-        view.dashboardHabitsKpiTypingTimeValue.text = if (habits.totalTypingTimeMs <= 0L) {
-            placeholder
-        } else {
-            getString(R.string.dashboard_kpi_typing_time_value, String.format(locale, "%.1f", typingMinutes))
-        }
-        view.dashboardHabitsKpiAvgSessionValue.text = habits.avgSessionDurationMs?.let {
-            getString(R.string.dashboard_habits_avg_session_value, it / MS_PER_SECOND)
-        } ?: placeholder
-        // Phase 9.11: under TODAY, "streak" reduces to a binary
-        // present/absent on a single calendar day — show "Today" if the
-        // user typed at all today, otherwise the placeholder.
-        view.dashboardHabitsKpiStreakValue.text = when (habits.streakUnit) {
-            IkdHabitsAggregator.StreakUnit.HOURS -> {
-                if (habits.totalSessions > 0) {
-                    getString(R.string.dashboard_habits_streak_today)
-                } else {
-                    placeholder
-                }
-            }
-            IkdHabitsAggregator.StreakUnit.DAYS -> getString(
-                R.string.dashboard_habits_streak_days, habits.longestStreak,
-            )
-            IkdHabitsAggregator.StreakUnit.WEEKS -> getString(
-                R.string.dashboard_habits_streak_weeks, habits.longestStreak,
-            )
-        }
 
         val labels = habits.buckets.map { DashboardLabelFormat.formatBucketLabel(ctx, it.label, habits.range) }
         val durationMinutes = habits.buckets.map { it.avgSessionDurationMs?.toFloat()?.div(MS_PER_MINUTE) }
@@ -150,9 +119,16 @@ class HabitsFragment : DashboardFragment() {
         bindActivityQualityScatter(quality)
     }
 
-    private fun applyCardThemeColors() {
+    /**
+     * Phase 9.12: theming pass — push the user-selected Fossify theme
+     * onto every TextView/MaterialCardView under this fragment. Mirrors
+     * the discipline `EventFeedActivity.applyThemeColors()` uses.
+     */
+    private fun applyThemeColors() {
         val ctx = context ?: return
         val view = _binding ?: return
+        val activity = activity ?: return
+        activity.updateTextColors(view.root)
         view.dashboardActivityQualityCard.setCardBackgroundColor(ctx.getProperBackgroundColor())
     }
 
@@ -242,7 +218,6 @@ class HabitsFragment : DashboardFragment() {
 
     companion object {
         private const val MS_PER_MINUTE = 60_000L
-        private const val MS_PER_SECOND = 1_000.0
         private const val ALPHA_FULL = 255
         private const val FADE_MAX_ALPHA = 204
         private const val FADE_MIN_ALPHA = 51

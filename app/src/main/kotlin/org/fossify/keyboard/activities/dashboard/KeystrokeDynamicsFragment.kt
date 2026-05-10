@@ -17,6 +17,7 @@ import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.views.MyTextView
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.FragmentDashboardKeystrokeDynamicsBinding
@@ -95,6 +96,9 @@ class KeystrokeDynamicsFragment : DashboardFragment() {
     private fun applyCardThemeColors() {
         val ctx = context ?: return
         val view = _binding ?: return
+        // Phase 9.12: re-theme histograms titles, legend rows, donut
+        // centre text and outlier labels.
+        activity?.updateTextColors(view.root)
         val bg = ctx.getProperBackgroundColor()
         view.dashboardIkdDistributionCard.setCardBackgroundColor(bg)
         view.dashboardDwellDistributionCard.setCardBackgroundColor(bg)

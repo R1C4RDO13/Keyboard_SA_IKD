@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Phase 9.11: Habits tab content. Phase 9.3 KPI strip + four trend
-    charts plus the Phase 9.10 backspaces-vs-autocorrects scatter.
+    Phase 9.11/9.12: Habits tab content. Phase 9.12 dropped the internal
+    4-cell KPI strip — three of those values now live on the global
+    KPI strip at the activity level (Avg session + Longest streak), and
+    Sessions / Typing time were already there. Only the four trend charts
+    plus the Phase 9.10 backspaces-vs-autocorrects scatter remain.
 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -17,115 +20,11 @@
         android:orientation="vertical"
         android:padding="@dimen/normal_margin">
 
-        <!-- Phase 9.3: Habits KPI strip. -->
-        <LinearLayout
-            android:id="@+id/dashboard_habits_kpi_strip"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="gone"
-            android:weightSum="4">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_horizontal"
-                android:orientation="vertical">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/dashboard_habits_kpi_sessions_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dashboard_value_placeholder"
-                    android:textSize="@dimen/bigger_text_size"
-                    android:textStyle="bold" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dashboard_habits_kpi_sessions"
-                    android:textSize="@dimen/smaller_text_size" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_horizontal"
-                android:orientation="vertical">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/dashboard_habits_kpi_typing_time_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dashboard_value_placeholder"
-                    android:textSize="@dimen/bigger_text_size"
-                    android:textStyle="bold" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dashboard_habits_kpi_typing_time"
-                    android:textSize="@dimen/smaller_text_size" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_horizontal"
-                android:orientation="vertical">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/dashboard_habits_kpi_avg_session_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dashboard_value_placeholder"
-                    android:textSize="@dimen/bigger_text_size"
-                    android:textStyle="bold" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dashboard_habits_kpi_avg_session"
-                    android:textSize="@dimen/smaller_text_size" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_horizontal"
-                android:orientation="vertical">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/dashboard_habits_kpi_streak_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dashboard_value_placeholder"
-                    android:textSize="@dimen/bigger_text_size"
-                    android:textStyle="bold" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dashboard_habits_kpi_streak"
-                    android:textSize="@dimen/smaller_text_size" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
         <!-- Phase 9.3: Habits trend charts. -->
         <org.fossify.commons.views.MyTextView
             android:id="@+id/dashboard_chart_habits_session_duration_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/normal_margin"
             android:text="@string/dashboard_chart_habits_session_duration_title"
             android:textStyle="bold"
             android:visibility="gone" />

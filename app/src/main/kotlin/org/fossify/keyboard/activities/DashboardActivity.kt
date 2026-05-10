@@ -5,9 +5,12 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.chip.Chip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,20 +38,21 @@ import org.fossify.keyboard.extensions.ikdQualityAggregator
 import org.fossify.keyboard.extensions.ikdSensorAggregator
 import org.fossify.keyboard.extensions.moodDB
 import org.fossify.keyboard.helpers.IkdAggregator
+import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
 import java.util.Locale
 
 /**
- * Phase 9.11: the Insights screen is now a thin host. The activity owns
- *  - the global header (mood-filter chip row, range toggle, KPI strip),
+ * Phase 9.11/9.12: the Insights screen is now a thin host. The activity owns
+ *  - the global header (KPI strip, tab toggle, range toggle, mood-filter chip row),
  *  - the data hop (one `Dispatchers.IO` round-trip per `loadSnapshot`),
  *  - the empty-state view,
  *
  * and the rest lives in five `DashboardFragment` subclasses driven by a
- * [DashboardPagerAdapter] backing a [ViewPager2]. A
- * [com.google.android.material.navigationrail.NavigationRailView] on
- * the left edge is wired bidirectionally to the pager so vertical-tab
- * taps and horizontal swipes stay in sync.
+ * [DashboardPagerAdapter] backing a [ViewPager2]. Phase 9.12 dropped the
+ * NavigationRail in favour of a top-of-screen
+ * [MaterialButtonToggleGroup] styled identically to the range toggle —
+ * the user wanted the tab strip on top.
  *
  * Range, mood filter and active tab are persisted via
  * `onSaveInstanceState` (no new pref keys — Phase 9 Decision #2).
@@ -66,14 +70,36 @@ class DashboardActivity : SimpleActivity() {
 
     /**
      * Phase 9.11: latest payload from the most recent `loadSnapshot` run.
-     * Read by fragments via `(activity as DashboardActivity).latestPayload`
-     * when they become resumed — covers the swipe-to-tab case where a
-     * fragment's view is created after the data has already loaded.
+     * Fragments pull this on `onResume` via `renderFromHostIfReady` to
+     * cover the swipe-to-tab case where a fragment view is created after
+     * the data has already loaded.
      */
     var latestPayload: DashboardPayload? = null
         private set
 
     private lateinit var pagerAdapter: DashboardPagerAdapter
+
+    /**
+     * Phase 9.12: re-theme freshly attached fragment views. Material
+     * cards inside fragments inherit `?attr/colorSurface` by default,
+     * which on a dark Fossify theme renders as a near-white slab
+     * against a dark background. Re-running `applyThemeColors` once a
+     * fragment view is attached pushes the user-selected text/background
+     * tokens onto every `MyTextView` and `MaterialCardView` in the tab.
+     */
+    private val fragmentLifecycleCallbacks = object : FragmentManager.FragmentLifecycleCallbacks() {
+        override fun onFragmentViewCreated(
+            fm: FragmentManager,
+            f: Fragment,
+            v: android.view.View,
+            savedInstanceState: Bundle?,
+        ) {
+            if (f is DashboardFragment) {
+                (v as? android.view.ViewGroup)?.let { updateTextColors(it) }
+                latestPayload?.let { f.renderPayload(it) }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,17 +116,14 @@ class DashboardActivity : SimpleActivity() {
         }
 
         binding.apply {
-            setupEdgeToEdge(padBottomSystem = listOf(dashboardPagerContainer))
-            // Phase 9.11: each fragment owns its own NestedScrollView, so
-            // we don't have a single ScrollingView to wire to the appbar's
-            // material elevation listener at the activity level. Dropping
-            // the listener call leaves the appbar rendered correctly; the
-            // tiny scroll-elevation animation just doesn't fire.
+            setupEdgeToEdge(padBottomSystem = listOf(dashboardViewPager))
         }
+
+        supportFragmentManager.registerFragmentLifecycleCallbacks(fragmentLifecycleCallbacks, false)
 
         setupListeners()
         setupMoodFilterChips()
-        setupPagerAndRail(savedInstanceState)
+        setupPagerAndToggle(savedInstanceState)
     }
 
     override fun onResume() {
@@ -110,12 +133,18 @@ class DashboardActivity : SimpleActivity() {
             updateTextColors(dashboardGlobalHeader)
         }
         binding.dashboardEmptyMessage.setTextColor(getProperTextColor())
-        applyRangeToggleColors()
+        applyToggleGroupColors(binding.dashboardRangeGroup)
+        applyToggleGroupColors(binding.dashboardTabGroup)
         applyChipColors()
         // Phase 9.4: refresh chip-row visibility on every onResume — the
         // user may have just recorded their first mood entry.
         refreshMoodFilterAvailability()
         loadSnapshot()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        supportFragmentManager.unregisterFragmentLifecycleCallbacks(fragmentLifecycleCallbacks)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -126,32 +155,32 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
-     * Phase 9.11: wire the NavigationRailView to the ViewPager2 in both
-     * directions. Rail item taps drive `setCurrentItem`; pager scrolls
-     * (manual swipe) drive `setCheckedItem` so the rail tracks the
+     * Phase 9.12: wire the top tab toggle group to the ViewPager2 in both
+     * directions. Toggle taps drive `setCurrentItem`; pager scrolls
+     * (manual swipe) drive `check(buttonId)` so the toggle tracks the
      * current page. Restore the last tab index from `savedInstanceState`.
      */
-    private fun setupPagerAndRail(savedInstanceState: Bundle?) {
+    private fun setupPagerAndToggle(savedInstanceState: Bundle?) {
         pagerAdapter = DashboardPagerAdapter(this)
         binding.dashboardViewPager.adapter = pagerAdapter
         // Keep all five fragments in memory so swipe re-renders are instant
         // and the legend strips / chart caches survive page changes.
         binding.dashboardViewPager.offscreenPageLimit = DashboardPagerAdapter.TAB_COUNT - 1
 
-        binding.dashboardNavigationRail.setOnItemSelectedListener { item ->
-            val target = navItemIdToTabIndex(item.itemId)
+        binding.dashboardTabGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            val target = tabButtonIdToTabIndex(checkedId)
             if (target >= 0 && target != binding.dashboardViewPager.currentItem) {
                 binding.dashboardViewPager.currentItem = target
             }
-            true
         }
 
         binding.dashboardViewPager.registerOnPageChangeCallback(
             object : ViewPager2.OnPageChangeCallback() {
                 override fun onPageSelected(position: Int) {
-                    val itemId = tabIndexToNavItemId(position)
-                    if (binding.dashboardNavigationRail.selectedItemId != itemId) {
-                        binding.dashboardNavigationRail.selectedItemId = itemId
+                    val buttonId = tabIndexToTabButtonId(position)
+                    if (binding.dashboardTabGroup.checkedButtonId != buttonId) {
+                        binding.dashboardTabGroup.check(buttonId)
                     }
                 }
             }
@@ -160,10 +189,16 @@ class DashboardActivity : SimpleActivity() {
         val initialTab = savedInstanceState?.getInt(STATE_TAB_INDEX, DashboardPagerAdapter.TAB_TRENDS)
             ?: DashboardPagerAdapter.TAB_TRENDS
         binding.dashboardViewPager.setCurrentItem(initialTab, false)
-        binding.dashboardNavigationRail.selectedItemId = tabIndexToNavItemId(initialTab)
+        binding.dashboardTabGroup.check(tabIndexToTabButtonId(initialTab))
     }
 
-    private fun applyRangeToggleColors() {
+    /**
+     * Phase 9.12: shared colour application for both
+     * [MaterialButtonToggleGroup]s on the screen (range toggle + tab
+     * toggle). Unchecked: theme primary text + transparent background;
+     * checked: contrast text on a primary-tinted background.
+     */
+    private fun applyToggleGroupColors(group: MaterialButtonToggleGroup) {
         val primary = getProperPrimaryColor()
         val onPrimary = primary.getContrastColor()
         val checkedState = intArrayOf(android.R.attr.state_checked)
@@ -174,15 +209,11 @@ class DashboardActivity : SimpleActivity() {
         val bgColors = ColorStateList(states, intArrayOf(primary, Color.TRANSPARENT))
         val strokeColors = ColorStateList(states, intArrayOf(primary, primary))
 
-        listOf(
-            binding.dashboardRangeToday,
-            binding.dashboardRangeWeek,
-            binding.dashboardRangeMonth,
-            binding.dashboardRangeAll,
-        ).forEach { button: MaterialButton ->
-            button.setTextColor(textColors)
-            button.backgroundTintList = bgColors
-            button.strokeColor = strokeColors
+        for (i in 0 until group.childCount) {
+            val child = group.getChildAt(i) as? MaterialButton ?: continue
+            child.setTextColor(textColors)
+            child.backgroundTintList = bgColors
+            child.strokeColor = strokeColors
         }
     }
 
@@ -333,13 +364,36 @@ class DashboardActivity : SimpleActivity() {
         latestPayload = payload
         val isEmpty = payload.ikd.totalSessions == 0
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
-        binding.dashboardPagerContainer.beVisibleIf(!isEmpty)
+        binding.dashboardViewPager.beVisibleIf(!isEmpty)
         binding.dashboardGlobalHeader.beVisibleIf(!isEmpty)
         if (isEmpty) return
 
+        renderKpiStrip(payload)
+
+        // Dispatch the payload to every attached fragment. Fragments that
+        // are not currently visible still render so a swipe to them is
+        // instant. Fragments not yet created (offscreenPageLimit overflow)
+        // pick the latest payload up via `renderFromHostIfReady` on
+        // `onResume` / their first lifecycle attach.
+        for (fragment in supportFragmentManager.fragments) {
+            if (fragment is DashboardFragment && fragment.view != null) {
+                fragment.renderPayload(payload)
+            }
+        }
+    }
+
+    /**
+     * Phase 9.12: 6-cell global KPI strip. Sessions · Total typing time ·
+     * Avg WPM · Error rate · Avg session duration · Longest streak.
+     * The last two cells are pulled from the Habits aggregator output —
+     * which the activity already gathers on its single Dispatchers.IO
+     * hop — and replace the per-tab Habits KPI strip.
+     */
+    private fun renderKpiStrip(payload: DashboardPayload) {
         val placeholder = getString(R.string.dashboard_value_placeholder)
         val locale = Locale.getDefault()
         val snap = payload.ikd
+        val habits = payload.habits
         val minutes = snap.totalTypingTimeMs.toDouble() / MS_PER_MINUTE
 
         binding.dashboardKpiSessionsValue.text = snap.totalSessions.toString()
@@ -353,15 +407,24 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardKpiErrorRateValue.text = snap.avgErrorRatePct
             ?.let { getString(R.string.dashboard_kpi_error_rate_value, it) } ?: placeholder
 
-        // Dispatch the payload to every attached fragment. Fragments that
-        // are not currently visible still render so a swipe to them is
-        // instant. Fragments not yet created (offscreenPageLimit overflow)
-        // pick the latest payload up via `renderFromHostIfReady` on
-        // `onResume` / their first lifecycle attach.
-        for (fragment in supportFragmentManager.fragments) {
-            if (fragment is DashboardFragment && fragment.view != null) {
-                fragment.renderPayload(payload)
+        binding.dashboardKpiAvgSessionValue.text = habits.avgSessionDurationMs?.let {
+            getString(R.string.dashboard_habits_avg_session_value, it / MS_PER_SECOND)
+        } ?: placeholder
+
+        binding.dashboardKpiStreakValue.text = when (habits.streakUnit) {
+            IkdHabitsAggregator.StreakUnit.HOURS -> {
+                if (habits.totalSessions > 0) {
+                    getString(R.string.dashboard_habits_streak_today)
+                } else {
+                    placeholder
+                }
             }
+            IkdHabitsAggregator.StreakUnit.DAYS -> getString(
+                R.string.dashboard_habits_streak_days, habits.longestStreak,
+            )
+            IkdHabitsAggregator.StreakUnit.WEEKS -> getString(
+                R.string.dashboard_habits_streak_weeks, habits.longestStreak,
+            )
         }
     }
 
@@ -380,7 +443,7 @@ class DashboardActivity : SimpleActivity() {
         else -> IkdAggregator.Range.WEEK
     }
 
-    private fun navItemIdToTabIndex(itemId: Int): Int = when (itemId) {
+    private fun tabButtonIdToTabIndex(buttonId: Int): Int = when (buttonId) {
         R.id.dashboard_tab_trends -> DashboardPagerAdapter.TAB_TRENDS
         R.id.dashboard_tab_daily_activity -> DashboardPagerAdapter.TAB_DAILY_ACTIVITY
         R.id.dashboard_tab_mood -> DashboardPagerAdapter.TAB_MOOD
@@ -389,7 +452,7 @@ class DashboardActivity : SimpleActivity() {
         else -> -1
     }
 
-    private fun tabIndexToNavItemId(position: Int): Int = when (position) {
+    private fun tabIndexToTabButtonId(position: Int): Int = when (position) {
         DashboardPagerAdapter.TAB_TRENDS -> R.id.dashboard_tab_trends
         DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.id.dashboard_tab_daily_activity
         DashboardPagerAdapter.TAB_MOOD -> R.id.dashboard_tab_mood
@@ -404,5 +467,6 @@ class DashboardActivity : SimpleActivity() {
         private const val STATE_TAB_INDEX = "dashboard_tab_index"
         private const val MOOD_FILTER_ALL_SENTINEL = -1
         private const val MS_PER_MINUTE = 60_000L
+        private const val MS_PER_SECOND = 1_000.0
     }
 }

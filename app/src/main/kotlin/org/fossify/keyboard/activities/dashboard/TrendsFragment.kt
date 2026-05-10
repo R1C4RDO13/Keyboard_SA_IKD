@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import org.fossify.commons.extensions.beVisibleIf
+import org.fossify.commons.extensions.updateTextColors
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.FragmentDashboardTrendsBinding
 
@@ -36,6 +37,12 @@ class TrendsFragment : DashboardFragment() {
     override fun renderPayload(payload: DashboardPayload) {
         val ctx = context ?: return
         val view = _binding ?: return
+
+        // Phase 9.12: re-theme on every render so chart titles and the
+        // empty placeholder pick up the user's Fossify theme. The
+        // IkdLineChartView already pulls its own axis colours from the
+        // theme on construction.
+        activity?.updateTextColors(view.root)
 
         val snap = payload.ikd
         val sensor = payload.sensor

@@ -8,6 +8,7 @@ import android.widget.Toast
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getProperBackgroundColor
+import org.fossify.commons.extensions.updateTextColors
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.FragmentDashboardDailyActivityBinding
 import org.fossify.keyboard.helpers.IkdActivityAggregator
@@ -97,6 +98,8 @@ class DailyActivityFragment : DashboardFragment() {
         val ctx = context ?: return
         val bg = ctx.getProperBackgroundColor()
         val view = _binding ?: return
+        // Phase 9.12: re-theme card titles + DOW labels under each heatmap.
+        activity?.updateTextColors(view.root)
         view.dashboardCalendarHeatmapCard.setCardBackgroundColor(bg)
         view.dashboardDailyKeypressCard.setCardBackgroundColor(bg)
         view.dashboardHourlyCard.setCardBackgroundColor(bg)

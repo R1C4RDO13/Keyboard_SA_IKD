@@ -48,4 +48,8 @@
     <!-- Phase 9.9 — Usage Map bubbles -->
     <dimen name="bubble_map_min_radius_dp">1dp</dimen>
     <dimen name="bubble_map_max_radius_dp">12dp</dimen>
+
+    <!-- Phase 9.12 — global KPI strip cell minimum width when wrapped in
+         a horizontal scroller (6 cells overflow narrow phones). -->
+    <dimen name="dashboard_kpi_cell_min_width">72dp</dimen>
 </resources>
