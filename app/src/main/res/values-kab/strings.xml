@@ -6,7 +6,6 @@
     <string name="flags">Anayen</string>
     <string name="clipboard_recent">Melmi kan</string>
     <string name="keycode_delete">Kkes</string>
-    <string name="app_launcher_name">Anasiw</string>
     <string name="emojis">Imujiten</string>
     <string name="activities">Irmad</string>
     <string name="objects">Tiɣawsiwin</string>
@@ -27,7 +26,7 @@
     <string name="recently_used">Wid yettwaseqdacen tagara</string>
     <string name="animals_and_nature">Iɣersiwen d ugama</string>
     <string name="voice_typing_method">Askar n usekcem s taɣect</string>
-    <string name="redirection_note">Ma ulac aɣilif, rmed anasiw Fossify deg ugdil i d-iteddun akken ad yili unasiw. Sit \'Uɣal\' seld dayen irmed.</string>
+    <string name="redirection_note">Ma ulac aɣilif, rmed MoodScript deg ugdil i d-iteddun akken ad yili unasiw. Sit \'Uɣal\' seld dayen irmed.</string>
     <string name="manage_clipboard_items">Sefrek tacfawit n yiferdisen</string>
     <string name="manage_clipboard_empty">Tacfawit-ik d tilemt.</string>
     <string name="manage_clipboard_label">Ticki tneɣleḍ kran n uḍris, ad d-iban dagi. Tzemreḍ daɣen ad tesneṭḍeḍ iklipin akken ur ttruḥun ara ticki.</string>

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Клавіятура</string>
     <string name="change_keyboard">Змяніць клавіятуру</string>
     <string name="manage_clipboard_items">Кіраванне элементамі буфера абмену</string>
     <string name="manage_clipboard_empty">Ваш буфер абмену пусты.</string>
@@ -30,7 +29,7 @@
     <string name="show_key_borders">Паказаць контуры клавіш</string>
     <string name="show_numbers_row">Паказаць лічбы ў асобным радку</string>
     <string name="emojis">Эмодзі</string>
-    <string name="redirection_note">Кклі ласка, уключыце Клавіятуру Fossify на наступным экране, каб яна стала даступнай. Націсніце \'Назад\' калі ўключыце.</string>
+    <string name="redirection_note">Кклі ласка, уключыце MoodScript на наступным экране, каб яна стала даступнай. Націсніце \'Назад\' калі ўключыце.</string>
     <string name="show_emoji_key">Паказваць кнопку эмодзі</string>
     <string name="manage_keyboard_languages">Кіраванне мовамі клавіятуры</string>
     <string name="keycode_space">Прабел</string>

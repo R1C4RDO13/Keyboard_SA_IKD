@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Näppäimistö</string>
     <string name="change_keyboard">Vaihda näppäimistö</string>
     <string name="manage_clipboard_items">Hallitse leikepöydän kohteita</string>
     <string name="manage_clipboard_empty">Leikepöytä on tyhjä.</string>
@@ -31,7 +30,7 @@
     <string name="manage_keyboard_languages">Hallitse näppäimistön kieliä</string>
     <string name="smileys_and_emotions">Hymiöt ja tunteet</string>
     <string name="travel_and_places">Matkailu ja paikat</string>
-    <string name="redirection_note">Ota Fossify Keyboard -näppäimistö käyttöön seuraavassa, avautuvassa näytössä, tehdäksesi siitä käytettävissä olevan näppäimistön. Paina \'Takaisin\' kun se on otettu käyttöön.</string>
+    <string name="redirection_note">Ota MoodScript -näppäimistö käyttöön seuraavassa, avautuvassa näytössä, tehdäksesi siitä käytettävissä olevan näppäimistön. Paina \'Takaisin\' kun se on otettu käyttöön.</string>
     <string name="start_sentences_capitalized">Aloita lauseet isolla alkukirjaimella</string>
     <string name="animals_and_nature">Eläimet ja luonto</string>
     <string name="objects">Esineet</string>

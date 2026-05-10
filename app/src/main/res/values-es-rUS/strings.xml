@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Teclado</string>
-    <string name="redirection_note">Habilite el teclado Fossify en la siguiente pantalla para convertirlo en un teclado disponible. Presione \'Atrás\' una vez habilitado.</string>
+    <string name="redirection_note">Habilite el MoodScript en la siguiente pantalla para convertirlo en un teclado disponible. Presione \'Atrás\' una vez habilitado.</string>
     <string name="change_keyboard">Cambiar Teclado</string>
 </resources>

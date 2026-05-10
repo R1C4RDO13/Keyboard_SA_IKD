@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Klávesnica</string>
     <string name="change_keyboard">Zmeniť klávesnicu</string>
     <string name="manage_clipboard_items">Spravovať položky v schránke</string>
     <string name="manage_clipboard_empty">Vaša schránka je prázdna.</string>
@@ -30,7 +29,7 @@
     <string name="show_numbers_row">Zobraziť čísla na samostatnom riadku</string>
     <string name="start_sentences_capitalized">Začať vety veľkým písmenom</string>
     <string name="emojis">Emoji</string>
-    <string name="redirection_note">Prosím povoľte Fossify Klávesnicu na ďalšej obrazovke, aby bola dostupná na používanie. Potom stlačte \'Späť\'.</string>
+    <string name="redirection_note">Prosím povoľte MoodScript na ďalšej obrazovke, aby bola dostupná na používanie. Potom stlačte \'Späť\'.</string>
     <string name="manage_keyboard_languages">Spravovať klávesnice</string>
     <string name="keycode_shift">Shift</string>
     <string name="keycode_enter">Enter</string>

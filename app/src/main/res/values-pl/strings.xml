@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Klawiatura</string>
-    <string name="redirection_note">Włącz Fossify Keyboard na następnym ekranie, aby stała się dostępną klawiaturą. Naciśnij przycisk Wstecz po włączeniu.</string>
+    <string name="redirection_note">Włącz MoodScript na następnym ekranie, aby stała się dostępną klawiaturą. Naciśnij przycisk Wstecz po włączeniu.</string>
     <string name="change_keyboard">Zmień klawiaturę</string>
     <string name="manage_clipboard_items">Zarządzaj elementami schowka</string>
     <string name="manage_clipboard_empty">Twój schowek jest pusty.</string>

@@ -13,8 +13,6 @@ import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
-import org.fossify.commons.helpers.LICENSE_GSON
-import org.fossify.commons.models.FAQItem
 import org.fossify.keyboard.BuildConfig
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ActivityMainBinding
@@ -31,6 +29,13 @@ class MainActivity : SimpleActivity() {
         refreshMenuItems()
 
         binding.apply {
+            // Phase 10: explicitly set the toolbar title so it always
+            // reads "MoodScript". `setupTopAppBar` from Commons does not
+            // reliably set a title for activities without an explicit
+            // `android:label`, leaving the toolbar empty / stale on some
+            // configurations.
+            mainToolbar.title = getString(R.string.app_launcher_name)
+
             setupEdgeToEdge(padBottomSystem = listOf(mainNestedScrollview))
             setupMaterialScrollListener(binding.mainNestedScrollview, binding.mainAppbar)
 
@@ -87,15 +92,11 @@ class MainActivity : SimpleActivity() {
     }
 
     private fun launchAbout() {
-        val licenses = LICENSE_GSON
-
-        val faqItems = ArrayList<FAQItem>()
-        if (!resources.getBoolean(R.bool.hide_google_relations)) {
-            faqItems.add(FAQItem(R.string.faq_2_title_commons, R.string.faq_2_text_commons))
-            faqItems.add(FAQItem(R.string.faq_6_title_commons, R.string.faq_6_text_commons))
-        }
-
-        startAboutActivity(R.string.app_name, licenses, BuildConfig.VERSION_NAME, faqItems, true)
+        // Phase 10 — launch the local MoodScript AboutActivity instead of the
+        // Commons Compose-based one. The Commons class is final + Compose-only
+        // with no public extension hooks, so we build a small XML-based screen
+        // that surfaces MoodScript-led copy plus a Fossify upstream credit.
+        startActivity(Intent(this, AboutActivity::class.java))
     }
 
     private fun updateChangeKeyboardColor() {

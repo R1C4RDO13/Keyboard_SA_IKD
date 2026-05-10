@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Tipkovnica</string>
     <string name="change_keyboard">Spremeni tipkovnico</string>
     <string name="manage_clipboard_items">Upravljaj elemente odložišča</string>
     <string name="manage_clipboard_empty">Vaše odložišče je prazno.</string>

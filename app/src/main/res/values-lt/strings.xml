@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Klaviatūra</string>
     <string name="change_keyboard">Keisti klaviatūrą</string>
     <string name="clear_clipboard_data">Valyti iškarpinės duomenis</string>
     <string name="clear_clipboard_data_confirmation">Ar tikrai norite išvalyti iškarpinės duomenis\?</string>
     <string name="keycode_mode_change">Keisti klaviatūros tipą</string>
     <string name="show_clipboard_content">Jei prieinama, rodyti iškarpinės turinį</string>
-    <string name="redirection_note">Tolesniame ekrane įjunkite „Fossify Keyboard“, kad ji taptų pasiekiama klaviatūra. Įjungę spauskite „Atgal“.</string>
+    <string name="redirection_note">Tolesniame ekrane įjunkite „MoodScript“, kad ji taptų pasiekiama klaviatūra. Įjungę spauskite „Atgal“.</string>
     <string name="manage_clipboard_items">Tvarkyti iškarpinės elementus</string>
     <string name="manage_clipboard_empty">Jūsų iškarpinė tuščia.</string>
     <string name="manage_clipboard_label">Kai nukopijuosite tekstą, jis bus rodomas čia. Taip pat galite prisegti iškarpas, tad jie vėliau nepradingtų.</string>

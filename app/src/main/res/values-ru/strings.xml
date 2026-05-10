@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Клавиатура</string>
     <string name="change_keyboard">Сменить клавиатуру</string>
     <string name="manage_clipboard_items">Управлять данными из буфера обмена</string>
     <string name="manage_clipboard_empty">Ваш буфер обмена пуст.</string>
@@ -30,7 +29,7 @@
     <string name="show_numbers_row">Показывать цифры отдельной строкой</string>
     <string name="start_sentences_capitalized">Начинать предложения с заглавной буквы</string>
     <string name="emojis">Эмодзи</string>
-    <string name="redirection_note">Включите Fossify Keyboard на следующем экране, чтобы сделать её доступной для использования. Нажмите \"Назад\" после включения.</string>
+    <string name="redirection_note">Включите MoodScript на следующем экране, чтобы сделать её доступной для использования. Нажмите \"Назад\" после включения.</string>
     <string name="keycode_shift">Shift</string>
     <string name="keycode_enter">Ввод</string>
     <string name="manage_keyboard_languages">Управление языками клавиатуры</string>

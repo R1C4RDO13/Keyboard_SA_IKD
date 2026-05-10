@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Tipkovnica</string>
     <string name="change_keyboard">Promijeni tipkovnicu</string>
     <string name="manage_clipboard_items">Upravljaj stavkama međuspremnika</string>
     <string name="manage_clipboard_empty">Tvoj međuspremnik je prazan.</string>
@@ -29,7 +28,7 @@
     <string name="show_numbers_row">Pokaži brojeve u zasebnom retku</string>
     <string name="start_sentences_capitalized">Počni rečenice s velikim slovom</string>
     <string name="emojis">Emoji</string>
-    <string name="redirection_note">Omogući Fossify tipkovnicu na sljedećem ekranu kako bi bila dostupna tipkovnica. Pritisni „Natrag” kada je omogućena.</string>
+    <string name="redirection_note">Omogući MoodScript na sljedećem ekranu kako bi bila dostupna tipkovnica. Pritisni „Natrag” kada je omogućena.</string>
     <string name="keycode_space">Razmaknica</string>
     <string name="keycode_shift">Shift</string>
     <string name="keycode_enter">Enter</string>

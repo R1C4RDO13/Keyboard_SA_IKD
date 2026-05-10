@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Tastatur</string>
     <string name="change_keyboard">Skift tastatur</string>
     <string name="manage_clipboard_items">Administrer elementer i udklipsholder</string>
     <string name="manage_clipboard_empty">Din udklipsholder er tom.</string>
@@ -19,7 +18,7 @@
     <string name="show_popup">Vis en popup ved tastetryk</string>
     <string name="vibrate_on_keypress">Vibrér ved tastetryk</string>
     <string name="keyboard_language">Tastatursprog</string>
-    <string name="redirection_note">Aktivér Fossify Tastatur på næste skærm for at gøre den tilgængelig. Tryk på \'Tilbage\', når det er aktiveret.</string>
+    <string name="redirection_note">Aktivér MoodScript på næste skærm for at gøre den tilgængelig. Tryk på \'Tilbage\', når det er aktiveret.</string>
     <string name="clipboard">Udklipsholder</string>
     <string name="pin_text">Fastgør tekst</string>
     <string name="export_clipboard_items">Eksportér elementer fra udklipsholder</string>

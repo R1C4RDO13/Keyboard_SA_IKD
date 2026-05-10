@@ -1,6 +1,6 @@
-# KeyboardSA — Behavioral Analytics Keyboard
+# MoodScript — Behavioural-Analytics Keyboard
 
-A research-grade Android keyboard for capturing keystroke dynamics and device sensor data during natural typing. Based on the open-source [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard).
+**MoodScript** is a research-grade Android keyboard that captures keystroke timing, kinematic sensor data, and self-reported mood signals during everyday typing, then turns them into private on-device insights about anxiety, routine, and wellbeing. Built on the open-source [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard) — all upstream features remain functional.
 
 ## Project Goal
 
@@ -46,7 +46,7 @@ Detailed implementation plans:
 
 ## Based On
 
-This project is a fork of [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard), an open-source, privacy-focused Android keyboard. All original Fossify Keyboard features remain functional:
+MoodScript is a fork of [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard), an open-source, privacy-focused Android keyboard. All original Fossify Keyboard features remain functional:
 
 - Fully offline operation (no internet permission)
 - Multiple languages and layouts

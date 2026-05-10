@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Clavier</string>
     <string name="change_keyboard">Changer de clavier</string>
     <string name="manage_clipboard_items">Gérer les éléments du presse-papiers</string>
     <string name="manage_clipboard_empty">Votre presse-papiers est vide.</string>
@@ -32,7 +31,7 @@
     <string name="show_numbers_row">Afficher les chiffres sur une ligne distincte</string>
     <string name="start_sentences_capitalized">Commencer les phrases par une majuscule</string>
     <string name="emojis">Émojis</string>
-    <string name="redirection_note">Veuillez activer le clavier Fossify sur l\'écran suivant, pour qu\'il soit disponible. Appuyez sur \"Retour\" une fois l\'option activée.</string>
+    <string name="redirection_note">Veuillez activer le MoodScript sur l\'écran suivant, pour qu\'il soit disponible. Appuyez sur \"Retour\" une fois l\'option activée.</string>
     <string name="smileys_and_emotions">Smileys et émoticônes</string>
     <string name="symbols">Symboles</string>
     <string name="recently_used">Utilisé récemment</string>

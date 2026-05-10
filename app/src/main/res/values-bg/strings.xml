@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Клавиатура</string>
     <string name="change_keyboard">Промяна на клавиатура</string>
     <string name="manage_clipboard_items">Управление на клипборд елементи</string>
     <string name="manage_clipboard_empty">Вашият клипборд е празен.</string>

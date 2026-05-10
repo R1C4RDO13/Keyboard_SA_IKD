@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Tastiera</string>
     <string name="change_keyboard">Cambia la tastiera</string>
     <string name="manage_clipboard_items">Gestisci gli elementi degli appunti</string>
     <string name="manage_clipboard_empty">Gli appunti sono vuoti.</string>
@@ -30,7 +29,7 @@
     <string name="start_sentences_capitalized">Inizia le frasi con la lettera maiuscola</string>
     <string name="show_emoji_key">Mostra tasto emoji</string>
     <string name="emojis">Emoji</string>
-    <string name="redirection_note">Si prega di abilitare Tastiera Fossify nella schermata successiva per renderla disponibile. Una volta abilitata, premi \"Indietro\".</string>
+    <string name="redirection_note">Si prega di abilitare MoodScript nella schermata successiva per renderla disponibile. Una volta abilitata, premi \"Indietro\".</string>
     <string name="clipboard">Appunti</string>
     <string name="clipboard_recent">Recente</string>
     <string name="objects">Oggetti</string>

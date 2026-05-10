@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Тастатура</string>
     <string name="change_keyboard">Промените тастатуру</string>
     <string name="manage_clipboard_items">Управљајте ставкама међумеморије</string>
     <string name="manage_clipboard_empty">Ваш међуспремник је празан.</string>
@@ -30,6 +29,6 @@
     <string name="show_key_borders">Прикажи ивице кључева</string>
     <string name="show_numbers_row">Прикажи бројеве у посебном реду</string>
     <string name="emojis">Емоји</string>
-    <string name="redirection_note">Молимо те, омогући Fossify Keyboard на следећем екрану да би постала доступна. Након омогућавања, притисните ‘Назад.</string>
+    <string name="redirection_note">Молимо те, омогући MoodScript на следећем екрану да би постала доступна. Након омогућавања, притисните ‘Назад.</string>
     <string name="manage_keyboard_languages">Управљај језицима тастатуре</string>
 </resources>

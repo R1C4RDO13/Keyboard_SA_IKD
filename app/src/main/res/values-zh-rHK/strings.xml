@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">鍵盤</string>
-    <string name="redirection_note">請在下一個畫面中啟用 Fossify 鍵盤，使其變為可以使用的鍵盤。啟用後請按「返回」。</string>
+    <string name="redirection_note">請在下一個畫面中啟用 MoodScript，使其變為可以使用的鍵盤。啟用後請按「返回」。</string>
     <string name="change_keyboard">更改鍵盤</string>
     <string name="manage_clipboard_items">管理剪貼簿項目</string>
     <string name="manage_clipboard_empty">您的剪貼簿是空的。</string>

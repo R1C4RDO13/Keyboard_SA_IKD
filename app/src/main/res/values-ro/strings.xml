@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Tastatură</string>
     <string name="change_keyboard">Schimbați tastatura</string>
     <string name="manage_clipboard_items">Gestionați elementele din clipboard</string>
     <string name="manage_clipboard_empty">Clipboard-ul dvs. este gol.</string>
@@ -31,7 +30,7 @@
     <string name="show_numbers_row">Arată numerele pe un rând separat</string>
     <string name="objects">Obiecte</string>
     <string name="manage_keyboard_languages">Gestionați limbile tastaturii</string>
-    <string name="redirection_note">Vă rugăm să activați Fossify Keyboard pe următorul ecran, pentru a deveni o tastatură disponibilă. Apăsați „Înapoi” odată activat.</string>
+    <string name="redirection_note">Vă rugăm să activați MoodScript pe următorul ecran, pentru a deveni o tastatură disponibilă. Apăsați „Înapoi” odată activat.</string>
     <string name="show_key_borders">Arată marginile tastelor</string>
     <string name="symbols">Simboluri</string>
     <string name="travel_and_places">Locații și călătorii</string>
