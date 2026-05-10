@@ -20,7 +20,7 @@ Quick-access summary of phase completion. For detailed scope of each phase see [
 | 8.5 | Collapsible Mood Bar with Persistent Standing Rating + Inactivity Reset | **Planned** | [Phase8.5_Plan.md](Phase8/Phase8.5_Plan.md) | not started |
 | 9 | Global Insights Expansion | Implemented (10 sub-phases; absorbs Phase 11) | [Phase9_Plan.md](Phase9/Phase9_Plan.md) | landed on `main` |
 | 9.11 | Insights — TODAY range + vertical tabs | Implemented | [9.11 sub-plan](Phase9/sub_plans/9.11_today_filter_and_tabs.md) | landed on `main` |
-| 10 | Rebranding & New Identity | **Planned (next)** | — | not started |
+| 10 | Rebranding & New Identity (MoodScript) | **Planned (next)** | [Phase10_Plan.md](Phase10/Phase10_Plan.md) | not started |
 | ~~11~~ | ~~Usage Map & Daily Activity Charts~~ | ~~Planned~~ — **deleted; absorbed into Phase 9.5–9.10** | — | — |
 
 ## Schema state
