@@ -146,9 +146,9 @@
     <string name="info_habits_sessions_formula">value = COUNT(sessions) per bucket</string>
 
     <string name="info_habits_error_rate_title">Avg error rate</string>
-    <string name="info_habits_error_rate_desc">Per-bucket error rate. Numerator: sum of correction weights (BACKSPACE chars deleted + AUTOCORRECT replaced spans). Denominator on this Habits chart is the bucket\'s non-autocorrect keystroke count, including BACKSPACE.</string>
-    <string name="info_habits_error_rate_interpretation">Reads slightly differently from the Trends error chart and the global KPI. Trends and the KPI use productive keystrokes (excluding both BACKSPACE and AUTOCORRECT). Numbers here are usually a touch lower for the same data.</string>
-    <string name="info_habits_error_rate_formula">errorRate = 100 × Σ correction_weight / non_autocorrect_keystrokes</string>
+    <string name="info_habits_error_rate_desc">Per-bucket weighted error rate. Numerator: sum of correction weights (BACKSPACE chars deleted + AUTOCORRECT replaced spans). Denominator: productive keystrokes — events that produced kept text (excludes both BACKSPACE and AUTOCORRECT).</string>
+    <string name="info_habits_error_rate_interpretation">Same formula as the Trends error chart and the global KPI, just bucketed by day or week. Higher values mean a larger share of your typing in that bucket was deletion or autocorrect activity.</string>
+    <string name="info_habits_error_rate_formula">errorRate = 100 × Σ correction_weight / productive_keystrokes\nproductive_keystrokes = events − BACKSPACE − AUTOCORRECT</string>
 
     <string name="info_habits_flight_title">Avg flight time</string>
     <string name="info_habits_flight_desc">Average flight time per bucket — the gap between releasing one key and pressing the next. The first event of every session is excluded (no previous key to measure from).</string>

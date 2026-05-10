@@ -23,6 +23,10 @@ class IkdHabitsAggregatorTest {
         avgFlightMs: Double? = null,
         correctionWeight: Int = 0,
         keystrokeCount: Int = 0,
+        // Defaults to `keystrokeCount` so existing fixtures (no BACKSPACE
+        // rows) keep their previously-asserted error rates. New fixtures
+        // pass `productiveKeystrokes` explicitly when they have BACKSPACE.
+        productiveKeystrokes: Int = keystrokeCount,
     ) = HabitsBucketRow(
         bucket = bucket,
         sessionCount = sessionCount,
@@ -30,6 +34,7 @@ class IkdHabitsAggregatorTest {
         avgFlightMs = avgFlightMs,
         correctionWeight = correctionWeight,
         keystrokeCount = keystrokeCount,
+        productiveKeystrokes = productiveKeystrokes,
     )
 
     private fun bucket(sessionCount: Int) = HabitsBucket(

@@ -10,9 +10,11 @@ import androidx.room.ColumnInfo
  * Habits aggregator's streak helper can walk the list directly.
  *
  * `avgFlightMs` is null when the bucket has zero events with `flight_time_ms >= 0`
- * (only first-event sentinels). `correctionWeight` and `keystrokeCount` follow
- * the Phase 7.1 convention — weight = real chars deleted / replaced;
- * keystrokeCount excludes AUTOCORRECT rows (matches WPM denominator).
+ * (only first-event sentinels). `correctionWeight` is the per-bucket sum of
+ * `correction_weight`. `keystrokeCount` excludes AUTOCORRECT rows (matches
+ * the WPM denominator). `productiveKeystrokes` excludes both AUTOCORRECT
+ * and BACKSPACE rows — used as the error-rate denominator so it matches
+ * `IkdAggregator`'s formula post the `569f331b` fix.
  */
 data class HabitsBucketRow(
     @ColumnInfo(name = "bucket") val bucket: String,
@@ -21,4 +23,5 @@ data class HabitsBucketRow(
     @ColumnInfo(name = "avgFlightMs") val avgFlightMs: Double?,
     @ColumnInfo(name = "correctionWeight") val correctionWeight: Int,
     @ColumnInfo(name = "keystrokeCount") val keystrokeCount: Int,
+    @ColumnInfo(name = "productiveKeystrokes") val productiveKeystrokes: Int,
 )

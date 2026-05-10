@@ -141,8 +141,13 @@ class IkdHabitsAggregator(private val db: IkdDatabase) {
                 } else {
                     null
                 }
-                val errorRate = if (row.keystrokeCount > 0) {
-                    PCT_MULTIPLIER * row.correctionWeight / row.keystrokeCount.toDouble()
+                // Productive-keystroke denominator (excludes both BACKSPACE
+                // and AUTOCORRECT) — matches IkdAggregator post the
+                // `569f331b` fix. Without this, the Habits chart would
+                // report a different error rate from the global KPI / Trends
+                // chart for the same range.
+                val errorRate = if (row.productiveKeystrokes > 0) {
+                    PCT_MULTIPLIER * row.correctionWeight / row.productiveKeystrokes.toDouble()
                 } else {
                     null
                 }

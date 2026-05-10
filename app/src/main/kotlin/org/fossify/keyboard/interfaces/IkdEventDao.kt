@@ -160,7 +160,8 @@ interface IkdEventDao {
             COALESCE(s.totalDurationMs, 0) AS totalDurationMs,
             e.avgFlightMs AS avgFlightMs,
             COALESCE(e.correctionWeight, 0) AS correctionWeight,
-            COALESCE(e.keystrokeCount, 0) AS keystrokeCount
+            COALESCE(e.keystrokeCount, 0) AS keystrokeCount,
+            COALESCE(e.productiveKeystrokes, 0) AS productiveKeystrokes
         FROM (
             SELECT
                 strftime(:bucketFormat, started_at / 1000, 'unixepoch', 'localtime') AS bucket,
@@ -178,7 +179,8 @@ interface IkdEventDao {
                 strftime(:bucketFormat, timestamp / 1000, 'unixepoch', 'localtime') AS bucket,
                 AVG(CASE WHEN flight_time_ms >= 0 THEN flight_time_ms END) AS avgFlightMs,
                 SUM(correction_weight) AS correctionWeight,
-                SUM(CASE WHEN event_category != 'AUTOCORRECT' THEN 1 ELSE 0 END) AS keystrokeCount
+                SUM(CASE WHEN event_category != 'AUTOCORRECT' THEN 1 ELSE 0 END) AS keystrokeCount,
+                SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) AS productiveKeystrokes
             FROM ikd_events
             WHERE timestamp >= :fromMs
               AND timestamp <  :toMs
