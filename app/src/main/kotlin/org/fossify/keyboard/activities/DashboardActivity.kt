@@ -2,21 +2,15 @@ package org.fossify.keyboard.activities
 
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
-import android.view.LayoutInflater
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.button.MaterialButtonToggleGroup
-import com.google.android.material.chip.Chip
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.fossify.commons.extensions.beVisibleIf
-import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
@@ -36,15 +30,13 @@ import org.fossify.keyboard.extensions.ikdMoodAggregator
 import org.fossify.keyboard.extensions.ikdOrientationAggregator
 import org.fossify.keyboard.extensions.ikdQualityAggregator
 import org.fossify.keyboard.extensions.ikdSensorAggregator
-import org.fossify.keyboard.extensions.moodDB
 import org.fossify.keyboard.helpers.IkdAggregator
+import org.fossify.keyboard.helpers.InsightsFiltersBottomSheet
 import org.fossify.keyboard.helpers.MoodEmoji
-import org.fossify.keyboard.helpers.WidgetInfo
-import org.fossify.keyboard.helpers.attachWidgetInfo
 
 /**
  * Phase 9.11/9.12/9.14: the Insights screen is a thin host. The activity owns
- *  - the global header (range toggle + mood-filter chip row),
+ *  - the global header chrome (TabLayout + active-filter chip),
  *  - the data hop (one `Dispatchers.IO` round-trip per `loadSnapshot`),
  *  - the empty-state view,
  *
@@ -52,14 +44,16 @@ import org.fossify.keyboard.helpers.attachWidgetInfo
  * [DashboardPagerAdapter] backing a `ViewPager2`.
  *
  * Phase 9.14.1 added the **Summary** tab as the new index 0 (KPI grid
- * lifted out of the activity chrome); 9.14.2 swapped the Phase 9.12
- * `MaterialButtonToggleGroup` for a Material 3 `TabLayout` wired via
- * [TabLayoutMediator], with one vector icon + short label per tab. The
- * tab bar is `MODE_FIXED` + `tabMinWidth=0` so all six tabs distribute
- * across a 360 dp screen with no horizontal scroll.
+ * lifted out of the activity chrome). Phase 9.14.2 swapped the Phase
+ * 9.12 `MaterialButtonToggleGroup` for a Material 3 `TabLayout` wired
+ * via [TabLayoutMediator], with one vector icon + short label per tab.
+ * Phase 9.14.3 collapsed the standalone range toggle and mood-filter
+ * chip strip into [InsightsFiltersBottomSheet] — the toolbar Filters
+ * action launches it; the active-filter chip surfaces non-default state
+ * and reopens the sheet when tapped.
  *
- * Range, mood filter and active tab are persisted via
- * `onSaveInstanceState` (no new pref keys — Phase 9 Decision #2).
+ * Range, mood filter and active tab persist via `onSaveInstanceState`
+ * (no new pref keys — Phase 9 Decision #2 / Phase 9.14 Decision #10).
  */
 class DashboardActivity : SimpleActivity() {
 
@@ -68,9 +62,6 @@ class DashboardActivity : SimpleActivity() {
 
     /** Phase 9.4: per-screen-instance state — null means "All". */
     private var currentMoodFilter: Int? = null
-
-    /** Phase 9.4: handles to the seven chips so the click handler can hand-roll mutual exclusivity. */
-    private val moodFilterChips: MutableList<Chip> = mutableListOf()
 
     /**
      * Phase 9.11: latest payload from the most recent `loadSnapshot` run.
@@ -124,38 +115,45 @@ class DashboardActivity : SimpleActivity() {
         }
 
         supportFragmentManager.registerFragmentLifecycleCallbacks(fragmentLifecycleCallbacks, false)
+        registerFiltersResultListener()
 
         setupListeners()
-        setupMoodFilterChips()
-        setupPagerAndToggle(savedInstanceState)
-        setupWidgetInfo()
+        setupActiveFilterChip()
+        setupPagerAndTabs(savedInstanceState)
     }
 
     /**
-     * Phase 9.13: wire the header info icons to themed
-     * [WidgetInfoDialog] popups. Phase 9.14.1: the KPI strip info icon is
-     * gone — its info copy now belongs on the Summary tab's KPI grid (a
-     * future per-tile follow-up; the existing strip-level copy is kept in
-     * `strings_widget_info.xml` for reuse). The range and mood-filter
-     * icons stay on the activity chrome.
+     * Phase 9.14.3: listen for the bottom sheet's
+     * [InsightsFiltersBottomSheet.REQUEST_KEY] result. Wired in
+     * `onCreate` so it survives configuration changes — the FragmentManager
+     * keeps the listener alive while the activity is recreated.
      */
-    private fun setupWidgetInfo() {
-        binding.dashboardRangeInfoButton.attachWidgetInfo(
-            WidgetInfo(
-                titleRes = R.string.info_global_range_title,
-                descriptionRes = R.string.info_global_range_desc,
-                interpretationRes = R.string.info_global_range_interpretation,
-                formulaRes = null,
-            ),
-        )
-        binding.dashboardMoodFilterInfoButton.attachWidgetInfo(
-            WidgetInfo(
-                titleRes = R.string.info_global_mood_filter_title,
-                descriptionRes = R.string.info_global_mood_filter_desc,
-                interpretationRes = R.string.info_global_mood_filter_interpretation,
-                formulaRes = null,
-            ),
-        )
+    private fun registerFiltersResultListener() {
+        supportFragmentManager.setFragmentResultListener(
+            InsightsFiltersBottomSheet.REQUEST_KEY,
+            this,
+        ) { _, bundle ->
+            val newRange = bundle.getString(InsightsFiltersBottomSheet.KEY_RANGE)
+                ?.let { runCatching { IkdAggregator.Range.valueOf(it) }.getOrNull() }
+                ?: currentRange
+            val storedMood = bundle.getInt(
+                InsightsFiltersBottomSheet.KEY_MOOD_FILTER,
+                InsightsFiltersBottomSheet.MOOD_FILTER_NONE,
+            )
+            val newMood = if (storedMood == InsightsFiltersBottomSheet.MOOD_FILTER_NONE) {
+                null
+            } else {
+                storedMood
+            }
+            val rangeChanged = newRange != currentRange
+            val moodChanged = newMood != currentMoodFilter
+            currentRange = newRange
+            currentMoodFilter = newMood
+            renderActiveFilterChip()
+            if (rangeChanged || moodChanged) {
+                loadSnapshot()
+            }
+        }
     }
 
     override fun onResume() {
@@ -165,12 +163,8 @@ class DashboardActivity : SimpleActivity() {
             updateTextColors(dashboardGlobalHeader)
         }
         binding.dashboardEmptyMessage.setTextColor(getProperTextColor())
-        applyToggleGroupColors(binding.dashboardRangeGroup)
-        applyTabLayoutColors()
-        applyChipColors()
-        // Phase 9.4: refresh chip-row visibility on every onResume — the
-        // user may have just recorded their first mood entry.
-        refreshMoodFilterAvailability()
+        applyChromeColors()
+        renderActiveFilterChip()
         loadSnapshot()
     }
 
@@ -190,13 +184,12 @@ class DashboardActivity : SimpleActivity() {
      * Phase 9.14.2: wire the new Material 3 [TabLayout] to the
      * ViewPager2 via [TabLayoutMediator]. The mediator owns the
      * two-way sync — tab taps drive `setCurrentItem`, pager scrolls
-     * drive `selectTab` — replacing the manual hand-roll from Phase
-     * 9.12. Each tab gets a vector icon and a short label; in
-     * `MODE_FIXED` with `tabMinWidth=0` Material distributes the six
+     * drive `selectTab`. Each tab gets a vector icon and a short label;
+     * in `MODE_FIXED` with `tabMinWidth=0` Material distributes the six
      * tabs evenly across the screen at 360 dp / 6 = 60 dp per tab,
-     * which fits at default font size (Section 4 — width verification).
+     * which fits at default font size.
      */
-    private fun setupPagerAndToggle(savedInstanceState: Bundle?) {
+    private fun setupPagerAndTabs(savedInstanceState: Bundle?) {
         pagerAdapter = DashboardPagerAdapter(this)
         binding.dashboardViewPager.adapter = pagerAdapter
         // Keep every fragment in memory so swipe re-renders are instant
@@ -216,16 +209,43 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
-     * Phase 9.14.2: TabLayout indicator + selected/unselected text
-     * colours follow the user's Fossify primary token. The icon tint
-     * comes from the `dashboard_tab_icon_tint.xml` selector — runtime
-     * theming for the indicator/text is set per-onResume to track theme
-     * changes.
+     * Phase 9.14.2 + 9.14.3 theming: Fossify's "primary color" is a
+     * runtime-stored int on `BaseConfig` rather than a static theme
+     * attribute, so the static `?attr/colorPrimary` references in
+     * `activity_dashboard.xml` and `dashboard_tab_icon_tint.xml` resolve
+     * to Material's default purple instead of the user-selected tone.
+     * This pass forces every chrome surface (tab indicator, tab text /
+     * icon tint, active-filter chip) onto the same `getProperPrimaryColor()`
+     * / `getProperTextColor()` pair every time `onResume` fires.
      */
-    private fun applyTabLayoutColors() {
+    private fun applyChromeColors() {
         val primary = getProperPrimaryColor()
+        val textColor = getProperTextColor()
+        val background = getProperBackgroundColor()
+
         binding.dashboardTabLayout.setSelectedTabIndicatorColor(primary)
-        binding.dashboardTabLayout.setTabTextColors(getProperTextColor(), primary)
+        binding.dashboardTabLayout.setTabTextColors(textColor, primary)
+        // Static color-state-list selectors do not see Fossify's runtime
+        // primary, so build the icon tint at runtime too.
+        val iconTintStates = arrayOf(
+            intArrayOf(android.R.attr.state_selected),
+            intArrayOf(-android.R.attr.state_selected),
+        )
+        binding.dashboardTabLayout.tabIconTint = ColorStateList(
+            iconTintStates,
+            intArrayOf(primary, textColor),
+        )
+
+        // Active-filter chip: outlined silhouette in the user's primary
+        // tone — body matches the activity background, the stroke and
+        // text/close-icon use the primary token. Same discipline as the
+        // Phase 9.4 mood chip-row colours.
+        val chip = binding.dashboardActiveFilterChip
+        chip.chipBackgroundColor = ColorStateList.valueOf(background)
+        chip.chipStrokeColor = ColorStateList.valueOf(primary)
+        chip.chipStrokeWidth = resources.getDimension(R.dimen.chip_stroke_width)
+        chip.setTextColor(primary)
+        chip.closeIconTint = ColorStateList.valueOf(primary)
     }
 
     private fun tabIconResFor(position: Int): Int = when (position) {
@@ -248,43 +268,13 @@ class DashboardActivity : SimpleActivity() {
         else -> R.string.dashboard_tab_label_summary
     }
 
-    /**
-     * Phase 9.12: shared colour application for both
-     * [MaterialButtonToggleGroup]s on the screen (range toggle + tab
-     * toggle). Unchecked: theme primary text + transparent background;
-     * checked: contrast text on a primary-tinted background.
-     */
-    private fun applyToggleGroupColors(group: MaterialButtonToggleGroup) {
-        val primary = getProperPrimaryColor()
-        val onPrimary = primary.getContrastColor()
-        val checkedState = intArrayOf(android.R.attr.state_checked)
-        val uncheckedState = intArrayOf(-android.R.attr.state_checked)
-        val states = arrayOf(checkedState, uncheckedState)
-
-        val textColors = ColorStateList(states, intArrayOf(onPrimary, primary))
-        val bgColors = ColorStateList(states, intArrayOf(primary, Color.TRANSPARENT))
-        val strokeColors = ColorStateList(states, intArrayOf(primary, primary))
-
-        for (i in 0 until group.childCount) {
-            val child = group.getChildAt(i) as? MaterialButton ?: continue
-            child.setTextColor(textColors)
-            child.backgroundTintList = bgColors
-            child.strokeColor = strokeColors
-        }
-    }
-
     private fun setupListeners() {
-        binding.dashboardRangeGroup.check(rangeButtonId(currentRange))
-        binding.dashboardRangeGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked) return@addOnButtonCheckedListener
-            val newRange = idToRange(checkedId)
-            if (newRange != currentRange) {
-                currentRange = newRange
-                loadSnapshot()
-            }
-        }
         binding.dashboardToolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
+                R.id.dashboard_filters -> {
+                    openFiltersSheet()
+                    true
+                }
                 R.id.dashboard_refresh -> {
                     loadSnapshot()
                     true
@@ -298,93 +288,69 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
-     * Phase 9.4: inflate the seven mood-filter chips (All + six emoji) and
-     * wire their click handlers. Hand-rolled mutual exclusivity. State
-     * machine: tap the active chip to toggle back to All.
+     * Phase 9.14.3: tap chip body → reopen the sheet at current
+     * selection; tap × → reset both filters to defaults (Week + All)
+     * and re-aggregate. The chip itself only renders when a non-default
+     * filter is active (`renderActiveFilterChip`).
      */
-    private fun setupMoodFilterChips() {
-        val container = binding.dashboardMoodFilterContainer
-        val inflater = LayoutInflater.from(this)
-        moodFilterChips.clear()
-        container.removeAllViews()
-
-        val allChip = inflater.inflate(R.layout.item_mood_filter_chip, container, false) as Chip
-        allChip.text = getString(R.string.dashboard_mood_filter_all)
-        allChip.contentDescription = getString(R.string.dashboard_mood_filter_all)
-        allChip.setOnClickListener {
-            if (currentMoodFilter != null) {
-                currentMoodFilter = null
-                refreshChipsCheckedState()
-                applyChipColors()
+    private fun setupActiveFilterChip() {
+        binding.dashboardActiveFilterChip.setOnClickListener { openFiltersSheet() }
+        binding.dashboardActiveFilterChip.setOnCloseIconClickListener {
+            val rangeChanged = currentRange != IkdAggregator.Range.WEEK
+            val moodChanged = currentMoodFilter != null
+            currentRange = IkdAggregator.Range.WEEK
+            currentMoodFilter = null
+            renderActiveFilterChip()
+            if (rangeChanged || moodChanged) {
                 loadSnapshot()
-            } else {
-                allChip.isChecked = true
-            }
-        }
-        container.addView(allChip)
-        moodFilterChips.add(allChip)
-
-        for (score in MoodEmoji.displayOrder()) {
-            val chip = inflater.inflate(R.layout.item_mood_filter_chip, container, false) as Chip
-            val emoji = MoodEmoji.emojiFor(score)
-            val label = getString(MoodEmoji.labelResFor(score))
-            chip.text = "$emoji $label"
-            chip.contentDescription = label
-            chip.setOnClickListener {
-                currentMoodFilter = if (currentMoodFilter == score) null else score
-                refreshChipsCheckedState()
-                applyChipColors()
-                loadSnapshot()
-            }
-            container.addView(chip)
-            moodFilterChips.add(chip)
-        }
-        refreshChipsCheckedState()
-    }
-
-    private fun refreshChipsCheckedState() {
-        if (moodFilterChips.isEmpty()) return
-        moodFilterChips[0].isChecked = currentMoodFilter == null
-        val displayOrder = MoodEmoji.displayOrder()
-        for (idx in displayOrder.indices) {
-            val chipIdx = idx + 1
-            if (chipIdx < moodFilterChips.size) {
-                moodFilterChips[chipIdx].isChecked = currentMoodFilter == displayOrder[idx]
             }
         }
     }
 
-    private fun applyChipColors() {
-        val primary = getProperPrimaryColor()
-        val background = getProperBackgroundColor()
-        val onPrimary = primary.getContrastColor()
-        val textColor = getProperTextColor()
-        val checkedState = intArrayOf(android.R.attr.state_checked)
-        val uncheckedState = intArrayOf(-android.R.attr.state_checked)
-        val states = arrayOf(checkedState, uncheckedState)
-
-        val bgColors = ColorStateList(states, intArrayOf(primary, background))
-        val txtColors = ColorStateList(states, intArrayOf(onPrimary, textColor))
-        val strokeColors = ColorStateList(states, intArrayOf(primary, primary))
-        for (chip in moodFilterChips) {
-            chip.chipBackgroundColor = bgColors
-            chip.setTextColor(txtColors)
-            chip.chipStrokeColor = strokeColors
-        }
+    private fun openFiltersSheet() {
+        if (supportFragmentManager.findFragmentByTag(InsightsFiltersBottomSheet.TAG) != null) return
+        InsightsFiltersBottomSheet
+            .newInstance(currentRange, currentMoodFilter)
+            .show(supportFragmentManager, InsightsFiltersBottomSheet.TAG)
     }
 
-    private fun refreshMoodFilterAvailability() {
-        lifecycleScope.launch {
-            val available = withContext(Dispatchers.IO) {
-                moodDB.hasAnyMoodEntry()
-            }
-            binding.dashboardMoodFilterStrip.beVisibleIf(available)
-            if (!available && currentMoodFilter != null) {
-                currentMoodFilter = null
-                refreshChipsCheckedState()
-                loadSnapshot()
-            }
+    /**
+     * Phase 9.14.3: chip text rules.
+     *  - range == Week, mood == null  → chip hidden
+     *  - mood only                    → "😊 Happy"
+     *  - range only                   → "Today" / "Month" / "All time"
+     *  - both                         → "Month · 😊 Happy"
+     */
+    private fun renderActiveFilterChip() {
+        val chip = binding.dashboardActiveFilterChip
+        val hasRange = currentRange != IkdAggregator.Range.WEEK
+        val mood = currentMoodFilter
+        val hasMood = mood != null
+        if (!hasRange && !hasMood) {
+            chip.beVisibleIf(false)
+            return
         }
+        val rangeLabel = when (currentRange) {
+            IkdAggregator.Range.TODAY -> getString(R.string.dashboard_range_today)
+            IkdAggregator.Range.WEEK -> getString(R.string.dashboard_range_week)
+            IkdAggregator.Range.MONTH -> getString(R.string.dashboard_range_month)
+            IkdAggregator.Range.ALL_TIME -> getString(R.string.dashboard_range_all)
+        }
+        chip.text = when {
+            hasRange && hasMood -> getString(
+                R.string.insights_filters_chip_range_and_mood,
+                rangeLabel,
+                MoodEmoji.emojiFor(mood!!),
+                getString(MoodEmoji.labelResFor(mood)),
+            )
+            hasMood -> getString(
+                R.string.insights_filters_chip_mood_only,
+                MoodEmoji.emojiFor(mood!!),
+                getString(MoodEmoji.labelResFor(mood)),
+            )
+            else -> rangeLabel
+        }
+        chip.beVisibleIf(true)
     }
 
     private fun loadSnapshot() {
@@ -443,27 +409,12 @@ class DashboardActivity : SimpleActivity() {
     /**
      * Phase 9.14.1: public entry point for KPI tile clicks on the
      * Summary tab (Decision #7). Delegates to the underlying ViewPager2
-     * with a smooth-scroll so the tab toggle's
-     * `OnPageChangeCallback` keeps the segmented control in sync.
+     * with a smooth-scroll so the [TabLayoutMediator] keeps the tab
+     * indicator in sync.
      */
     fun goToTab(position: Int) {
         if (position < 0 || position >= DashboardPagerAdapter.TAB_COUNT) return
         binding.dashboardViewPager.setCurrentItem(position, true)
-    }
-
-    private fun rangeButtonId(range: IkdAggregator.Range): Int = when (range) {
-        IkdAggregator.Range.TODAY -> R.id.dashboard_range_today
-        IkdAggregator.Range.WEEK -> R.id.dashboard_range_week
-        IkdAggregator.Range.MONTH -> R.id.dashboard_range_month
-        IkdAggregator.Range.ALL_TIME -> R.id.dashboard_range_all
-    }
-
-    private fun idToRange(id: Int): IkdAggregator.Range = when (id) {
-        R.id.dashboard_range_today -> IkdAggregator.Range.TODAY
-        R.id.dashboard_range_week -> IkdAggregator.Range.WEEK
-        R.id.dashboard_range_month -> IkdAggregator.Range.MONTH
-        R.id.dashboard_range_all -> IkdAggregator.Range.ALL_TIME
-        else -> IkdAggregator.Range.WEEK
     }
 
     companion object {

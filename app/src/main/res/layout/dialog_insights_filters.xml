@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 9.14.3: body for the Insights Filters bottom sheet. Theming
+    discipline mirrors `dialog_widget_info.xml` (Phase 9.13) — every
+    text/heading colour is set via `getProperBackgroundColor` /
+    `getProperTextColor` / `getProperPrimaryColor` from the host context
+    when the sheet is shown, so the popup tracks the user's Fossify
+    theme on both light and dark builds.
+
+    Layout per Section 6 of the Phase 9.14 plan:
+      Range  → segmented MaterialButtonToggleGroup (Today / Week / Month / All time)
+      Mood   → chip strip (All + Ekman 6) — gone until MoodDao.hasAnyMoodEntry() returns true
+      Reset / Apply
+-->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/insights_filters_root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/activity_margin">
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/insights_filters_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/insights_filters_title"
+            android:textSize="@dimen/bigger_text_size"
+            android:textStyle="bold" />
+
+        <!-- Range section -->
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/insights_filters_range_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:text="@string/insights_filters_range_header"
+            android:textSize="@dimen/smaller_text_size"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/insights_filters_range_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/small_margin"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/insights_filters_range_today"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_range_today" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/insights_filters_range_week"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_range_week" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/insights_filters_range_month"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_range_month" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/insights_filters_range_all"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_range_all" />
+
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <!-- Mood section — visibility flipped by InsightsFiltersBottomSheet
+             when MoodDao.hasAnyMoodEntry() returns false (gating per
+             Decision #11). -->
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/insights_filters_mood_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:text="@string/insights_filters_mood_header"
+            android:textSize="@dimen/smaller_text_size"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:id="@+id/insights_filters_mood_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/small_margin"
+            android:fillViewport="false"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/insights_filters_mood_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+        </HorizontalScrollView>
+
+        <!-- Reset / Apply -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/insights_filters_reset"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/insights_filters_reset" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/insights_filters_apply"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/small_margin"
+                android:text="@string/insights_filters_apply" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

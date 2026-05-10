@@ -52,4 +52,9 @@
     <!-- Phase 9.12 — global KPI strip cell minimum width when wrapped in
          a horizontal scroller (6 cells overflow narrow phones). -->
     <dimen name="dashboard_kpi_cell_min_width">72dp</dimen>
+
+    <!-- Phase 9.14.3 — outlined silhouette for the active filter chip and
+         the bottom-sheet's range/mood chips so the runtime Fossify primary
+         tone reads against the activity background. -->
+    <dimen name="chip_stroke_width">1dp</dimen>
 </resources>

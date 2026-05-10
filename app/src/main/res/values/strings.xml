@@ -349,6 +349,20 @@
     <string name="dashboard_kpi_wpm_value">%1$.1f</string>
     <string name="dashboard_kpi_error_rate_value">%1$.1f%%</string>
 
+    <!-- Phase 9.14.3: Filters bottom sheet copy and active-filter chip.
+         The chip text combines range + mood; the format strings below
+         render the two-filter case (Range · Mood) and the single-mood
+         case (emoji + label) in one line. -->
+    <string name="insights_filters_action_title">Filters</string>
+    <string name="insights_filters_title">Filters</string>
+    <string name="insights_filters_range_header">Range</string>
+    <string name="insights_filters_mood_header">Mood</string>
+    <string name="insights_filters_reset">Reset</string>
+    <string name="insights_filters_apply">Apply</string>
+    <string name="insights_filters_mood_chip_format" formatted="false">%1$s %2$s</string>
+    <string name="insights_filters_chip_mood_only" formatted="false">%1$s %2$s</string>
+    <string name="insights_filters_chip_range_and_mood" formatted="false">%1$s · %2$s %3$s</string>
+
     <!-- Phase 9.14.1: Summary tab labels and delta placeholder. The
          delta itself ("—") is rendered by the tile until 9.14.4 wires
          in real previous-range comparison. -->
