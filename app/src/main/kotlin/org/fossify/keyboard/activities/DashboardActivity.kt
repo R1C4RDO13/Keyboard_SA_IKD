@@ -223,6 +223,16 @@ class DashboardActivity : SimpleActivity() {
         val textColor = getProperTextColor()
         val background = getProperBackgroundColor()
 
+        // Phase 9.14 follow-up: Material 3 components (TabLayout, the
+        // LinearLayouts hosting them) default to `?attr/colorSurface` /
+        // unset, neither of which tracks Fossify's runtime background tone.
+        // Tint the chrome surfaces below the AppBar so the strip between the
+        // toolbar and the first chart matches the user's theme on every
+        // Fossify variant.
+        binding.dashboardRootContainer.setBackgroundColor(background)
+        binding.dashboardGlobalHeader.setBackgroundColor(background)
+        binding.dashboardTabLayout.setBackgroundColor(background)
+
         binding.dashboardTabLayout.setSelectedTabIndicatorColor(primary)
         binding.dashboardTabLayout.setTabTextColors(textColor, primary)
         // Static color-state-list selectors do not see Fossify's runtime
