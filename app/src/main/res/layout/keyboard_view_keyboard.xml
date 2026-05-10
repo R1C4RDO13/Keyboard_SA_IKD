@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/keyboard_holder"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/toolbar_holder"
@@ -28,143 +30,52 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Phase 8.5: collapsible three-zone mood bar.
-             - mood_bar_collapsed_indicator: single-slot chip rendered in the
-               collapsed state. Tap target for expansion; emoji / alpha
-               re-derived per refresh from privacy + standing rating.
-             - mood_bar_expanded_slots: the seven-button valence-ordered row
-               (🛡️ + Ekman 6) shown when the bar is expanded.
-             - mood_bar_toggle_chevron: tap target that flips the bar's
-               state. Rotation is animated at runtime (0° expanded, 180° collapsed).
-             The bar is left-anchored (replaces clipboard_clear's leading
-             slot). When Config.showMoodBar is false a runtime ConstraintSet
-             re-anchors suggestions_holder.start to endOf(clipboard_clear).
-             Phase 8 / 8.1 / 8.2 / 8.4 semantics on the slot taps are
-             preserved verbatim — see MyKeyboardView.onMoodSlotClicked. -->
-        <LinearLayout
-            android:id="@+id/mood_bar"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/mood_bar_height"
+        <!-- Phase 13: pinned-clipboard moved to the leading edge so the
+             elevated mood bar on the trailing edge doesn't cover it. -->
+        <ImageView
+            android:id="@+id/pinned_clipboard_items"
+            android:layout_width="@dimen/toolbar_icon_height"
+            android:layout_height="@dimen/toolbar_icon_height"
             android:layout_marginStart="@dimen/medium_margin"
-            android:background="@drawable/mood_bar_background"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="@dimen/mood_bar_horizontal_padding"
-            android:paddingEnd="@dimen/mood_bar_horizontal_padding"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/clipboard_pinned"
+            android:padding="@dimen/small_margin"
+            android:src="@drawable/ic_clipboard_vector"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintStart_toEndOf="@+id/clipboard_clear"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/mood_bar_collapsed_indicator"
-                android:layout_width="@dimen/mood_bar_collapsed_indicator_width"
-                android:layout_height="@dimen/mood_bar_button_size"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/mood_bar_toggle_content_description"
-                android:gravity="center"
-                android:text="@string/mood_bar_collapsed_placeholder"
-                android:textSize="@dimen/mood_bar_collapsed_indicator_text_size" />
+        <!-- Phase 13: settings_cog moved to the leading edge so the
+             elevated mood bar on the trailing edge doesn't cover it. -->
+        <ImageView
+            android:id="@+id/settings_cog"
+            android:layout_width="@dimen/toolbar_icon_height"
+            android:layout_height="@dimen/toolbar_icon_height"
+            android:layout_marginStart="@dimen/medium_margin"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings"
+            android:padding="@dimen/small_margin"
+            android:src="@drawable/ic_settings_cog_vector"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/pinned_clipboard_items"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <LinearLayout
-                android:id="@+id/mood_bar_expanded_slots"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:clipChildren="false"
-                android:clipToPadding="false"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:visibility="gone">
-
-                <TextView
-                    android:id="@+id/mood_bar_privacy"
-                    android:layout_width="@dimen/mood_bar_button_size"
-                    android:layout_height="@dimen/mood_bar_button_size"
-                    android:layout_marginEnd="@dimen/mood_bar_privacy_gap"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/privacy_toggle_content_description"
-                    android:gravity="center"
-                    android:text="@string/mood_bar_privacy_emoji"
-                    android:textSize="@dimen/mood_bar_button_text_size" />
-
-                <TextView
-                    android:id="@+id/mood_bar_happiness"
-                    android:layout_width="@dimen/mood_bar_button_size"
-                    android:layout_height="@dimen/mood_bar_button_size"
-                    android:layout_marginEnd="@dimen/mood_bar_button_gap"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/mood_label_happiness"
-                    android:gravity="center"
-                    android:text="@string/mood_bar_happiness_emoji"
-                    android:textSize="@dimen/mood_bar_button_text_size" />
-
-                <TextView
-                    android:id="@+id/mood_bar_surprise"
-                    android:layout_width="@dimen/mood_bar_button_size"
-                    android:layout_height="@dimen/mood_bar_button_size"
-                    android:layout_marginEnd="@dimen/mood_bar_button_gap"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/mood_label_surprise"
-                    android:gravity="center"
-                    android:text="@string/mood_bar_surprise_emoji"
-                    android:textSize="@dimen/mood_bar_button_text_size" />
-
-                <TextView
-                    android:id="@+id/mood_bar_disgust"
-                    android:layout_width="@dimen/mood_bar_button_size"
-                    android:layout_height="@dimen/mood_bar_button_size"
-                    android:layout_marginEnd="@dimen/mood_bar_button_gap"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/mood_label_disgust"
-                    android:gravity="center"
-                    android:text="@string/mood_bar_disgust_emoji"
-                    android:textSize="@dimen/mood_bar_button_text_size" />
-
-                <TextView
-                    android:id="@+id/mood_bar_sadness"
-                    android:layout_width="@dimen/mood_bar_button_size"
-                    android:layout_height="@dimen/mood_bar_button_size"
-                    android:layout_marginEnd="@dimen/mood_bar_button_gap"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/mood_label_sadness"
-                    android:gravity="center"
-                    android:text="@string/mood_bar_sadness_emoji"
-                    android:textSize="@dimen/mood_bar_button_text_size" />
-
-                <TextView
-                    android:id="@+id/mood_bar_fear"
-                    android:layout_width="@dimen/mood_bar_button_size"
-                    android:layout_height="@dimen/mood_bar_button_size"
-                    android:layout_marginEnd="@dimen/mood_bar_button_gap"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/mood_label_fear"
-                    android:gravity="center"
-                    android:text="@string/mood_bar_fear_emoji"
-                    android:textSize="@dimen/mood_bar_button_text_size" />
-
-                <TextView
-                    android:id="@+id/mood_bar_anger"
-                    android:layout_width="@dimen/mood_bar_button_size"
-                    android:layout_height="@dimen/mood_bar_button_size"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/mood_label_anger"
-                    android:gravity="center"
-                    android:text="@string/mood_bar_anger_emoji"
-                    android:textSize="@dimen/mood_bar_button_text_size" />
-
-            </LinearLayout>
-
-            <ImageView
-                android:id="@+id/mood_bar_toggle_chevron"
-                android:layout_width="@dimen/mood_bar_chevron_size"
-                android:layout_height="@dimen/mood_bar_chevron_size"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/mood_bar_toggle_content_description"
-                android:padding="@dimen/small_margin"
-                android:src="@drawable/ic_chevron_right_vector" />
-
-        </LinearLayout>
+        <!-- Phase 13: one-tap shortcut into the Insights dashboard
+             (Phase 3 / 9). Lives immediately right of settings_cog so
+             the leading-edge icon row reads as a logical cluster:
+             clear → clipboard → settings → insights. -->
+        <ImageView
+            android:id="@+id/insights_button"
+            android:layout_width="@dimen/toolbar_icon_height"
+            android:layout_height="@dimen/toolbar_icon_height"
+            android:layout_marginStart="@dimen/medium_margin"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/dashboard_title"
+            android:padding="@dimen/small_margin"
+            android:src="@drawable/ic_insights_vector"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/settings_cog"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <org.fossify.keyboard.views.InlineContentViewHorizontalScrollView
             android:id="@+id/suggestions_holder"
@@ -175,7 +86,7 @@
             android:fillViewport="true"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/voice_input_button"
-            app:layout_constraintStart_toEndOf="@+id/mood_bar"
+            app:layout_constraintStart_toEndOf="@+id/insights_button"
             app:layout_constraintTop_toTopOf="parent">
 
             <LinearLayout
@@ -211,6 +122,11 @@
 
         </org.fossify.keyboard.views.InlineContentViewHorizontalScrollView>
 
+        <!-- Phase 13: voice_input_button keeps its right-cluster role but
+             now anchors directly to the parent's trailing edge — the mood
+             bar floats over it as an elevated sibling. Voice is normally
+             GONE unless `Config.voiceInputMethod` is set, so the visual
+             collision is rare in practice. -->
         <ImageView
             android:id="@+id/voice_input_button"
             android:layout_width="@dimen/toolbar_icon_height"
@@ -220,32 +136,6 @@
             android:contentDescription="@string/switch_to_voice_typing"
             android:padding="@dimen/small_margin"
             android:src="@drawable/ic_microphone_vector"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/pinned_clipboard_items"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageView
-            android:id="@+id/pinned_clipboard_items"
-            android:layout_width="@dimen/toolbar_icon_height"
-            android:layout_height="@dimen/toolbar_icon_height"
-            android:layout_marginEnd="@dimen/medium_margin"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/clipboard_pinned"
-            android:padding="@dimen/small_margin"
-            android:src="@drawable/ic_clipboard_vector"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/settings_cog"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageView
-            android:id="@+id/settings_cog"
-            android:layout_width="@dimen/toolbar_icon_height"
-            android:layout_height="@dimen/toolbar_icon_height"
-            android:layout_marginEnd="@dimen/medium_margin"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/settings"
-            android:padding="@dimen/small_margin"
-            android:src="@drawable/ic_settings_cog_vector"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -492,4 +382,162 @@
             app:layout_constraintTop_toTopOf="parent" />
 
     </RelativeLayout>
+
+    <!-- Phase 13: trailing-edge persistent mood bar.
+         Lifted out of toolbar_holder so it can float above both the regular
+         toolbar AND the emoji drawer's top bar. Declared LAST in
+         keyboard_holder so the natural draw order places it on top of
+         emoji_palette_holder + clipboard_manager_holder. Trailing-edge
+         anchor auto-flips under RTL via end_toEndOf="parent".
+         app:elevation adds a Material shadow so the floating capsule reads
+         as overlay (parent keyboard_holder has clipChildren="false" so the
+         Phase 8.4 dance peak and Phase 8.2 chat bubble are not clipped).
+         The bar is a sibling of toolbar_holder (not its child), so
+         settings_cog cannot directly reference it via end_toStartOf —
+         applyMoodBarConstraints sets settings_cog.marginEnd at runtime
+         instead (push left by bar width + bar marginEnd) and restores
+         the XML default `medium_margin` when Config.showMoodBar = false.
+         Phase 8 / 8.1 / 8.2 / 8.4 / 8.5 semantics on the slot taps are
+         preserved verbatim — see MyKeyboardView.onMoodSlotClicked /
+         applyMoodBarLayout. -->
+    <LinearLayout
+        android:id="@+id/mood_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/mood_bar_height"
+        android:layout_marginEnd="@dimen/small_margin"
+        android:background="@drawable/mood_bar_background"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:elevation="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/mood_bar_horizontal_padding"
+        android:paddingEnd="0dp"
+        app:layout_constraintBottom_toBottomOf="@+id/toolbar_holder"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/toolbar_holder">
+
+        <!-- Phase 13: chevron + slots + indicator reordered so the chip
+             (indicator) stays pinned to the trailing screen edge and the
+             chevron moves leftward as the bar expands. Mirrors the
+             original left-anchored design where the chip stayed pinned
+             and the chevron tracked the bar's growing edge. -->
+        <ImageView
+            android:id="@+id/mood_bar_toggle_chevron"
+            android:layout_width="@dimen/mood_bar_chevron_size"
+            android:layout_height="@dimen/mood_bar_chevron_size"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/mood_bar_toggle_content_description"
+            android:padding="@dimen/small_margin"
+            android:src="@drawable/ic_chevron_right_vector" />
+
+        <LinearLayout
+            android:id="@+id/mood_bar_expanded_slots"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <!-- Phase 13: right-anchored bar expands leftward, so the
+                 slot adjacent to the chip is the FIRST one the user
+                 reveals as the bar grows. Order is reversed in XML
+                 (privacy → anger → fear → sadness → disgust → surprise
+                 → happiness, left-to-right) so happiness sits next to
+                 the chip and is revealed first; privacy lives at the
+                 far-left end of the row. The `mood_bar_privacy_gap`
+                 separates privacy from the emotion column on its
+                 marginEnd. -->
+            <TextView
+                android:id="@+id/mood_bar_privacy"
+                android:layout_width="@dimen/mood_bar_button_size"
+                android:layout_height="@dimen/mood_bar_button_size"
+                android:layout_marginEnd="@dimen/mood_bar_privacy_gap"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/privacy_toggle_content_description"
+                android:gravity="center"
+                android:text="@string/mood_bar_privacy_emoji"
+                android:textSize="@dimen/mood_bar_button_text_size" />
+
+            <TextView
+                android:id="@+id/mood_bar_anger"
+                android:layout_width="@dimen/mood_bar_button_size"
+                android:layout_height="@dimen/mood_bar_button_size"
+                android:layout_marginEnd="@dimen/mood_bar_button_gap"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/mood_label_anger"
+                android:gravity="center"
+                android:text="@string/mood_bar_anger_emoji"
+                android:textSize="@dimen/mood_bar_button_text_size" />
+
+            <TextView
+                android:id="@+id/mood_bar_fear"
+                android:layout_width="@dimen/mood_bar_button_size"
+                android:layout_height="@dimen/mood_bar_button_size"
+                android:layout_marginEnd="@dimen/mood_bar_button_gap"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/mood_label_fear"
+                android:gravity="center"
+                android:text="@string/mood_bar_fear_emoji"
+                android:textSize="@dimen/mood_bar_button_text_size" />
+
+            <TextView
+                android:id="@+id/mood_bar_sadness"
+                android:layout_width="@dimen/mood_bar_button_size"
+                android:layout_height="@dimen/mood_bar_button_size"
+                android:layout_marginEnd="@dimen/mood_bar_button_gap"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/mood_label_sadness"
+                android:gravity="center"
+                android:text="@string/mood_bar_sadness_emoji"
+                android:textSize="@dimen/mood_bar_button_text_size" />
+
+            <TextView
+                android:id="@+id/mood_bar_disgust"
+                android:layout_width="@dimen/mood_bar_button_size"
+                android:layout_height="@dimen/mood_bar_button_size"
+                android:layout_marginEnd="@dimen/mood_bar_button_gap"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/mood_label_disgust"
+                android:gravity="center"
+                android:text="@string/mood_bar_disgust_emoji"
+                android:textSize="@dimen/mood_bar_button_text_size" />
+
+            <TextView
+                android:id="@+id/mood_bar_surprise"
+                android:layout_width="@dimen/mood_bar_button_size"
+                android:layout_height="@dimen/mood_bar_button_size"
+                android:layout_marginEnd="@dimen/mood_bar_button_gap"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/mood_label_surprise"
+                android:gravity="center"
+                android:text="@string/mood_bar_surprise_emoji"
+                android:textSize="@dimen/mood_bar_button_text_size" />
+
+            <TextView
+                android:id="@+id/mood_bar_happiness"
+                android:layout_width="@dimen/mood_bar_button_size"
+                android:layout_height="@dimen/mood_bar_button_size"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/mood_label_happiness"
+                android:gravity="center"
+                android:text="@string/mood_bar_happiness_emoji"
+                android:textSize="@dimen/mood_bar_button_text_size" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/mood_bar_collapsed_indicator"
+            android:layout_width="@dimen/mood_bar_collapsed_indicator_width"
+            android:layout_height="@dimen/mood_bar_button_size"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/mood_bar_toggle_content_description"
+            android:gravity="center"
+            android:text="@string/mood_bar_collapsed_placeholder"
+            android:textSize="@dimen/mood_bar_collapsed_indicator_text_size" />
+
+    </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

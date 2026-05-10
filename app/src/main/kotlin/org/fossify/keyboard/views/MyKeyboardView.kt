@@ -33,6 +33,8 @@ import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
+import android.transition.AutoTransition
+import android.transition.TransitionManager
 import android.view.inputmethod.EditorInfo
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -41,8 +43,6 @@ import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.inline.InlineContentView
 import androidx.annotation.RequiresApi
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.view.ViewCompat
@@ -78,6 +78,7 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isPiePlus
 import org.fossify.keyboard.R
 import org.fossify.keyboard.activities.ManageClipboardItemsActivity
+import org.fossify.keyboard.activities.DashboardActivity
 import org.fossify.keyboard.activities.SettingsActivity
 import org.fossify.keyboard.adapters.ClipsKeyboardAdapter
 import org.fossify.keyboard.adapters.EmojisAdapter
@@ -332,17 +333,24 @@ class MyKeyboardView @JvmOverloads constructor(
         // string at a glance; short enough not to obscure typing.
         private const val MOOD_BUBBLE_AUTO_DISMISS_MS = 1500L
 
-        // Phase 8.5: collapse / expand animation cadences. Mirrors the
-        // Phase 6 `applySensorExpansion` discipline — short enough to feel
-        // crisp, long enough that the cross-fade doesn't read as a flicker.
-        private const val MOOD_BAR_CHEVRON_ROT_MS = 150L
-        private const val MOOD_BAR_LAYOUT_FADE_MS = 200L
-        // Chevron rotation targets. Right-chevron at rest (`0°`) reads
-        // as `>` and means "tap to expand" when the bar is collapsed.
-        // Flipped to `180°` it reads as `<` and means "tap to collapse"
-        // when expanded.
-        private const val MOOD_BAR_CHEVRON_ROT_EXPANDED = 180f
-        private const val MOOD_BAR_CHEVRON_ROT_COLLAPSED = 0f
+        // Phase 8.5 + Phase 13: collapse / expand animation cadence. A
+        // single duration is reused for the chevron rotation, the
+        // indicator/slots cross-fade, AND the AutoTransition that smooths
+        // the slot container's GONE↔VISIBLE layout flip — so everything
+        // settles on the same frame instead of staggering visibly.
+        private const val MOOD_BAR_LAYOUT_FADE_MS = 240L
+        // Phase 13: a single shared interpolator for every animation in
+        // the bar's open/close cycle. Material's standard "fast out, slow
+        // in" curve — quick to start, gentle on landing — reads as smooth
+        // even when the bar's width is interpolating simultaneously.
+        private val MOOD_BAR_SMOOTH_INTERPOLATOR = AccelerateDecelerateInterpolator()
+        // Phase 13: bar is right-anchored, so expansion direction is
+        // LEFT. Chevron rotation targets are flipped from Phase 8.5 so
+        // the icon points in the direction of motion:
+        //   collapsed → `<` (rotation 180°) — "tap to expand leftward"
+        //   expanded  → `>` (rotation 0°)   — "tap to collapse rightward"
+        private const val MOOD_BAR_CHEVRON_ROT_EXPANDED = 0f
+        private const val MOOD_BAR_CHEVRON_ROT_COLLAPSED = 180f
         // Phase 8.5: small delay between a slot tap and the auto-collapse
         // (Decision #10). Lets the user see the highlight settle on the
         // newly-tapped slot before the bar collapses around the chip.
@@ -504,6 +512,20 @@ class MyKeyboardView @JvmOverloads constructor(
                 }
             }
 
+            // Phase 13: one-tap shortcut to the Insights dashboard from the
+            // keyboard top bar. FLAG_ACTIVITY_NEW_TASK mirrors the existing
+            // settings_cog launch path so the dashboard lands as its own
+            // task rather than stacking on top of whichever app the user
+            // is typing in.
+            insightsButton.setOnLongClickListener { context.toast(R.string.dashboard_title); true }
+            insightsButton.setOnClickListener {
+                vibrateIfNeeded()
+                Intent(context, DashboardActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(this)
+                }
+            }
+
             pinnedClipboardItems.setOnLongClickListener { context.toast(R.string.clipboard); true; }
             pinnedClipboardItems.setOnClickListener {
                 vibrateIfNeeded()
@@ -631,6 +653,7 @@ class MyKeyboardView @JvmOverloads constructor(
             }
 
             settingsCog.applyColorFilter(mTextColor)
+            insightsButton.applyColorFilter(mTextColor)
             pinnedClipboardItems.applyColorFilter(mTextColor)
             clipboardClear.applyColorFilter(mTextColor)
             // Phase 8: mood bar buttons are TextViews with emoji glyphs;
@@ -982,72 +1005,27 @@ class MyKeyboardView @JvmOverloads constructor(
     }
 
     /**
-     * Phase 8 follow-up: gate mood-bar visibility on `Config.showMoodBar`
-     * (default true). When false, the entire seven-button bar is `View.GONE`
-     * and `suggestionsHolder` reclaims the freed horizontal space. Privacy
-     * mode is still reachable from `IkdSettingsActivity`.
-     *
-     * Phase 8.2: when the bar is visible the centered seven-button row owns
-     * the toolbar's middle. The pinned-clipboard and settings buttons stay
-     * visible on the right edge per user request, but the clipboard chip,
-     * the inline-suggestions area, the clipboard-clear trash icon and the
-     * voice-input button are hidden so the bar gets the spotlight. When the
-     * mood bar is off, every default toolbar item is restored.
+     * Phase 8 follow-up + Phase 13: gate mood-bar visibility on
+     * `Config.showMoodBar`. When false, the bar is `View.GONE`. When true,
+     * the bar lives on the trailing edge in an elevated sibling overlay
+     * above `toolbar_holder` and `emoji_palette_holder`, and the expanded
+     * slot row is allowed to **float over** the right-side toolbar icons
+     * (voice / pinned / settings). None of those icons move or hide when
+     * the bar expands — the elevation does the visual lifting.
      */
     private fun applyMoodBarVisibility() {
         val binding = keyboardViewBinding ?: return
         val visible = context.config.showMoodBar
         binding.moodBar.visibility = if (visible) View.VISIBLE else View.GONE
-        if (visible) {
-            // Phase 8.5: bar owns the leading edge. Hide clipboard_clear /
-            // suggestions / voice so they don't fight the chip for space;
-            // suggestions stays anchored to `endOf(mood_bar)` per the XML.
-            binding.clipboardClear.visibility = View.GONE
-            binding.suggestionsHolder.visibility = View.VISIBLE
-            // voiceInputButton is hidden whenever the bar takes over; its
-            // own gating (mVoiceInputMethod.isEmpty) is re-applied in the
-            // else branch so we never force-show it incorrectly.
-            binding.voiceInputButton.visibility = View.GONE
-            // Phase 8.5: suggestions anchored to endOf(mood_bar) per XML.
-            // No constraint mutation needed — the XML default applies.
-            applyMoodBarConstraints(barOn = true)
-        } else {
-            // Phase 8.5: when the mood bar is hidden, the XML constraint
-            // `suggestions_holder.start = endOf(mood_bar)` would orphan
-            // suggestions at the leading edge (constraints persist when
-            // their target is GONE). Re-anchor at runtime to
-            // `endOf(clipboard_clear)` so the pre-Phase-8 layout returns.
-            binding.clipboardClear.visibility = View.VISIBLE
-            binding.suggestionsHolder.visibility = View.VISIBLE
-            binding.voiceInputButton.beGoneIf(mVoiceInputMethod.isEmpty())
-            applyMoodBarConstraints(barOn = false)
-        }
-    }
-
-    /**
-     * Phase 8.5: re-anchor `suggestions_holder` based on whether the mood
-     * bar is on or off (Decision #3). When the bar is on, suggestions
-     * trails it. When the bar is off, suggestions trails `clipboard_clear`,
-     * the pre-Phase-8 leading anchor.
-     *
-     * Driven by a `ConstraintSet` clone of `toolbar_holder` rather than by
-     * mutating LayoutParams in-place — `ConstraintSet` is the canonical
-     * way to flip anchors on a `ConstraintLayout` without losing the
-     * other constraints already set in XML.
-     */
-    private fun applyMoodBarConstraints(barOn: Boolean) {
-        val binding = keyboardViewBinding ?: return
-        val toolbar = binding.toolbarHolder as? ConstraintLayout ?: return
-        val set = ConstraintSet().apply { clone(toolbar) }
-        set.clear(R.id.suggestions_holder, ConstraintSet.START)
-        val anchor = if (barOn) R.id.mood_bar else R.id.clipboard_clear
-        set.connect(
-            R.id.suggestions_holder,
-            ConstraintSet.START,
-            anchor,
-            ConstraintSet.END,
-        )
-        set.applyTo(toolbar)
+        // Phase 13: the bar is an elevated overlay anchored to the trailing
+        // edge. The expanded slot row is free to float over `pinned_clipboard`
+        // / `voice_input_button` / `settings_cog` — none of those need to
+        // move or hide. Suggestions and clipboard_clear stay on the leading
+        // edge and are never touched.
+        binding.clipboardClear.visibility = View.VISIBLE
+        binding.suggestionsHolder.visibility = View.VISIBLE
+        binding.voiceInputButton.beGoneIf(mVoiceInputMethod.isEmpty())
+        binding.pinnedClipboardItems.visibility = View.VISIBLE
     }
 
     /**
@@ -1088,15 +1066,30 @@ class MyKeyboardView @JvmOverloads constructor(
             slots.visibility = if (expanded) View.VISIBLE else View.GONE
             return
         }
+        // Phase 13: ask the framework to smoothly animate the layout
+        // change that's about to happen (slots flipping GONE↔VISIBLE,
+        // which would otherwise snap the bar's width instantly). The
+        // AutoTransition's default ChangeBounds + Fade gives us a smooth
+        // width interpolation tied to the same duration as our explicit
+        // chevron + alpha animations, so everything settles together.
+        TransitionManager.beginDelayedTransition(
+            binding.moodBar,
+            AutoTransition().apply {
+                duration = MOOD_BAR_LAYOUT_FADE_MS
+                interpolator = MOOD_BAR_SMOOTH_INTERPOLATOR
+            },
+        )
         chevron.animate()
             .rotation(rotTarget)
-            .setDuration(MOOD_BAR_CHEVRON_ROT_MS)
+            .setDuration(MOOD_BAR_LAYOUT_FADE_MS)
+            .setInterpolator(MOOD_BAR_SMOOTH_INTERPOLATOR)
             .start()
         if (expanded) {
             // Hide the collapsed chip; cross-fade the expanded slots in.
             indicator.animate()
                 .alpha(0f)
                 .setDuration(MOOD_BAR_LAYOUT_FADE_MS)
+                .setInterpolator(MOOD_BAR_SMOOTH_INTERPOLATOR)
                 .withEndAction { indicator.visibility = View.GONE }
                 .start()
             slots.alpha = 0f
@@ -1104,11 +1097,13 @@ class MyKeyboardView @JvmOverloads constructor(
             slots.animate()
                 .alpha(1f)
                 .setDuration(MOOD_BAR_LAYOUT_FADE_MS)
+                .setInterpolator(MOOD_BAR_SMOOTH_INTERPOLATOR)
                 .start()
         } else {
             slots.animate()
                 .alpha(0f)
                 .setDuration(MOOD_BAR_LAYOUT_FADE_MS)
+                .setInterpolator(MOOD_BAR_SMOOTH_INTERPOLATOR)
                 .withEndAction { slots.visibility = View.GONE }
                 .start()
             // Hotfix: re-derive the indicator's intended alpha so the
@@ -1123,6 +1118,7 @@ class MyKeyboardView @JvmOverloads constructor(
             indicator.animate()
                 .alpha(targetAlpha)
                 .setDuration(MOOD_BAR_LAYOUT_FADE_MS)
+                .setInterpolator(MOOD_BAR_SMOOTH_INTERPOLATOR)
                 .start()
         }
     }
@@ -2526,6 +2522,33 @@ class MyKeyboardView @JvmOverloads constructor(
             emojiPaletteHolder.beGone()
             emojisList.scrollToPosition(0)
             suggestionsHolder.beVisible()
+        }
+    }
+
+    /**
+     * Phase 13: when a mood-bar tap changes `Config.lastMoodScore` (or
+     * clears it) and the emoji drawer is currently visible, rebuild the
+     * emoji list so the Phase 12 curated section reflects the new mood.
+     *
+     * Re-runs `setupEmojis()` which already dispatches its work to a
+     * background thread and posts the new adapter back to the main thread.
+     * The Phase 12 `addCuratedMoodSection(items)` call at the top of
+     * `prepareEmojiItems` reads `Config.lastMoodScore` fresh on every
+     * invocation, so a fresh `setupEmojis` call automatically picks up
+     * the new curated emoji glyph and list.
+     *
+     * Called from `SimpleKeyboardIME.onSharedPreferenceChanged` *after*
+     * the controller's Config write commits — the listener-driven path
+     * decouples the rebuild from the click handler (`IkdMoodBarController`
+     * writes on `Dispatchers.IO`; the listener fires after the write so
+     * the rebuild reads the freshly-written value). No-ops when the
+     * emoji drawer is not currently visible.
+     */
+    fun notifyEmojiAdapterMoodChanged() {
+        val binding = keyboardViewBinding ?: return
+        if (binding.emojiPaletteHolder.visibility == View.VISIBLE) {
+            binding.emojisList.scrollToPosition(0)
+            setupEmojis()
         }
     }
 

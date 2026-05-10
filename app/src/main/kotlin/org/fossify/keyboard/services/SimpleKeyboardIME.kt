@@ -131,6 +131,7 @@ import org.fossify.keyboard.helpers.EVENT_CATEGORY_ENTER
 import org.fossify.keyboard.helpers.EVENT_CATEGORY_OTHER
 import org.fossify.keyboard.helpers.EVENT_CATEGORY_SPACE
 import org.fossify.keyboard.helpers.IME_EDIT_GRACE_MS
+import org.fossify.keyboard.helpers.LAST_MOOD_SCORE
 import org.fossify.keyboard.helpers.MOOD_INACTIVITY_TIMEOUT_MS
 import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.helpers.cachedVNTelexData
@@ -1058,16 +1059,26 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key != null && key in arrayOf(
+        if (key == null || !::binding.isInitialized) return
+        // Phase 13: route a Config.lastMoodScore write back to the keyboard
+        // view so the emoji drawer's Phase-12 curated section rebuilds
+        // when the user changes mood mid-drawer. The listener fires AFTER
+        // the controller's `Dispatchers.IO` write commits, so this is the
+        // only place where the rebuild is guaranteed to see the new value
+        // (see Phase13_Plan.md §5 race-condition note — option C).
+        // The helper itself no-ops when the drawer isn't visible.
+        if (key == LAST_MOOD_SCORE) {
+            keyboardView?.notifyEmojiAdapterMoodChanged()
+            return
+        }
+        if (key in arrayOf(
                 SHOW_KEY_BORDERS, KEYBOARD_LANGUAGE, HEIGHT_PERCENTAGE, SHOW_NUMBERS_ROW, VOICE_INPUT_METHOD,
                 TEXT_COLOR, BACKGROUND_COLOR, PRIMARY_COLOR, ACCENT_COLOR, CUSTOM_TEXT_COLOR, CUSTOM_BACKGROUND_COLOR,
                 CUSTOM_PRIMARY_COLOR, CUSTOM_ACCENT_COLOR, IS_GLOBAL_THEME_ENABLED, IS_SYSTEM_THEME_ENABLED
             )
         ) {
-            if (::binding.isInitialized) {
-                keyboardView?.setupKeyboard()
-                updateBackgroundColors()
-            }
+            keyboardView?.setupKeyboard()
+            updateBackgroundColors()
         }
     }
 
