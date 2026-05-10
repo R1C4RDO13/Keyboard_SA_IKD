@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KeyboardSA IKD — Insights Redesign Proposals</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #e0e0e0;
+    --primary: #1976d2;
+    --primary-soft: #e3f2fd;
+    --accent: #00838f;
+    --text: #212121;
+    --muted: #616161;
+    --good: #2e7d32;
+    --bad: #b71c1c;
+    --frame-bg: #f6f7fa;
+    --chart-placeholder: #eef3f8;
+    --chip-bg: #eceff1;
+    --chip-active: #1976d2;
+    --tab-active-bg: #1976d2;
+    --tab-active-text: #ffffff;
+    --tab-bg: transparent;
+    --tab-border: #1976d2;
+    --tab-text: #1976d2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    line-height: 1.55;
+  }
+  header.page-header {
+    background: linear-gradient(135deg, #1976d2 0%, #353c3d 100%);
+    color: white;
+    padding: 32px 40px;
+  }
+  header.page-header h1 { margin: 0 0 8px 0; font-size: 28px; }
+  header.page-header p { margin: 0; opacity: 0.9; font-size: 15px; max-width: 720px; }
+  main { max-width: 1280px; margin: 0 auto; padding: 32px 24px 64px 24px; }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+  }
+  nav.toc h2 { margin-top: 0; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc li { margin: 6px 0; }
+  nav.toc a { color: var(--primary); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+
+  section.proposal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 32px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  section.proposal > header {
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+  }
+  section.proposal > header h2 { margin: 0 0 4px 0; font-size: 22px; color: var(--primary); }
+  section.proposal > header .tagline { margin: 0; color: var(--muted); font-size: 14px; }
+  section.proposal > .body { padding: 24px 28px; }
+
+  .layout-row {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) 1fr;
+    gap: 28px;
+    align-items: flex-start;
+  }
+  .layout-row.two-mocks {
+    grid-template-columns: minmax(260px, 320px) minmax(260px, 320px) 1fr;
+  }
+
+  /* ─── phone frame ─────────────────────────────────────────── */
+  .phone-frame {
+    background: var(--frame-bg);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 16px 12px 12px 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06), inset 0 0 0 6px #ffffff;
+    position: relative;
+  }
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 60px; height: 6px;
+    background: #d8d8d8;
+    border-radius: 3px;
+  }
+  .phone-screen {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-top: 4px;
+    min-height: 540px;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-screen.compact { min-height: 460px; }
+  .phone-label {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── android UI atoms ────────────────────────────────────── */
+  .toolbar {
+    background: var(--primary);
+    color: white;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .toolbar .icons { display: flex; gap: 14px; opacity: 0.95; }
+  .toolbar .icons span { width: 18px; text-align: center; }
+
+  .row {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .row.compact { padding: 6px 12px; }
+  .row.tight   { padding: 4px 12px; }
+  .row .row-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 4px 0;
+  }
+
+  .kpi-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 0;
+  }
+  .kpi-cell {
+    flex: 0 0 auto;
+    min-width: 64px;
+    background: #f6f8fb;
+    border-radius: 6px;
+    padding: 6px 8px;
+    text-align: center;
+  }
+  .kpi-cell .v { font-weight: 700; font-size: 13px; color: var(--text); }
+  .kpi-cell .l { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+  .toggle-group {
+    display: flex;
+    gap: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--tab-border);
+  }
+  .toggle-group .btn {
+    flex: 1 1 auto;
+    background: var(--tab-bg);
+    color: var(--tab-text);
+    text-align: center;
+    padding: 6px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    border-right: 1px solid var(--tab-border);
+    white-space: nowrap;
+  }
+  .toggle-group .btn:last-child { border-right: none; }
+  .toggle-group .btn.active {
+    background: var(--tab-active-bg);
+    color: var(--tab-active-text);
+  }
+
+  .toggle-group.scrollable {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .chip-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 0;
+  }
+  .chip {
+    flex: 0 0 auto;
+    background: var(--chip-bg);
+    border-radius: 14px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--text);
+    border: 1px solid transparent;
+  }
+  .chip.active {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+  }
+  .chip.dismissable::after {
+    content: ' ×';
+    color: var(--muted);
+    margin-left: 2px;
+  }
+
+  .tab-strip-content {
+    flex: 1 1 auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .chart-block {
+    background: var(--chart-placeholder);
+    border-radius: 6px;
+    height: 84px;
+    position: relative;
+  }
+  .chart-block::before {
+    content: 'chart';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #9aacc1;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .chart-block.tall { height: 120px; }
+  .chart-block.short { height: 50px; }
+
+  /* ─── annotation callouts ─────────────────────────────────── */
+  .note { color: var(--muted); font-size: 13px; }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .stat-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .stat-card .stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 4px 0;
+  }
+  .stat-card .stat-value { font-weight: 600; font-size: 14px; }
+  .stat-card.cost { border-color: #ffd180; background: #fff8e1; }
+  .stat-card.pros { border-color: #a5d6a7; background: #e8f5e9; }
+  .stat-card.cons { border-color: #ef9a9a; background: #ffebee; }
+  .stat-card.recommend { border-color: var(--good); background: #e8f5e9; }
+
+  ul.pros-cons { margin: 0; padding-left: 18px; font-size: 13px; }
+  ul.pros-cons li { margin: 4px 0; }
+
+  .callout {
+    border-left: 4px solid var(--good);
+    background: #f1f8f4;
+    padding: 14px 18px;
+    border-radius: 0 6px 6px 0;
+    margin-top: 18px;
+  }
+  .callout strong { color: var(--good); }
+
+  /* highlight ring around a row that's the focus of a redesign */
+  .row.highlight {
+    box-shadow: inset 0 0 0 2px #ff8a65;
+    background: #fff3e0;
+  }
+  .row.removed {
+    opacity: 0.35;
+    text-decoration: line-through;
+    text-decoration-color: var(--bad);
+  }
+  .row.added {
+    box-shadow: inset 0 0 0 2px var(--good);
+    background: #e8f5e9;
+  }
+
+  .density-meter {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+    align-items: center;
+  }
+  .density-meter .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #d0d0d0;
+  }
+  .density-meter .dot.filled { background: var(--bad); }
+  .density-meter .dot.filled.lighter { background: #ffb74d; }
+  .density-meter .dot.filled.lightest { background: #aed581; }
+  .density-meter .label { font-size: 11px; color: var(--muted); margin-left: 8px; }
+
+  /* bottom-sheet overlay mock */
+  .sheet-overlay {
+    background: rgba(0,0,0,0.4);
+    flex: 1 1 auto;
+    display: flex;
+    align-items: flex-end;
+  }
+  .sheet {
+    background: white;
+    width: 100%;
+    border-radius: 14px 14px 0 0;
+    padding: 14px 14px 18px 14px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+  }
+  .sheet h4 {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .sheet .grabber {
+    width: 36px; height: 4px; background: #d0d0d0;
+    border-radius: 2px;
+    margin: 0 auto 10px auto;
+  }
+  .sheet .section-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 24px;
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>Insights — Redesign Proposals</h1>
+  <p>Three concrete ways to thin the top menu of <code>DashboardActivity</code>. The current design stacks five horizontal rows before the first chart appears (KPI strip · tab toggle · range toggle · mood chip row · plus the toolbar). Below: the current state for reference, then three redesigns ranked by cost vs. payoff. Each mock is HTML/CSS — not pixel-perfect Android, but enough to compare structure.</p>
+</header>
+
+<main>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#current">Current state — for reference</a></li>
+    <li><a href="#option-a">Option A — Filters into a single icon (recommended)</a></li>
+    <li><a href="#option-b">Option B — Collapsing KPI on scroll</a></li>
+    <li><a href="#option-c">Option C — Tabs to bottom navigation</a></li>
+    <li><a href="#recommendation">Recommendation</a></li>
+  </ol>
+</nav>
+
+<!-- ====================== CURRENT STATE ====================== -->
+<section class="proposal" id="current">
+  <header>
+    <h2>Current state</h2>
+    <p class="tagline">For reference. Five rows of chrome before the first chart.</p>
+  </header>
+  <div class="body">
+    <div class="layout-row">
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="row highlight">
+              <p class="row-label">KPI strip · 6 cells · scrolls horizontally</p>
+              <div class="kpi-strip">
+                <div class="kpi-cell"><div class="v">128</div><div class="l">Sessions</div></div>
+                <div class="kpi-cell"><div class="v">42 m</div><div class="l">Typing time</div></div>
+                <div class="kpi-cell"><div class="v">38</div><div class="l">WPM</div></div>
+                <div class="kpi-cell"><div class="v">7.2%</div><div class="l">Errors</div></div>
+                <div class="kpi-cell"><div class="v">19 s</div><div class="l">Avg session</div></div>
+                <div class="kpi-cell"><div class="v">5d</div><div class="l">Streak</div></div>
+              </div>
+            </div>
+            <div class="row highlight">
+              <p class="row-label">Tab toggle · 5 buttons · scrolls horizontally</p>
+              <div class="toggle-group scrollable">
+                <div class="btn active">Trends</div>
+                <div class="btn">Activity</div>
+                <div class="btn">Mood</div>
+                <div class="btn">Keys</div>
+                <div class="btn">Habits</div>
+              </div>
+            </div>
+            <div class="row highlight">
+              <p class="row-label">Range toggle · 4 buttons</p>
+              <div class="toggle-group">
+                <div class="btn">Today</div>
+                <div class="btn active">Week</div>
+                <div class="btn">Month</div>
+                <div class="btn">All</div>
+              </div>
+            </div>
+            <div class="row highlight">
+              <p class="row-label">Mood filter chip row · gone until first mood entry</p>
+              <div class="chip-strip">
+                <div class="chip active">All</div>
+                <div class="chip">😊</div>
+                <div class="chip">😲</div>
+                <div class="chip">🤢</div>
+                <div class="chip">😢</div>
+                <div class="chip">😨</div>
+                <div class="chip">😠</div>
+              </div>
+            </div>
+            <div class="tab-strip-content">
+              <div class="chart-block tall"></div>
+              <div class="chart-block"></div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-label">Current — 5 chrome rows ≈ 35–40% of viewport before charts</p>
+      </div>
+
+      <div>
+        <h3 style="margin-top:0;">What's painful</h3>
+        <ul class="pros-cons">
+          <li>The two filter rows (range + mood) are <em>set-once-then-ignored</em> for most users — but they consume permanent vertical space.</li>
+          <li>The KPI strip carries 6 cells. On a 360 dp screen they only fit by horizontally scrolling, which is awkward when you want to compare at a glance.</li>
+          <li>Tab toggle + range toggle look visually identical (both are <code>MaterialButtonToggleGroup</code>s). Two segmented controls stacked is a confusing UX hierarchy — one is navigation, the other is filter, but the eye treats them the same.</li>
+          <li>Mood chip row only appears after the first mood entry — but when it does, it's a fifth row.</li>
+        </ul>
+        <div class="density-meter">
+          <span class="dot filled"></span>
+          <span class="dot filled"></span>
+          <span class="dot filled"></span>
+          <span class="dot filled"></span>
+          <span class="dot filled lighter"></span>
+          <span class="label">density: heavy (5 chrome rows / charts pushed below the fold)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== OPTION A ====================== -->
+<section class="proposal" id="option-a">
+  <header>
+    <h2>Option A — Filters into a single icon</h2>
+    <p class="tagline">Lowest cost. Hide range &amp; mood behind a toolbar Filters icon; surface the active selection as a single chip below the tabs.</p>
+  </header>
+  <div class="body">
+    <div class="layout-row two-mocks">
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>⚙</span><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="row">
+              <p class="row-label">KPI strip — kept</p>
+              <div class="kpi-strip">
+                <div class="kpi-cell"><div class="v">128</div><div class="l">Sessions</div></div>
+                <div class="kpi-cell"><div class="v">42 m</div><div class="l">Typing time</div></div>
+                <div class="kpi-cell"><div class="v">38</div><div class="l">WPM</div></div>
+                <div class="kpi-cell"><div class="v">7.2%</div><div class="l">Errors</div></div>
+                <div class="kpi-cell"><div class="v">19 s</div><div class="l">Avg session</div></div>
+                <div class="kpi-cell"><div class="v">5d</div><div class="l">Streak</div></div>
+              </div>
+            </div>
+            <div class="row">
+              <p class="row-label">Tab toggle — kept</p>
+              <div class="toggle-group scrollable">
+                <div class="btn active">Trends</div>
+                <div class="btn">Activity</div>
+                <div class="btn">Mood</div>
+                <div class="btn">Keys</div>
+                <div class="btn">Habits</div>
+              </div>
+            </div>
+            <div class="row added tight">
+              <div class="chip-strip">
+                <div class="chip active dismissable">Week · 😊 Happy</div>
+              </div>
+            </div>
+            <div class="tab-strip-content">
+              <div class="chart-block tall"></div>
+              <div class="chart-block"></div>
+              <div class="chart-block short"></div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-label">Default state · range &amp; mood collapsed into one chip</p>
+      </div>
+
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span style="opacity:.6;">⚙</span><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="sheet-overlay">
+              <div class="sheet">
+                <div class="grabber"></div>
+                <h4>Filters</h4>
+                <div class="section-label">Range</div>
+                <div class="toggle-group">
+                  <div class="btn">Today</div>
+                  <div class="btn active">Week</div>
+                  <div class="btn">Month</div>
+                  <div class="btn">All</div>
+                </div>
+                <div class="section-label">Mood</div>
+                <div class="chip-strip">
+                  <div class="chip">All</div>
+                  <div class="chip active">😊</div>
+                  <div class="chip">😲</div>
+                  <div class="chip">🤢</div>
+                  <div class="chip">😢</div>
+                  <div class="chip">😨</div>
+                  <div class="chip">😠</div>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:14px;">
+                  <div class="chip" style="flex:1; text-align:center;">Reset</div>
+                  <div class="chip active" style="flex:1; text-align:center;">Apply</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-label">Filters bottom-sheet · opened from toolbar ⚙</p>
+      </div>
+
+      <div>
+        <h3 style="margin-top:0;">Trade-off</h3>
+        <ul class="pros-cons">
+          <li>Saves <strong>2 chrome rows</strong> (range + mood) → ~12% viewport reclaimed.</li>
+          <li>Filter affordance is one tap deeper, but signposted by both the toolbar icon and the active chip.</li>
+          <li>Active filter is always visible as a single chip — you never lose track of what's scoping the data.</li>
+          <li>Tabs and filters are now visually distinct (segmented control vs. icon+chip). Resolves the "two adjacent toggle groups look the same" hierarchy bug.</li>
+        </ul>
+        <div class="stat-grid">
+          <div class="stat-card cost">
+            <p class="stat-label">Cost</p>
+            <p class="stat-value">~½ day</p>
+          </div>
+          <div class="stat-card pros">
+            <p class="stat-label">Wins</p>
+            <p class="stat-value">2 rows back</p>
+          </div>
+          <div class="stat-card cons">
+            <p class="stat-label">Risk</p>
+            <p class="stat-value">Discoverability</p>
+          </div>
+        </div>
+        <div class="density-meter" style="margin-top:14px;">
+          <span class="dot filled"></span>
+          <span class="dot filled"></span>
+          <span class="dot filled lightest"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="label">density: light (3 chrome rows + 1 thin chip row)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== OPTION B ====================== -->
+<section class="proposal" id="option-b">
+  <header>
+    <h2>Option B — Collapsing KPI on scroll</h2>
+    <p class="tagline">Keeps every control visible at first glance, then reclaims the KPI row when the user scrolls into the charts.</p>
+  </header>
+  <div class="body">
+    <div class="layout-row two-mocks">
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="row">
+              <p class="row-label">KPI strip · expanded</p>
+              <div class="kpi-strip">
+                <div class="kpi-cell"><div class="v">128</div><div class="l">Sessions</div></div>
+                <div class="kpi-cell"><div class="v">42 m</div><div class="l">Typing time</div></div>
+                <div class="kpi-cell"><div class="v">38</div><div class="l">WPM</div></div>
+                <div class="kpi-cell"><div class="v">7.2%</div><div class="l">Errors</div></div>
+                <div class="kpi-cell"><div class="v">19 s</div><div class="l">Avg session</div></div>
+                <div class="kpi-cell"><div class="v">5d</div><div class="l">Streak</div></div>
+              </div>
+            </div>
+            <div class="row tight">
+              <div class="toggle-group scrollable" style="margin-bottom:6px;">
+                <div class="btn active">Trends</div>
+                <div class="btn">Activity</div>
+                <div class="btn">Mood</div>
+                <div class="btn">Keys</div>
+                <div class="btn">Habits</div>
+              </div>
+              <div class="chip-strip">
+                <div class="chip active">Week ▾</div>
+                <div class="chip">😊</div>
+                <div class="chip">😲</div>
+                <div class="chip">🤢</div>
+                <div class="chip">😢</div>
+              </div>
+            </div>
+            <div class="tab-strip-content">
+              <div class="chart-block tall"></div>
+              <div class="chart-block"></div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-label">Expanded · top of tab</p>
+      </div>
+
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="row tight" style="background:#f9fbfd;">
+              <div class="toggle-group scrollable" style="margin-bottom:6px;">
+                <div class="btn active">Trends</div>
+                <div class="btn">Activity</div>
+                <div class="btn">Mood</div>
+                <div class="btn">Keys</div>
+                <div class="btn">Habits</div>
+              </div>
+              <div class="chip-strip">
+                <div class="chip active">Week ▾</div>
+                <div class="chip">😊</div>
+              </div>
+            </div>
+            <div class="tab-strip-content">
+              <div class="chart-block tall"></div>
+              <div class="chart-block tall"></div>
+              <div class="chart-block"></div>
+              <div class="chart-block"></div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-label">Collapsed · after scroll into charts</p>
+      </div>
+
+      <div>
+        <h3 style="margin-top:0;">Trade-off</h3>
+        <ul class="pros-cons">
+          <li>Range becomes a dropdown chip (Week ▾) inline with the mood chips — same row.</li>
+          <li>KPI cells animate away as the user scrolls, returning when they scroll back to the top.</li>
+          <li>Best of both: full overview when you arrive on a tab, full chart real-estate when you focus.</li>
+          <li>Material's <code>AppBarLayout</code> + <code>scrollFlags</code> is the canonical pattern; pairs with <code>NestedScrollView</code> inside each fragment.</li>
+        </ul>
+        <div class="stat-grid">
+          <div class="stat-card cost">
+            <p class="stat-label">Cost</p>
+            <p class="stat-value">1–2 days</p>
+          </div>
+          <div class="stat-card pros">
+            <p class="stat-label">Wins</p>
+            <p class="stat-value">No info hidden</p>
+          </div>
+          <div class="stat-card cons">
+            <p class="stat-label">Risk</p>
+            <p class="stat-value">Scroll jitter w/ ViewPager2</p>
+          </div>
+        </div>
+        <div class="density-meter" style="margin-top:14px;">
+          <span class="dot filled"></span>
+          <span class="dot filled"></span>
+          <span class="dot filled lighter"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="label">density: medium top-of-tab · light when scrolled</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== OPTION C ====================== -->
+<section class="proposal" id="option-c">
+  <header>
+    <h2>Option C — Tabs to bottom navigation</h2>
+    <p class="tagline">Maximum chart real-estate. Tabs become persistent <code>BottomNavigationView</code>; range &amp; mood live behind the same Filters icon as Option A.</p>
+  </header>
+  <div class="body">
+    <div class="layout-row">
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights · Trends</span>
+              <span class="icons"><span>⚙</span><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="row">
+              <p class="row-label">KPI strip — kept</p>
+              <div class="kpi-strip">
+                <div class="kpi-cell"><div class="v">128</div><div class="l">Sessions</div></div>
+                <div class="kpi-cell"><div class="v">42 m</div><div class="l">Typing time</div></div>
+                <div class="kpi-cell"><div class="v">38</div><div class="l">WPM</div></div>
+                <div class="kpi-cell"><div class="v">7.2%</div><div class="l">Errors</div></div>
+                <div class="kpi-cell"><div class="v">19 s</div><div class="l">Avg session</div></div>
+                <div class="kpi-cell"><div class="v">5d</div><div class="l">Streak</div></div>
+              </div>
+            </div>
+            <div class="row added tight">
+              <div class="chip-strip">
+                <div class="chip active dismissable">Week · 😊 Happy</div>
+              </div>
+            </div>
+            <div class="tab-strip-content">
+              <div class="chart-block tall"></div>
+              <div class="chart-block tall"></div>
+              <div class="chart-block"></div>
+              <div class="chart-block short"></div>
+            </div>
+            <!-- bottom nav -->
+            <div style="display:flex; gap:0; border-top:1px solid var(--border); background:white;">
+              <div style="flex:1; text-align:center; padding:8px 0; font-size:10px; color:var(--primary); font-weight:600; border-top:2px solid var(--primary);">📈<br>Trends</div>
+              <div style="flex:1; text-align:center; padding:8px 0; font-size:10px; color:var(--muted);">📅<br>Activity</div>
+              <div style="flex:1; text-align:center; padding:8px 0; font-size:10px; color:var(--muted);">😊<br>Mood</div>
+              <div style="flex:1; text-align:center; padding:8px 0; font-size:10px; color:var(--muted);">⌨<br>Keys</div>
+              <div style="flex:1; text-align:center; padding:8px 0; font-size:10px; color:var(--muted);">🔁<br>Habits</div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-label">Tabs as bottom nav · most chart real-estate</p>
+      </div>
+
+      <div>
+        <h3 style="margin-top:0;">Trade-off</h3>
+        <ul class="pros-cons">
+          <li>Tabs persistently visible without competing with filter controls.</li>
+          <li>Title bar gains active-tab name (e.g. "Insights · Trends") so the navigation context is preserved despite the move.</li>
+          <li>Charts get the most vertical space of any option — useful for the histograms and heatmaps that crowded under shorter layouts.</li>
+          <li><strong>Hard ceiling at 5 tabs.</strong> If a future Phase 9.x adds a sixth section, you'd have to drop one or move to bottom-sheet navigation.</li>
+          <li>Replaces the swipeable <code>ViewPager2</code> with a <code>NavController</code>-driven <code>FragmentContainerView</code> — biggest structural change of the three options.</li>
+          <li>Bottom nav competes for thumb space with the system gesture bar / IME on edge-to-edge devices.</li>
+        </ul>
+        <div class="stat-grid">
+          <div class="stat-card cost">
+            <p class="stat-label">Cost</p>
+            <p class="stat-value">~2 days</p>
+          </div>
+          <div class="stat-card pros">
+            <p class="stat-label">Wins</p>
+            <p class="stat-value">Max chart space</p>
+          </div>
+          <div class="stat-card cons">
+            <p class="stat-label">Risk</p>
+            <p class="stat-value">Loses swipe gesture</p>
+          </div>
+        </div>
+        <div class="density-meter" style="margin-top:14px;">
+          <span class="dot filled"></span>
+          <span class="dot filled"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="label">density: light top · persistent bottom nav</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== RECOMMENDATION ====================== -->
+<section class="proposal" id="recommendation">
+  <header>
+    <h2>Recommendation</h2>
+    <p class="tagline">Where to start.</p>
+  </header>
+  <div class="body">
+    <p>Start with <strong>Option A</strong>. It directly addresses "too many buttons on the top" by removing 9 visible control buttons (4 range + up to 7 mood) and replacing them with a single toolbar icon plus one chip. It costs less than half a day and is fully reversible.</p>
+    <p>If after living with A you want to push further, layer <strong>Option B</strong> on top — A and B compose cleanly. The collapsing-KPI behaviour just adds <code>scrollFlags</code> to the existing <code>AppBarLayout</code>; A's filter chip stays in the lower (always-visible) tier of the bar.</p>
+    <p><strong>Option C</strong> is the right call only if you decide tabs should become app-wide chrome rather than a per-screen control. It's the biggest disruption and locks tab count at 5.</p>
+    <div class="callout">
+      <strong>Suggested rollout order:</strong> ship A first (most impact per hour). Live with it for a week. If the KPI strip still feels heavy when reading charts, layer B. Don't pre-commit to C — its trade-offs (loss of swipe gesture, 5-tab cap, biggest refactor) are only worth it if A+B together still aren't enough.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Generated for the KeyboardSA IKD project · sibling document: <code>insights_dashboards_overview.html</code>
+</footer>
+
+</body>
+</html>

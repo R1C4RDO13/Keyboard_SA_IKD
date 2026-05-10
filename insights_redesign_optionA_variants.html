@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KeyboardSA IKD — Option A Variants</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #e0e0e0;
+    --primary: #1976d2;
+    --primary-soft: #e3f2fd;
+    --accent: #00838f;
+    --text: #212121;
+    --muted: #616161;
+    --good: #2e7d32;
+    --frame-bg: #f6f7fa;
+    --chart-placeholder: #eef3f8;
+    --chip-bg: #eceff1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    line-height: 1.55;
+  }
+  header.page-header {
+    background: linear-gradient(135deg, #1976d2 0%, #353c3d 100%);
+    color: white;
+    padding: 32px 40px;
+  }
+  header.page-header h1 { margin: 0 0 8px 0; font-size: 28px; }
+  header.page-header p { margin: 0; opacity: 0.9; font-size: 15px; max-width: 720px; }
+  main { max-width: 1380px; margin: 0 auto; padding: 32px 24px 64px 24px; }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+  }
+  nav.toc h2 { margin-top: 0; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc li { margin: 6px 0; }
+  nav.toc a { color: var(--primary); text-decoration: none; }
+
+  section.proposal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 32px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  section.proposal > header {
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+  }
+  section.proposal > header h2 { margin: 0 0 4px 0; font-size: 22px; color: var(--primary); }
+  section.proposal > header .tagline { margin: 0; color: var(--muted); font-size: 14px; }
+  section.proposal > .body { padding: 24px 28px; }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(280px, 360px));
+    gap: 28px;
+    justify-content: start;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(280px, 360px));
+    gap: 28px;
+    justify-content: start;
+  }
+  .variant-card { display: flex; flex-direction: column; align-items: center; }
+  .variant-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: var(--text);
+    text-align: center;
+  }
+  .variant-card .sub {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    margin: 0 0 14px 0;
+    min-height: 36px;
+  }
+
+  /* ─── phone frame ─────────────────────────────────────────── */
+  .phone-frame {
+    background: var(--frame-bg);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 16px 12px 12px 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06), inset 0 0 0 6px #ffffff;
+    position: relative;
+    width: 100%;
+  }
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 60px; height: 6px;
+    background: #d8d8d8;
+    border-radius: 3px;
+  }
+  .phone-screen {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-top: 4px;
+    min-height: 580px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .toolbar {
+    background: var(--primary);
+    color: white;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .toolbar .icons { display: flex; gap: 14px; opacity: 0.95; }
+  .toolbar .icons span { width: 18px; text-align: center; }
+
+  .filter-chip-row {
+    padding: 6px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #f9fbfd;
+    display: flex;
+    gap: 6px;
+  }
+  .filter-chip {
+    background: var(--primary-soft);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    border-radius: 14px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .filter-chip.dismissable::after {
+    content: ' ×';
+    color: var(--muted);
+    margin-left: 2px;
+  }
+
+  /* ── tab variants ───────────────────────────────────────── */
+  .tabs-base {
+    display: flex;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    background: white;
+  }
+  .tab {
+    flex: 1 0 auto;
+    text-align: center;
+    cursor: default;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+  }
+
+  /* Variant 1: Icon left of text, single row */
+  .tabs-inline .tab {
+    padding: 10px 12px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .tabs-inline .tab .ico { font-size: 14px; line-height: 1; }
+
+  /* Variant 2: Icon stacked over text, two-line */
+  .tabs-stacked .tab {
+    padding: 8px 4px;
+    font-size: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 60px;
+  }
+  .tabs-stacked .tab .ico { font-size: 18px; line-height: 1; }
+
+  /* Variant 3: Icon-only, label revealed when active */
+  .tabs-icon-only .tab {
+    padding: 12px 6px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 48px;
+  }
+  .tabs-icon-only .tab .ico { font-size: 18px; line-height: 1; }
+  .tabs-icon-only .tab .label { display: none; }
+  .tabs-icon-only .tab.active .label { display: inline; }
+  .tabs-icon-only .tab.active {
+    background: var(--primary-soft);
+    border-radius: 18px 18px 0 0;
+  }
+
+  /* ─── KPI tab content (Summary) ───────────────────────────── */
+  .summary-body {
+    flex: 1;
+    padding: 12px;
+    background: #fafbfc;
+    overflow: auto;
+  }
+  .summary-grid-2x3 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .summary-grid-3x2 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .kpi-tile {
+    background: white;
+    border-radius: 10px;
+    padding: 12px 10px;
+    border: 1px solid #ececec;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .kpi-tile.compact { padding: 8px 6px; }
+  .kpi-tile .head { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .kpi-tile .head .ico { font-size: 12px; }
+  .kpi-tile .value { font-weight: 700; font-size: 20px; color: var(--text); line-height: 1; }
+  .kpi-tile.compact .value { font-size: 16px; }
+  .kpi-tile .delta { font-size: 11px; color: var(--good); }
+  .kpi-tile .delta.bad { color: #c62828; }
+  .kpi-tile .spark {
+    height: 22px;
+    background: linear-gradient(180deg, transparent 30%, var(--primary-soft) 30%);
+    border-radius: 2px;
+    position: relative;
+    margin-top: 2px;
+    overflow: hidden;
+  }
+  .kpi-tile .spark::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg, transparent 0 6px,
+      rgba(25, 118, 210, 0.18) 6px 7px
+    );
+  }
+
+  .summary-section-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 12px 0 6px 0;
+  }
+
+  .summary-charts {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .chart-card {
+    background: white;
+    border: 1px solid #ececec;
+    border-radius: 8px;
+    padding: 8px;
+  }
+  .chart-card .title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .chart-card .placeholder {
+    background: var(--chart-placeholder);
+    border-radius: 4px;
+    height: 70px;
+    position: relative;
+  }
+  .chart-card .placeholder::before {
+    content: 'mini-chart';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #9aacc1;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  ul.pros-cons { margin: 0; padding-left: 18px; font-size: 13px; }
+  ul.pros-cons li { margin: 4px 0; }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .stat-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .stat-card .stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 4px 0;
+  }
+  .stat-card .stat-value { font-weight: 600; font-size: 13px; }
+  .stat-card.cost { border-color: #ffd180; background: #fff8e1; }
+  .stat-card.pros { border-color: #a5d6a7; background: #e8f5e9; }
+  .stat-card.cons { border-color: #ef9a9a; background: #ffebee; }
+
+  .callout {
+    border-left: 4px solid var(--good);
+    background: #f1f8f4;
+    padding: 14px 18px;
+    border-radius: 0 6px 6px 0;
+    margin-top: 18px;
+  }
+  .callout strong { color: var(--good); }
+
+  .icon-key {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .icon-key .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    background: #f6f8fa;
+    padding: 6px 10px;
+    border-radius: 6px;
+  }
+  .icon-key .row .ico { font-size: 18px; width: 22px; text-align: center; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 24px;
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>Insights — Option A Variants</h1>
+  <p>You picked Option A (filters behind a single icon) and asked for two refinements: <strong>move the KPI strip into its own tab</strong>, and <strong>add icons to the tabs</strong>. The dashboard now has six tabs — Summary as the new landing page hosting the KPI cards, plus the existing five. Below: three variants of how the tab bar can render those six tabs, all sharing the same Summary content. Pick any one — they're swap-in equivalents.</p>
+</header>
+
+<main>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#icons">Icon mapping</a></li>
+    <li><a href="#variant-1">Variant 1 — Icon + text, inline (one row)</a></li>
+    <li><a href="#variant-2">Variant 2 — Icon stacked over text (two-line)</a></li>
+    <li><a href="#variant-3">Variant 3 — Icon-only, label on active</a></li>
+    <li><a href="#summary-grid">Summary tab — KPI grid layouts</a></li>
+    <li><a href="#recommendation">Recommendation</a></li>
+  </ol>
+</nav>
+
+<!-- ====================== ICON KEY ====================== -->
+<section class="proposal" id="icons">
+  <header>
+    <h2>Icon mapping</h2>
+    <p class="tagline">Six tabs · the Summary lands first; the rest preserve their current order. All icons here are Material symbols (rendered as emoji in this preview for portability — swap for vector drawables in the actual app).</p>
+  </header>
+  <div class="body">
+    <div class="icon-key">
+      <div class="row"><span class="ico">📊</span><span><strong>Summary</strong> · KPI grid</span></div>
+      <div class="row"><span class="ico">📈</span><span><strong>Trends</strong> · WPM / IKD / errors</span></div>
+      <div class="row"><span class="ico">📅</span><span><strong>Activity</strong> · when you type</span></div>
+      <div class="row"><span class="ico">😊</span><span><strong>Mood</strong> · how you tagged</span></div>
+      <div class="row"><span class="ico">⌨️</span><span><strong>Keystrokes</strong> · distributions</span></div>
+      <div class="row"><span class="ico">🔁</span><span><strong>Habits</strong> · routine signals</span></div>
+    </div>
+    <p class="note" style="margin-top:14px; font-size:13px; color:var(--muted);">In the Android implementation use <code>?attr/colorControlNormal</code>-tinted vector drawables in <code>res/drawable/</code> (e.g. <code>ic_dashboard_summary_vector.xml</code>) so each icon tracks the user's Fossify theme — same discipline as Phase 6 status chips and Phase 9.12 chart axes.</p>
+  </div>
+</section>
+
+<!-- ====================== VARIANT 1 ====================== -->
+<section class="proposal" id="variant-1">
+  <header>
+    <h2>Variant 1 — Icon + text, inline (one row)</h2>
+    <p class="tagline">Icon and label sit side-by-side in a single horizontal row. Tabs scroll horizontally if they don't all fit at default font size.</p>
+  </header>
+  <div class="body">
+    <div class="grid-2">
+      <div class="variant-card">
+        <h3>Default · Summary tab</h3>
+        <p class="sub">First impression — KPIs land directly inside the tab content.</p>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>⚙</span><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="tabs-base tabs-inline">
+              <div class="tab active"><span class="ico">📊</span><span>Summary</span></div>
+              <div class="tab"><span class="ico">📈</span><span>Trends</span></div>
+              <div class="tab"><span class="ico">📅</span><span>Activity</span></div>
+              <div class="tab"><span class="ico">😊</span><span>Mood</span></div>
+              <div class="tab"><span class="ico">⌨️</span><span>Keys</span></div>
+              <div class="tab"><span class="ico">🔁</span><span>Habits</span></div>
+            </div>
+            <div class="filter-chip-row">
+              <div class="filter-chip dismissable">Week · 😊 Happy</div>
+            </div>
+            <div class="summary-body">
+              <div class="summary-grid-2x3">
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">📋</span>Sessions</div>
+                  <div class="value">128</div>
+                  <div class="delta">+12 vs prev</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⏱</span>Typing time</div>
+                  <div class="value">42 m</div>
+                  <div class="delta">+5 m</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⚡</span>WPM</div>
+                  <div class="value">38</div>
+                  <div class="delta">+2</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⚠</span>Error rate</div>
+                  <div class="value">7.2%</div>
+                  <div class="delta bad">+0.4%</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⌛</span>Avg session</div>
+                  <div class="value">19 s</div>
+                  <div class="delta">+1 s</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">🔥</span>Streak</div>
+                  <div class="value">5d</div>
+                  <div class="delta">new high</div>
+                  <div class="spark"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="margin-top:0;">Trade-off</h3>
+        <ul class="pros-cons">
+          <li>Maximum readability — every tab carries both an icon and a word, removing all guesswork.</li>
+          <li>Six tabs at default font may overflow narrow widths and need horizontal scrolling. The current Phase 9.12 implementation already wraps the toggle in a <code>HorizontalScrollView</code>, so this is a non-issue mechanically — but the user has to swipe to see the rightmost tabs (Habits sometimes hidden initially).</li>
+          <li>Closest to the existing Phase 9.12 layout — minimum surprise.</li>
+          <li>Touch target is the full row width per tab. Generous on a 360 dp screen.</li>
+        </ul>
+        <div class="stat-grid">
+          <div class="stat-card cost"><p class="stat-label">Cost</p><p class="stat-value">~½ day</p></div>
+          <div class="stat-card pros"><p class="stat-label">Wins</p><p class="stat-value">Clearest labels</p></div>
+          <div class="stat-card cons"><p class="stat-label">Cons</p><p class="stat-value">Scroll required</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== VARIANT 2 ====================== -->
+<section class="proposal" id="variant-2">
+  <header>
+    <h2>Variant 2 — Icon stacked over text (two-line)</h2>
+    <p class="tagline">Icon on top, label below — same shape as a bottom-nav cell, but rendered at the top of the screen as a tab.</p>
+  </header>
+  <div class="body">
+    <div class="grid-2">
+      <div class="variant-card">
+        <h3>Default · Summary tab</h3>
+        <p class="sub">All six tabs visible at once on a 360 dp screen, no scrolling.</p>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>⚙</span><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="tabs-base tabs-stacked">
+              <div class="tab active"><span class="ico">📊</span><span>Summary</span></div>
+              <div class="tab"><span class="ico">📈</span><span>Trends</span></div>
+              <div class="tab"><span class="ico">📅</span><span>Activity</span></div>
+              <div class="tab"><span class="ico">😊</span><span>Mood</span></div>
+              <div class="tab"><span class="ico">⌨️</span><span>Keys</span></div>
+              <div class="tab"><span class="ico">🔁</span><span>Habits</span></div>
+            </div>
+            <div class="filter-chip-row">
+              <div class="filter-chip dismissable">Week · 😊 Happy</div>
+            </div>
+            <div class="summary-body">
+              <div class="summary-grid-2x3">
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">📋</span>Sessions</div>
+                  <div class="value">128</div>
+                  <div class="delta">+12 vs prev</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⏱</span>Typing time</div>
+                  <div class="value">42 m</div>
+                  <div class="delta">+5 m</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⚡</span>WPM</div>
+                  <div class="value">38</div>
+                  <div class="delta">+2</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⚠</span>Error rate</div>
+                  <div class="value">7.2%</div>
+                  <div class="delta bad">+0.4%</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⌛</span>Avg session</div>
+                  <div class="value">19 s</div>
+                  <div class="delta">+1 s</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">🔥</span>Streak</div>
+                  <div class="value">5d</div>
+                  <div class="delta">new high</div>
+                  <div class="spark"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="margin-top:0;">Trade-off</h3>
+        <ul class="pros-cons">
+          <li>All six labels readable at once on a typical screen — no scrolling.</li>
+          <li>Tab strip is taller (≈ 56 dp) than Variant 1 (≈ 36 dp). Costs ~20 dp more vertical space than V1 — but you've already saved ~80 dp by moving filters to a chip.</li>
+          <li>Two-line cells are the canonical Material 3 "primary tab with icon" shape — feels native.</li>
+          <li>Bigger touch target than V1: easier to hit on a phone.</li>
+          <li>Visually <em>resembles</em> a bottom-nav row at the top — slight risk of users expecting it to dock at the bottom on first encounter.</li>
+        </ul>
+        <div class="stat-grid">
+          <div class="stat-card cost"><p class="stat-label">Cost</p><p class="stat-value">~½ day</p></div>
+          <div class="stat-card pros"><p class="stat-label">Wins</p><p class="stat-value">No scroll · canonical shape</p></div>
+          <div class="stat-card cons"><p class="stat-label">Cons</p><p class="stat-value">+20 dp tab height</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== VARIANT 3 ====================== -->
+<section class="proposal" id="variant-3">
+  <header>
+    <h2>Variant 3 — Icon-only, label on active</h2>
+    <p class="tagline">Inactive tabs render only their icon. Active tab fills its background and reveals its label inline. Most compact bar of the three.</p>
+  </header>
+  <div class="body">
+    <div class="grid-2">
+      <div class="variant-card">
+        <h3>Default · Summary tab active</h3>
+        <p class="sub">Six 48 dp icon-cells across; only the active one carries text, so the bar doesn't feel cluttered.</p>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>⚙</span><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="tabs-base tabs-icon-only">
+              <div class="tab active"><span class="ico">📊</span><span class="label">Summary</span></div>
+              <div class="tab"><span class="ico">📈</span><span class="label">Trends</span></div>
+              <div class="tab"><span class="ico">📅</span><span class="label">Activity</span></div>
+              <div class="tab"><span class="ico">😊</span><span class="label">Mood</span></div>
+              <div class="tab"><span class="ico">⌨️</span><span class="label">Keys</span></div>
+              <div class="tab"><span class="ico">🔁</span><span class="label">Habits</span></div>
+            </div>
+            <div class="filter-chip-row">
+              <div class="filter-chip dismissable">Week · 😊 Happy</div>
+            </div>
+            <div class="summary-body">
+              <div class="summary-grid-2x3">
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">📋</span>Sessions</div>
+                  <div class="value">128</div>
+                  <div class="delta">+12 vs prev</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⏱</span>Typing time</div>
+                  <div class="value">42 m</div>
+                  <div class="delta">+5 m</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⚡</span>WPM</div>
+                  <div class="value">38</div>
+                  <div class="delta">+2</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⚠</span>Error rate</div>
+                  <div class="value">7.2%</div>
+                  <div class="delta bad">+0.4%</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⌛</span>Avg session</div>
+                  <div class="value">19 s</div>
+                  <div class="delta">+1 s</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">🔥</span>Streak</div>
+                  <div class="value">5d</div>
+                  <div class="delta">new high</div>
+                  <div class="spark"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="margin-top:0;">Trade-off</h3>
+        <ul class="pros-cons">
+          <li>Most compact tab bar of the three — ≈ 44 dp tall, single line, no scroll.</li>
+          <li>First-time users have to either tap icons to see labels, or rely on memory. Icon discoverability is key — the Summary 📊 / Mood 😊 / Habits 🔁 mappings are not universal.</li>
+          <li>Active tab visibly &quot;swells&quot; to fit its label, giving a satisfying state change.</li>
+          <li>Pairs well with a one-time onboarding tooltip pass that shows each label on first launch.</li>
+          <li>Touch targets: each icon-only cell is 48 dp wide on a 360 dp screen — fine but tight if a user has many emoji-mood entries that need a wider mood chip in the filter row.</li>
+        </ul>
+        <div class="stat-grid">
+          <div class="stat-card cost"><p class="stat-label">Cost</p><p class="stat-value">~½ day + onboarding</p></div>
+          <div class="stat-card pros"><p class="stat-label">Wins</p><p class="stat-value">Most compact</p></div>
+          <div class="stat-card cons"><p class="stat-label">Cons</p><p class="stat-value">Lower discoverability</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== SUMMARY GRID ====================== -->
+<section class="proposal" id="summary-grid">
+  <header>
+    <h2>Summary tab — KPI grid layouts</h2>
+    <p class="tagline">Three ways to render the six KPIs inside the new Summary tab. Pick one independently of the tab bar variant above.</p>
+  </header>
+  <div class="body">
+    <div class="grid-3">
+      <div class="variant-card">
+        <h3>Layout A · 2 × 3 grid</h3>
+        <p class="sub">Two columns, three rows. Each tile is generous and includes a sparkline. <strong>Used by all the mocks above</strong>.</p>
+        <div class="phone-frame">
+          <div class="phone-screen" style="min-height:420px;">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>⚙</span><span>⋮</span></span>
+            </div>
+            <div class="summary-body">
+              <div class="summary-grid-2x3">
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">📋</span>Sessions</div>
+                  <div class="value">128</div>
+                  <div class="delta">+12</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⏱</span>Typing time</div>
+                  <div class="value">42 m</div>
+                  <div class="delta">+5 m</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⚡</span>WPM</div>
+                  <div class="value">38</div>
+                  <div class="delta">+2</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⚠</span>Error rate</div>
+                  <div class="value">7.2%</div>
+                  <div class="delta bad">+0.4%</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">⌛</span>Avg session</div>
+                  <div class="value">19 s</div>
+                  <div class="delta">+1 s</div>
+                  <div class="spark"></div>
+                </div>
+                <div class="kpi-tile">
+                  <div class="head"><span class="ico">🔥</span>Streak</div>
+                  <div class="value">5d</div>
+                  <div class="delta">new high</div>
+                  <div class="spark"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="variant-card">
+        <h3>Layout B · 3 × 2 grid</h3>
+        <p class="sub">Three columns, two rows. More cells per glance but each tile is smaller — sparkline cropped, deltas stay.</p>
+        <div class="phone-frame">
+          <div class="phone-screen" style="min-height:420px;">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>⚙</span><span>⋮</span></span>
+            </div>
+            <div class="summary-body">
+              <div class="summary-grid-3x2">
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">📋</span>Sessions</div>
+                  <div class="value">128</div>
+                  <div class="delta">+12</div>
+                </div>
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">⏱</span>Time</div>
+                  <div class="value">42 m</div>
+                  <div class="delta">+5</div>
+                </div>
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">⚡</span>WPM</div>
+                  <div class="value">38</div>
+                  <div class="delta">+2</div>
+                </div>
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">⚠</span>Errors</div>
+                  <div class="value">7.2%</div>
+                  <div class="delta bad">+0.4</div>
+                </div>
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">⌛</span>Avg sess.</div>
+                  <div class="value">19 s</div>
+                  <div class="delta">+1</div>
+                </div>
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">🔥</span>Streak</div>
+                  <div class="value">5d</div>
+                  <div class="delta">new</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="variant-card">
+        <h3>Layout C · grid + headline charts</h3>
+        <p class="sub">2×3 KPI grid on top, then two miniature headline charts (WPM &amp; Error rate). Summary tab becomes a real "at-a-glance" page.</p>
+        <div class="phone-frame">
+          <div class="phone-screen" style="min-height:580px;">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>⚙</span><span>⋮</span></span>
+            </div>
+            <div class="summary-body">
+              <div class="summary-grid-2x3">
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">📋</span>Sessions</div>
+                  <div class="value">128</div>
+                  <div class="delta">+12</div>
+                </div>
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">⏱</span>Time</div>
+                  <div class="value">42 m</div>
+                  <div class="delta">+5</div>
+                </div>
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">⚡</span>WPM</div>
+                  <div class="value">38</div>
+                  <div class="delta">+2</div>
+                </div>
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">⚠</span>Errors</div>
+                  <div class="value">7.2%</div>
+                  <div class="delta bad">+0.4</div>
+                </div>
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">⌛</span>Avg sess.</div>
+                  <div class="value">19 s</div>
+                  <div class="delta">+1</div>
+                </div>
+                <div class="kpi-tile compact">
+                  <div class="head"><span class="ico">🔥</span>Streak</div>
+                  <div class="value">5d</div>
+                  <div class="delta">new</div>
+                </div>
+              </div>
+              <p class="summary-section-label">Headline charts</p>
+              <div class="summary-charts">
+                <div class="chart-card">
+                  <div class="title"><span>📈</span><span>WPM over time</span></div>
+                  <div class="placeholder"></div>
+                </div>
+                <div class="chart-card">
+                  <div class="title"><span>⚠</span><span>Error rate</span></div>
+                  <div class="placeholder"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== RECOMMENDATION ====================== -->
+<section class="proposal" id="recommendation">
+  <header>
+    <h2>Recommendation</h2>
+    <p class="tagline">A pragmatic pairing.</p>
+  </header>
+  <div class="body">
+    <p>Pair <strong>Variant 2 (icon stacked over text)</strong> with <strong>Summary Layout C (KPI grid + headline charts)</strong>. Reasoning:</p>
+    <ul class="pros-cons">
+      <li><strong>V2 over V1:</strong> all six labels visible without scrolling at default font size; the slightly taller bar costs ~20 dp but you've already reclaimed ~80 dp by moving filters to a chip — net positive.</li>
+      <li><strong>V2 over V3:</strong> the Summary 📊 / Mood 😊 / Habits 🔁 mapping isn't universal, and the cost of one extra row on the tab strip is much smaller than the cost of users tapping the wrong tab. Save icon-only for a v2 polish if the bar feels too dense.</li>
+      <li><strong>Layout C over A or B:</strong> the new Summary tab is the landing page; users opening Insights expect a glance answer ("how am I doing?"). KPI grid alone is a glance, but adding the WPM and error-rate mini-charts gives shape — see whether numbers are climbing or sagging without leaving the tab.</li>
+      <li><strong>Each KPI tile becomes tappable</strong> → jumps to its parent tab (e.g. tap "WPM" → Trends tab). Cheap to wire (one <code>setOnClickListener</code> per tile that calls <code>viewPager.setCurrentItem(...)</code>); huge payoff in navigation flow.</li>
+    </ul>
+    <div class="callout">
+      <strong>Implementation hint:</strong> the Summary tab's six KPI cells reuse the values your global header already computes (<code>IkdAggregator.snapshot</code> + <code>IkdHabitsAggregator.snapshot</code>) — no new aggregator. The two headline charts reuse <code>IkdLineChartView</code> + <code>IkdAggregator.Bucket</code> outputs already produced for the Trends tab. Net new code: one fragment + layout + an updated <code>FragmentStateAdapter</code> that puts Summary at index 0.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Generated for the KeyboardSA IKD project · sibling document: <code>insights_redesign_proposals.html</code>
+</footer>
+
+</body>
+</html>

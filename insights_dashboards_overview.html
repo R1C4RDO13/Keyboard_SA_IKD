@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KeyboardSA IKD — Insights Dashboards Overview</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #e0e0e0;
+    --primary: #1976d2;
+    --accent: #00838f;
+    --text: #212121;
+    --muted: #616161;
+    --code-bg: #f4f4f4;
+    --tag-bg: #eceff1;
+    --tag-text: #37474f;
+    --warn: #b71c1c;
+    --good: #2e7d32;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    line-height: 1.55;
+  }
+  header.page-header {
+    background: linear-gradient(135deg, #1976d2 0%, #353c3d 100%);
+    color: white;
+    padding: 32px 40px;
+  }
+  header.page-header h1 { margin: 0 0 8px 0; font-size: 28px; }
+  header.page-header p { margin: 0; opacity: 0.9; font-size: 15px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px 24px; }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+  }
+  nav.toc h2 { margin-top: 0; font-size: 16px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc li { margin: 6px 0; }
+  nav.toc a { color: var(--primary); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+
+  section.dashboard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 32px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  section.dashboard > header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+  }
+  section.dashboard > header h2 { margin: 0 0 6px 0; font-size: 22px; color: var(--primary); }
+  section.dashboard > header p.lead { margin: 0; color: var(--muted); font-size: 14px; }
+  section.dashboard > .body { padding: 20px 24px; }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 8px 16px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  .meta-grid dt { font-weight: 600; color: var(--muted); }
+  .meta-grid dd { margin: 0; }
+  code, .meta-grid dd code, .path {
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  h3.subhead {
+    margin: 24px 0 8px 0;
+    font-size: 16px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  table.widgets {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  table.widgets th, table.widgets td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.widgets th {
+    background: #f6f8fa;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  table.widgets tr:last-child td { border-bottom: none; }
+  table.widgets td.widget-name { font-weight: 600; width: 22%; }
+  table.widgets td.widget-type { width: 18%; }
+  table.widgets td.widget-source { width: 22%; }
+
+  p.muted-note { color: var(--muted); font-size: 13px; margin: 0 0 12px 0; }
+
+  .tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-right: 4px;
+  }
+  .tag.line   { background: #e3f2fd; color: #0d47a1; }
+  .tag.bar    { background: #fff3e0; color: #e65100; }
+  .tag.heatmap{ background: #fce4ec; color: #880e4f; }
+  .tag.donut  { background: #f3e5f5; color: #4a148c; }
+  .tag.scatter{ background: #e0f7fa; color: #006064; }
+  .tag.bubble { background: #e8f5e9; color: #1b5e20; }
+  .tag.kpi    { background: #ede7f6; color: #311b92; }
+  .tag.stacked{ background: #fff8e1; color: #ff6f00; }
+  .tag.histogram { background: #eceff1; color: #37474f; }
+  .tag.chip   { background: #e0f2f1; color: #004d40; }
+
+  .aspect-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .aspect-list li {
+    background: #f6f8fa;
+    padding: 10px 14px;
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .aspect-list li strong { color: var(--accent); display: block; margin-bottom: 2px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+  .ascii-mock {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 16px 20px;
+    border-radius: 6px;
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-x: auto;
+    margin: 16px 0;
+    white-space: pre;
+  }
+
+  .callout {
+    border-left: 4px solid var(--primary);
+    background: #f0f7ff;
+    padding: 10px 16px;
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+  }
+  .callout.warn { border-left-color: var(--warn); background: #fff5f5; }
+  .callout.good { border-left-color: var(--good); background: #f0fdf4; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 24px;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>KeyboardSA IKD — Insights Dashboards</h1>
+  <p>An inventory of every dashboard surface currently shipping in the app, with widget-level breakdown, data source, and visualisation type. Intended as the starting point for the next round of insights-design work.</p>
+</header>
+
+<main>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#overview">Overview &amp; conventions</a></li>
+    <li><a href="#global">1. Global Insights Dashboard (<code>DashboardActivity</code>)</a>
+      <ol>
+        <li><a href="#tab-trends">1.1 Trends tab</a></li>
+        <li><a href="#tab-daily">1.2 Daily Activity tab</a></li>
+        <li><a href="#tab-mood">1.3 Mood tab</a></li>
+        <li><a href="#tab-keystroke">1.4 Keystroke Dynamics tab</a></li>
+        <li><a href="#tab-habits">1.5 Habits tab</a></li>
+      </ol>
+    </li>
+    <li><a href="#per-session">2. Per-Session Dashboard (<code>EventFeedActivity</code>, DB-backed mode)</a></li>
+    <li><a href="#diagnostics">3. Diagnostics Dashboard (<code>DiagnosticsActivity</code>)</a></li>
+    <li><a href="#data-flow">4. Data flow &amp; aggregation strategy</a></li>
+    <li><a href="#recent-changes">5. Recent changes</a></li>
+  </ol>
+</nav>
+
+<!-- ====================== OVERVIEW ====================== -->
+<section class="dashboard" id="overview">
+  <header>
+    <h2>Overview &amp; conventions</h2>
+    <p class="lead">All insights surfaces read from the same Room database (<code>ikd.db</code>). Capture is privacy-gated — no rows exist unless the user has flipped privacy mode off.</p>
+  </header>
+  <div class="body">
+    <p>The app exposes <strong>three distinct insights surfaces</strong>, each with a different scope and audience:</p>
+    <ul>
+      <li><strong>Global Insights Dashboard</strong> — aggregated trends across all stored sessions. Five tabs, one shared global header (range + mood filter + KPI strip).</li>
+      <li><strong>Per-Session Dashboard</strong> — single-session deep dive. Same shape as one tab of the global dashboard but bounded to one <code>session_id</code>.</li>
+      <li><strong>Diagnostics Dashboard</strong> — live developer screen, populated by the in-memory <code>LiveCaptureSessionStore</code> rather than by Room queries. Used to verify capture is working.</li>
+    </ul>
+
+    <h3 class="subhead">Visualisation types in use</h3>
+    <p>The legend below is also used as colour-coded tags on every widget table.</p>
+    <p>
+      <span class="tag kpi">KPI cell</span>
+      <span class="tag chip">Chip / metadata strip</span>
+      <span class="tag line">Line chart</span>
+      <span class="tag bar">Bar chart</span>
+      <span class="tag stacked">Stacked bar</span>
+      <span class="tag histogram">Histogram</span>
+      <span class="tag heatmap">Heatmap</span>
+      <span class="tag donut">Donut / Pie</span>
+      <span class="tag scatter">Scatter</span>
+      <span class="tag bubble">Bubble map</span>
+    </p>
+
+    <h3 class="subhead">Cross-cutting principles</h3>
+    <ul>
+      <li><strong>Privacy-first.</strong> No raw text is ever stored or displayed — only event categories (<code>ALPHA</code>, <code>SPACE</code>, <code>BACKSPACE</code>, <code>EMOJI</code>, <code>AUTOCORRECT</code>, …) and timestamps.</li>
+      <li><strong>Read-side only.</strong> Every dashboard is computed from existing capture rows. Adding a new dashboard never modifies the keyboard layer.</li>
+      <li><strong>Empty states are first-class.</strong> Every card hides itself when the underlying query returns nothing; the parent tab shows a placeholder when <em>all</em> its cards are empty.</li>
+      <li><strong>One IO hop per refresh.</strong> The global dashboard fans out all aggregator calls onto a single <code>Dispatchers.IO</code> coroutine and renders fragments off the same payload.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ====================== GLOBAL DASHBOARD ====================== -->
+<section class="dashboard" id="global">
+  <header>
+    <h2>1. Global Insights Dashboard</h2>
+    <p class="lead">Activity-level trends across every stored session. Implemented as a top-mounted segmented tab toggle + horizontal <code>ViewPager2</code> host with five swipeable fragments and a shared global header.</p>
+  </header>
+  <div class="body">
+
+    <dl class="meta-grid">
+      <dt>Activity</dt>           <dd><code>activities/DashboardActivity.kt</code></dd>
+      <dt>Layout</dt>             <dd><code>res/layout/activity_dashboard.xml</code></dd>
+      <dt>Tab control</dt>        <dd><code>MaterialButtonToggleGroup</code> in the activity layout (same outlined-button style as the range toggle, wrapped in a <code>HorizontalScrollView</code> for narrow widths)</dd>
+      <dt>Entry points</dt>       <dd><code>MainActivity</code> overflow → "Insights" · <code>IkdSettingsActivity</code> → "View Dashboard"</dd>
+      <dt>Data source</dt>        <dd>Room — <code>ikd.db</code> (sessions / ikd_events / sensor_samples / mood_entries)</dd>
+      <dt>Refresh trigger</dt>    <dd><code>onResume()</code>, range-toggle change, mood-filter chip change, Refresh menu action</dd>
+      <dt>Shipped in</dt>         <dd>Phase 3 (initial), expanded through Phases 8 / 8.3 / 9.x / 9.11 / 9.12</dd>
+    </dl>
+
+    <h3 class="subhead">Layout shape</h3>
+    <div class="ascii-mock">┌─────────────────────────────────────────────────────────────┐
+│ Toolbar: "Insights"                                  [⋮]    │
+├─────────────────────────────────────────────────────────────┤
+│ Global header (shared across every tab)                     │
+│   ▸ KPI strip (6 cells, horizontally scrollable):           │
+│        Sessions · Typing time · WPM · Error rate ·          │
+│        Avg session · Longest streak                         │
+│   ▸ Tab toggle (segmented, scrollable):                     │
+│        [Trends] [Activity] [Mood] [Keystrokes] [Habits]     │
+│   ▸ Range toggle: [Today] [Week] [Month] [All Time]         │
+│   ▸ Mood filter chip row (gone until first mood entry)      │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ViewPager2 — current tab fragment                         │
+│   (swipe left/right to change tab; tab toggle stays in      │
+│    sync via OnPageChangeCallback)                           │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</div>
+
+    <h3 class="subhead">Global header — always visible</h3>
+    <table class="widgets">
+      <thead>
+        <tr><th>Widget</th><th>Type</th><th>Data source</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="widget-name">KPI strip</td>
+          <td class="widget-type"><span class="tag kpi">KPI x6</span></td>
+          <td class="widget-source"><code>IkdAggregator.snapshot(range)</code> + <code>IkdHabitsAggregator.snapshot(range)</code></td>
+          <td>Six cells in a horizontal scroller: <strong>Sessions</strong> (count) · <strong>Typing time</strong> (minutes) · <strong>WPM</strong> (keystroke-only denominator) · <strong>Error rate</strong> (weighted, see Phase 7.1) · <strong>Avg session</strong> (seconds, lifted from the old Habits internal strip in Phase 9.12) · <strong>Longest streak</strong> (unit varies by range — hours under TODAY, days for Week / Month, weeks for All Time).</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Tab toggle</td>
+          <td class="widget-type"><span class="tag chip">Segmented control</span></td>
+          <td class="widget-source">UI state (no DB) — drives <code>ViewPager2.setCurrentItem</code></td>
+          <td>Five mutually-exclusive buttons — <strong>Trends · Activity · Mood · Keystrokes · Habits</strong> — styled identically to the range toggle. Wrapped in a <code>HorizontalScrollView</code> so all five fit at any width. Stays in two-way sync with <code>ViewPager2</code>: tapping a tab pages the viewer; swiping the viewer updates the toggle.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Range toggle</td>
+          <td class="widget-type"><span class="tag chip">Segmented control</span></td>
+          <td class="widget-source">UI state (no DB)</td>
+          <td>Four mutually-exclusive buttons — <strong>Today / Week / Month / All Time</strong> — that drive the time window of every aggregator query. Default Week. <strong>Today</strong> switches all daily widgets to hourly buckets and hides charts that would degenerate (calendar heatmap, daily-keypress bar, Usage Map).</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Mood filter chip row</td>
+          <td class="widget-type"><span class="tag chip">Chip strip</span></td>
+          <td class="widget-source"><code>MoodDao.getMoodDistribution</code></td>
+          <td>Horizontal scroll of one chip per Ekman category that has at least one entry, plus an "All" chip. Selecting a non-All chip restricts every other widget on the page to sessions tagged with that mood. Hidden until the first mood entry exists.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ----- 1.1 TRENDS ----- -->
+    <h3 class="subhead" id="tab-trends">1.1 Trends tab</h3>
+    <p>Headline time-series view — speed, comfort and accuracy over the selected range, plus optional motion trends when sensor capture is enabled.</p>
+    <dl class="meta-grid">
+      <dt>Fragment</dt> <dd><code>activities/dashboard/TrendsFragment.kt</code></dd>
+      <dt>Layout</dt>   <dd><code>res/layout/fragment_dashboard_trends.xml</code></dd>
+      <dt>Aggregators</dt> <dd><code>IkdAggregator</code>, <code>IkdSensorTrendAggregator</code></dd>
+    </dl>
+    <table class="widgets">
+      <thead><tr><th>Widget</th><th>Type</th><th>Data source</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="widget-name">Typing speed</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>IkdAggregator</code> · WPM per bucket</td>
+          <td>Words per minute over time. Null buckets render as line breaks (no fake zeros).</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Avg IKD</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>IkdAggregator</code> · avg IKD ms per bucket</td>
+          <td>Mean inter-key delay. Sentinel <code>-1</code> rows excluded from the average via SQL <code>CASE</code>.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Error rate</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>IkdAggregator</code> · weighted error % per bucket</td>
+          <td>Weighted by <code>SUM(correction_weight)</code> over keystrokes (Phase 7.1) — autocorrect of a long misspelling counts proportionally to its length.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Gyro magnitude trend</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>IkdSensorTrendAggregator</code> (Phase 9.2)</td>
+          <td>Avg gyro magnitude over time. Card hides itself + title when no buckets carry gyro data.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Accel magnitude trend</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>IkdSensorTrendAggregator</code></td>
+          <td>Avg accel magnitude over time. Same hide-when-empty contract.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ----- 1.2 DAILY ACTIVITY ----- -->
+    <h3 class="subhead" id="tab-daily">1.2 Daily Activity tab</h3>
+    <p>When-do-you-type view — calendar / hour breakdowns plus the day×hour usage map.</p>
+    <dl class="meta-grid">
+      <dt>Fragment</dt> <dd><code>activities/dashboard/DailyActivityFragment.kt</code></dd>
+      <dt>Layout</dt>   <dd><code>res/layout/fragment_dashboard_daily_activity.xml</code></dd>
+      <dt>Aggregator</dt><dd><code>IkdActivityAggregator</code></dd>
+      <dt>Custom views</dt><dd><code>IkdHeatmapView</code>, <code>IkdBubbleMapView</code></dd>
+    </dl>
+    <table class="widgets">
+      <thead><tr><th>Widget</th><th>Type</th><th>Data source</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="widget-name">Calendar heatmap</td>
+          <td class="widget-type"><span class="tag heatmap">Heatmap</span></td>
+          <td class="widget-source"><code>activity.dailyBuckets</code></td>
+          <td>GitHub-style week×day grid coloured by daily keystroke count. Hidden under the hourly TODAY range. Cell tap toasts <em>YYYY-MM-DD · N keystrokes</em>.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Daily keypress bar</td>
+          <td class="widget-type"><span class="tag bar">Bar</span></td>
+          <td class="widget-source"><code>activity.dailyBuckets</code></td>
+          <td>Day-of-month label on X, keystroke count on Y. Companion to the calendar heatmap; both share the same daily aggregation. Hidden under TODAY.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">24-hour bar</td>
+          <td class="widget-type"><span class="tag bar">Bar</span></td>
+          <td class="widget-source"><code>activity.hourlyBuckets</code></td>
+          <td>Keystrokes by hour of day (0–23) summed across the range. X-axis labels at 00 / 06 / 12 / 18 only.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Circadian heatmap</td>
+          <td class="widget-type"><span class="tag heatmap">Heatmap</span></td>
+          <td class="widget-source"><code>activity.circadianCells</code> (always all-time)</td>
+          <td>7×24 grid (weekday × hour) showing where in the week typing concentrates. Always all-time per design — the patterns become meaningful only after multiple weeks.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Usage map</td>
+          <td class="widget-type"><span class="tag bubble">Bubble</span></td>
+          <td class="widget-source"><code>activity.dayHourCells</code></td>
+          <td>Day × hour bubble chart, bubble area ∝ keystroke count. Tap toasts <em>day, hour, count</em>. Hidden under TODAY (would degenerate to a single column).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ----- 1.3 MOOD ----- -->
+    <h3 class="subhead" id="tab-mood">1.3 Mood tab</h3>
+    <p>How the user has tagged their typing sessions emotionally. Both cards stay hidden until at least one mood entry exists.</p>
+    <dl class="meta-grid">
+      <dt>Fragment</dt> <dd><code>activities/dashboard/MoodFragment.kt</code></dd>
+      <dt>Layout</dt>   <dd><code>res/layout/fragment_dashboard_mood.xml</code></dd>
+      <dt>Aggregator</dt><dd><code>IkdMoodAggregator</code> (<code>snapshot</code> + <code>mixSnapshot</code>)</dd>
+      <dt>Categories</dt><dd>Ekman 6 — 😊 Happiness · 😲 Surprise · 🤢 Disgust · 😢 Sadness · 😨 Fear · 😠 Anger</dd>
+    </dl>
+    <table class="widgets">
+      <thead><tr><th>Widget</th><th>Type</th><th>Data source</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="widget-name">Mood mix over time</td>
+          <td class="widget-type"><span class="tag stacked">Stacked bar</span></td>
+          <td class="widget-source"><code>moodMix.buckets</code></td>
+          <td>One bar per time bucket; six stacked segments per bar showing the percentage breakdown of each Ekman category. X-axis is shared with the Trends line charts so users can correlate "I typed faster on May 3" with "May 3's bar is mostly Happiness". Custom legend below the chart.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Mood distribution</td>
+          <td class="widget-type"><span class="tag bar">Horizontal bars</span></td>
+          <td class="widget-source"><code>mood.counts</code> + <code>mood.total</code></td>
+          <td>Six rows in valence order — emoji + label + horizontal progress bar + count. Each row's bar is filled to <code>count / total</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      Phase 8.3 explicitly removed an "average mood" KPI cell and a "mood-over-time" line chart that previously lived here — averaging an ordinal valence id over six categorical labels produced numbers (e.g. 🤢 3.2) that didn't correspond to any user-reportable state. The stacked bar preserves the time dimension without re-introducing a meaningless average.
+    </div>
+
+    <!-- ----- 1.4 KEYSTROKE DYNAMICS ----- -->
+    <h3 class="subhead" id="tab-keystroke">1.4 Keystroke Dynamics tab</h3>
+    <p>Distribution-shape view of the three timing dimensions plus an orientation breakdown.</p>
+    <dl class="meta-grid">
+      <dt>Fragment</dt> <dd><code>activities/dashboard/KeystrokeDynamicsFragment.kt</code></dd>
+      <dt>Layout</dt>   <dd><code>res/layout/fragment_dashboard_keystroke_dynamics.xml</code></dd>
+      <dt>Aggregators</dt><dd><code>IkdDistributionAggregator</code>, <code>IkdOrientationAggregator</code></dd>
+      <dt>Custom view</dt><dd><code>IkdHistogramView</code> (log-scale)</dd>
+    </dl>
+    <table class="widgets">
+      <thead><tr><th>Widget</th><th>Type</th><th>Data source</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="widget-name">IKD distribution</td>
+          <td class="widget-type"><span class="tag histogram">Histogram</span></td>
+          <td class="widget-source"><code>distribution.ikdHistogram</code></td>
+          <td>Log-scale buckets of inter-key-delay values. Outlier counter shown top-right when buckets above the cap exist.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Dwell distribution</td>
+          <td class="widget-type"><span class="tag histogram">Histogram</span></td>
+          <td class="widget-source"><code>distribution.holdHistogram</code></td>
+          <td>Same shape, over key-press hold time (touch-down → touch-up).</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Flight distribution</td>
+          <td class="widget-type"><span class="tag histogram">Histogram</span></td>
+          <td class="widget-source"><code>distribution.flightHistogram</code></td>
+          <td>Same shape, over flight time (touch-up of one key → touch-down of next).</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Orientation breakdown</td>
+          <td class="widget-type"><span class="tag donut">Donut</span></td>
+          <td class="widget-source"><code>orientation.slices</code></td>
+          <td>Donut split by Portrait / Landscape / Unknown. Centre text shows total sessions and total minutes. Legend with colour swatches + counts below.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ----- 1.5 HABITS ----- -->
+    <h3 class="subhead" id="tab-habits">1.5 Habits tab</h3>
+    <p>Behavioural / longitudinal view — KPIs about routine plus four trend charts and the activity-quality scatter.</p>
+    <dl class="meta-grid">
+      <dt>Fragment</dt> <dd><code>activities/dashboard/HabitsFragment.kt</code></dd>
+      <dt>Layout</dt>   <dd><code>res/layout/fragment_dashboard_habits.xml</code></dd>
+      <dt>Aggregators</dt><dd><code>IkdHabitsAggregator</code>, <code>IkdQualityAggregator</code></dd>
+    </dl>
+    <p class="muted-note"><em>Phase 9.12 removed the Habits tab's internal 4-cell KPI strip. <strong>Avg session</strong> and <strong>Longest streak</strong> moved up into the global KPI strip (now 6 cells); the other two cells already duplicated values in the global strip. Habits tab is now charts-only.</em></p>
+    <table class="widgets">
+      <thead><tr><th>Widget</th><th>Type</th><th>Data source</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="widget-name">Avg session duration</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>habits.buckets.avgSessionDurationMs</code></td>
+          <td>Per-bucket mean session length in minutes.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Sessions per bucket</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>habits.buckets.sessionCount</code></td>
+          <td>How many sessions started in each bucket. Zero buckets render as 0 (not as line breaks).</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Error rate trend</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>habits.buckets.errorRatePct</code></td>
+          <td>Habits-scoped weighted error rate over time. Mirrors the global Trends Error chart but is derived from <code>IkdHabitsAggregator</code>'s session-level rollup.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Avg flight time trend</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>habits.buckets.avgFlightMs</code></td>
+          <td>Mean flight time over time — slower flight ≈ more deliberation.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Activity quality scatter</td>
+          <td class="widget-type"><span class="tag scatter">Scatter</span></td>
+          <td class="widget-source"><code>quality.points</code> (one point per day)</td>
+          <td>X = backspace count, Y = autocorrect count, alpha fades older days into the background. Tap a point to toast its day + counts. Hidden when no day has either signal.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 class="subhead">Cross-tab aspects</h3>
+    <ul class="aspect-list">
+      <li><strong>Range awareness</strong>Every aggregator takes the same <code>Range</code> enum (Today / Week / Month / All Time). TODAY switches daily widgets to hourly buckets and hides date-keyed widgets that would degenerate.</li>
+      <li><strong>Mood filter scope</strong>Filter applies to every tab <em>except</em> the Mood tab itself (a mood-filtered Mood Distribution would be a degenerate one-row chart — the visible filter chip <em>is</em> the feedback that the filter is in effect).</li>
+      <li><strong>Empty-state contract</strong>Each card hides when its query is empty; each tab shows a placeholder string when every card is empty; the activity shows a global "no sessions" message when the database has none at all.</li>
+      <li><strong>Theming</strong>Every <code>MaterialCardView</code> calls <code>setCardBackgroundColor(getProperBackgroundColor())</code> on render so the dashboards track Fossify's runtime theme palette in both light and dark modes.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ====================== PER-SESSION DASHBOARD ====================== -->
+<section class="dashboard" id="per-session">
+  <header>
+    <h2>2. Per-Session Dashboard</h2>
+    <p class="lead">Single-session deep dive shown when the user taps a row in <code>SessionsListActivity</code>. Same activity (<code>EventFeedActivity</code>) hosts the live raw event log when launched without a session id — the two modes share the layout file but flip visibility on a sibling container.</p>
+  </header>
+  <div class="body">
+
+    <dl class="meta-grid">
+      <dt>Activity</dt>     <dd><code>activities/EventFeedActivity.kt</code> (DB-backed mode)</dd>
+      <dt>Layout</dt>       <dd><code>res/layout/activity_event_feed.xml</code></dd>
+      <dt>Trigger</dt>      <dd>Launched with <code>EXTRA_SESSION_ID</code> from <code>SessionsListActivity</code> tap</dd>
+      <dt>Loaders</dt>      <dd><code>IkdSessionStatsLoader</code>, <code>IkdSessionChartLoader</code>, <code>IkdMoodLoader</code></dd>
+      <dt>Shipped in</dt>   <dd>Phase 5; KPI row + mood chip extended in Phase 8</dd>
+    </dl>
+
+    <h3 class="subhead">Layout shape</h3>
+    <div class="ascii-mock">┌─────────────────────────────────────────────────────────────┐
+│ Toolbar: "Session"                                          │
+├─────────────────────────────────────────────────────────────┤
+│ KPI strip card                                              │
+│   Events · Typing time · WPM · Error rate · [😊 Mood?]      │
+├─────────────────────────────────────────────────────────────┤
+│ Secondary chip row: Avg IKD · Avg Dwell · Avg Flight        │
+│ Metadata: started · duration · orientation · locale         │
+├─────────────────────────────────────────────────────────────┤
+│ IKD over time          (line chart card)                    │
+│ Gyro magnitude         (line chart card)                    │
+│ Accel magnitude        (line chart card)                    │
+└─────────────────────────────────────────────────────────────┘</div>
+
+    <table class="widgets">
+      <thead><tr><th>Widget</th><th>Type</th><th>Data source</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="widget-name">KPI strip (4–5 cells)</td>
+          <td class="widget-type"><span class="tag kpi">KPI</span></td>
+          <td class="widget-source"><code>IkdSessionStatsLoader.compute</code></td>
+          <td>Events · Typing time (m s) · WPM · Error rate %. The fifth cell — emoji + label — appears only when a <code>MoodEntry</code> exists for this session; the layout uses <code>weight=1</code> so the other cells redistribute when it's hidden.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Secondary chip row</td>
+          <td class="widget-type"><span class="tag chip">Chip x3</span></td>
+          <td class="widget-source"><code>SessionStatsRow</code> averages</td>
+          <td>Avg IKD ms · Avg dwell ms · Avg flight ms. Sentinel <code>-1</code> rows excluded.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Metadata one-liner</td>
+          <td class="widget-type"><span class="tag chip">Text</span></td>
+          <td class="widget-source"><code>SessionRecord</code> + <code>IkdFormatters</code></td>
+          <td>Started timestamp · duration · orientation label · locale. Orientation <code>-1</code> and empty locale render as "—".</td>
+        </tr>
+        <tr>
+          <td class="widget-name">IKD over time</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>SessionChartData.ikdSeries</code></td>
+          <td>Per-bucket avg IKD across the session. Bucket width = <code>max(50ms, ⌈durationMs / 200⌉)</code> so every chart receives ≤ 200 points regardless of session length. Card shows "No data" overlay when the series is empty.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Gyro magnitude over time</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>SessionChartData.gyroSeries</code></td>
+          <td>Magnitude derived in Kotlin per row from <code>AVG(x*x+y*y+z*z)</code> via SQL. Magnitude is never stored — a UI concern only.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Accel magnitude over time</td>
+          <td class="widget-type"><span class="tag line">Line</span></td>
+          <td class="widget-source"><code>SessionChartData.accelSeries</code></td>
+          <td>Same shape and derivation as gyro.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ul class="aspect-list">
+      <li><strong>Mode switching</strong>The same activity hosts a live raw-event log when launched without <code>EXTRA_SESSION_ID</code>. The XML keeps both containers and toggles visibility in <code>onCreate</code> to avoid a frame of the wrong layout.</li>
+      <li><strong>Empty-card handling</strong>Sessions captured with sensors disabled show "No data" inside the card silhouette rather than removing the card outright — keeps the layout stable across sessions.</li>
+      <li><strong>Performance</strong>Bucket-width formula keeps the chart wire footprint constant in session length: 10 s → 50 ms buckets / 200 pts; 1 hour → 18 s buckets / 200 pts.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ====================== DIAGNOSTICS ====================== -->
+<section class="dashboard" id="diagnostics">
+  <header>
+    <h2>3. Diagnostics Dashboard</h2>
+    <p class="lead">Live developer screen for verifying that the capture pipeline is actually firing. Reads the in-memory <code>LiveCaptureSessionStore</code> rather than Room — values update as the user types in the screen's own typing area.</p>
+  </header>
+  <div class="body">
+
+    <dl class="meta-grid">
+      <dt>Activity</dt>   <dd><code>activities/DiagnosticsActivity.kt</code></dd>
+      <dt>Layout</dt>     <dd><code>res/layout/activity_diagnostics.xml</code></dd>
+      <dt>Entry point</dt><dd>Settings → Developer → "Diagnostics"</dd>
+      <dt>Data source</dt><dd>In-memory <code>LiveCaptureSessionStore</code> (no Room reads)</dd>
+      <dt>Refresh</dt>    <dd>Per-event push from the IME background thread + 250 ms status tick</dd>
+      <dt>Shipped in</dt> <dd>Phase 1 / 1.1; polished in Phase 6</dd>
+    </dl>
+
+    <h3 class="subhead">Layout shape</h3>
+    <div class="ascii-mock">┌─────────────────────────────────────────────────────────────┐
+│ Toolbar: "Diagnostics" — [Save CSV] [Insights] [Toggle]     │
+├─────────────────────────────────────────────────────────────┤
+│ Typing area (max 6 lines)                                   │
+│ Status chip: ● Active / ● Idle / 🛡 Privacy / ○ No data      │
+├─────────────────────────────────────────────────────────────┤
+│ Timing metrics card                                         │
+│   IKD     Dwell     Flight                                  │
+│   125ms   42ms      88ms                                    │
+├─────────────────────────────────────────────────────────────┤
+│ Count metrics card                                          │
+│   Events  Speed     Error rate                              │
+│   34      287 kpm   3 %                                     │
+├─────────────────────────────────────────────────────────────┤
+│ Sensor readings (collapsible)            [chevron]          │
+│   Gyro:  [bar bar bar]   axes / magnitude                   │
+│   Accel: [bar bar bar]   axes / magnitude                   │
+├─────────────────────────────────────────────────────────────┤
+│ View Event Log →                                            │
+└─────────────────────────────────────────────────────────────┘</div>
+
+    <table class="widgets">
+      <thead><tr><th>Widget</th><th>Type</th><th>Data source</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="widget-name">Typing area</td>
+          <td class="widget-type"><span class="tag chip">Input</span></td>
+          <td class="widget-source">Local edit text</td>
+          <td>Multi-line input that triggers the actual keyboard so the diagnostics screen has something to display. Privacy-preserving — the edit text content itself is never read by the dashboard.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Status chip</td>
+          <td class="widget-type"><span class="tag chip">Status</span></td>
+          <td class="widget-source">IME state + Privacy flag</td>
+          <td>Coloured indicator of the capture pipeline state — Active (green), Idle (amber), Privacy (grey shield), No data. Background and text colour resolve from <code>res/values{,-night}/colors.xml</code> so it works in both themes.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Timing metrics card</td>
+          <td class="widget-type"><span class="tag kpi">KPI x3</span></td>
+          <td class="widget-source"><code>LiveCaptureSessionStore</code></td>
+          <td>IKD · Dwell · Flight — last-seen values from the live event stream, in ms.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Count metrics card</td>
+          <td class="widget-type"><span class="tag kpi">KPI x3</span></td>
+          <td class="widget-source"><code>LiveCaptureSessionStore</code></td>
+          <td>Event count · Typing speed (kpm — keys per minute, live convention) · Error rate %. Error rate uses the Phase 7.1 weighted formula with a fallback weight of 1 for in-flight events that pre-date the migration.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">Sensor readings (collapsible)</td>
+          <td class="widget-type"><span class="tag bar">Bar gauges</span></td>
+          <td class="widget-source"><code>KinematicSensorHelper</code></td>
+          <td>Gyro and accel — either three per-axis bars or a single magnitude bar, toggled via a toolbar action and persisted in <code>Config.sensorDisplayMode</code>. Card collapse state persists across re-entries.</td>
+        </tr>
+        <tr>
+          <td class="widget-name">View Event Log row</td>
+          <td class="widget-type"><span class="tag chip">Navigation</span></td>
+          <td class="widget-source">Intent → <code>EventFeedActivity</code> live mode</td>
+          <td>Opens the raw timing + sensor event lists, populated from the same in-memory store.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ul class="aspect-list">
+      <li><strong>Audience</strong>Developer / researcher debugging the capture path — not an end-user analytics view.</li>
+      <li><strong>Live vs persisted</strong>Reads the in-memory store, not Room. Values disappear if you navigate away during an active session.</li>
+      <li><strong>Save CSV</strong>The toolbar action streams the current session's timing + sensor rows directly to a SAF <code>OutputStream</code> — same dual-block format as the bulk export.</li>
+      <li><strong>Insights shortcut</strong>Toolbar action that jumps to the most recent session's per-session dashboard, or live mode if a session is currently active.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ====================== DATA FLOW ====================== -->
+<section class="dashboard" id="data-flow">
+  <header>
+    <h2>4. Data flow &amp; aggregation strategy</h2>
+    <p class="lead">A summary of where each dashboard's numbers come from, since the redesign work will probably want to move some widgets between surfaces or consolidate aggregators.</p>
+  </header>
+  <div class="body">
+
+    <h3 class="subhead">Aggregator inventory</h3>
+    <table class="widgets">
+      <thead><tr><th>Aggregator</th><th>Used by</th><th>Returns</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="widget-name"><code>IkdAggregator</code></td>
+          <td>Global header KPI strip · Trends tab · Mood tab (bucket alignment)</td>
+          <td><code>Snapshot</code> — <code>List&lt;Bucket&gt;</code> with WPM / avg IKD / error % per time bucket</td>
+          <td>SQLite <code>strftime</code> for daily/weekly buckets. WPM denominator excludes <code>AUTOCORRECT</code>.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>IkdMoodAggregator</code></td>
+          <td>Mood tab</td>
+          <td><code>MoodSnapshot</code> (counts) + <code>MoodMixSnapshot</code> (per-bucket per-category)</td>
+          <td>Two SQL queries, both bounded to ≤ 30 daily / ≤ 14 weekly buckets.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>IkdActivityAggregator</code></td>
+          <td>Daily Activity tab</td>
+          <td>Daily / hourly / circadian / day-hour cells</td>
+          <td>Mixes daily, hourly and weekday×hour SQL projections for the four widgets.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>IkdDistributionAggregator</code></td>
+          <td>Keystroke Dynamics tab (3 histograms)</td>
+          <td>Three log-scale histograms with outlier counts</td>
+          <td>Bucket boundaries computed in Kotlin; SQL just streams the raw timing values within range.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>IkdOrientationAggregator</code></td>
+          <td>Keystroke Dynamics tab (donut)</td>
+          <td>Per-orientation session count + duration</td>
+          <td>Three slices: Portrait / Landscape / Unknown. Unknown covers sessions captured before Phase 2 + sessions where orientation capture was disabled.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>IkdHabitsAggregator</code></td>
+          <td>Habits tab (KPI + 4 trend charts)</td>
+          <td><code>HabitsSnapshot</code> — totals + per-bucket session-level rollups + streak unit</td>
+          <td>Streak unit varies by range (HOURS / DAYS / WEEKS) so the KPI label can adapt.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>IkdQualityAggregator</code></td>
+          <td>Habits tab (scatter)</td>
+          <td>One <code>DayQualityPoint</code> per day with backspace + autocorrect counts</td>
+          <td>Day index drives the alpha fade of older points.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>IkdSensorTrendAggregator</code></td>
+          <td>Trends tab (gyro / accel charts)</td>
+          <td>Per-bucket avg gyro / accel magnitude</td>
+          <td>Magnitude derived in Kotlin from <code>AVG(x*x+y*y+z*z)</code> — SQLite has no <code>sqrt</code>.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>IkdSessionStatsLoader</code></td>
+          <td>Per-session dashboard (KPI + chip row + metadata)</td>
+          <td><code>SessionStats</code> — counts, averages, durations</td>
+          <td>One SQL round-trip; sentinels excluded via <code>AVG(CASE WHEN col >= 0 …)</code>.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>IkdSessionChartLoader</code></td>
+          <td>Per-session dashboard (3 line charts)</td>
+          <td><code>SessionChartData</code> — IKD / gyro / accel series</td>
+          <td>Bucket width auto-scaled; ≤ 200 points per chart regardless of session length.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>IkdMoodLoader</code></td>
+          <td>Per-session dashboard (mood KPI cell)</td>
+          <td>Optional <code>MoodEntry</code> for the session</td>
+          <td>Cell hidden when null.</td>
+        </tr>
+        <tr>
+          <td class="widget-name"><code>LiveCaptureSessionStore</code></td>
+          <td>Diagnostics dashboard</td>
+          <td>In-memory event + sensor lists for the active session</td>
+          <td>Push-based — no Room reads. Drains to Room every 500 ms or 100 events.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 class="subhead">Performance budgets (from CLAUDE.md)</h3>
+    <ul>
+      <li>Global aggregator: Week &lt; 100 ms · Month &lt; 150 ms · All Time &lt; 200 ms.</li>
+      <li>Per-session chart loader: 30 s session &lt; 100 ms · 5 min &lt; 200 ms · 1 hour &lt; 400 ms.</li>
+      <li>Every loader logs its own wall-clock duration in debug builds (tags <code>IkdAggregator</code>, <code>IkdMoodAggregator</code>, <code>IkdSessionStatsLoader</code>, <code>IkdSessionChartLoader</code>).</li>
+    </ul>
+
+    <h3 class="subhead">Schema referenced</h3>
+    <ul>
+      <li><code>sessions</code> — id, started_at, ended_at, counts, orientation, locale</li>
+      <li><code>ikd_events</code> — session_id (FK CASCADE), timestamp, event_category, ikd_ms, hold_time_ms, flight_time_ms, is_correction, correction_weight</li>
+      <li><code>sensor_samples</code> — session_id (FK CASCADE), timestamp, sensor_type (GYRO / ACCEL), x, y, z</li>
+      <li><code>mood_entries</code> — id, session_id (FK CASCADE, unique), timestamp, mood_score (1..6)</li>
+    </ul>
+
+    <div class="callout good">
+      <strong>Read-side only.</strong> Every aggregator listed here is additive over the existing capture rows. New dashboards or chart variants can be designed without reopening the keyboard / IME / capture layer.
+    </div>
+  </div>
+</section>
+
+<!-- ====================== RECENT CHANGES ====================== -->
+<section class="dashboard" id="recent-changes">
+  <header>
+    <h2>5. Recent changes</h2>
+    <p class="lead">Changelog for the Insights surface, newest first. Pulled from the commit history on <code>main</code> and the matching plan files under <code>roadmap/</code>.</p>
+  </header>
+  <div class="body">
+
+    <h3 class="subhead">Phase 9.12 — Theming, top tabs, KPI dedup</h3>
+    <p>Commits <code>cc0f64aa</code> (feat) and <code>bf904b49</code> (docs). Plan: <code>roadmap/Phase9/sub_plans/9.12_theming_top_tabs_kpi_dedup.md</code>.</p>
+    <ul>
+      <li><strong>Theme propagation.</strong> Every fragment root is now run through <code>updateTextColors()</code>; every <code>MaterialCardView</code> calls <code>setCardBackgroundColor(getProperBackgroundColor())</code>; chart axis / legend colours pull from <code>getProperTextColor()</code>. Mirrors the Phase 5 / 6 discipline so the user's selected Fossify keyboard theme reaches the new Phase 9 surfaces.</li>
+      <li><strong>Tabs moved to the top.</strong> <code>NavigationRailView</code> (left edge) replaced with a <code>MaterialButtonToggleGroup</code> at the top, styled identically to the range toggle and wrapped in a <code>HorizontalScrollView</code> for narrow widths. Two abbreviated labels — "Activity" and "Keystrokes" — keep all five tabs visible at default font size. Two-way sync between the toggle and <code>ViewPager2</code> preserved.</li>
+      <li><strong>KPI dedup.</strong> Habits tab's internal 4-cell KPI strip removed; <strong>Avg session</strong> and <strong>Longest streak</strong> lifted up into the global KPI strip (now 6 cells, horizontally scrollable). The other two cells already duplicated values in the global strip. Habits tab body is now four trend charts + the activity-quality scatter.</li>
+      <li><strong>Side-effect win:</strong> Detekt's <code>LargeClass</code> warning on <code>DashboardActivity</code> is gone; total weighted issues unchanged at 52 vs. Phase 9 baseline.</li>
+    </ul>
+
+    <h3 class="subhead">Phase 9.11 — TODAY range + vertical tabs</h3>
+    <p>Commits <code>eb8454f2</code> (TODAY range), <code>f00b5713</code> (tabs), <code>be4d98ba</code> (docs). Plan: <code>roadmap/Phase9/sub_plans/9.11_today_filter_and_tabs.md</code>.</p>
+    <ul>
+      <li><strong>TODAY range.</strong> New <code>Range.TODAY(days = 1, bucketFormat = "%Y-%m-%d %H")</code> as the first option on the range toggle. X-axis labels render as <code>HH:00</code>. Charts that go degenerate under TODAY hide cleanly: calendar heatmap, daily-keypress bar, Usage Map. The 24-hour bar and circadian heatmap stay — already hourly. The Habits longest-streak KPI gains a <code>StreakUnit.HOURS</code> mode that prints "Today" / "—".</li>
+      <li><strong>Vertical tabs (since superseded by 9.12).</strong> Initially shipped as <code>NavigationRailView</code> on the left + horizontal <code>ViewPager2</code>. The five Phase 9 sections became five swipeable fragments under <code>activities/dashboard/</code> (<code>TrendsFragment</code>, <code>DailyActivityFragment</code>, <code>MoodFragment</code>, <code>KeystrokeDynamicsFragment</code>, <code>HabitsFragment</code>). <code>DashboardActivity</code> shrunk from ~1100 LOC to ~340 LOC. Phase 9.12 then moved the tab control to the top while keeping the fragment split.</li>
+    </ul>
+
+    <h3 class="subhead">Error-rate denominator fix (post-Phase-8.3)</h3>
+    <p>Commit <code>569f331b</code>. Manual test plan: <code>roadmap/ErrorRateFix_TestPlan.md</code>.</p>
+    <ul>
+      <li>Two bugs in the Phase 7.1 weighted error-rate metric. (1) Denominator only excluded <code>AUTOCORRECT</code> rows, so typing <code>hello world</code> (11 chars) and backspacing all 11 read 11/22 = <strong>50 %</strong> instead of the user-expected 100 %. Fixed by switching the denominator to <em>productive keystrokes</em> — <code>eventCount - correctionCount</code> — which excludes both <code>AUTOCORRECT</code> and <code>BACKSPACE</code>.</li>
+      <li>(2) <code>BACKSPACE</code> rows always carried <code>correction_weight = 1</code>, even when one keypress deleted an N-char selection or word-grapheme. Fixed by reading the selection length (or <code>getCountToDelete()</code>) before recording the timing event — new <code>SimpleKeyboardIME.computeBackspaceWeight()</code> helper.</li>
+      <li>Net: <code>ocasdasda</code>+autocorrect stays at 90 %; <code>hello world&lt;BS×11&gt;</code> now reads 100 %; legacy backfill drifts 18.18 % → 20 %.</li>
+    </ul>
+
+    <h3 class="subhead">Phase 9 — Global Insights Expansion</h3>
+    <p>Commits <code>f2d13b33</code> … <code>38ae0d63</code> (10 sub-phases). Plan: <code>roadmap/Phase9/Phase9_Plan.md</code> + 10 sub-plan files.</p>
+    <ul>
+      <li>Five-section dashboard introduced: <strong>Trends → Daily Activity → Mood → Keystroke Dynamics → Habits</strong>.</li>
+      <li>New surfaces (one sub-phase each): aggregate gyro/accel magnitude trend charts (9.2); Habits trend charts + KPI strip (9.3 — internal strip later removed in 9.12); Mood Filter chip row (9.4); calendar heatmap + daily keypress bar (9.5); 24-hour bar + circadian heatmap (9.6); IKD/Dwell/Flight log-scale histograms (9.7); orientation breakdown donut (9.8); Usage Map bubble chart (9.9); backspaces-vs-autocorrects scatter (9.10).</li>
+      <li>Two new custom views (<code>IkdHeatmapView</code>, <code>IkdBubbleMapView</code>) joined the existing <code>IkdLineChartView</code> / <code>IkdStackedBarChartView</code>.</li>
+      <li>Six new aggregators paralleled <code>IkdAggregator</code>: <code>IkdSensorTrendAggregator</code>, <code>IkdHabitsAggregator</code>, <code>IkdActivityAggregator</code>, <code>IkdDistributionAggregator</code>, <code>IkdOrientationAggregator</code>, <code>IkdQualityAggregator</code>. DAOs gained <code>*ForMood</code> two-query variants for the mood filter (orchestrator Decision #14).</li>
+      <li>Phase 11 ("Usage Map &amp; Daily Activity Charts") deleted from the roadmap — every chart was absorbed into 9.5 / 9.6 / 9.9 / 9.10.</li>
+    </ul>
+
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Generated for the KeyboardSA IKD project · sources: <code>app/src/main/kotlin/.../activities</code>, <code>res/layout/activity_dashboard.xml</code>, fragment XMLs, <code>CLAUDE.md</code>.
+</footer>
+
+</body>
+</html>
