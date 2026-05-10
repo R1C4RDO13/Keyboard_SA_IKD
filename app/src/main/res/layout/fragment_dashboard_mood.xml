@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 9.11: Mood tab content. Phase 8.3 stacked-bar mood-mix chart and
+    Phase 8 Mood Distribution panel. Both cards stay GONE until the mood
+    snapshot total > 0.
+-->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_mood_scroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/normal_margin">
+
+        <!-- Phase 8.3: Mood Mix over Time stacked-bar chart card. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/dashboard_mood_stacked_chart_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:cardCornerRadius="@dimen/card_corner_radius"
+            app:cardElevation="@dimen/card_elevation">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/normal_margin">
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/dashboard_mood_stacked_chart_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dashboard_chart_mood_mix_title"
+                    android:textStyle="bold" />
+
+                <org.fossify.keyboard.views.IkdStackedBarChartView
+                    android:id="@+id/dashboard_chart_mood_stacked"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:layout_marginTop="@dimen/small_margin" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/small_margin"
+                    android:fillViewport="false"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/dashboard_mood_stacked_legend"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+
+                </HorizontalScrollView>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Phase 8: Mood Distribution panel — six rows in display order. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/dashboard_mood_distribution_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:visibility="gone"
+            app:cardCornerRadius="@dimen/card_corner_radius"
+            app:cardElevation="@dimen/card_elevation">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/normal_margin">
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/dashboard_mood_distribution_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dashboard_mood_distribution_title"
+                    android:textStyle="bold" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_happiness"
+                    layout="@layout/item_mood_distribution_row" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_surprise"
+                    layout="@layout/item_mood_distribution_row" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_disgust"
+                    layout="@layout/item_mood_distribution_row" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_sadness"
+                    layout="@layout/item_mood_distribution_row" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_fear"
+                    layout="@layout/item_mood_distribution_row" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_anger"
+                    layout="@layout/item_mood_distribution_row" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Empty placeholder when this tab has no data to show. -->
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/fragment_mood_empty_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="@dimen/activity_margin"
+            android:text="@string/dashboard_tab_empty_message"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

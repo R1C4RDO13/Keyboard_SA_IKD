@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 9.11: Trends tab content. Three IKD line charts (WPM / Avg IKD /
+    Error rate) plus the Phase 9.2 gyro/accel global trend charts. The
+    section header is gone — the NavigationRail label replaces it.
+-->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragment_trends_scroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/normal_margin">
+
+        <!-- Speed chart -->
+        <org.fossify.commons.views.MyTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/dashboard_chart_speed"
+            android:textStyle="bold" />
+
+        <org.fossify.keyboard.views.IkdLineChartView
+            android:id="@+id/dashboard_chart_speed"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="@dimen/small_margin" />
+
+        <!-- IKD chart -->
+        <org.fossify.commons.views.MyTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:text="@string/dashboard_chart_ikd"
+            android:textStyle="bold" />
+
+        <org.fossify.keyboard.views.IkdLineChartView
+            android:id="@+id/dashboard_chart_ikd"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="@dimen/small_margin" />
+
+        <!-- Error rate chart -->
+        <org.fossify.commons.views.MyTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:text="@string/dashboard_chart_error"
+            android:textStyle="bold" />
+
+        <org.fossify.keyboard.views.IkdLineChartView
+            android:id="@+id/dashboard_chart_error"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="@dimen/small_margin" />
+
+        <!-- Phase 9.2: Gyro magnitude trend chart -->
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/dashboard_chart_gyro_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:text="@string/dashboard_chart_gyro_title"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <org.fossify.keyboard.views.IkdLineChartView
+            android:id="@+id/dashboard_chart_gyro"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="@dimen/small_margin"
+            android:visibility="gone" />
+
+        <!-- Phase 9.2: Accel magnitude trend chart -->
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/dashboard_chart_accel_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:text="@string/dashboard_chart_accel_title"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <org.fossify.keyboard.views.IkdLineChartView
+            android:id="@+id/dashboard_chart_accel"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="@dimen/small_margin"
+            android:visibility="gone" />
+
+        <!-- Empty placeholder when this tab has no data to show. -->
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/fragment_trends_empty_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="@dimen/activity_margin"
+            android:text="@string/dashboard_tab_empty_message"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

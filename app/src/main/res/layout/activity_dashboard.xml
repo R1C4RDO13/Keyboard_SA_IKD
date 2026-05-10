@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 9.11: dashboard restructured into:
+      - app bar / toolbar
+      - global header: Mood Filter chip row, Range toggle, KPI strip
+      - vertical NavigationRail (left) + ViewPager2 (right) with five
+        per-section fragments swipeable horizontally.
+    Each section's full content moved into a fragment_dashboard_*.xml file.
+-->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -22,16 +30,16 @@
 
     </org.fossify.commons.views.MyAppBarLayout>
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/dashboard_nested_scrollview"
+    <LinearLayout
+        android:id="@+id/dashboard_root_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:scrollbars="none"
+        android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <!-- Global header — shared across every tab. -->
         <LinearLayout
-            android:id="@+id/dashboard_holder"
+            android:id="@+id/dashboard_global_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -39,7 +47,9 @@
 
             <!-- Phase 9.4: Mood Filter chip row (gone until first MoodEntry).
                  Sits above the range selector — outermost filter (sessions
-                 by mood) precedes time-window selection. -->
+                 by mood) precedes time-window selection. Phase 9.11: stays
+                 in the global header so chip-row state applies to every
+                 tab. -->
             <HorizontalScrollView
                 android:id="@+id/dashboard_mood_filter_strip"
                 android:layout_width="match_parent"
@@ -98,8 +108,7 @@
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            <!-- KPI strip — Phase 8.3 drops the fifth Avg Mood cell, so the
-                 strip is back to four cells unconditionally. -->
+            <!-- Global KPI strip — Sessions / Typing time / WPM / Error rate. -->
             <LinearLayout
                 android:id="@+id/dashboard_kpi_strip"
                 android:layout_width="match_parent"
@@ -112,8 +121,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
 
                     <org.fossify.commons.views.MyTextView
                         android:id="@+id/dashboard_kpi_sessions_value"
@@ -135,8 +144,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
 
                     <org.fossify.commons.views.MyTextView
                         android:id="@+id/dashboard_kpi_typing_time_value"
@@ -158,8 +167,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
 
                     <org.fossify.commons.views.MyTextView
                         android:id="@+id/dashboard_kpi_wpm_value"
@@ -181,8 +190,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
 
                     <org.fossify.commons.views.MyTextView
                         android:id="@+id/dashboard_kpi_error_rate_value"
@@ -202,825 +211,36 @@
 
             </LinearLayout>
 
-            <!-- Phase 9.1: Trends section header (primary-coloured) -->
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_section_header_trends"
+        </LinearLayout>
+
+        <!-- Phase 9.11: NavigationRail (left) + ViewPager2 (right). The
+             rail provides the vertical tab strip; the ViewPager2 provides
+             horizontal swipe between tab content. -->
+        <LinearLayout
+            android:id="@+id/dashboard_pager_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <com.google.android.material.navigationrail.NavigationRailView
+                android:id="@+id/dashboard_navigation_rail"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                app:labelVisibilityMode="labeled"
+                app:menu="@menu/menu_dashboard_tabs" />
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/dashboard_view_pager"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_section_trends"
-                android:textSize="@dimen/bigger_text_size"
-                android:textStyle="bold" />
-
-            <!-- Speed chart -->
-            <org.fossify.commons.views.MyTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_chart_speed"
-                android:textStyle="bold" />
-
-            <org.fossify.keyboard.views.IkdLineChartView
-                android:id="@+id/dashboard_chart_speed"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="@dimen/small_margin" />
-
-            <!-- IKD chart -->
-            <org.fossify.commons.views.MyTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_chart_ikd"
-                android:textStyle="bold" />
-
-            <org.fossify.keyboard.views.IkdLineChartView
-                android:id="@+id/dashboard_chart_ikd"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="@dimen/small_margin" />
-
-            <!-- Error rate chart -->
-            <org.fossify.commons.views.MyTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_chart_error"
-                android:textStyle="bold" />
-
-            <org.fossify.keyboard.views.IkdLineChartView
-                android:id="@+id/dashboard_chart_error"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="@dimen/small_margin" />
-
-            <!-- Phase 9.2: Gyro magnitude trend chart -->
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_chart_gyro_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_chart_gyro_title"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <org.fossify.keyboard.views.IkdLineChartView
-                android:id="@+id/dashboard_chart_gyro"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="@dimen/small_margin"
-                android:visibility="gone" />
-
-            <!-- Phase 9.2: Accel magnitude trend chart -->
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_chart_accel_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_chart_accel_title"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <org.fossify.keyboard.views.IkdLineChartView
-                android:id="@+id/dashboard_chart_accel"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="@dimen/small_margin"
-                android:visibility="gone" />
-
-            <!-- Phase 9.5: Daily Activity section header. Hidden when no
-                 activity widget renders. -->
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_section_header_daily_activity"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_section_daily_activity"
-                android:textSize="@dimen/bigger_text_size"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <!-- Phase 9.5: Calendar heatmap card. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_calendar_heatmap_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/small_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_chart_calendar_heatmap_title"
-                        android:textStyle="bold" />
-
-                    <org.fossify.keyboard.views.IkdHeatmapView
-                        android:id="@+id/dashboard_calendar_heatmap"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 9.5: Daily keypress bar chart card. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_daily_keypress_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_chart_daily_keypress_title"
-                        android:textStyle="bold" />
-
-                    <org.fossify.keyboard.views.IkdLineChartView
-                        android:id="@+id/dashboard_daily_keypress_chart"
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 9.6: 24-hour bar chart card. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_hourly_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_chart_hourly_title"
-                        android:textStyle="bold" />
-
-                    <org.fossify.keyboard.views.IkdLineChartView
-                        android:id="@+id/dashboard_hourly_chart"
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 9.6: Circadian (hour×weekday) heatmap card.
-                 Always all-time per orchestrator Decision #18 — subtitle
-                 documents the static scope. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_circadian_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_chart_circadian_title"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/dashboard_circadian_subtitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_circadian_subtitle"
-                        android:textSize="@dimen/smaller_text_size"
-                        android:textStyle="italic" />
-
-                    <org.fossify.keyboard.views.IkdHeatmapView
-                        android:id="@+id/dashboard_circadian_heatmap"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 9.9: Usage Map bubble chart card. Reuses the
-                 dayHourCells payload from IkdActivityAggregator (no extra
-                 query). Bubbles scaled between min/max radius dimens. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_usage_map_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_chart_usage_map_title"
-                        android:textStyle="bold" />
-
-                    <org.fossify.keyboard.views.IkdBubbleMapView
-                        android:id="@+id/dashboard_usage_map"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 9.1: Mood section header (primary-coloured). Hidden
-                 when both child mood cards are gone. -->
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_section_header_mood"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_section_mood"
-                android:textSize="@dimen/bigger_text_size"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <!-- Phase 8.3: Mood Mix over Time stacked-bar chart card.
-                 Replaces the Phase 8 Mood-over-Time line chart and the
-                 Avg Mood KPI cell. Each bar is one time bucket; each
-                 stacked segment is the percentage of one Ekman category
-                 in that bucket. X axis aligns with the IKD charts above.
-                 Hidden when the selected range has no mood entries. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_mood_stacked_chart_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/dashboard_mood_stacked_chart_title"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_chart_mood_mix_title"
-                        android:textStyle="bold" />
-
-                    <org.fossify.keyboard.views.IkdStackedBarChartView
-                        android:id="@+id/dashboard_chart_mood_stacked"
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                    <!-- Custom legend below the chart: a horizontally
-                         scrollable strip of six entries. Each entry pairs
-                         a small colour swatch (a tinted circle drawable)
-                         with emoji + label. Activity inflates the
-                         per-entry rows from item_mood_legend_swatch.xml. -->
-                    <HorizontalScrollView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/small_margin"
-                        android:fillViewport="false"
-                        android:scrollbars="none">
-
-                        <LinearLayout
-                            android:id="@+id/dashboard_mood_stacked_legend"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal" />
-
-                    </HorizontalScrollView>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 8: Mood Distribution panel — six rows in display order
-                 (Happiness → Anger), each emoji + label + horizontal
-                 progress bar + count. Hidden when no entries in range. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_mood_distribution_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/dashboard_mood_distribution_title"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_mood_distribution_title"
-                        android:textStyle="bold" />
-
-                    <include
-                        android:id="@+id/dashboard_mood_row_happiness"
-                        layout="@layout/item_mood_distribution_row" />
-
-                    <include
-                        android:id="@+id/dashboard_mood_row_surprise"
-                        layout="@layout/item_mood_distribution_row" />
-
-                    <include
-                        android:id="@+id/dashboard_mood_row_disgust"
-                        layout="@layout/item_mood_distribution_row" />
-
-                    <include
-                        android:id="@+id/dashboard_mood_row_sadness"
-                        layout="@layout/item_mood_distribution_row" />
-
-                    <include
-                        android:id="@+id/dashboard_mood_row_fear"
-                        layout="@layout/item_mood_distribution_row" />
-
-                    <include
-                        android:id="@+id/dashboard_mood_row_anger"
-                        layout="@layout/item_mood_distribution_row" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 9.7: Keystroke Dynamics section header (primary-
-                 coloured). Hidden when all three histograms are empty. -->
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_section_header_keystroke_dynamics"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_section_keystroke_dynamics"
-                android:textSize="@dimen/bigger_text_size"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <!-- Phase 9.7: IKD distribution histogram -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_ikd_distribution_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/small_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_chart_ikd_distribution_title"
-                            android:textStyle="bold" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/dashboard_ikd_distribution_outliers"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:textSize="@dimen/smaller_text_size"
-                            android:visibility="gone" />
-
-                    </RelativeLayout>
-
-                    <org.fossify.keyboard.views.IkdHistogramView
-                        android:id="@+id/dashboard_ikd_distribution_chart"
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 9.7: Dwell histogram -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_dwell_distribution_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_chart_dwell_distribution_title"
-                            android:textStyle="bold" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/dashboard_dwell_distribution_outliers"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:textSize="@dimen/smaller_text_size"
-                            android:visibility="gone" />
-
-                    </RelativeLayout>
-
-                    <org.fossify.keyboard.views.IkdHistogramView
-                        android:id="@+id/dashboard_dwell_distribution_chart"
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 9.7: Flight-time histogram -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_flight_distribution_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_chart_flight_distribution_title"
-                            android:textStyle="bold" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/dashboard_flight_distribution_outliers"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:textSize="@dimen/smaller_text_size"
-                            android:visibility="gone" />
-
-                    </RelativeLayout>
-
-                    <org.fossify.keyboard.views.IkdHistogramView
-                        android:id="@+id/dashboard_flight_distribution_chart"
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 9.8: Orientation breakdown donut. Sits inside the
-                 Keystroke Dynamics section beneath the three histograms. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_orientation_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_chart_orientation_title"
-                        android:textStyle="bold" />
-
-                    <com.github.mikephil.charting.charts.PieChart
-                        android:id="@+id/dashboard_orientation_chart"
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                    <HorizontalScrollView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/small_margin"
-                        android:fillViewport="false"
-                        android:scrollbars="none">
-
-                        <LinearLayout
-                            android:id="@+id/dashboard_orientation_legend"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal" />
-
-                    </HorizontalScrollView>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Phase 9.3: Habits section header (primary-coloured). Hidden
-                 when totalSessions == 0. -->
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_section_header_habits"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_section_habits"
-                android:textSize="@dimen/bigger_text_size"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <!-- Phase 9.3: Habits KPI strip (matches the top KPI strip's
-                 4-cell layout). -->
-            <LinearLayout
-                android:id="@+id/dashboard_habits_kpi_strip"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/small_margin"
-                android:orientation="horizontal"
-                android:visibility="gone"
-                android:weightSum="4">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/dashboard_habits_kpi_sessions_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_value_placeholder"
-                        android:textSize="@dimen/bigger_text_size"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_habits_kpi_sessions"
-                        android:textSize="@dimen/smaller_text_size" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/dashboard_habits_kpi_typing_time_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_value_placeholder"
-                        android:textSize="@dimen/bigger_text_size"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_habits_kpi_typing_time"
-                        android:textSize="@dimen/smaller_text_size" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/dashboard_habits_kpi_avg_session_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_value_placeholder"
-                        android:textSize="@dimen/bigger_text_size"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_habits_kpi_avg_session"
-                        android:textSize="@dimen/smaller_text_size" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:id="@+id/dashboard_habits_kpi_streak_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_value_placeholder"
-                        android:textSize="@dimen/bigger_text_size"
-                        android:textStyle="bold" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_habits_kpi_streak"
-                        android:textSize="@dimen/smaller_text_size" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <!-- Phase 9.3: Habits trend charts. -->
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_chart_habits_session_duration_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_chart_habits_session_duration_title"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <org.fossify.keyboard.views.IkdLineChartView
-                android:id="@+id/dashboard_chart_habits_session_duration"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="@dimen/small_margin"
-                android:visibility="gone" />
-
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_chart_habits_sessions_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_chart_habits_sessions_title"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <org.fossify.keyboard.views.IkdLineChartView
-                android:id="@+id/dashboard_chart_habits_sessions"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="@dimen/small_margin"
-                android:visibility="gone" />
-
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_chart_habits_error_rate_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_chart_habits_error_rate_title"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <org.fossify.keyboard.views.IkdLineChartView
-                android:id="@+id/dashboard_chart_habits_error_rate"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="@dimen/small_margin"
-                android:visibility="gone" />
-
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_chart_habits_flight_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:text="@string/dashboard_chart_habits_flight_title"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <org.fossify.keyboard.views.IkdLineChartView
-                android:id="@+id/dashboard_chart_habits_flight"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="@dimen/small_margin"
-                android:visibility="gone" />
-
-            <!-- Phase 9.10: Activity Quality scatter card. Sits at the
-                 bottom of the Habits section. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dashboard_activity_quality_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
-                android:visibility="gone"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/normal_margin">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_chart_activity_quality_title"
-                        android:textStyle="bold" />
-
-                    <com.github.mikephil.charting.charts.ScatterChart
-                        android:id="@+id/dashboard_activity_quality_chart"
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="@dimen/small_margin" />
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/small_margin"
-                        android:text="@string/dashboard_activity_quality_subtitle"
-                        android:textSize="@dimen/smaller_text_size"
-                        android:textStyle="italic" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
+                android:layout_height="match_parent"
+                android:orientation="horizontal" />
 
         </LinearLayout>
 
-    </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
 
-    <!-- Empty state: shown when no sessions exist -->
+    <!-- Empty state: shown when no sessions exist at all. -->
     <org.fossify.commons.views.MyTextView
         android:id="@+id/dashboard_empty_message"
         android:layout_width="match_parent"
