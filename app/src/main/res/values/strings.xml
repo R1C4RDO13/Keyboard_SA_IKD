@@ -347,9 +347,9 @@
     <string name="dashboard_chart_error">Error rate (%)</string>
     <string name="dashboard_empty_message">Type with privacy mode off and your trends will appear here. Open Data Collection &amp; Privacy and toggle Privacy mode.</string>
     <!-- Phase 9.18 follow-up: shown when a mood filter narrows the range
-         down to zero sessions. The active-filter chip stays visible so the
-         user can clear the filter via the ✕ on the chip. -->
-    <string name="dashboard_empty_for_mood_filter">No sessions for this mood in the current range. Tap the ✕ on the filter chip above to see all moods.</string>
+         down to zero sessions. The empty-state TextView is itself
+         tappable — tapping it clears the mood filter and returns to All. -->
+    <string name="dashboard_empty_for_mood_filter">No sessions for this mood in the current range.\n\nTap here to show all moods.</string>
     <!-- Phase 9.11: per-tab empty state when a tab has no widgets to render
          (e.g. user disabled gyro/accel and Trends has no sensor data, or
          the calendar heatmap card is hidden under TODAY). -->

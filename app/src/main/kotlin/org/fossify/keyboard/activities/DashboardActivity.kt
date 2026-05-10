@@ -315,7 +315,19 @@ class DashboardActivity : SimpleActivity() {
             }
         }
         binding.dashboardEmptyMessage.setOnClickListener {
-            startActivity(Intent(this, IkdSettingsActivity::class.java))
+            // Phase 9.18 follow-up: when a mood filter has narrowed the range
+            // to zero sessions, the empty-state TextView is the *only*
+            // affordance the user can see (chip is now range-only and hidden
+            // for mood; tiles are inside the hidden ViewPager). Tapping the
+            // empty message clears the mood filter — same toggle path as
+            // tapping the active tile would. Otherwise (genuinely no data)
+            // it still redirects to the data-collection settings as before.
+            val activeMood = currentMoodFilter
+            if (activeMood != null) {
+                onMoodTileTapped(activeMood)
+            } else {
+                startActivity(Intent(this, IkdSettingsActivity::class.java))
+            }
         }
     }
 
@@ -355,40 +367,27 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
-     * Phase 9.14.3: chip text rules.
-     *  - range == Week, mood == null  → chip hidden
-     *  - mood only                    → "😊 Happy"
-     *  - range only                   → "Today" / "Month" / "All time"
-     *  - both                         → "Month · 😊 Happy"
+     * Chip text rules (post-9.18 follow-up: chip is now range-only).
+     *  - range == Week → chip hidden, regardless of mood filter.
+     *  - range != Week → chip shows the range label only.
+     *
+     * The mood filter is surfaced exclusively via the Distribution-tile
+     * highlight on the Summary tab — no mood chip in the global header.
+     * Per-user feedback after Phase 9.18: the mood chip felt like a
+     * redundant "tiny widget at the top" once the tile highlight existed.
      */
     private fun renderActiveFilterChip() {
         val chip = binding.dashboardActiveFilterChip
         val hasRange = currentRange != IkdAggregator.Range.WEEK
-        val mood = currentMoodFilter
-        val hasMood = mood != null
-        if (!hasRange && !hasMood) {
+        if (!hasRange) {
             chip.beVisibleIf(false)
             return
         }
-        val rangeLabel = when (currentRange) {
+        chip.text = when (currentRange) {
             IkdAggregator.Range.TODAY -> getString(R.string.dashboard_range_today)
-            IkdAggregator.Range.WEEK -> getString(R.string.dashboard_range_week)
             IkdAggregator.Range.MONTH -> getString(R.string.dashboard_range_month)
             IkdAggregator.Range.ALL_TIME -> getString(R.string.dashboard_range_all)
-        }
-        chip.text = when {
-            hasRange && hasMood -> getString(
-                R.string.insights_filters_chip_range_and_mood,
-                rangeLabel,
-                MoodEmoji.emojiFor(mood!!),
-                getString(MoodEmoji.labelResFor(mood)),
-            )
-            hasMood -> getString(
-                R.string.insights_filters_chip_mood_only,
-                MoodEmoji.emojiFor(mood!!),
-                getString(MoodEmoji.labelResFor(mood)),
-            )
-            else -> rangeLabel
+            IkdAggregator.Range.WEEK -> "" // unreachable — guarded above
         }
         chip.beVisibleIf(true)
     }
@@ -452,11 +451,10 @@ class DashboardActivity : SimpleActivity() {
     private fun renderPayload(payload: DashboardPayload) {
         latestPayload = payload
         val isEmpty = payload.ikd.totalSessions == 0
-        // Phase 9.18 follow-up: when a mood filter is active and produces
-        // zero sessions, keep the global header visible so the active-
-        // filter chip ✕ remains usable. Otherwise the user is trapped —
-        // tiles are inside the ViewPager which would also hide. Swap the
-        // empty-state message text to direct them at the chip ✕.
+        // Phase 9.18 follow-up: distinct empty-state copy when a mood
+        // filter narrowed the range to zero sessions. The empty message
+        // itself becomes the escape hatch — tapping it clears the mood
+        // filter (handled in `setupListeners` via the click listener).
         val emptyWithFilter = isEmpty && currentMoodFilter != null
         binding.dashboardEmptyMessage.setText(
             if (emptyWithFilter) R.string.dashboard_empty_for_mood_filter
@@ -464,7 +462,7 @@ class DashboardActivity : SimpleActivity() {
         )
         binding.dashboardEmptyMessage.beVisibleIf(isEmpty)
         binding.dashboardViewPager.beVisibleIf(!isEmpty)
-        binding.dashboardGlobalHeader.beVisibleIf(!isEmpty || emptyWithFilter)
+        binding.dashboardGlobalHeader.beVisibleIf(!isEmpty)
         if (isEmpty) return
 
         // Phase 9.14.1: the global KPI strip is gone — its six cells are
