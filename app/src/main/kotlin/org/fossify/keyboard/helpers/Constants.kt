@@ -52,6 +52,29 @@ const val SHOW_MOOD_BAR = "ikd_show_mood_bar"
 // suppressed when this is false. Default true.
 const val SHOW_MOOD_POPUP = "ikd_show_mood_popup"
 
+// Phase 8.5: persisted ordinal valence id (1..6) of the user's most-recent
+// mood selection. Display-only standing rating — pre-highlights the
+// collapsed mood-bar chip on re-entry. NEVER auto-writes a `mood_entries`
+// row; that path stays gated on an explicit slot tap. `0` is the
+// "no standing rating" sentinel (`MoodEmoji.SCORE_NONE`).
+const val LAST_MOOD_SCORE = "ikd_last_mood_score"
+
+// Phase 8.5: timestamp (ms since epoch) of the last meaningful mood-bar
+// interaction — written on slot-select and on `onFinishInputView` only.
+// NOT updated per-keystroke (would put a SharedPreferences write on the
+// IME thread for every key, violating CLAUDE.md "Critical Constraint").
+const val LAST_MOOD_ACTIVITY_TIMESTAMP = "ikd_last_mood_activity_ts"
+
+// Phase 8.5: persists whether the keyboard mood bar is currently expanded
+// (showing all seven slots) or collapsed (one-slot chip on the leading
+// edge). Default `false` (collapsed) so first-launch users see the new
+// compact chip; existing users see the bar collapse on upgrade.
+const val MOOD_BAR_EXPANDED = "ikd_mood_bar_expanded"
+
+// Phase 8.5: how long since the last meaningful keyboard / mood-bar
+// interaction before the standing rating auto-clears. One hour.
+const val MOOD_INACTIVITY_TIMEOUT_MS = 60L * 60L * 1000L
+
 // IKD event category strings (Phase 1.1 + Phase 7). Persisted as the
 // `event_category` column on `ikd_events`. Centralized here so the IME
 // capture site, the aggregator queries, and the unit tests share the same

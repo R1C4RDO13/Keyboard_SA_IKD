@@ -63,6 +63,13 @@ class IkdMoodBarController(
             context.config.privacyModeEnabled = false
         }
 
+        // Phase 8.5: standing rating + activity-timestamp updates always
+        // run, regardless of whether a `mood_entries` row gets written.
+        // The standing rating is the user's current self-rating across
+        // sessions; selecting *is* the strongest "user engaged" signal.
+        context.config.lastMoodScore = score
+        context.config.lastMoodActivityTimestamp = System.currentTimeMillis()
+
         val sessionId = LiveCaptureSessionStore.currentSessionId
         if (sessionId.isEmpty()) {
             // No session in flight — nothing to annotate yet. The user
@@ -108,6 +115,14 @@ class IkdMoodBarController(
         if (!context.config.privacyModeEnabled) {
             context.config.privacyModeEnabled = true
         }
+
+        // Phase 8.5: clear the standing rating alongside the in-flight
+        // mood row — Decision #16. "Stop tracking me" includes the
+        // standing self-rating. The activity timestamp is intentionally
+        // NOT updated: privacy-on is itself an interaction, but the
+        // semantic loss of leaving the timestamp is acceptable (the
+        // staleness check skips when `lastMoodScore == SCORE_NONE`).
+        context.config.lastMoodScore = MoodEmoji.SCORE_NONE
 
         if (LiveCaptureSessionStore.isCapturing) {
             LiveCaptureSessionStore.stopSession()
@@ -158,6 +173,15 @@ class IkdMoodBarController(
      * the only state that flips, no row exists to remove).
      */
     suspend fun clearMoodForActiveSession() = withContext(Dispatchers.IO) {
+        // Phase 8.5: also clear the standing rating — Decision #15. The
+        // user explicitly retracted their self-rating; honour it across
+        // sessions, not just the in-flight one. The activity timestamp
+        // is NOT cleared (clearing is itself an interaction; if we
+        // also reset the timestamp, the very next on-show staleness
+        // check would compare against `0L` and no-op anyway, but
+        // leaving the timestamp keeps the semantics tidy).
+        context.config.lastMoodScore = MoodEmoji.SCORE_NONE
+
         val sessionId = LiveCaptureSessionStore.currentSessionId
         if (sessionId.isEmpty()) return@withContext
         try {

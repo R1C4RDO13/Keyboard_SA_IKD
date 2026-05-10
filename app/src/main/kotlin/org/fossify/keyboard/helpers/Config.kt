@@ -61,6 +61,20 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(SHOW_MOOD_POPUP, true)
         set(value) = prefs.edit().putBoolean(SHOW_MOOD_POPUP, value).apply()
 
+    // Phase 8.5: standing-mood, inactivity timestamp, and bar expansion
+    // state. See `roadmap/Phase8/Phase8.5_Plan.md` Sections 3 and 4.
+    var lastMoodScore: Int
+        get() = prefs.getInt(LAST_MOOD_SCORE, MoodEmoji.SCORE_NONE)
+        set(value) = prefs.edit().putInt(LAST_MOOD_SCORE, value).apply()
+
+    var lastMoodActivityTimestamp: Long
+        get() = prefs.getLong(LAST_MOOD_ACTIVITY_TIMESTAMP, 0L)
+        set(value) = prefs.edit().putLong(LAST_MOOD_ACTIVITY_TIMESTAMP, value).apply()
+
+    var moodBarExpanded: Boolean
+        get() = prefs.getBoolean(MOOD_BAR_EXPANDED, false)
+        set(value) = prefs.edit().putBoolean(MOOD_BAR_EXPANDED, value).apply()
+
     var soundOnKeypress: Int
         get() = prefs.getInt(SOUND_ON_KEYPRESS, SOUND_SYSTEM)
         set(soundOnKeypress) = prefs.edit().putInt(SOUND_ON_KEYPRESS, soundOnKeypress).apply()

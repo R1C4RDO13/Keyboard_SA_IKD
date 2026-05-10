@@ -245,6 +245,13 @@
     <string name="mood_bar_sadness_emoji" translatable="false">😢</string>
     <string name="mood_bar_fear_emoji" translatable="false">😨</string>
     <string name="mood_bar_anger_emoji" translatable="false">😠</string>
+    <!-- Phase 8.5: collapsed-state placeholder rendered when there is no
+         standing rating and privacy is off. Dim 🙂 — see Decision #5. -->
+    <string name="mood_bar_collapsed_placeholder" translatable="false">🙂</string>
+    <!-- Phase 8.5: chevron + indicator a11y label. The same string serves
+         both expand and collapse — TalkBack users get the static "Toggle
+         mood bar" rather than two states to disambiguate. -->
+    <string name="mood_bar_toggle_content_description">Toggle mood bar</string>
 
     <!-- IKD Settings page -->
     <string name="ikd_settings_title">Data Collection &amp; Privacy</string>
