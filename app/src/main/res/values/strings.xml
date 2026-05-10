@@ -343,6 +343,18 @@
     <string name="dashboard_kpi_wpm_value">%1$.1f</string>
     <string name="dashboard_kpi_error_rate_value">%1$.1f%%</string>
 
+    <!-- Phase 9.14.1: Summary tab labels and delta placeholder. The
+         delta itself ("—") is rendered by the tile until 9.14.4 wires
+         in real previous-range comparison. -->
+    <string name="dashboard_tab_label_summary">Summary</string>
+    <string name="summary_tile_label_sessions">Sessions</string>
+    <string name="summary_tile_label_typing_time">Typing time</string>
+    <string name="summary_tile_label_wpm">Avg WPM</string>
+    <string name="summary_tile_label_error_rate">Error rate</string>
+    <string name="summary_tile_label_avg_session">Avg session</string>
+    <string name="summary_tile_label_streak">Longest streak</string>
+    <string name="summary_tile_delta_placeholder">—</string>
+
     <!-- Session detail header (Phase 4) -->
     <string name="session_detail_section">Session details</string>
     <string name="session_detail_started_at">Started at</string>

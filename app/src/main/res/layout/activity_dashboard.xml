@@ -48,208 +48,19 @@
             android:orientation="vertical"
             android:padding="@dimen/activity_margin">
 
-            <!-- Phase 9.12: Global KPI strip — 6 cells (Sessions / Typing time
-                 / Avg WPM / Error rate / Avg session / Longest streak). Wrapped
-                 in a HorizontalScrollView so 6 cells fit on narrow screens.
-                 Phase 9.13: outer LinearLayout adds a tap-to-explain info icon
-                 on the right edge (one popup covers all six cells). -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <HorizontalScrollView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:fillViewport="true"
-                    android:scrollbars="none">
-
-                <LinearLayout
-                    android:id="@+id/dashboard_kpi_strip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:minWidth="0dp"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_horizontal"
-                        android:minWidth="@dimen/dashboard_kpi_cell_min_width"
-                        android:orientation="vertical"
-                        android:paddingStart="@dimen/small_margin"
-                        android:paddingEnd="@dimen/small_margin">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/dashboard_kpi_sessions_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_value_placeholder"
-                            android:textSize="@dimen/bigger_text_size"
-                            android:textStyle="bold" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_kpi_sessions"
-                            android:textSize="@dimen/smaller_text_size" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_horizontal"
-                        android:minWidth="@dimen/dashboard_kpi_cell_min_width"
-                        android:orientation="vertical"
-                        android:paddingStart="@dimen/small_margin"
-                        android:paddingEnd="@dimen/small_margin">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/dashboard_kpi_typing_time_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_value_placeholder"
-                            android:textSize="@dimen/bigger_text_size"
-                            android:textStyle="bold" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_kpi_typing_time"
-                            android:textSize="@dimen/smaller_text_size" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_horizontal"
-                        android:minWidth="@dimen/dashboard_kpi_cell_min_width"
-                        android:orientation="vertical"
-                        android:paddingStart="@dimen/small_margin"
-                        android:paddingEnd="@dimen/small_margin">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/dashboard_kpi_wpm_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_value_placeholder"
-                            android:textSize="@dimen/bigger_text_size"
-                            android:textStyle="bold" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_kpi_wpm"
-                            android:textSize="@dimen/smaller_text_size" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_horizontal"
-                        android:minWidth="@dimen/dashboard_kpi_cell_min_width"
-                        android:orientation="vertical"
-                        android:paddingStart="@dimen/small_margin"
-                        android:paddingEnd="@dimen/small_margin">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/dashboard_kpi_error_rate_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_value_placeholder"
-                            android:textSize="@dimen/bigger_text_size"
-                            android:textStyle="bold" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_kpi_error_rate"
-                            android:textSize="@dimen/smaller_text_size" />
-
-                    </LinearLayout>
-
-                    <!-- Phase 9.12: lifted from the Habits tab's internal strip. -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_horizontal"
-                        android:minWidth="@dimen/dashboard_kpi_cell_min_width"
-                        android:orientation="vertical"
-                        android:paddingStart="@dimen/small_margin"
-                        android:paddingEnd="@dimen/small_margin">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/dashboard_kpi_avg_session_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_value_placeholder"
-                            android:textSize="@dimen/bigger_text_size"
-                            android:textStyle="bold" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_habits_kpi_avg_session"
-                            android:textSize="@dimen/smaller_text_size" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_horizontal"
-                        android:minWidth="@dimen/dashboard_kpi_cell_min_width"
-                        android:orientation="vertical"
-                        android:paddingStart="@dimen/small_margin"
-                        android:paddingEnd="@dimen/small_margin">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/dashboard_kpi_streak_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_value_placeholder"
-                            android:textSize="@dimen/bigger_text_size"
-                            android:textStyle="bold" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_habits_kpi_streak"
-                            android:textSize="@dimen/smaller_text_size" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-                </HorizontalScrollView>
-
-                <ImageView
-                    android:id="@+id/dashboard_kpi_info_button"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginStart="@dimen/small_margin"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:contentDescription="@string/widget_info_content_description"
-                    android:focusable="true"
-                    android:src="@drawable/ic_info_outline_vector" />
-
-            </LinearLayout>
+            <!-- Phase 9.14.1: Global KPI strip removed — its six cells now
+                 live as the 2x3 KPI grid on the new Summary tab
+                 (`SummaryFragment`). The Summary tab is the new Insights
+                 landing page; cards still render via the Phase 9.12
+                 segmented toggle below. The tab bar redesign (TabLayout +
+                 icons) lands in 9.14.2. -->
 
             <!-- Phase 9.12: top-of-screen tab toggle group. Same MaterialButton
-                 toggle styling as the range toggle below — the user asked for
-                 a top tab strip styled identically. Wrapped in a horizontal
-                 scroller because the five tab labels (Trends, Daily Activity,
-                 Mood, Keystroke Dynamics, Habits) overflow narrow widths. -->
+                 toggle styling as the range toggle below.
+                 Phase 9.14.1: Summary added as the first tab. -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/normal_margin"
                 android:fillViewport="true"
                 android:scrollbars="none">
 
@@ -259,6 +70,13 @@
                     android:layout_height="wrap_content"
                     app:singleSelection="true"
                     app:selectionRequired="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/dashboard_tab_summary"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_tab_label_summary" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/dashboard_tab_trends"

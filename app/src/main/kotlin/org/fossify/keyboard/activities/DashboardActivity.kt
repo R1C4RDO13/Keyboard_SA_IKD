@@ -38,11 +38,9 @@ import org.fossify.keyboard.extensions.ikdQualityAggregator
 import org.fossify.keyboard.extensions.ikdSensorAggregator
 import org.fossify.keyboard.extensions.moodDB
 import org.fossify.keyboard.helpers.IkdAggregator
-import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.helpers.WidgetInfo
 import org.fossify.keyboard.helpers.attachWidgetInfo
-import java.util.Locale
 
 /**
  * Phase 9.11/9.12: the Insights screen is now a thin host. The activity owns
@@ -130,20 +128,14 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
-     * Phase 9.13: wire the three header info icons to themed
-     * [WidgetInfoDialog] popups. The KPI strip icon explains all six
-     * cells together; the range and mood-filter icons explain those
-     * controls. Per-fragment chart icons are wired by each fragment.
+     * Phase 9.13: wire the header info icons to themed
+     * [WidgetInfoDialog] popups. Phase 9.14.1: the KPI strip info icon is
+     * gone — its info copy now belongs on the Summary tab's KPI grid (a
+     * future per-tile follow-up; the existing strip-level copy is kept in
+     * `strings_widget_info.xml` for reuse). The range and mood-filter
+     * icons stay on the activity chrome.
      */
     private fun setupWidgetInfo() {
-        binding.dashboardKpiInfoButton.attachWidgetInfo(
-            WidgetInfo(
-                titleRes = R.string.info_global_kpi_strip_title,
-                descriptionRes = R.string.info_global_kpi_strip_desc,
-                interpretationRes = R.string.info_global_kpi_strip_interpretation,
-                formulaRes = R.string.info_global_kpi_strip_formula,
-            ),
-        )
         binding.dashboardRangeInfoButton.attachWidgetInfo(
             WidgetInfo(
                 titleRes = R.string.info_global_range_title,
@@ -222,8 +214,9 @@ class DashboardActivity : SimpleActivity() {
             }
         )
 
-        val initialTab = savedInstanceState?.getInt(STATE_TAB_INDEX, DashboardPagerAdapter.TAB_TRENDS)
-            ?: DashboardPagerAdapter.TAB_TRENDS
+        // Phase 9.14.1: cold-launch default is the new Summary tab.
+        val initialTab = savedInstanceState?.getInt(STATE_TAB_INDEX, DashboardPagerAdapter.TAB_SUMMARY)
+            ?: DashboardPagerAdapter.TAB_SUMMARY
         binding.dashboardViewPager.setCurrentItem(initialTab, false)
         binding.dashboardTabGroup.check(tabIndexToTabButtonId(initialTab))
     }
@@ -404,7 +397,9 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardGlobalHeader.beVisibleIf(!isEmpty)
         if (isEmpty) return
 
-        renderKpiStrip(payload)
+        // Phase 9.14.1: the global KPI strip is gone — its six cells are
+        // now the Summary tab's 2x3 grid, populated by `SummaryFragment`
+        // off the same payload below.
 
         // Dispatch the payload to every attached fragment. Fragments that
         // are not currently visible still render so a swipe to them is
@@ -419,49 +414,14 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
-     * Phase 9.12: 6-cell global KPI strip. Sessions · Total typing time ·
-     * Avg WPM · Error rate · Avg session duration · Longest streak.
-     * The last two cells are pulled from the Habits aggregator output —
-     * which the activity already gathers on its single Dispatchers.IO
-     * hop — and replace the per-tab Habits KPI strip.
+     * Phase 9.14.1: public entry point for KPI tile clicks on the
+     * Summary tab (Decision #7). Delegates to the underlying ViewPager2
+     * with a smooth-scroll so the tab toggle's
+     * `OnPageChangeCallback` keeps the segmented control in sync.
      */
-    private fun renderKpiStrip(payload: DashboardPayload) {
-        val placeholder = getString(R.string.dashboard_value_placeholder)
-        val locale = Locale.getDefault()
-        val snap = payload.ikd
-        val habits = payload.habits
-        val minutes = snap.totalTypingTimeMs.toDouble() / MS_PER_MINUTE
-
-        binding.dashboardKpiSessionsValue.text = snap.totalSessions.toString()
-        binding.dashboardKpiTypingTimeValue.text = if (snap.totalTypingTimeMs <= 0L) {
-            placeholder
-        } else {
-            getString(R.string.dashboard_kpi_typing_time_value, String.format(locale, "%.1f", minutes))
-        }
-        binding.dashboardKpiWpmValue.text = snap.avgWpm
-            ?.let { getString(R.string.dashboard_kpi_wpm_value, it) } ?: placeholder
-        binding.dashboardKpiErrorRateValue.text = snap.avgErrorRatePct
-            ?.let { getString(R.string.dashboard_kpi_error_rate_value, it) } ?: placeholder
-
-        binding.dashboardKpiAvgSessionValue.text = habits.avgSessionDurationMs?.let {
-            getString(R.string.dashboard_habits_avg_session_value, it / MS_PER_SECOND)
-        } ?: placeholder
-
-        binding.dashboardKpiStreakValue.text = when (habits.streakUnit) {
-            IkdHabitsAggregator.StreakUnit.HOURS -> {
-                if (habits.totalSessions > 0) {
-                    getString(R.string.dashboard_habits_streak_today)
-                } else {
-                    placeholder
-                }
-            }
-            IkdHabitsAggregator.StreakUnit.DAYS -> getString(
-                R.string.dashboard_habits_streak_days, habits.longestStreak,
-            )
-            IkdHabitsAggregator.StreakUnit.WEEKS -> getString(
-                R.string.dashboard_habits_streak_weeks, habits.longestStreak,
-            )
-        }
+    fun goToTab(position: Int) {
+        if (position < 0 || position >= DashboardPagerAdapter.TAB_COUNT) return
+        binding.dashboardViewPager.setCurrentItem(position, true)
     }
 
     private fun rangeButtonId(range: IkdAggregator.Range): Int = when (range) {
@@ -480,6 +440,7 @@ class DashboardActivity : SimpleActivity() {
     }
 
     private fun tabButtonIdToTabIndex(buttonId: Int): Int = when (buttonId) {
+        R.id.dashboard_tab_summary -> DashboardPagerAdapter.TAB_SUMMARY
         R.id.dashboard_tab_trends -> DashboardPagerAdapter.TAB_TRENDS
         R.id.dashboard_tab_daily_activity -> DashboardPagerAdapter.TAB_DAILY_ACTIVITY
         R.id.dashboard_tab_mood -> DashboardPagerAdapter.TAB_MOOD
@@ -489,12 +450,13 @@ class DashboardActivity : SimpleActivity() {
     }
 
     private fun tabIndexToTabButtonId(position: Int): Int = when (position) {
+        DashboardPagerAdapter.TAB_SUMMARY -> R.id.dashboard_tab_summary
         DashboardPagerAdapter.TAB_TRENDS -> R.id.dashboard_tab_trends
         DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.id.dashboard_tab_daily_activity
         DashboardPagerAdapter.TAB_MOOD -> R.id.dashboard_tab_mood
         DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS -> R.id.dashboard_tab_keystroke_dynamics
         DashboardPagerAdapter.TAB_HABITS -> R.id.dashboard_tab_habits
-        else -> R.id.dashboard_tab_trends
+        else -> R.id.dashboard_tab_summary
     }
 
     companion object {
@@ -502,7 +464,5 @@ class DashboardActivity : SimpleActivity() {
         private const val STATE_MOOD_FILTER = "dashboard_mood_filter"
         private const val STATE_TAB_INDEX = "dashboard_tab_index"
         private const val MOOD_FILTER_ALL_SENTINEL = -1
-        private const val MS_PER_MINUTE = 60_000L
-        private const val MS_PER_SECOND = 1_000.0
     }
 }
