@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KeyboardSA IKD — Phase 9.17 Preview</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #e0e0e0;
+    --primary: #1976d2;
+    --accent: #00838f;
+    --text: #212121;
+    --muted: #616161;
+    --good: #2e7d32;
+    --bad: #b71c1c;
+    --frame-bg: #f6f7fa;
+    --chart-placeholder: #eef3f8;
+
+    /* Phase 9.17 — new mood palette (light) */
+    --mood-happiness: #F9A825;
+    --mood-surprise:  #EF6C00;
+    --mood-disgust:   #558B2F;
+    --mood-sadness:   #0D47A1;
+    --mood-fear:      #6A1B9A;
+    --mood-anger:     #C62828;
+
+    /* Old palette (for the comparison swatches) */
+    --mood-happiness-old: #2E7D32;
+    --mood-surprise-old:  #00838F;
+    --mood-disgust-old:   #827717;
+    --mood-sadness-old:   #1565C0;
+    --mood-fear-old:      #6A1B9A;
+    --mood-anger-old:     #C62828;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    line-height: 1.55;
+  }
+  header.page-header {
+    background: linear-gradient(135deg, #1976d2 0%, #353c3d 100%);
+    color: white;
+    padding: 32px 40px;
+  }
+  header.page-header h1 { margin: 0 0 8px 0; font-size: 28px; }
+  header.page-header p { margin: 0; opacity: 0.9; font-size: 15px; max-width: 840px; }
+  main { max-width: 1400px; margin: 0 auto; padding: 32px 24px 64px 24px; }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 28px;
+  }
+  nav.toc h2 { margin-top: 0; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc a { color: var(--primary); text-decoration: none; }
+
+  section.proposal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 28px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  section.proposal > header {
+    padding: 20px 26px;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+  }
+  section.proposal > header h2 { margin: 0 0 4px 0; font-size: 22px; color: var(--primary); }
+  section.proposal > header .tagline { margin: 0; color: var(--muted); font-size: 14px; }
+  section.proposal > .body { padding: 22px 26px; }
+
+  /* ─── Color comparison block ─── */
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+  .palette-row { font-size: 13px; }
+  .palette-row .palette-label {
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .swatch {
+    border-radius: 8px;
+    height: 56px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+  }
+  .swatch .emoji { font-size: 22px; }
+  .swatch .name { font-size: 11px; margin-top: 2px; opacity: 0.95; }
+  .swatch .hex { font-size: 10px; opacity: 0.85; font-family: monospace; }
+
+  .swatch.changed { box-shadow: 0 0 0 2px #ff8a65; }
+  .swatch.unchanged { box-shadow: 0 0 0 2px transparent; }
+
+  /* ─── phone frame ─── */
+  .layout-row {
+    display: grid;
+    grid-template-columns: minmax(300px, 380px) 1fr;
+    gap: 28px;
+    align-items: flex-start;
+  }
+  .layout-row.two-mocks {
+    grid-template-columns: minmax(300px, 360px) minmax(300px, 360px);
+    gap: 24px;
+  }
+  .phone-frame {
+    background: var(--frame-bg);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 16px 12px 12px 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06), inset 0 0 0 6px #ffffff;
+    position: relative;
+  }
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 60px; height: 6px;
+    background: #d8d8d8;
+    border-radius: 3px;
+  }
+  .phone-screen {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-top: 4px;
+    min-height: 720px;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-screen.short { min-height: 480px; }
+  .phone-label {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .toolbar {
+    background: var(--primary);
+    color: white;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .toolbar .icons { display: flex; gap: 14px; opacity: 0.95; }
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: white;
+  }
+  .tabs .tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 10px;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+  }
+  .tabs .tab .ico { font-size: 16px; display: block; margin-bottom: 2px; }
+  .tabs .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+  .filter-strip {
+    padding: 6px 12px;
+    background: #f9fbfd;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .body-area {
+    flex: 1;
+    padding: 12px;
+    background: #fafbfc;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: auto;
+  }
+
+  /* Mood tile row (NEW position) */
+  .mood-tiles-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+  .mood-tile {
+    border-radius: 10px;
+    padding: 8px 4px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    line-height: 1.2;
+  }
+  .mood-tile .emoji { font-size: 18px; }
+  .mood-tile .pct { font-size: 16px; font-weight: 700; }
+  .mood-tile .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.95; }
+  .mood-tile .cnt { font-size: 9px; opacity: 0.8; }
+
+  /* KPI grid (3x2, simplified) */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .kpi-tile {
+    background: white;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .kpi-tile .label {
+    font-size: 9px;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .kpi-tile .value { font-weight: 700; font-size: 17px; margin-top: 2px; }
+
+  /* Section heading */
+  .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 4px 0 -4px 0;
+  }
+
+  /* Usage Map mock */
+  .usage-map {
+    background: white;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    padding: 10px;
+    height: 240px;
+    position: relative;
+  }
+  .usage-map .axis-y, .usage-map .axis-x {
+    color: var(--muted);
+    font-size: 9px;
+    position: absolute;
+  }
+  .usage-map .axis-y {
+    left: 6px; top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    transform-origin: left center;
+  }
+  .usage-map .axis-x {
+    bottom: 6px; left: 50%;
+    transform: translateX(-50%);
+  }
+  .usage-map .grid {
+    position: absolute;
+    inset: 16px 16px 22px 22px;
+  }
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.18);
+    opacity: 0.92;
+  }
+
+  /* Mood mix mock */
+  .mix-card {
+    background: white;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .mix-card .title {
+    font-size: 11px; font-weight: 600; color: var(--text);
+    margin-bottom: 8px;
+  }
+  .mix-bars {
+    display: flex;
+    height: 110px;
+    gap: 4px;
+    align-items: flex-end;
+  }
+  .mix-bars .bar-stack {
+    flex: 1;
+    height: 100%;
+    border-radius: 3px 3px 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .mix-bars .seg { width: 100%; }
+
+  /* Stat / decisions */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .stat-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .stat-card .stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 4px 0;
+  }
+  .stat-card .stat-value { font-weight: 600; font-size: 14px; }
+  .stat-card.cost { border-color: #ffd180; background: #fff8e1; }
+  .stat-card.pros { border-color: #a5d6a7; background: #e8f5e9; }
+  .stat-card.cons { border-color: #ef9a9a; background: #ffebee; }
+
+  ul.pros-cons { margin: 0; padding-left: 18px; font-size: 13px; }
+  ul.pros-cons li { margin: 4px 0; }
+  table.colors { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 12px; }
+  table.colors th, table.colors td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: middle;
+  }
+  table.colors th { background: #f6f8fa; font-weight: 600; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  table.colors .chip { display: inline-block; width: 22px; height: 22px; border-radius: 4px; vertical-align: middle; }
+
+  .callout {
+    border-left: 4px solid var(--good);
+    background: #f1f8f4;
+    padding: 14px 18px;
+    border-radius: 0 6px 6px 0;
+    margin-top: 18px;
+  }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 24px; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>Insights — Phase 9.17 preview</h1>
+  <p>Plan at <code>roadmap/Phase9/sub_plans/9.17_mood_colors_distribution_first.md</code>. Four shifts: refresh the six mood colors to match the conventional emotion associations (yellow happiness, orange surprise, green disgust, deep blue sadness, purple fear, red anger); promote the Mood Distribution to a colored-tile row at the top of the Summary tab; switch its values from absolute counts to percentages; tint each Usage Map bubble by the dominant mood of the sessions in its cell. The Distribution tiles double as the global color legend for every mood widget on the screen.</p>
+</header>
+
+<main>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#palette">1. New mood color palette</a></li>
+    <li><a href="#summary">2. New Summary tab layout</a></li>
+    <li><a href="#usage-map">3. Usage Map — mood-tinted bubbles</a></li>
+    <li><a href="#mood-mix">4. Mood Mix re-skin</a></li>
+    <li><a href="#trade-offs">5. Trade-offs / decisions</a></li>
+  </ol>
+</nav>
+
+<!-- ====================== PALETTE ====================== -->
+<section class="proposal" id="palette">
+  <header>
+    <h2>1. New mood color palette</h2>
+    <p class="tagline">Three updated, three preserved. Highlighted swatches are the ones that change. Old colors below for comparison.</p>
+  </header>
+  <div class="body">
+
+    <p class="section-title" style="color:var(--text); font-weight:600;">Proposed (Phase 9.17 light)</p>
+    <div class="palette-grid">
+      <div class="palette-row">
+        <div class="swatch changed" style="background:var(--mood-happiness);">
+          <span class="emoji">😊</span><span class="name">Happiness</span><span class="hex">#F9A825</span>
+        </div>
+      </div>
+      <div class="palette-row">
+        <div class="swatch changed" style="background:var(--mood-surprise);">
+          <span class="emoji">😲</span><span class="name">Surprise</span><span class="hex">#EF6C00</span>
+        </div>
+      </div>
+      <div class="palette-row">
+        <div class="swatch changed" style="background:var(--mood-disgust);">
+          <span class="emoji">🤢</span><span class="name">Disgust</span><span class="hex">#558B2F</span>
+        </div>
+      </div>
+      <div class="palette-row">
+        <div class="swatch changed" style="background:var(--mood-sadness);">
+          <span class="emoji">😢</span><span class="name">Sadness</span><span class="hex">#0D47A1</span>
+        </div>
+      </div>
+      <div class="palette-row">
+        <div class="swatch unchanged" style="background:var(--mood-fear);">
+          <span class="emoji">😨</span><span class="name">Fear</span><span class="hex">#6A1B9A</span>
+        </div>
+      </div>
+      <div class="palette-row">
+        <div class="swatch unchanged" style="background:var(--mood-anger);">
+          <span class="emoji">😠</span><span class="name">Anger</span><span class="hex">#C62828</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="section-title" style="color:var(--text); font-weight:600; margin-top:18px;">Current (post Phase 8.3)</p>
+    <div class="palette-grid">
+      <div class="palette-row">
+        <div class="swatch" style="background:var(--mood-happiness-old);">
+          <span class="emoji">😊</span><span class="name">Happiness</span><span class="hex">#2E7D32</span>
+        </div>
+      </div>
+      <div class="palette-row">
+        <div class="swatch" style="background:var(--mood-surprise-old);">
+          <span class="emoji">😲</span><span class="name">Surprise</span><span class="hex">#00838F</span>
+        </div>
+      </div>
+      <div class="palette-row">
+        <div class="swatch" style="background:var(--mood-disgust-old);">
+          <span class="emoji">🤢</span><span class="name">Disgust</span><span class="hex">#827717</span>
+        </div>
+      </div>
+      <div class="palette-row">
+        <div class="swatch" style="background:var(--mood-sadness-old);">
+          <span class="emoji">😢</span><span class="name">Sadness</span><span class="hex">#1565C0</span>
+        </div>
+      </div>
+      <div class="palette-row">
+        <div class="swatch" style="background:var(--mood-fear-old);">
+          <span class="emoji">😨</span><span class="name">Fear</span><span class="hex">#6A1B9A</span>
+        </div>
+      </div>
+      <div class="palette-row">
+        <div class="swatch" style="background:var(--mood-anger-old);">
+          <span class="emoji">😠</span><span class="name">Anger</span><span class="hex">#C62828</span>
+        </div>
+      </div>
+    </div>
+
+    <table class="colors">
+      <thead><tr><th>Mood</th><th>Old</th><th>New</th><th>Why change</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>😊 Happiness</td>
+          <td><span class="chip" style="background:#2E7D32;"></span> dark green</td>
+          <td><span class="chip" style="background:#F9A825;"></span> warm gold</td>
+          <td>Green collides with the "green = disgust" association. Yellow / gold is the universal cultural mapping for joy.</td>
+        </tr>
+        <tr>
+          <td>😲 Surprise</td>
+          <td><span class="chip" style="background:#00838F;"></span> teal</td>
+          <td><span class="chip" style="background:#EF6C00;"></span> orange</td>
+          <td>Orange reads as alertness / sudden energy. Teal had no cultural link to surprise.</td>
+        </tr>
+        <tr>
+          <td>🤢 Disgust</td>
+          <td><span class="chip" style="background:#827717;"></span> dark olive</td>
+          <td><span class="chip" style="background:#558B2F;"></span> mid green</td>
+          <td>Closer to the "green with disgust" idiom; dark olive read as a muddy yellow.</td>
+        </tr>
+        <tr>
+          <td>😢 Sadness</td>
+          <td><span class="chip" style="background:#1565C0;"></span> Material Blue 800</td>
+          <td><span class="chip" style="background:#0D47A1;"></span> Material Blue 900</td>
+          <td>Per-user request — darker blue reads as a heavier, more melancholy tone and contrasts more strongly against the lighter Happiness gold next to it.</td>
+        </tr>
+        <tr>
+          <td>😨 Fear · 😠 Anger</td>
+          <td colspan="2">unchanged — purple / red already match conventional mappings.</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top:14px; font-size:13px; color:var(--muted);">A matching <code>res/values-night/colors.xml</code> tier supplies lighter / desaturated variants so the same tokens stay legible against a Fossify dark theme: Happiness <code>#FFD54F</code> · Surprise <code>#FFB74D</code> · Disgust <code>#9CCC65</code>. Sadness / Fear / Anger keep their existing dark variants.</p>
+  </div>
+</section>
+
+<!-- ====================== SUMMARY LAYOUT ====================== -->
+<section class="proposal" id="summary">
+  <header>
+    <h2>2. New Summary tab layout</h2>
+    <p class="tagline">Mood Distribution becomes the first widget — six colored tiles across the top, doubling as the global color legend. KPIs · Usage Map · Mood Mix follow.</p>
+  </header>
+  <div class="body">
+    <div class="layout-row two-mocks">
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>⚙</span><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="tabs">
+              <div class="tab active"><span class="ico">📊</span>Summary</div>
+              <div class="tab"><span class="ico">📈</span>Trends</div>
+              <div class="tab"><span class="ico">📅</span>Activity</div>
+              <div class="tab"><span class="ico">⌨</span>Keys</div>
+              <div class="tab"><span class="ico">🔁</span>Habits</div>
+            </div>
+            <div class="filter-strip">Past 7 days · grouped by day</div>
+
+            <div class="body-area">
+              <!-- Mood Distribution tiles (NEW, FIRST) -->
+              <p class="section-title">Mood distribution · past 7 days</p>
+              <div class="mood-tiles-row">
+                <div class="mood-tile" style="background:var(--mood-happiness);">
+                  <div class="emoji">😊</div>
+                  <div class="pct">38%</div>
+                  <div class="lbl">Happy</div>
+                </div>
+                <div class="mood-tile" style="background:var(--mood-surprise);">
+                  <div class="emoji">😲</div>
+                  <div class="pct">9%</div>
+                  <div class="lbl">Surprise</div>
+                </div>
+                <div class="mood-tile" style="background:var(--mood-disgust);">
+                  <div class="emoji">🤢</div>
+                  <div class="pct">3%</div>
+                  <div class="lbl">Disgust</div>
+                </div>
+                <div class="mood-tile" style="background:var(--mood-sadness);">
+                  <div class="emoji">😢</div>
+                  <div class="pct">22%</div>
+                  <div class="lbl">Sad</div>
+                </div>
+                <div class="mood-tile" style="background:var(--mood-fear);">
+                  <div class="emoji">😨</div>
+                  <div class="pct">12%</div>
+                  <div class="lbl">Fear</div>
+                </div>
+                <div class="mood-tile" style="background:var(--mood-anger);">
+                  <div class="emoji">😠</div>
+                  <div class="pct">16%</div>
+                  <div class="lbl">Anger</div>
+                </div>
+              </div>
+
+              <!-- KPI grid 3x2 -->
+              <p class="section-title">Summary</p>
+              <div class="kpi-grid">
+                <div class="kpi-tile"><div class="label">Sessions</div><div class="value">128</div></div>
+                <div class="kpi-tile"><div class="label">Time</div><div class="value">42m</div></div>
+                <div class="kpi-tile"><div class="label">WPM</div><div class="value">38</div></div>
+                <div class="kpi-tile"><div class="label">Errors</div><div class="value">7.2%</div></div>
+                <div class="kpi-tile"><div class="label">Avg sess.</div><div class="value">19s</div></div>
+                <div class="kpi-tile"><div class="label">Streak</div><div class="value">5d</div></div>
+              </div>
+
+              <!-- Usage Map preview -->
+              <p class="section-title">Usage map · bubbles colored by dominant mood</p>
+              <div class="usage-map">
+                <div class="grid">
+                  <!-- happiness cluster, morning -->
+                  <div class="bubble" style="background:var(--mood-happiness); width:14px; height:14px; left:10%; top:30%;"></div>
+                  <div class="bubble" style="background:var(--mood-happiness); width:18px; height:18px; left:18%; top:34%;"></div>
+                  <div class="bubble" style="background:var(--mood-happiness); width:22px; height:22px; left:25%; top:32%;"></div>
+                  <!-- sadness cluster, late afternoon -->
+                  <div class="bubble" style="background:var(--mood-sadness); width:24px; height:24px; left:55%; top:60%;"></div>
+                  <div class="bubble" style="background:var(--mood-sadness); width:20px; height:20px; left:62%; top:55%;"></div>
+                  <!-- anger spike, evening -->
+                  <div class="bubble" style="background:var(--mood-anger); width:28px; height:28px; left:75%; top:70%;"></div>
+                  <!-- fear, late night -->
+                  <div class="bubble" style="background:var(--mood-fear); width:14px; height:14px; left:88%; top:78%;"></div>
+                  <!-- some neutral grey bubbles for "no mood tagged" -->
+                  <div class="bubble" style="background:#9aa0a6; width:10px; height:10px; left:42%; top:25%;"></div>
+                  <div class="bubble" style="background:#9aa0a6; width:12px; height:12px; left:48%; top:42%;"></div>
+                </div>
+                <div class="axis-y">date</div>
+                <div class="axis-x">hour of day</div>
+              </div>
+
+              <!-- Mood Mix over Time -->
+              <p class="section-title">Mood mix over time</p>
+              <div class="mix-card">
+                <div class="mix-bars">
+                  <div class="bar-stack">
+                    <div class="seg" style="background:var(--mood-happiness); height:38%;"></div>
+                    <div class="seg" style="background:var(--mood-surprise);  height:9%;"></div>
+                    <div class="seg" style="background:var(--mood-disgust);   height:3%;"></div>
+                    <div class="seg" style="background:var(--mood-sadness);   height:22%;"></div>
+                    <div class="seg" style="background:var(--mood-fear);      height:12%;"></div>
+                    <div class="seg" style="background:var(--mood-anger);     height:16%;"></div>
+                  </div>
+                  <div class="bar-stack">
+                    <div class="seg" style="background:var(--mood-happiness); height:50%;"></div>
+                    <div class="seg" style="background:var(--mood-sadness);   height:30%;"></div>
+                    <div class="seg" style="background:var(--mood-fear);      height:20%;"></div>
+                  </div>
+                  <div class="bar-stack">
+                    <div class="seg" style="background:var(--mood-happiness); height:25%;"></div>
+                    <div class="seg" style="background:var(--mood-anger);     height:55%;"></div>
+                    <div class="seg" style="background:var(--mood-sadness);   height:20%;"></div>
+                  </div>
+                  <div class="bar-stack">
+                    <div class="seg" style="background:var(--mood-happiness); height:65%;"></div>
+                    <div class="seg" style="background:var(--mood-surprise);  height:20%;"></div>
+                    <div class="seg" style="background:var(--mood-anger);     height:15%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-label">Proposed · Phase 9.17 Summary tab</p>
+      </div>
+
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="toolbar">
+              <span>Insights</span>
+              <span class="icons"><span>⚙</span><span>↻</span><span>⋮</span></span>
+            </div>
+            <div class="tabs">
+              <div class="tab active"><span class="ico">📊</span>Summary</div>
+              <div class="tab"><span class="ico">📈</span>Trends</div>
+              <div class="tab"><span class="ico">📅</span>Activity</div>
+              <div class="tab"><span class="ico">⌨</span>Keys</div>
+              <div class="tab"><span class="ico">🔁</span>Habits</div>
+            </div>
+            <div class="filter-strip">Past 7 days · grouped by day</div>
+
+            <div class="body-area">
+              <!-- KPI grid first (current) -->
+              <p class="section-title">Summary</p>
+              <div class="kpi-grid">
+                <div class="kpi-tile"><div class="label">Sessions</div><div class="value">128</div></div>
+                <div class="kpi-tile"><div class="label">Time</div><div class="value">42m</div></div>
+                <div class="kpi-tile"><div class="label">WPM</div><div class="value">38</div></div>
+                <div class="kpi-tile"><div class="label">Errors</div><div class="value">7.2%</div></div>
+                <div class="kpi-tile"><div class="label">Avg sess.</div><div class="value">19s</div></div>
+                <div class="kpi-tile"><div class="label">Streak</div><div class="value">5d</div></div>
+              </div>
+
+              <!-- Usage Map (no mood tinting) -->
+              <p class="section-title">Usage map · single accent</p>
+              <div class="usage-map">
+                <div class="grid">
+                  <div class="bubble" style="background:var(--primary); width:14px; height:14px; left:10%; top:30%;"></div>
+                  <div class="bubble" style="background:var(--primary); width:18px; height:18px; left:18%; top:34%;"></div>
+                  <div class="bubble" style="background:var(--primary); width:22px; height:22px; left:25%; top:32%;"></div>
+                  <div class="bubble" style="background:var(--primary); width:24px; height:24px; left:55%; top:60%;"></div>
+                  <div class="bubble" style="background:var(--primary); width:20px; height:20px; left:62%; top:55%;"></div>
+                  <div class="bubble" style="background:var(--primary); width:28px; height:28px; left:75%; top:70%;"></div>
+                  <div class="bubble" style="background:var(--primary); width:14px; height:14px; left:88%; top:78%;"></div>
+                  <div class="bubble" style="background:var(--primary); width:10px; height:10px; left:42%; top:25%;"></div>
+                  <div class="bubble" style="background:var(--primary); width:12px; height:12px; left:48%; top:42%;"></div>
+                </div>
+                <div class="axis-y">date</div>
+                <div class="axis-x">hour of day</div>
+              </div>
+
+              <!-- Old Mood Mix (current colors) -->
+              <p class="section-title">Mood mix · old palette</p>
+              <div class="mix-card">
+                <div class="mix-bars">
+                  <div class="bar-stack">
+                    <div class="seg" style="background:var(--mood-happiness-old); height:38%;"></div>
+                    <div class="seg" style="background:var(--mood-surprise-old);  height:9%;"></div>
+                    <div class="seg" style="background:var(--mood-disgust-old);   height:3%;"></div>
+                    <div class="seg" style="background:var(--mood-sadness-old);   height:22%;"></div>
+                    <div class="seg" style="background:var(--mood-fear-old);      height:12%;"></div>
+                    <div class="seg" style="background:var(--mood-anger-old);     height:16%;"></div>
+                  </div>
+                  <div class="bar-stack">
+                    <div class="seg" style="background:var(--mood-happiness-old); height:50%;"></div>
+                    <div class="seg" style="background:var(--mood-sadness-old);   height:30%;"></div>
+                    <div class="seg" style="background:var(--mood-fear-old);      height:20%;"></div>
+                  </div>
+                  <div class="bar-stack">
+                    <div class="seg" style="background:var(--mood-happiness-old); height:25%;"></div>
+                    <div class="seg" style="background:var(--mood-anger-old);     height:55%;"></div>
+                    <div class="seg" style="background:var(--mood-sadness-old);   height:20%;"></div>
+                  </div>
+                  <div class="bar-stack">
+                    <div class="seg" style="background:var(--mood-happiness-old); height:65%;"></div>
+                    <div class="seg" style="background:var(--mood-surprise-old);  height:20%;"></div>
+                    <div class="seg" style="background:var(--mood-anger-old);     height:15%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Old Mood Distribution (last) -->
+              <p class="section-title">Mood distribution · last in current build</p>
+              <div class="mix-card" style="font-size:11px;">
+                <div style="display:flex; justify-content:space-between; padding:2px 0;">
+                  <span>😊 Happiness</span>
+                  <span style="color:var(--muted);">12</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:2px 0;">
+                  <span>😲 Surprise</span>
+                  <span style="color:var(--muted);">3</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:2px 0;">
+                  <span>🤢 Disgust</span>
+                  <span style="color:var(--muted);">1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-label">Current · Phase 9.15 / 9.16</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== USAGE MAP DETAIL ====================== -->
+<section class="proposal" id="usage-map">
+  <header>
+    <h2>3. Usage Map — bubbles colored by dominant mood</h2>
+    <p class="tagline">Each bubble adopts the color of the mood that the most sessions in its (day, hour) cell were tagged with. Cells with no mood entry stay neutral grey.</p>
+  </header>
+  <div class="body">
+    <p>Aggregation is a simple Kotlin post-processing pass on top of the existing <code>getDayHourActivity</code> query — no SQL change. The activity aggregator picks up a small companion query <code>MoodDao.getAllSessionMoods()</code> (one row per <code>session_id</code> with a mood) and groups events into <code>(day, hour, sessionMood)</code> triples in memory; for each cell it picks the most-frequent mood.</p>
+    <pre style="background:#f4f4f4; padding:10px 14px; border-radius:6px; font-size:12px; line-height:1.5; overflow:auto;">data class DayHourCell(
+    val day: String,
+    val hour: Int,
+    val keystrokeCount: Int,
+    val dominantMood: Int? = null,   // 1..6 or null when no mood tagged
+)
+
+// In IkdActivityAggregator:
+val sessionMood: Map&lt;String, Int&gt; = db.MoodDao().getAllSessionMoods()
+    .associate { it.sessionId to it.moodScore }
+
+val cells = events
+    .groupBy { Triple(it.day, it.hour, sessionMood[it.sessionId]) }
+    .mapValues { it.value.sumOf { e -&gt; e.count } }
+    .entries
+    .groupBy { (k, _) -&gt; k.first to k.second }
+    .map { (dayHour, rows) -&gt;
+        val total = rows.sumOf { it.value }
+        val dominant = rows
+            .filter { it.key.third != null }
+            .maxByOrNull { it.value }
+            ?.key?.third
+        DayHourCell(dayHour.first, dayHour.second, total, dominant)
+    }</pre>
+    <p style="margin-top:14px;">Bubble color resolution at render time:</p>
+    <ul class="pros-cons">
+      <li><code>cell.dominantMood</code> resolves to one of the six <code>mood_color_*</code> tokens via a new <code>MoodEmoji.colorResFor(score: Int): Int</code> helper.</li>
+      <li><code>null</code> falls back to <code>getProperPrimaryColor()</code> at low alpha — preserves the "no mood data" visual identity.</li>
+      <li>Tooltip on tap extends to <code>"&lt;day&gt; HH:00 — N keystrokes · 😊 Happy"</code> when a dominant mood exists; bare keystroke version otherwise.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ====================== MIX RE-SKIN ====================== -->
+<section class="proposal" id="mood-mix">
+  <header>
+    <h2>4. Mood Mix re-skin</h2>
+    <p class="tagline">No code change — the stacked bar already pulls from <code>mood_color_*</code>. The token swap re-tints it for free.</p>
+  </header>
+  <div class="body">
+    <p>The Mood Distribution tiles upstream now serve as the global color legend, so the in-card legend that previously sat below the Mood Mix can be dropped. One boolean toggle on <code>IkdStackedBarChartView.setData(...)</code> hides it.</p>
+  </div>
+</section>
+
+<!-- ====================== TRADE-OFFS ====================== -->
+<section class="proposal" id="trade-offs">
+  <header>
+    <h2>5. Trade-offs / decisions</h2>
+    <p class="tagline">Worth surfacing before the implementer starts.</p>
+  </header>
+  <div class="body">
+    <ul class="pros-cons">
+      <li><strong>Tile color = readable on dark themes?</strong> The proposed light-mode hex values are saturated mid-tones; the matching <code>values-night</code> tier supplies lighter / desaturated variants (<code>#FFD54F</code> Happiness, etc.) so the tiles still read against a dark Fossify surface. White text-on-color is used in both modes.</li>
+      <li><strong>Tile width.</strong> Six tiles at 60 dp each = 360 dp = exactly a typical viewport. We'll wrap in a <code>HorizontalScrollView</code> defensively so very narrow widths still render.</li>
+      <li><strong>Percentage rounding.</strong> Six percentages don't always sum to 100 due to integer rounding. Plan: round each tile to the nearest integer; absolute counts are ground truth so a 100±1 tile-sum mismatch is acceptable.</li>
+      <li><strong>Bubble color when zero mood.</strong> Stays the existing primary tone at low alpha — preserves the "data exists, no mood logged" reading.</li>
+      <li><strong>Tile click.</strong> Toast for now; Phase 9.18 candidate to make a tile open a session list filtered by that mood.</li>
+      <li><strong>Drop the Mix legend.</strong> Tiles upstairs are the legend. One less row of vertical chrome.</li>
+    </ul>
+
+    <div class="stat-grid">
+      <div class="stat-card cost"><p class="stat-label">Cost</p><p class="stat-value">~½ day</p></div>
+      <div class="stat-card pros"><p class="stat-label">Wins</p><p class="stat-value">color↔mood mapping clear</p></div>
+      <div class="stat-card cons"><p class="stat-label">Risk</p><p class="stat-value">scroll on narrow widths</p></div>
+    </div>
+
+    <div class="callout">
+      <strong>Implementation gate:</strong> reply with <em>"go"</em> (or your tweaks — alternate hex values, different tile order, mix legend retained, etc.) and I'll spawn the implementer agent against this plan. The plan file at <code>roadmap/Phase9/sub_plans/9.17_mood_colors_distribution_first.md</code> mirrors this preview.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Generated for the KeyboardSA IKD project · sibling to <code>insights_dashboards_overview.html</code> and <code>insights_redesign_optionA_variants.html</code>.
+</footer>
+
+</body>
+</html>

@@ -64,7 +64,10 @@ class IkdStackedBarChartView @JvmOverloads constructor(
 
         // We render our own emoji + label + colour-swatch legend below
         // the chart — MPAndroidChart's built-in legend doesn't compose
-        // emoji and a colour swatch cleanly.
+        // emoji and a colour swatch cleanly. Phase 9.17 lets each caller
+        // override this per-setData via the `drawLegend` parameter; the
+        // initial state stays disabled so a caller that never calls
+        // `setData(..., drawLegend = true)` keeps the existing silhouette.
         legend.isEnabled = false
 
         setNoDataText("")
@@ -107,8 +110,21 @@ class IkdStackedBarChartView @JvmOverloads constructor(
      * Populate the chart. `labels` is one bar per index; `segments` are
      * the stacked colour bands. Each segment's `values` list must be the
      * same length as `labels`.
+     *
+     * @param drawLegend Phase 9.17: when `true` (default) the chart's
+     *   built-in legend is shown — preserves the pre-9.17 behaviour for
+     *   any caller that hasn't moved its legend out of the card. When
+     *   `false`, the legend stays hidden — Summary tab passes `false`
+     *   because the new Mood Distribution tile row above the chart
+     *   doubles as the global colour legend (Decision #5 of
+     *   `roadmap/Phase9/sub_plans/9.17_mood_colors_distribution_first.md`).
      */
-    fun setData(labels: List<String>, segments: List<MoodSegment>) {
+    fun setData(
+        labels: List<String>,
+        segments: List<MoodSegment>,
+        drawLegend: Boolean = true,
+    ) {
+        legend.isEnabled = drawLegend
         if (labels.isEmpty() || segments.isEmpty()) {
             data = null
             invalidate()

@@ -395,6 +395,18 @@
     <string name="summary_tile_label_streak">Longest streak</string>
     <string name="summary_tile_delta_placeholder">—</string>
 
+    <!-- Phase 9.17: Mood Distribution tile row (top of Summary tab).
+         Tiles render a per-mood percentage; the absolute count is
+         surfaced via the tap-toast format below (Decision #3). -->
+    <string name="summary_mood_section_title">Mood distribution</string>
+    <string name="summary_mood_tile_pct_format">%1$d%%</string>
+    <string name="summary_mood_tile_toast_format">%1$s %2$s · %3$d sessions (%4$d%%)</string>
+    <string name="summary_mood_tile_content_description">%1$s %2$s · %3$d sessions (%4$d%%)</string>
+    <!-- Phase 9.17: tooltip extension when a Usage Map cell has a
+         dominant mood. Falls back to dashboard_usage_map_tooltip_format
+         when no mood is tagged for the cell. -->
+    <string name="dashboard_usage_map_tooltip_with_mood">%1$s %2$02d:00 — %3$d keystrokes · %4$s %5$s</string>
+
     <!-- Session detail header (Phase 4) -->
     <string name="session_detail_section">Session details</string>
     <string name="session_detail_started_at">Started at</string>

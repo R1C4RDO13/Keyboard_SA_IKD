@@ -309,6 +309,38 @@ interface IkdEventDao {
     ): List<DayHourBucketRow>
 
     /**
+     * Phase 9.17: per-`(day, hour, mood_score)` keystroke aggregation —
+     * sibling to [getDayHourBuckets]. `LEFT JOIN`s `mood_entries` so
+     * cells with sessions that have no mood entry surface as
+     * `moodScore = NULL` rows alongside the moods that *are* tagged in
+     * the same cell. The aggregator folds the rows in Kotlin to pick the
+     * dominant mood per cell (Decision #6 of
+     * `roadmap/Phase9/sub_plans/9.17_mood_colors_distribution_first.md`).
+     *
+     * Filters: AUTOCORRECT rows excluded (same as the sibling query); no
+     * `moodScore` parameter — this row stream is *consumed* to derive
+     * dominant mood, not filtered by it. Mood-filtered Usage Map rendering
+     * still goes through the existing [getDayHourBuckets] path.
+     */
+    @Query(
+        """
+        SELECT
+            strftime('%Y-%m-%d', e.timestamp / 1000, 'unixepoch', 'localtime') AS day,
+            CAST(strftime('%H', e.timestamp / 1000, 'unixepoch', 'localtime') AS INTEGER) AS hour,
+            m.mood_score AS moodScore,
+            COUNT(*) AS keystrokeCount
+        FROM ikd_events e
+        LEFT JOIN mood_entries m ON m.session_id = e.session_id
+        WHERE e.event_category != 'AUTOCORRECT'
+          AND e.timestamp >= :fromMs
+          AND e.timestamp <  :toMs
+        GROUP BY day, hour, m.mood_score
+        ORDER BY day, hour, m.mood_score
+        """
+    )
+    fun getDayHourMoodBuckets(fromMs: Long, toMs: Long): List<DayHourMoodBucketRow>
+
+    /**
      * Phase 9.7: log-scale IKD distribution histogram. Bucket edges are
      * hardcoded into the SQL CASE ladder — see
      * [org.fossify.keyboard.helpers.IkdDistributionAggregator.BUCKET_EDGES_MS].

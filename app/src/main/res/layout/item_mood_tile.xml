@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 9.17: one tile of the Mood Distribution row at the top of the
+    Summary tab. Six instances are inflated via <include> with distinct
+    ids; each card renders a coloured background (mood_color_*), the
+    Ekman emoji, the integer percentage, and the mood label.
+
+    No absolute count on the tile (Decision #3 of
+    `roadmap/Phase9/sub_plans/9.17_mood_colors_distribution_first.md`):
+    the count is surfaced only via the tap-toast.
+
+    The MaterialCardView background is tinted at runtime in
+    SummaryFragment.renderMoodTiles via setCardBackgroundColor — the
+    layout XML defines silhouette / typography only.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="@dimen/summary_mood_tile_width"
+    android:layout_height="@dimen/summary_mood_tile_height"
+    android:layout_marginEnd="@dimen/small_margin"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="@dimen/card_corner_radius"
+    app:cardElevation="@dimen/card_elevation">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="@dimen/small_margin">
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/summary_mood_tile_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/big_text_size"
+            tools:text="😊" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/summary_mood_tile_pct"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/bigger_text_size"
+            android:textStyle="bold"
+            tools:text="38%" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/summary_mood_tile_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/smaller_text_size"
+            tools:text="Happy" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -32,8 +32,71 @@
         android:orientation="vertical"
         android:padding="@dimen/normal_margin">
 
+        <!-- Phase 9.17: Mood Distribution tiles row (FIRST on Summary
+             tab — Decision #9). Doubles as the global colour legend
+             for every mood widget below. Whole row is hidden when
+             `MoodSnapshot.total == 0`. -->
+        <LinearLayout
+            android:id="@+id/summary_mood_tiles_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/normal_margin"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/summary_mood_tiles_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/small_margin"
+                android:text="@string/summary_mood_section_title"
+                android:textStyle="bold" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fillViewport="false"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/summary_mood_tiles_row"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <include
+                        android:id="@+id/summary_mood_tile_happiness"
+                        layout="@layout/item_mood_tile" />
+
+                    <include
+                        android:id="@+id/summary_mood_tile_surprise"
+                        layout="@layout/item_mood_tile" />
+
+                    <include
+                        android:id="@+id/summary_mood_tile_disgust"
+                        layout="@layout/item_mood_tile" />
+
+                    <include
+                        android:id="@+id/summary_mood_tile_sadness"
+                        layout="@layout/item_mood_tile" />
+
+                    <include
+                        android:id="@+id/summary_mood_tile_fear"
+                        layout="@layout/item_mood_tile" />
+
+                    <include
+                        android:id="@+id/summary_mood_tile_anger"
+                        layout="@layout/item_mood_tile" />
+
+                </LinearLayout>
+
+            </HorizontalScrollView>
+
+        </LinearLayout>
+
         <!-- Row 1: Sessions · Typing time · WPM -->
         <LinearLayout
+            android:id="@+id/summary_kpi_row_1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -255,94 +318,19 @@
                     android:layout_height="200dp"
                     android:layout_marginTop="@dimen/small_margin" />
 
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/small_margin"
-                    android:fillViewport="false"
-                    android:scrollbars="none">
-
-                    <LinearLayout
-                        android:id="@+id/dashboard_mood_stacked_legend"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal" />
-
-                </HorizontalScrollView>
+                <!-- Phase 9.17: in-card legend dropped — the Mood
+                     Distribution tile row at the top of the Summary
+                     tab doubles as the global colour legend
+                     (Decision #5 of the 9.17 plan). -->
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Phase 9.15: Mood Distribution panel (moved from Mood tab). -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/dashboard_mood_distribution_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/normal_margin"
-            android:visibility="gone"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/normal_margin">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/dashboard_mood_distribution_title"
-                        android:textStyle="bold" />
-
-                    <ImageView
-                        android:id="@+id/dashboard_mood_distribution_info"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginStart="@dimen/small_margin"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:contentDescription="@string/widget_info_content_description"
-                        android:focusable="true"
-                        android:src="@drawable/ic_info_outline_vector" />
-
-                </LinearLayout>
-
-                <include
-                    android:id="@+id/dashboard_mood_row_happiness"
-                    layout="@layout/item_mood_distribution_row" />
-
-                <include
-                    android:id="@+id/dashboard_mood_row_surprise"
-                    layout="@layout/item_mood_distribution_row" />
-
-                <include
-                    android:id="@+id/dashboard_mood_row_disgust"
-                    layout="@layout/item_mood_distribution_row" />
-
-                <include
-                    android:id="@+id/dashboard_mood_row_sadness"
-                    layout="@layout/item_mood_distribution_row" />
-
-                <include
-                    android:id="@+id/dashboard_mood_row_fear"
-                    layout="@layout/item_mood_distribution_row" />
-
-                <include
-                    android:id="@+id/dashboard_mood_row_anger"
-                    layout="@layout/item_mood_distribution_row" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
+        <!-- Phase 9.17: the Mood Distribution panel has moved to the
+             top of the Summary tab as the colour-tile row above the KPI
+             grid. Decision #9 of the 9.17 plan — tiles double as the
+             global colour legend for every mood widget below. -->
 
         <org.fossify.commons.views.MyTextView
             android:id="@+id/fragment_summary_empty_message"

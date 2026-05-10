@@ -16,13 +16,16 @@
     <color name="ikd_status_no_data">#757575</color>
     <color name="ikd_status_no_data_text">#FFFFFFFF</color>
 
-    <!-- Phase 8.3: mood-mix stacked-bar palette (dark mode).
-         Lighter, less-saturated variants so each band reads cleanly on
-         dark backgrounds without screaming. Same colour names as the
-         light palette so ContextCompat.getColor() resolves automatically. -->
-    <color name="mood_color_happiness">#66BB6A</color>
-    <color name="mood_color_surprise">#4DD0E1</color>
-    <color name="mood_color_disgust">#C0CA33</color>
+    <!-- Phase 9.17 mood palette refresh (dark mode counterpart).
+         Same conventional mappings as the light palette, picked one
+         shade lighter so each colour reads cleanly on dark backgrounds.
+         Sadness, Fear and Anger were already in the right tonal range
+         and are preserved verbatim from Phase 8.3. Happiness moves
+         from green → warm amber, Surprise from teal → light orange,
+         Disgust from olive → leafy green. -->
+    <color name="mood_color_happiness">#FFD54F</color>
+    <color name="mood_color_surprise">#FFB74D</color>
+    <color name="mood_color_disgust">#9CCC65</color>
     <color name="mood_color_sadness">#42A5F5</color>
     <color name="mood_color_fear">#AB47BC</color>
     <color name="mood_color_anger">#EF5350</color>

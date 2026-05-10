@@ -1,5 +1,6 @@
 package org.fossify.keyboard.helpers
 
+import androidx.annotation.ColorRes
 import org.fossify.keyboard.R
 
 /**
@@ -63,6 +64,26 @@ object MoodEmoji {
         SCORE_FEAR -> R.string.mood_label_fear
         SCORE_ANGER -> R.string.mood_label_anger
         else -> R.string.mood_label_happiness
+    }
+
+    /**
+     * Phase 9.17: score → `mood_color_*` colour-resource id. Single source
+     * of truth for every per-mood tint on the dashboard (Mood Distribution
+     * tiles, Mood Mix stacked-bar segments, mood-tinted Usage Map bubbles).
+     * Callers resolve via `ContextCompat.getColor(...)` so the
+     * `values-night` overrides pick up automatically. Out-of-range scores
+     * fall back to the Happiness colour — same defensive shape as
+     * [labelResFor].
+     */
+    @ColorRes
+    fun colorResFor(score: Int): Int = when (score) {
+        SCORE_HAPPINESS -> R.color.mood_color_happiness
+        SCORE_SURPRISE -> R.color.mood_color_surprise
+        SCORE_DISGUST -> R.color.mood_color_disgust
+        SCORE_SADNESS -> R.color.mood_color_sadness
+        SCORE_FEAR -> R.color.mood_color_fear
+        SCORE_ANGER -> R.color.mood_color_anger
+        else -> R.color.mood_color_happiness
     }
 
     /** True when [score] is a valid ordinal valence id (1..6). */

@@ -15,16 +15,17 @@
     <color name="ikd_status_no_data">#9E9E9E</color>
     <color name="ikd_status_no_data_text">#FFFFFFFF</color>
 
-    <!-- Phase 8.3: mood-mix stacked-bar palette (light mode).
-         Six valence-ordered colours from green (Happiness, best valence)
-         to red (Anger, worst valence), passing through teal / olive /
-         blue / purple. Picked against Fossify's neutral-grey light
-         theme; reused by the legend swatches above the chart so the
-         colour tokens are the single source of truth. -->
-    <color name="mood_color_happiness">#2E7D32</color>
-    <color name="mood_color_surprise">#00838F</color>
-    <color name="mood_color_disgust">#827717</color>
-    <color name="mood_color_sadness">#1565C0</color>
+    <!-- Phase 9.17 mood palette refresh: match conventional emotion-colour
+         mappings (yellow = happy, orange = surprise, green = disgust,
+         deep blue = sad, purple = fear, red = anger). Sadness uses
+         Material Blue 900 so it reads as a heavier, more melancholy
+         tone next to the Happiness gold on the new Summary-tab tile
+         row. Phase 8.3 palette docs preserved in `mood_color_*`
+         comments via the dark-mode counterpart in values-night. -->
+    <color name="mood_color_happiness">#F9A825</color>
+    <color name="mood_color_surprise">#EF6C00</color>
+    <color name="mood_color_disgust">#558B2F</color>
+    <color name="mood_color_sadness">#0D47A1</color>
     <color name="mood_color_fear">#6A1B9A</color>
     <color name="mood_color_anger">#C62828</color>
 

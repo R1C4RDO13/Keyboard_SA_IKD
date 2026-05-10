@@ -1,12 +1,10 @@
 package org.fossify.keyboard.activities.dashboard
 
-import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import com.google.android.material.card.MaterialCardView
 import org.fossify.commons.extensions.beGone
@@ -19,8 +17,7 @@ import org.fossify.commons.extensions.updateTextColors
 import org.fossify.keyboard.R
 import org.fossify.keyboard.activities.DashboardActivity
 import org.fossify.keyboard.databinding.FragmentDashboardSummaryBinding
-import org.fossify.keyboard.databinding.ItemMoodDistributionRowBinding
-import org.fossify.keyboard.databinding.ItemMoodLegendSwatchBinding
+import org.fossify.keyboard.databinding.ItemMoodTileBinding
 import org.fossify.keyboard.databinding.ItemSummaryKpiTileBinding
 import org.fossify.keyboard.helpers.IkdActivityAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
@@ -34,19 +31,24 @@ import org.fossify.keyboard.views.IkdStackedBarChartView
 import java.util.Locale
 
 /**
- * Phase 9.15: Summary tab — the Insights landing page.
+ * Phase 9.15 / 9.17: Summary tab — the Insights landing page.
  *
- * Contents (top → bottom):
+ * Contents (top → bottom, post-9.17):
+ *  - **Mood Distribution tiles** (NEW position — Decision #9 of the 9.17
+ *    plan). Horizontal row of six coloured `MaterialCardView` tiles, one
+ *    per Ekman category, each rendering an emoji + integer percentage +
+ *    label on a per-mood `mood_color_*` background. Tap → toast with
+ *    `"<emoji> <label> · <count> sessions (<pct>%)"`. The tile row
+ *    doubles as the global colour legend for every mood widget below.
+ *    Hidden when `MoodSnapshot.total == 0`.
  *  - **3x2 KPI grid** (Sessions / Typing time / WPM | Error rate / Avg
- *    session / Streak). Each tile is label + big value only — sparkline
- *    strip and delta line introduced as Phase 9.14.4 placeholders are
- *    retired (Phase 9.15 decision #2 — explicit user feedback).
- *  - **Usage Map** (`IkdBubbleMapView`) — moved here from the Daily
- *    Activity tab and rendered at 240 dp height (decision #4). Its
- *    Daily Activity card is deleted; this is the only render site now.
- *  - **Mood Mix over Time** + **Mood Distribution** — moved here from
- *    the deleted Mood tab. Both cards stay `View.GONE` when
- *    `payload.mood.total == 0`.
+ *    session / Streak). Each tile is label + big value only.
+ *  - **Usage Map** (`IkdBubbleMapView`) — bubbles tinted by the dominant
+ *    mood of sessions in each `(day, hour)` cell, falling back to the
+ *    primary tone for cells with no mood-tagged session.
+ *  - **Mood Mix over Time** — stacked-bar chart, rendered without an
+ *    in-card legend now that the tiles upstairs cover that role
+ *    (Decision #5 of the 9.17 plan).
  *
  * Tile click routing (preserved from Phase 9.14.1 decision #7):
  *  - Sessions / Typing time / Avg session / Streak → Habits tab
@@ -54,7 +56,10 @@ import java.util.Locale
  *
  * The aggregator surface is reused as-is — values come from the host
  * activity's existing `Dispatchers.IO` hop via
- * [DashboardActivity.latestPayload]. No new SQL, no new aggregator.
+ * [DashboardActivity.latestPayload]. No new SQL on this fragment's hot
+ * path; the per-cell dominant-mood JOIN happens server-side via the
+ * sibling `IkdEventDao.getDayHourMoodBuckets` query Phase 9.17 added
+ * alongside the existing `getDayHourBuckets`.
  */
 class SummaryFragment : DashboardFragment() {
 
@@ -111,14 +116,6 @@ class SummaryFragment : DashboardFragment() {
                 descriptionRes = R.string.info_mood_mix_desc,
                 interpretationRes = R.string.info_mood_mix_interpretation,
                 formulaRes = R.string.info_mood_mix_formula,
-            ),
-        )
-        binding.dashboardMoodDistributionInfo.attachWidgetInfo(
-            WidgetInfo(
-                titleRes = R.string.info_mood_distribution_title,
-                descriptionRes = R.string.info_mood_distribution_desc,
-                interpretationRes = R.string.info_mood_distribution_interpretation,
-                formulaRes = R.string.info_mood_distribution_formula,
             ),
         )
     }
@@ -199,15 +196,19 @@ class SummaryFragment : DashboardFragment() {
             value = streakLabel(ctx, habits, placeholder),
         )
 
+        renderMoodTiles(payload.mood)
         renderUsageMap(payload.activity)
         renderMoodWidgets(payload)
     }
 
     /**
-     * Phase 9.15: Usage Map (formerly on Daily Activity). The TODAY range
-     * collapses the day axis to a single column — keep the same hide rule
-     * the Daily Activity tab used so the bubble chart never degenerates
-     * to one tall column.
+     * Phase 9.15 / 9.17: Usage Map (formerly on Daily Activity). The
+     * TODAY range collapses the day axis to a single column — keep the
+     * same hide rule the Daily Activity tab used so the bubble chart
+     * never degenerates to one tall column. Phase 9.17: bubbles are
+     * tinted by `dominantMood` (sessions in the cell with the largest
+     * mood-tagged keystroke count); falls back to the primary tone when
+     * the cell has no mood-tagged session.
      */
     private fun renderUsageMap(activity: IkdActivityAggregator.ActivitySnapshot) {
         val ctx = context ?: return
@@ -217,42 +218,53 @@ class SummaryFragment : DashboardFragment() {
         view.dashboardUsageMapCard.beVisibleIf(hasDayHour)
         if (!hasDayHour) return
         val bubbles = activity.dayHourCells.map {
-            IkdBubbleMapView.Bubble(day = it.day, hour = it.hour, count = it.keystrokeCount)
+            IkdBubbleMapView.Bubble(
+                day = it.day,
+                hour = it.hour,
+                count = it.keystrokeCount,
+                dominantMood = it.dominantMood,
+            )
         }
         view.dashboardUsageMap.setData(bubbles)
         view.dashboardUsageMap.setOnBubbleClickListener { bubble ->
-            Toast.makeText(
-                ctx,
+            val msg = if (bubble.dominantMood != null) {
+                getString(
+                    R.string.dashboard_usage_map_tooltip_with_mood,
+                    bubble.day,
+                    bubble.hour,
+                    bubble.count,
+                    MoodEmoji.emojiFor(bubble.dominantMood!!),
+                    getString(MoodEmoji.labelResFor(bubble.dominantMood!!)),
+                )
+            } else {
                 getString(
                     R.string.dashboard_usage_map_tooltip_format,
                     bubble.day,
                     bubble.hour,
                     bubble.count,
-                ),
-                Toast.LENGTH_SHORT,
-            ).show()
+                )
+            }
+            Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
         }
     }
 
     /**
-     * Phase 9.15: Mood Mix + Mood Distribution (formerly the entire Mood
-     * tab). Both cards stay GONE when `total == 0` — sessions without an
-     * explicit mood tap have no [MoodEntry] row, which is the
-     * absence-of-rating signal preserved from Phase 8.
+     * Phase 9.15: Mood Mix (formerly the Mood tab). The card stays GONE
+     * when `total == 0` — sessions without an explicit mood tap have no
+     * [MoodEntry] row, which is the absence-of-rating signal preserved
+     * from Phase 8. Phase 9.17: the in-card legend is dropped (the
+     * Mood Distribution tile row at the top of the Summary tab doubles
+     * as the global colour legend — Decision #5).
      */
     private fun renderMoodWidgets(payload: DashboardPayload) {
         val view = _binding ?: return
         val moodSnap = payload.mood
         if (moodSnap.total == 0) {
             view.dashboardMoodStackedChartCard.beGone()
-            view.dashboardMoodDistributionCard.beGone()
             return
         }
         view.dashboardMoodStackedChartCard.beVisible()
-        view.dashboardMoodDistributionCard.beVisible()
         bindStackedChart(payload.ikd, payload.moodMix)
-        bindMoodLegend()
-        renderMoodDistribution(moodSnap)
     }
 
     /**
@@ -265,6 +277,9 @@ class SummaryFragment : DashboardFragment() {
      * tab in line with the Phase 9.12 / 9.13 fragments.
      *
      * Phase 9.15 adds the Usage Map and Mood cards to the same pass.
+     * Phase 9.17 leaves the six mood-distribution tiles untinted by the
+     * background token — those cards intentionally render in their
+     * mood colour. They get their fill in [renderMoodTiles] instead.
      */
     private fun applyThemeColors() {
         val ctx = context ?: return
@@ -281,7 +296,6 @@ class SummaryFragment : DashboardFragment() {
         view.summaryTileStreak.setCardBackgroundColor(cardBg)
         view.dashboardUsageMapCard.setCardBackgroundColor(cardBg)
         view.dashboardMoodStackedChartCard.setCardBackgroundColor(cardBg)
-        view.dashboardMoodDistributionCard.setCardBackgroundColor(cardBg)
 
         val primary = ctx.getProperPrimaryColor()
         val textColor = ctx.getProperTextColor()
@@ -342,6 +356,10 @@ class SummaryFragment : DashboardFragment() {
      * Phase 9.15 (lifted from `MoodFragment.bindStackedChart`): build the
      * stacked-bar chart segments — one segment per Ekman category, value
      * is the bucket-percentage of mood entries carrying that score.
+     *
+     * Phase 9.17: passes `drawLegend = false` to the chart so the
+     * built-in legend stays hidden — the Summary tab's tile row at the
+     * top is the global legend now (Decision #5 of the 9.17 plan).
      */
     private fun bindStackedChart(
         ikdSnap: IkdAggregator.Snapshot,
@@ -366,72 +384,74 @@ class SummaryFragment : DashboardFragment() {
             IkdStackedBarChartView.MoodSegment(
                 score = score,
                 label = getString(MoodEmoji.labelResFor(score)),
-                colorInt = ContextCompat.getColor(ctx, moodColorResFor(score)),
+                colorInt = ContextCompat.getColor(ctx, MoodEmoji.colorResFor(score)),
                 values = values,
             )
         }
-        view.dashboardChartMoodStacked.setData(labels, segments)
+        view.dashboardChartMoodStacked.setData(labels, segments, drawLegend = false)
     }
 
     /**
-     * Phase 9.15 (lifted from `MoodFragment.bindMoodLegend`): inflate the
-     * six-item swatch legend below the stacked bar.
+     * Phase 9.17: render the six-tile Mood Distribution row at the top
+     * of the Summary tab. Each tile is filled in its mood's
+     * `mood_color_*` token (resolved at runtime so light / dark theme
+     * overrides apply automatically), shows the rounded integer
+     * percentage and the localized label. Tapping a tile shows a Toast
+     * with the verbose breakdown including the absolute count
+     * (Decision #3 of the 9.17 plan — counts are toast-only).
+     *
+     * Hidden as a whole when `total == 0` (no mood entries yet).
      */
-    private fun bindMoodLegend() {
+    private fun renderMoodTiles(moodSnap: IkdMoodAggregator.MoodSnapshot) {
         val ctx = context ?: return
         val view = _binding ?: return
-        val legend = view.dashboardMoodStackedLegend
-        legend.removeAllViews()
-        val inflater = LayoutInflater.from(ctx)
-        val textColor = ctx.getProperTextColor()
-        for (score in MoodEmoji.displayOrder()) {
-            val item = ItemMoodLegendSwatchBinding.inflate(inflater, legend, false)
-            item.moodLegendSwatch.backgroundTintList = ColorStateList.valueOf(
-                ContextCompat.getColor(ctx, moodColorResFor(score))
-            )
-            val emoji = MoodEmoji.emojiFor(score)
-            val label = getString(MoodEmoji.labelResFor(score))
-            item.moodLegendLabel.text = "$emoji $label"
-            item.moodLegendLabel.setTextColor(textColor)
-            legend.addView(item.root)
+        if (moodSnap.total <= 0) {
+            view.summaryMoodTilesSection.beGone()
+            return
         }
-    }
+        view.summaryMoodTilesSection.beVisible()
+        view.summaryMoodTilesTitle.setTextColor(ctx.getProperTextColor())
 
-    @ColorRes
-    private fun moodColorResFor(score: Int): Int = when (score) {
-        MoodEmoji.SCORE_HAPPINESS -> R.color.mood_color_happiness
-        MoodEmoji.SCORE_SURPRISE -> R.color.mood_color_surprise
-        MoodEmoji.SCORE_DISGUST -> R.color.mood_color_disgust
-        MoodEmoji.SCORE_SADNESS -> R.color.mood_color_sadness
-        MoodEmoji.SCORE_FEAR -> R.color.mood_color_fear
-        MoodEmoji.SCORE_ANGER -> R.color.mood_color_anger
-        else -> R.color.mood_color_happiness
-    }
-
-    /**
-     * Phase 9.15 (lifted from `MoodFragment.renderMoodDistribution`):
-     * fill in the six rows of the Mood Distribution panel.
-     */
-    private fun renderMoodDistribution(moodSnap: IkdMoodAggregator.MoodSnapshot) {
-        val view = _binding ?: return
-        val rows = listOf(
-            ItemMoodDistributionRowBinding.bind(view.dashboardMoodRowHappiness.root) to MoodEmoji.SCORE_HAPPINESS,
-            ItemMoodDistributionRowBinding.bind(view.dashboardMoodRowSurprise.root) to MoodEmoji.SCORE_SURPRISE,
-            ItemMoodDistributionRowBinding.bind(view.dashboardMoodRowDisgust.root) to MoodEmoji.SCORE_DISGUST,
-            ItemMoodDistributionRowBinding.bind(view.dashboardMoodRowSadness.root) to MoodEmoji.SCORE_SADNESS,
-            ItemMoodDistributionRowBinding.bind(view.dashboardMoodRowFear.root) to MoodEmoji.SCORE_FEAR,
-            ItemMoodDistributionRowBinding.bind(view.dashboardMoodRowAnger.root) to MoodEmoji.SCORE_ANGER,
+        val tiles = listOf(
+            view.summaryMoodTileHappiness to MoodEmoji.SCORE_HAPPINESS,
+            view.summaryMoodTileSurprise to MoodEmoji.SCORE_SURPRISE,
+            view.summaryMoodTileDisgust to MoodEmoji.SCORE_DISGUST,
+            view.summaryMoodTileSadness to MoodEmoji.SCORE_SADNESS,
+            view.summaryMoodTileFear to MoodEmoji.SCORE_FEAR,
+            view.summaryMoodTileAnger to MoodEmoji.SCORE_ANGER,
         )
         val total = moodSnap.total
-        for ((rowBinding, score) in rows) {
+        for ((cardRoot, score) in tiles) {
+            val tile = ItemMoodTileBinding.bind(cardRoot.root)
+            val card = tile.root
             val count = moodSnap.counts[score] ?: 0
-            rowBinding.moodRowEmoji.text = MoodEmoji.emojiFor(score)
-            rowBinding.moodRowLabel.setText(MoodEmoji.labelResFor(score))
-            rowBinding.moodRowCount.text = count.toString()
-            rowBinding.moodRowProgress.progress = if (total <= 0) {
-                0
-            } else {
-                (count * PCT_MAX / total)
+            val pct = if (total <= 0) 0 else (count * PCT_MAX + total / 2) / total
+            val emoji = MoodEmoji.emojiFor(score)
+            val label = getString(MoodEmoji.labelResFor(score))
+
+            card.setCardBackgroundColor(ContextCompat.getColor(ctx, MoodEmoji.colorResFor(score)))
+            tile.summaryMoodTileEmoji.text = emoji
+            tile.summaryMoodTilePct.text = ctx.getString(R.string.summary_mood_tile_pct_format, pct)
+            tile.summaryMoodTileLabel.text = label
+            card.contentDescription = ctx.getString(
+                R.string.summary_mood_tile_content_description,
+                emoji,
+                label,
+                count,
+                pct,
+            )
+            card.setOnClickListener {
+                Toast.makeText(
+                    ctx,
+                    ctx.getString(
+                        R.string.summary_mood_tile_toast_format,
+                        emoji,
+                        label,
+                        count,
+                        pct,
+                    ),
+                    Toast.LENGTH_SHORT,
+                ).show()
             }
         }
     }

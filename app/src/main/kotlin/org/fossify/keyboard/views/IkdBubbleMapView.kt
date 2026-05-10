@@ -8,10 +8,12 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.keyboard.R
+import org.fossify.keyboard.helpers.MoodEmoji
 
 /**
  * Phase 9.9: theme-aware date×hour bubble chart powering the dashboard's
@@ -34,8 +36,21 @@ class IkdBubbleMapView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : View(context, attrs, defStyle) {
 
-    /** One `(day, hour)` bubble. `day` is `YYYY-MM-DD`. */
-    data class Bubble(val day: String, val hour: Int, val count: Int)
+    /**
+     * One `(day, hour)` bubble. `day` is `YYYY-MM-DD`.
+     *
+     * Phase 9.17: [dominantMood] is the `mood_score` (1..6) of the most
+     * frequent mood among sessions in this cell, or `null` when no
+     * session in the cell has a mood entry. `null` falls back to the
+     * existing primary-tinted bubble — preserves the "no mood data"
+     * visual identity (Decision #7 of the Phase 9.17 plan).
+     */
+    data class Bubble(
+        val day: String,
+        val hour: Int,
+        val count: Int,
+        val dominantMood: Int? = null,
+    )
 
     /** Listener for tap-to-toast drilldown — passes back the closest bubble. */
     fun interface OnBubbleClickListener {
@@ -43,6 +58,7 @@ class IkdBubbleMapView @JvmOverloads constructor(
     }
 
     private val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private var fallbackBubbleColor: Int = Color.TRANSPARENT
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
         textSize = TypedValue.applyDimension(
@@ -85,7 +101,24 @@ class IkdBubbleMapView @JvmOverloads constructor(
     private fun applyTheme() {
         labelPaint.color = context.getProperTextColor()
         yLabelPaint.color = context.getProperTextColor()
-        bubblePaint.color = ColorUtils.setAlphaComponent(context.getProperPrimaryColor(), BUBBLE_ALPHA)
+        fallbackBubbleColor = ColorUtils.setAlphaComponent(context.getProperPrimaryColor(), BUBBLE_ALPHA)
+        bubblePaint.color = fallbackBubbleColor
+    }
+
+    /**
+     * Phase 9.17: resolve the fill colour for a single bubble. When the
+     * cell has a dominant mood, look up the matching `mood_color_*`
+     * token via [MoodEmoji.colorResFor] and apply the same per-bubble
+     * alpha as the fallback. When the cell has no mood, fall back to
+     * the cached primary-tinted neutral.
+     */
+    private fun bubbleFillColor(score: Int?): Int = if (score == null) {
+        fallbackBubbleColor
+    } else {
+        ColorUtils.setAlphaComponent(
+            ContextCompat.getColor(context, MoodEmoji.colorResFor(score)),
+            BUBBLE_ALPHA,
+        )
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -118,6 +151,7 @@ class IkdBubbleMapView @JvmOverloads constructor(
             val cx = gridLeft + cellWidth * (bubble.hour + HALF_OFFSET)
             val cy = gridTop + cellHeight * (rowIdx + HALF_OFFSET)
             val radius = computeBubbleRadius(bubble.count)
+            bubblePaint.color = bubbleFillColor(bubble.dominantMood)
             canvas.drawCircle(cx, cy, radius, bubblePaint)
         }
 

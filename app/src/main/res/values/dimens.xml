@@ -70,4 +70,11 @@
          the bottom-sheet's range/mood chips so the runtime Fossify primary
          tone reads against the activity background. -->
     <dimen name="chip_stroke_width">1dp</dimen>
+
+    <!-- Phase 9.17 — Mood Distribution tile row at the top of the
+         Summary tab. Six tiles at 60dp wide ≈ 360dp total: fits a
+         typical viewport and overflows narrow widths via the parent
+         HorizontalScrollView. Height ~76dp matches the preview. -->
+    <dimen name="summary_mood_tile_width">60dp</dimen>
+    <dimen name="summary_mood_tile_height">76dp</dimen>
 </resources>

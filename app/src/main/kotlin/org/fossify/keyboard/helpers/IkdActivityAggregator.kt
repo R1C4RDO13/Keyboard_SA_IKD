@@ -8,6 +8,7 @@ import org.fossify.keyboard.databases.IkdDatabase
 import org.fossify.keyboard.helpers.IkdAggregator.Range
 import org.fossify.keyboard.interfaces.DailyBucketRow
 import org.fossify.keyboard.interfaces.DayHourBucketRow
+import org.fossify.keyboard.interfaces.DayHourMoodBucketRow
 import org.fossify.keyboard.interfaces.HourWeekdayRow
 import org.fossify.keyboard.interfaces.HourlyBucketRow
 import java.util.Calendar
@@ -42,8 +43,19 @@ class IkdActivityAggregator(private val db: IkdDatabase) {
      * One `(day, hour)` activity cell. Used twice:
      *  - 9.6 hour×weekday heatmap (folded by `dayOfWeek(day)` in Kotlin);
      *  - 9.9 Usage Map bubble chart (one bubble per cell).
+     *
+     * Phase 9.17: [dominantMood] is the `mood_score` (1..6) of the most
+     * frequent mood among sessions whose events fall in this cell, or
+     * `null` when no session in the cell has a mood entry. Drives the
+     * Summary tab's Usage Map bubble tinting (Decision #6 of
+     * `roadmap/Phase9/sub_plans/9.17_mood_colors_distribution_first.md`).
      */
-    data class DayHourCell(val day: String, val hour: Int, val keystrokeCount: Int)
+    data class DayHourCell(
+        val day: String,
+        val hour: Int,
+        val keystrokeCount: Int,
+        val dominantMood: Int? = null,
+    )
 
     /**
      * Top-level Daily Activity payload. Empty lists when the range is
@@ -80,11 +92,15 @@ class IkdActivityAggregator(private val db: IkdDatabase) {
             val daily = db.IkdEventDao().getDailyKeystrokes(fromMs, toMs, moodFilter)
             val hourly = db.IkdEventDao().getHourlyKeystrokes(fromMs, toMs, moodFilter)
             val dayHour = db.IkdEventDao().getDayHourBuckets(fromMs, toMs, moodFilter)
+            // Phase 9.17: sibling row stream that brings each cell's
+            // (mood_score, keystrokeCount) breakdown — folded into
+            // `DayHourCell.dominantMood` for the Usage Map tinting.
+            val dayHourMood = db.IkdEventDao().getDayHourMoodBuckets(fromMs, toMs)
             // Circadian heatmap is range-independent (Decision #18) — never
             // pass `fromMs`/`toMs` so it always returns the all-time fold.
             val circadian = db.IkdEventDao().getHourByWeekday(moodFilter)
 
-            result = Companion.buildSnapshot(range, daily, hourly, dayHour, circadian)
+            result = Companion.buildSnapshot(range, daily, hourly, dayHour, circadian, dayHourMood)
         }
         if (BuildConfig.DEBUG) {
             Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter) took ${durationMs}ms")
@@ -119,6 +135,14 @@ class IkdActivityAggregator(private val db: IkdDatabase) {
         /**
          * Pure aggregation. Lives on the companion so it can be unit-tested
          * without standing up a Room DB. No I/O, no time read.
+         *
+         * Phase 9.17: [dayHourMood] is consumed to fold each cell's
+         * `dominantMood` — the `mood_score` (1..6) with the largest
+         * keystroke count among sessions tagged with a mood. Cells whose
+         * only rows are `moodScore = null` (no tagged session) keep the
+         * default `dominantMood = null`. Ties resolve to the
+         * lower-valenced (better) score (explicitly deferred call in
+         * Section 9 of the plan — pick lower so blends are deterministic).
          */
         internal fun buildSnapshot(
             range: Range,
@@ -126,11 +150,18 @@ class IkdActivityAggregator(private val db: IkdDatabase) {
             hourly: List<HourlyBucketRow>,
             dayHour: List<DayHourBucketRow>,
             circadian: List<HourWeekdayRow>,
+            dayHourMood: List<DayHourMoodBucketRow> = emptyList(),
         ): ActivitySnapshot {
             val dailyBuckets = daily.map { DailyBucket(day = it.day, keystrokeCount = it.keystrokeCount) }
             val hourlyBuckets = hourly.map { HourlyBucket(hour = it.hour, keystrokeCount = it.keystrokeCount) }
+            val dominantByCell = dominantMoodByCell(dayHourMood)
             val dayHourCells = dayHour.map {
-                DayHourCell(day = it.day, hour = it.hour, keystrokeCount = it.keystrokeCount)
+                DayHourCell(
+                    day = it.day,
+                    hour = it.hour,
+                    keystrokeCount = it.keystrokeCount,
+                    dominantMood = dominantByCell[it.day to it.hour],
+                )
             }
             return ActivitySnapshot(
                 range = range,
@@ -139,6 +170,44 @@ class IkdActivityAggregator(private val db: IkdDatabase) {
                 dayHourCells = dayHourCells,
                 circadianCells = circadian,
             )
+        }
+
+        /**
+         * Phase 9.17: fold per-`(day, hour, moodScore)` rows into a
+         * `(day, hour) → dominantMood` map. `null`-mood rows are skipped
+         * — they represent untagged sessions which can't claim
+         * dominance. Ties broken in favour of the lower-valenced (i.e.
+         * better) mood so the colour pick is deterministic.
+         */
+        private fun dominantMoodByCell(
+            rows: List<DayHourMoodBucketRow>,
+        ): Map<Pair<String, Int>, Int> {
+            if (rows.isEmpty()) return emptyMap()
+            val perCell: MutableMap<Pair<String, Int>, Pair<Int, Int>> = mutableMapOf()
+            for (row in rows) {
+                val mood = row.moodScore ?: continue
+                val key = row.day to row.hour
+                val existing = perCell[key]
+                if (shouldReplaceDominant(existing, mood, row.keystrokeCount)) {
+                    perCell[key] = mood to row.keystrokeCount
+                }
+            }
+            return perCell.mapValues { (_, value) -> value.first }
+        }
+
+        /**
+         * `true` when [candidate] should replace [existing] as the
+         * dominant `(moodScore, keystrokeCount)` for a cell. Wins on
+         * larger count; ties broken by lower (better) valence.
+         */
+        private fun shouldReplaceDominant(
+            existing: Pair<Int, Int>?,
+            candidateMood: Int,
+            candidateCount: Int,
+        ): Boolean {
+            if (existing == null) return true
+            if (candidateCount > existing.second) return true
+            return candidateCount == existing.second && candidateMood < existing.first
         }
     }
 }
