@@ -31,6 +31,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
 import android.view.inputmethod.EditorInfo
 import android.widget.ImageButton
@@ -156,6 +157,11 @@ class MyKeyboardView @JvmOverloads constructor(
     private val moodController: IkdMoodBarController by lazy { context.ikdMoodBarController }
     /** Currently-highlighted mood-bar slot (1..6 for emotions, null for no highlight, 0 for 🛡️). */
     private var highlightedMoodSlot: Int? = null
+    // Phase 8.4: in-flight dance animator for the most-recently-tapped mood
+    // slot. Held so a rapid second tap (or a different-slot tap mid-dance)
+    // can cancel the prior animation cleanly. Nulled in `onDetachedFromWindow`
+    // so a leaked animator can never keep this view alive past detach.
+    private var currentMoodDanceAnimator: AnimatorSet? = null
 
     private var mKeyboard: MyKeyboard? = null
     private var mCurrentKeyIndex: Int = NOT_A_KEY
@@ -288,6 +294,21 @@ class MyKeyboardView @JvmOverloads constructor(
         // keyboard_view_keyboard.xml so the scaled glyph isn't cropped.
         private const val MOOD_BAR_SCALE_SELECTED = 1.25f
         private const val MOOD_BAR_SCALE_DIMMED = 1.0f
+        // Phase 8.4: peak scale at the apex of the dance pop, before the
+        // wiggle. Visually distinct from the static `1.25×` highlight so the
+        // select-tap reads as celebratory without breaking the bar's
+        // silhouette.
+        private const val MOOD_BAR_SCALE_DANCE_PEAK = 1.6f
+        // Phase 8.4: dance envelope timings (~360 ms total).
+        private const val MOOD_BAR_DANCE_POP_MS = 120L
+        private const val MOOD_BAR_DANCE_WIGGLE_MS = 220L
+        private const val MOOD_BAR_DANCE_SETTLE_MS = 20L
+        // Phase 8.4: rotation keyframes (degrees) for the wiggle phase.
+        private const val MOOD_BAR_DANCE_ROT_BIG = 12f
+        private const val MOOD_BAR_DANCE_ROT_SMALL = 8f
+        // Phase 8.4: horizontal jitter keyframes (dp) for the wiggle phase.
+        private const val MOOD_BAR_DANCE_JITTER_DP = 3f
+        private const val MOOD_BAR_DANCE_JITTER_SMALL_DP = 2f
 
         // Phase 8.2: how long the chat-bubble popup stays on screen after a
         // tap before auto-dismissing. Long enough to read the first-person
@@ -683,6 +704,7 @@ class MyKeyboardView @JvmOverloads constructor(
                 } else {
                     applyMoodBarHighlight(MOOD_SLOT_PRIVACY)
                     showMoodBubble(anchor, R.string.mood_toast_privacy)
+                    animateMoodSlotDance(anchor, MOOD_BAR_SCALE_SELECTED)
                     moodScope.launch { moodController.enablePrivacyAndClearMood() }
                 }
             }
@@ -694,6 +716,7 @@ class MyKeyboardView @JvmOverloads constructor(
                 } else {
                     applyMoodBarHighlight(slot)
                     showMoodBubble(anchor, moodToastResFor(slot))
+                    animateMoodSlotDance(anchor, MOOD_BAR_SCALE_SELECTED)
                     moodScope.launch { moodController.setMoodForActiveSession(slot) }
                 }
             }
@@ -877,6 +900,72 @@ class MyKeyboardView @JvmOverloads constructor(
             view.scaleX = scale
             view.scaleY = scale
         }
+    }
+
+    /**
+     * Phase 8.4: short celebratory dance played on a mood-bar slot when the
+     * user *selects* it (privacy or one of the six emotions). Three-phase
+     * envelope (~360 ms): pop to `MOOD_BAR_SCALE_DANCE_PEAK`, wiggle
+     * (rotation + horizontal jitter in parallel), then settle back to
+     * `settleScale`. Deselect taps don't dance — see `onMoodSlotClicked`.
+     *
+     * The animator is held in `currentMoodDanceAnimator` so a second tap can
+     * cancel a still-running dance. On end (or cancel) we defensively snap
+     * the view back to `rotation = 0`, `translationX = 0`, `scale = settleScale`
+     * so a cancelled animation cannot leave the slot stuck mid-wiggle.
+     */
+    private fun animateMoodSlotDance(slot: View, settleScale: Float) {
+        slot.animate().cancel()
+        currentMoodDanceAnimator?.cancel()
+
+        val pop = AnimatorSet().apply {
+            playTogether(
+                ObjectAnimator.ofFloat(slot, "scaleX", settleScale, MOOD_BAR_SCALE_DANCE_PEAK),
+                ObjectAnimator.ofFloat(slot, "scaleY", settleScale, MOOD_BAR_SCALE_DANCE_PEAK),
+            )
+            duration = MOOD_BAR_DANCE_POP_MS
+            interpolator = AccelerateDecelerateInterpolator()
+        }
+
+        val density = resources.displayMetrics.density
+        val jitterPx = MOOD_BAR_DANCE_JITTER_DP * density
+        val smallJitterPx = MOOD_BAR_DANCE_JITTER_SMALL_DP * density
+        val rotBig = MOOD_BAR_DANCE_ROT_BIG
+        val rotSmall = MOOD_BAR_DANCE_ROT_SMALL
+        val rotationAnim = ObjectAnimator.ofFloat(
+            slot, "rotation", 0f, -rotBig, rotBig, -rotSmall, rotSmall, 0f
+        )
+        val translateAnim = ObjectAnimator.ofFloat(
+            slot, "translationX", 0f, -jitterPx, jitterPx, -smallJitterPx, smallJitterPx, 0f
+        )
+        val wiggle = AnimatorSet().apply {
+            playTogether(rotationAnim, translateAnim)
+            duration = MOOD_BAR_DANCE_WIGGLE_MS
+        }
+
+        val settle = AnimatorSet().apply {
+            playTogether(
+                ObjectAnimator.ofFloat(slot, "scaleX", MOOD_BAR_SCALE_DANCE_PEAK, settleScale),
+                ObjectAnimator.ofFloat(slot, "scaleY", MOOD_BAR_SCALE_DANCE_PEAK, settleScale),
+            )
+            duration = MOOD_BAR_DANCE_SETTLE_MS
+            interpolator = AccelerateDecelerateInterpolator()
+        }
+
+        val dance = AnimatorSet().apply {
+            playSequentially(pop, wiggle, settle)
+            doOnEnd {
+                slot.rotation = 0f
+                slot.translationX = 0f
+                slot.scaleX = settleScale
+                slot.scaleY = settleScale
+                if (currentMoodDanceAnimator === this) {
+                    currentMoodDanceAnimator = null
+                }
+            }
+        }
+        currentMoodDanceAnimator = dance
+        dance.start()
     }
 
     /**
@@ -2288,6 +2377,10 @@ class MyKeyboardView @JvmOverloads constructor(
         // callback so a re-attach doesn't fire on a leaked window token.
         mMoodBubbleHandler.removeCallbacks(mMoodBubbleDismissRunnable)
         mMoodBubblePopup?.dismiss()
+        // Phase 8.4: cancel any in-flight dance animator so a leaked frame
+        // callback can't keep this view alive past detach.
+        currentMoodDanceAnimator?.cancel()
+        currentMoodDanceAnimator = null
     }
 
     private fun dismissPopupKeyboard() {
