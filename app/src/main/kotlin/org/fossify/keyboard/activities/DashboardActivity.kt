@@ -40,8 +40,9 @@ import org.fossify.keyboard.helpers.MoodEmoji
  *  - the data hop (one `Dispatchers.IO` round-trip per `loadSnapshot`),
  *  - the empty-state view,
  *
- * and the rest lives in six `DashboardFragment` subclasses driven by a
- * [DashboardPagerAdapter] backing a `ViewPager2`.
+ * and the rest lives in five `DashboardFragment` subclasses driven by a
+ * [DashboardPagerAdapter] backing a `ViewPager2` (Phase 9.15 dropped
+ * the Mood tab — its widgets moved into Summary).
  *
  * Phase 9.14.1 added the **Summary** tab as the new index 0 (KPI grid
  * lifted out of the activity chrome). Phase 9.14.2 swapped the Phase
@@ -185,9 +186,9 @@ class DashboardActivity : SimpleActivity() {
      * ViewPager2 via [TabLayoutMediator]. The mediator owns the
      * two-way sync — tab taps drive `setCurrentItem`, pager scrolls
      * drive `selectTab`. Each tab gets a vector icon and a short label;
-     * in `MODE_FIXED` with `tabMinWidth=0` Material distributes the six
-     * tabs evenly across the screen at 360 dp / 6 = 60 dp per tab,
-     * which fits at default font size.
+     * in `MODE_FIXED` with `tabMinWidth=0` Material distributes the five
+     * tabs evenly across the screen at 360 dp / 5 = 72 dp per tab,
+     * which fits comfortably at default font size (Phase 9.15: Mood tab dropped).
      */
     private fun setupPagerAndTabs(savedInstanceState: Bundle?) {
         pagerAdapter = DashboardPagerAdapter(this)
@@ -262,7 +263,6 @@ class DashboardActivity : SimpleActivity() {
         DashboardPagerAdapter.TAB_SUMMARY -> R.drawable.ic_dashboard_summary_vector
         DashboardPagerAdapter.TAB_TRENDS -> R.drawable.ic_dashboard_trends_vector
         DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.drawable.ic_dashboard_activity_vector
-        DashboardPagerAdapter.TAB_MOOD -> R.drawable.ic_dashboard_mood_vector
         DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS -> R.drawable.ic_dashboard_keystrokes_vector
         DashboardPagerAdapter.TAB_HABITS -> R.drawable.ic_dashboard_habits_vector
         else -> R.drawable.ic_dashboard_summary_vector
@@ -272,7 +272,6 @@ class DashboardActivity : SimpleActivity() {
         DashboardPagerAdapter.TAB_SUMMARY -> R.string.dashboard_tab_label_summary
         DashboardPagerAdapter.TAB_TRENDS -> R.string.dashboard_tab_label_trends
         DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.string.dashboard_tab_label_daily_activity
-        DashboardPagerAdapter.TAB_MOOD -> R.string.dashboard_tab_label_mood
         DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS -> R.string.dashboard_tab_label_keystroke_dynamics
         DashboardPagerAdapter.TAB_HABITS -> R.string.dashboard_tab_label_habits
         else -> R.string.dashboard_tab_label_summary

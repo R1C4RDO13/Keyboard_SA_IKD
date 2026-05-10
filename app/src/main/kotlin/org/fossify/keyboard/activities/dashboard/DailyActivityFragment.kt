@@ -15,7 +15,6 @@ import org.fossify.keyboard.helpers.IkdActivityAggregator
 import org.fossify.keyboard.helpers.WidgetInfo
 import org.fossify.keyboard.helpers.attachWidgetInfo
 import org.fossify.keyboard.interfaces.HourWeekdayRow
-import org.fossify.keyboard.views.IkdBubbleMapView
 import org.fossify.keyboard.views.IkdHeatmapView
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -23,15 +22,17 @@ import java.util.Locale
 
 /**
  * Phase 9.11: Daily Activity tab. Calendar heatmap (9.5), daily keypress
- * bar (9.5), 24-hour bar (9.6), circadian heatmap (9.6) and the Usage
- * Map bubble chart (9.9). Each widget hides itself when its data is
- * empty; the tab renders an empty placeholder when *every* widget is
- * empty for the current range.
+ * bar (9.5), 24-hour bar (9.6), and circadian heatmap (9.6). Each widget
+ * hides itself when its data is empty; the tab renders an empty
+ * placeholder when *every* widget is empty for the current range.
  *
- * TODAY range hides the calendar heatmap, daily keypress bar, and Usage
- * Map (all of which would degenerate to single-cell views) — that
- * decision is made on the host activity via `range.isHourly()` before
- * the buckets land in the snapshot.
+ * Phase 9.15: the Usage Map (`IkdBubbleMapView`) was moved to the
+ * Summary tab and its card here was deleted — single render site rule.
+ *
+ * TODAY range hides the calendar heatmap and daily keypress bar (both
+ * would degenerate to single-cell views) — that decision is made on the
+ * host activity via `range.isHourly()` before the buckets land in the
+ * snapshot.
  */
 class DailyActivityFragment : DashboardFragment() {
 
@@ -84,14 +85,6 @@ class DailyActivityFragment : DashboardFragment() {
                 formulaRes = R.string.info_daily_circadian_formula,
             ),
         )
-        binding.dashboardUsageMapInfo.attachWidgetInfo(
-            WidgetInfo(
-                titleRes = R.string.info_daily_usage_map_title,
-                descriptionRes = R.string.info_daily_usage_map_desc,
-                interpretationRes = R.string.info_daily_usage_map_interpretation,
-                formulaRes = R.string.info_daily_usage_map_formula,
-            ),
-        )
     }
 
     override fun onDestroyView() {
@@ -100,18 +93,16 @@ class DailyActivityFragment : DashboardFragment() {
     }
 
     override fun renderPayload(payload: DashboardPayload) {
-        val ctx = context ?: return
         val view = _binding ?: return
         val activity = payload.activity
 
-        // Phase 9.11: under the hourly TODAY range the calendar-heatmap,
-        // daily-keypress bar and Usage Map (date-keyed) all degenerate
-        // — hide them. Hourly + circadian (always all-time) still apply.
+        // Phase 9.11: under the hourly TODAY range the calendar-heatmap
+        // and daily-keypress bar (date-keyed) all degenerate — hide them.
+        // Hourly + circadian (always all-time) still apply.
         val isHourly = activity.range.isHourly()
         val hasDaily = !isHourly && activity.dailyBuckets.isNotEmpty()
         val hasHourly = activity.hourlyBuckets.isNotEmpty()
         val hasCircadian = activity.circadianCells.isNotEmpty()
-        val hasDayHour = !isHourly && activity.dayHourCells.isNotEmpty()
 
         applyCardThemeColors()
 
@@ -132,12 +123,7 @@ class DailyActivityFragment : DashboardFragment() {
             bindCircadianHeatmap(activity.circadianCells)
         }
 
-        view.dashboardUsageMapCard.beVisibleIf(hasDayHour)
-        if (hasDayHour) {
-            bindUsageMap(activity.dayHourCells)
-        }
-
-        val anyVisible = hasDaily || hasHourly || hasCircadian || hasDayHour
+        val anyVisible = hasDaily || hasHourly || hasCircadian
         view.fragmentDailyActivityEmptyMessage.beVisibleIf(!anyVisible)
     }
 
@@ -151,28 +137,6 @@ class DailyActivityFragment : DashboardFragment() {
         view.dashboardDailyKeypressCard.setCardBackgroundColor(bg)
         view.dashboardHourlyCard.setCardBackgroundColor(bg)
         view.dashboardCircadianCard.setCardBackgroundColor(bg)
-        view.dashboardUsageMapCard.setCardBackgroundColor(bg)
-    }
-
-    private fun bindUsageMap(cells: List<IkdActivityAggregator.DayHourCell>) {
-        val view = _binding ?: return
-        val ctx = context ?: return
-        val bubbles = cells.map {
-            IkdBubbleMapView.Bubble(day = it.day, hour = it.hour, count = it.keystrokeCount)
-        }
-        view.dashboardUsageMap.setData(bubbles)
-        view.dashboardUsageMap.setOnBubbleClickListener { bubble ->
-            Toast.makeText(
-                ctx,
-                getString(
-                    R.string.dashboard_usage_map_tooltip_format,
-                    bubble.day,
-                    bubble.hour,
-                    bubble.count,
-                ),
-                Toast.LENGTH_SHORT,
-            ).show()
-        }
     }
 
     private fun bindHourlyBar(hourly: List<IkdActivityAggregator.HourlyBucket>) {

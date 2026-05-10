@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Phase 9.14.1: reusable KPI tile body for the Summary tab's 2x3 grid.
+    Phase 9.15: reusable KPI tile body for the Summary tab's 3x2 grid.
 
     Inflated via `<include android:id="...">` from
     `fragment_dashboard_summary.xml`, six times. Each include's child
     bindings are reached via `ItemSummaryKpiTileBinding.bind(root)` from
-    `SummaryFragment` — same pattern as `item_mood_distribution_row` in
-    `fragment_dashboard_mood.xml`.
+    `SummaryFragment`.
 
-    Layout per Decision #4 (Layout A):
-      - tiny uppercase label
+    Phase 9.15 simplification (decision #2): the sparkline placeholder
+    strip and delta `MyTextView` from Phase 9.14.1 are removed — the
+    user's feedback was explicit ("the current tiles don't need more
+    details, so remove the lines"). Each tile is now just label + value:
+
+      - tiny uppercase label (smaller_text_size)
       - big value (bigger_text_size, bold)
-      - delta vs previous comparable range (placeholder until 9.14.4)
-      - sparkline placeholder strip (real sparkline lands in 9.14.4)
 
     The card itself (the parent `MaterialCardView` in
     `fragment_dashboard_summary.xml`) is the click target.
@@ -40,20 +41,5 @@
         android:textSize="@dimen/bigger_text_size"
         android:textStyle="bold"
         tools:text="42" />
-
-    <org.fossify.commons.views.MyTextView
-        android:id="@+id/summary_tile_delta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/small_margin"
-        android:textSize="@dimen/smaller_text_size"
-        tools:text="—" />
-
-    <View
-        android:id="@+id/summary_tile_sparkline_placeholder"
-        android:layout_width="match_parent"
-        android:layout_height="4dp"
-        android:layout_marginTop="@dimen/small_margin"
-        android:background="?attr/colorControlHighlight" />
 
 </LinearLayout>

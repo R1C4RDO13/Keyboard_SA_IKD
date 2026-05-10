@@ -3,8 +3,9 @@
     Phase 9.14 layout (top-to-bottom):
       - app bar / toolbar (Filters action lives here, opens
         InsightsFiltersBottomSheet)
-      - Material 3 TabLayout — six icon+label tabs, MODE_FIXED + tabMinWidth=0
-        so all six fit at 360dp without horizontal scroll
+      - Material 3 TabLayout — five icon+label tabs, MODE_FIXED + tabMinWidth=0
+        so all five fit at 360dp without horizontal scroll (Phase 9.15
+        dropped the Mood tab; its widgets moved into the Summary tab)
       - active-filter chip — visible only when range != Week or moodFilter != null
       - ViewPager2 (horizontal, swipeable)
 
@@ -15,7 +16,7 @@
     only an active-filter chip remains visible in the chrome when the
     user has changed range or mood from defaults.
 
-    Per-tab content lives in six fragment_dashboard_*.xml files.
+    Per-tab content lives in five fragment_dashboard_*.xml files.
 -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -64,9 +65,10 @@
 
             <!-- Phase 9.14.2: Material 3 TabLayout replaces the Phase 9.12
                  MaterialButtonToggleGroup. Mode FIXED + tabMinWidth=0 +
-                 tabGravity=fill so all six icon+label tabs distribute
+                 tabGravity=fill so all five icon+label tabs distribute
                  evenly across the screen with no horizontal scroll
-                 (Decision #2 / #3). The icon tint selector tracks the
+                 (Decision #2 / #3; Phase 9.15 dropped the Mood tab so the
+                 count is now 5). The icon tint selector tracks the
                  Fossify theme — primary on selected, controlNormal on
                  unselected. TabLayoutMediator wires this to the pager
                  in DashboardActivity (Decision #2). -->

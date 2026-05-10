@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Phase 9.14.1: Summary tab layout — 2-column x 3-row grid of KPI
-    tiles. Each tile is a `MaterialCardView` (the click target), with an
-    `<include>` inflating the shared `item_summary_kpi_tile.xml` body.
-    Internal child views are reached via
-    `ItemSummaryKpiTileBinding.bind(includeRoot)` from `SummaryFragment`
-    — same pattern as the Phase 8 mood-distribution rows.
+    Phase 9.15: Summary tab — the Insights landing page.
 
-    Layout order (left-to-right, top-to-bottom):
-      Sessions · Typing time
-      WPM · Error rate
-      Avg session · Longest streak
+    Layout (top → bottom):
+      - 3-column x 2-row KPI grid (label + big value, no sparkline /
+        delta — see decision #2 in 9.15 plan).
+        Row 1: Sessions  · Typing time · WPM
+        Row 2: Error rate · Avg session · Streak
+      - Usage Map card (moved here from Daily Activity, ≥240dp tall).
+      - Mood Mix over Time stacked-bar card (moved here from the
+        deleted Mood tab).
+      - Mood Distribution panel card (moved here from the deleted Mood
+        tab).
+      - Empty placeholder when nothing to show.
 
-    Click routing per Decision #7: Sessions / Typing time / Avg session
-    / Streak → Habits; WPM / Error rate → Trends.
+    KPI tile click routing (preserved from 9.14.1 decision #7):
+        Sessions / Typing time / Avg session / Streak → Habits
+        WPM / Error rate                              → Trends
 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -29,12 +32,12 @@
         android:orientation="vertical"
         android:padding="@dimen/normal_margin">
 
-        <!-- Row 1: Sessions · Typing time -->
+        <!-- Row 1: Sessions · Typing time · WPM -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:weightSum="2">
+            android:weightSum="3">
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/summary_tile_sessions"
@@ -58,6 +61,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/small_margin"
+                android:layout_marginEnd="@dimen/small_margin"
                 android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
@@ -70,21 +74,11 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-        </LinearLayout>
-
-        <!-- Row 2: WPM · Error rate -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/normal_margin"
-            android:orientation="horizontal"
-            android:weightSum="2">
-
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/summary_tile_wpm"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/small_margin"
+                android:layout_marginStart="@dimen/small_margin"
                 android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
@@ -97,11 +91,21 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+        </LinearLayout>
+
+        <!-- Row 2: Error rate · Avg session · Streak -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/summary_tile_error_rate"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/small_margin"
+                android:layout_marginEnd="@dimen/small_margin"
                 android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
@@ -114,20 +118,11 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-        </LinearLayout>
-
-        <!-- Row 3: Avg session · Longest streak -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/normal_margin"
-            android:orientation="horizontal"
-            android:weightSum="2">
-
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/summary_tile_avg_session"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/small_margin"
                 android:layout_marginEnd="@dimen/small_margin"
                 android:layout_weight="1"
                 android:clickable="true"
@@ -159,6 +154,195 @@
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
+
+        <!-- Phase 9.15: Usage Map card (moved from Daily Activity, larger). -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/dashboard_usage_map_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:visibility="gone"
+            app:cardCornerRadius="@dimen/card_corner_radius"
+            app:cardElevation="@dimen/card_elevation">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/normal_margin">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_chart_usage_map_title"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/dashboard_usage_map_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
+
+                <org.fossify.keyboard.views.IkdBubbleMapView
+                    android:id="@+id/dashboard_usage_map"
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:layout_marginTop="@dimen/small_margin" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Phase 9.15: Mood Mix over Time card (moved from Mood tab). -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/dashboard_mood_stacked_chart_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:visibility="gone"
+            app:cardCornerRadius="@dimen/card_corner_radius"
+            app:cardElevation="@dimen/card_elevation">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/normal_margin">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_chart_mood_mix_title"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/dashboard_mood_stacked_chart_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
+
+                <org.fossify.keyboard.views.IkdStackedBarChartView
+                    android:id="@+id/dashboard_chart_mood_stacked"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:layout_marginTop="@dimen/small_margin" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/small_margin"
+                    android:fillViewport="false"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/dashboard_mood_stacked_legend"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+
+                </HorizontalScrollView>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Phase 9.15: Mood Distribution panel (moved from Mood tab). -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/dashboard_mood_distribution_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:visibility="gone"
+            app:cardCornerRadius="@dimen/card_corner_radius"
+            app:cardElevation="@dimen/card_elevation">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/normal_margin">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_mood_distribution_title"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/dashboard_mood_distribution_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
+
+                <include
+                    android:id="@+id/dashboard_mood_row_happiness"
+                    layout="@layout/item_mood_distribution_row" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_surprise"
+                    layout="@layout/item_mood_distribution_row" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_disgust"
+                    layout="@layout/item_mood_distribution_row" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_sadness"
+                    layout="@layout/item_mood_distribution_row" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_fear"
+                    layout="@layout/item_mood_distribution_row" />
+
+                <include
+                    android:id="@+id/dashboard_mood_row_anger"
+                    layout="@layout/item_mood_distribution_row" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
         <org.fossify.commons.views.MyTextView
             android:id="@+id/fragment_summary_empty_message"

@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Phase 9.11: Daily Activity tab content. Calendar heatmap (9.5), daily
-    keypress bar (9.5), 24-hour bar (9.6), circadian heatmap (9.6), and
-    the Usage Map bubble chart (9.9). All five cards are GONE by default;
-    the activity flips visibility per snapshot just like before.
+    keypress bar (9.5), 24-hour bar (9.6), and circadian heatmap (9.6).
+    All four cards are GONE by default; the activity flips visibility per
+    snapshot just like before.
     Phase 9.13: each card title row gets a tap-to-explain info icon.
+    Phase 9.15: the Usage Map (`IkdBubbleMapView`) was moved to the
+    Summary tab — the card that lived here is now deleted. The Summary
+    tab is the single render site for the bubble map.
 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -228,58 +231,6 @@
 
                 <org.fossify.keyboard.views.IkdHeatmapView
                     android:id="@+id/dashboard_circadian_heatmap"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/small_margin" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Phase 9.9: Usage Map bubble chart card. -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/dashboard_usage_map_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/normal_margin"
-            android:visibility="gone"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/normal_margin">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/dashboard_chart_usage_map_title"
-                        android:textStyle="bold" />
-
-                    <ImageView
-                        android:id="@+id/dashboard_usage_map_info"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginStart="@dimen/small_margin"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:contentDescription="@string/widget_info_content_description"
-                        android:focusable="true"
-                        android:src="@drawable/ic_info_outline_vector" />
-
-                </LinearLayout>
-
-                <org.fossify.keyboard.views.IkdBubbleMapView
-                    android:id="@+id/dashboard_usage_map"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/small_margin" />
