@@ -77,4 +77,11 @@
          HorizontalScrollView. Height ~76dp matches the preview. -->
     <dimen name="summary_mood_tile_width">60dp</dimen>
     <dimen name="summary_mood_tile_height">76dp</dimen>
+
+    <!-- Phase 9.18 — Mood Distribution tiles double as the Mood Filter.
+         The active tile gets a primary-tinted MaterialCardView stroke at
+         this width; inactive tiles render with strokeWidth=0. Sized to
+         read on a coloured tile background without overpowering the
+         emoji + percentage typography. -->
+    <dimen name="summary_mood_tile_stroke_active">1.5dp</dimen>
 </resources>

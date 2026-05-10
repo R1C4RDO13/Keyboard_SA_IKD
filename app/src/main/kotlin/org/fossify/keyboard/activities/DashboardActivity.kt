@@ -21,6 +21,7 @@ import org.fossify.keyboard.R
 import org.fossify.keyboard.activities.dashboard.DashboardFragment
 import org.fossify.keyboard.activities.dashboard.DashboardPagerAdapter
 import org.fossify.keyboard.activities.dashboard.DashboardPayload
+import org.fossify.keyboard.activities.dashboard.SummaryFragment
 import org.fossify.keyboard.databinding.ActivityDashboardBinding
 import org.fossify.keyboard.extensions.ikdActivityAggregator
 import org.fossify.keyboard.extensions.ikdAggregator
@@ -61,8 +62,17 @@ class DashboardActivity : SimpleActivity() {
     private val binding by viewBinding(ActivityDashboardBinding::inflate)
     private var currentRange: IkdAggregator.Range = IkdAggregator.Range.WEEK
 
-    /** Phase 9.4: per-screen-instance state — null means "All". */
-    private var currentMoodFilter: Int? = null
+    /**
+     * Phase 9.4: per-screen-instance state — null means "All".
+     *
+     * Phase 9.18: getter is package-visible so `SummaryFragment` can sync
+     * its Distribution-tile highlight after every `renderPayload` round.
+     * Mutations stay private — they flow exclusively through
+     * [onMoodTileTapped], the bottom-sheet result listener, and the
+     * active-filter chip ✕ handler.
+     */
+    internal var currentMoodFilter: Int? = null
+        private set
 
     /**
      * Phase 9.11: latest payload from the most recent `loadSnapshot` run.
@@ -154,6 +164,13 @@ class DashboardActivity : SimpleActivity() {
             renderBucketLabel()
             if (rangeChanged || moodChanged) {
                 loadSnapshot()
+            }
+            // Phase 9.18: keep the Summary-tab tile highlight in sync with
+            // changes made through the bottom sheet (the secondary entry
+            // point). Without this, picking a mood via the sheet would
+            // leave the tiles flat until the IO hop returned.
+            if (moodChanged) {
+                summaryFragment()?.applyMoodFilterHighlight(newMood)
             }
         }
     }
@@ -320,6 +337,13 @@ class DashboardActivity : SimpleActivity() {
             if (rangeChanged || moodChanged) {
                 loadSnapshot()
             }
+            // Phase 9.18: clear the Summary-tab tile highlight in sync —
+            // the chip ✕ is one of three reset paths and SummaryFragment
+            // would otherwise keep its dim/active state until the IO hop
+            // returns and `renderPayload` re-runs.
+            if (moodChanged) {
+                summaryFragment()?.applyMoodFilterHighlight(null)
+            }
         }
     }
 
@@ -459,6 +483,38 @@ class DashboardActivity : SimpleActivity() {
         if (position < 0 || position >= DashboardPagerAdapter.TAB_COUNT) return
         binding.dashboardViewPager.setCurrentItem(position, true)
     }
+
+    /**
+     * Phase 9.18: Distribution-tile click handler. Each Summary-tab tile
+     * doubles as a one-tap shortcut for the global Mood Filter. Toggle
+     * semantics mirror the Phase 8.2 mood-bar (Decision #3 of the 9.18
+     * plan):
+     *  - Tap the *active* tile → revert to All (`currentMoodFilter = null`).
+     *  - Tap any other tile → switch to that score in one tap.
+     *
+     * After the state flip, re-render the active-filter chip + scope
+     * label, re-run the IO-bound aggregation hop, and notify the
+     * SummaryFragment immediately so the tile highlight snaps without
+     * waiting for `loadSnapshot` to come back.
+     */
+    fun onMoodTileTapped(score: Int) {
+        val newFilter = if (currentMoodFilter == score) null else score
+        if (newFilter == currentMoodFilter) return
+        currentMoodFilter = newFilter
+        renderActiveFilterChip()
+        renderBucketLabel()
+        loadSnapshot()
+        summaryFragment()?.applyMoodFilterHighlight(newFilter)
+    }
+
+    /**
+     * Locate the live [SummaryFragment] instance, if any. The pager keeps
+     * every page in memory (`offscreenPageLimit = TAB_COUNT - 1`), so this
+     * succeeds as soon as the fragment view has been created. Returns
+     * `null` during early `onCreate` or after the fragment is destroyed.
+     */
+    private fun summaryFragment(): SummaryFragment? =
+        supportFragmentManager.fragments.filterIsInstance<SummaryFragment>().firstOrNull()
 
     companion object {
         private const val STATE_RANGE = "dashboard_range"

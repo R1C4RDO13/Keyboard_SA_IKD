@@ -199,6 +199,11 @@ class SummaryFragment : DashboardFragment() {
         renderMoodTiles(payload.mood)
         renderUsageMap(payload.activity)
         renderMoodWidgets(payload)
+
+        // Phase 9.18: re-apply the host's mood filter highlight after every
+        // payload swap so range / refresh / rotation cycles don't blow away
+        // the active-tile stroke and dim states.
+        applyMoodFilterHighlight((activity as? DashboardActivity)?.currentMoodFilter)
     }
 
     /**
@@ -441,6 +446,11 @@ class SummaryFragment : DashboardFragment() {
                 pct,
             )
             card.setOnClickListener {
+                // Phase 9.18: the toast still surfaces the unfiltered count
+                // (Decision #5 of the 9.18 plan — toast-firing is preserved
+                // and independent of filter activation). Fire it *before*
+                // toggling the filter so the count it shows refers to the
+                // distribution snapshot the user just tapped on.
                 Toast.makeText(
                     ctx,
                     ctx.getString(
@@ -452,6 +462,59 @@ class SummaryFragment : DashboardFragment() {
                     ),
                     Toast.LENGTH_SHORT,
                 ).show()
+                (activity as? DashboardActivity)?.onMoodTileTapped(score)
+            }
+        }
+    }
+
+    /**
+     * Phase 9.18: paint the active-tile stroke + scale, dim the rest.
+     *
+     * Called after every [renderPayload] (so the highlight survives range
+     * changes, refresh, rotation) and directly from
+     * [DashboardActivity.onMoodTileTapped] (so the tile snaps to the new
+     * state ahead of the IO-bound `loadSnapshot()` round-trip).
+     *
+     * Decision #2 of the 9.18 plan:
+     *  - Active tile: 1.5 dp primary stroke + 1.05× scale + full alpha.
+     *  - Inactive tiles while a filter is active: zero stroke + 1× scale +
+     *    0.55 alpha (the dim state).
+     *  - All tiles while no filter is active: zero stroke + 1× scale +
+     *    full alpha.
+     *
+     * Uses [MaterialCardView.strokeWidth] / [MaterialCardView.setStrokeColor]
+     * — the layout default is `strokeWidth=0`, so inactive tiles look
+     * unchanged from Phase 9.17 when nothing is filtered.
+     */
+    fun applyMoodFilterHighlight(activeScore: Int?) {
+        val ctx = context ?: return
+        val view = _binding ?: return
+        val tiles = listOf(
+            view.summaryMoodTileHappiness to MoodEmoji.SCORE_HAPPINESS,
+            view.summaryMoodTileSurprise to MoodEmoji.SCORE_SURPRISE,
+            view.summaryMoodTileDisgust to MoodEmoji.SCORE_DISGUST,
+            view.summaryMoodTileSadness to MoodEmoji.SCORE_SADNESS,
+            view.summaryMoodTileFear to MoodEmoji.SCORE_FEAR,
+            view.summaryMoodTileAnger to MoodEmoji.SCORE_ANGER,
+        )
+        val strokePx = ctx.resources
+            .getDimensionPixelSize(R.dimen.summary_mood_tile_stroke_active)
+        val primary = ctx.getProperPrimaryColor()
+        val hasFilter = activeScore != null
+        for ((cardRoot, score) in tiles) {
+            val card = ItemMoodTileBinding.bind(cardRoot.root).root
+            val isActive = score == activeScore
+            if (isActive) {
+                card.strokeWidth = strokePx
+                card.setStrokeColor(primary)
+                card.scaleX = ACTIVE_TILE_SCALE
+                card.scaleY = ACTIVE_TILE_SCALE
+                card.alpha = 1f
+            } else {
+                card.strokeWidth = 0
+                card.scaleX = 1f
+                card.scaleY = 1f
+                card.alpha = if (hasFilter) INACTIVE_TILE_ALPHA else 1f
             }
         }
     }
@@ -461,5 +524,10 @@ class SummaryFragment : DashboardFragment() {
         private const val MS_PER_SECOND = 1_000.0
         private const val PCT_MAX = 100
         private const val PCT_MAX_FLOAT = 100f
+
+        // Phase 9.18: active-tile scale-up factor and the dim alpha applied
+        // to the other five tiles while a filter is active. Plan Decision #2.
+        private const val ACTIVE_TILE_SCALE = 1.05f
+        private const val INACTIVE_TILE_ALPHA = 0.55f
     }
 }
