@@ -16,8 +16,8 @@ Quick-access summary of phase completion. For detailed scope of each phase see [
 | 8 | Mood Bar & Contextual Overlay | Implemented (incl. 8.1 UI polish) | [Phase8_Plan.md](Phase8/Phase8_Plan.md) | merged |
 | 8.2 | Mood Bar UX Polish (toggles, capsule background, chat-bubble) | Implemented | — (in-flight; plan rolled into Phase 8 §13) | landed on `main` |
 | 8.3 | Mood Distribution over Time (Stacked Bar) | Implemented | [Phase8.3_Plan.md](Phase8/Phase8.3_Plan.md) | landed on `main` |
-| 9 | Global Insights Expansion | **Planned (next)** — 10 sub-phases, absorbs Phase 11 | [Phase9_Plan.md](Phase9/Phase9_Plan.md) | not started |
-| 10 | Rebranding & New Identity | Planned | — | not started |
+| 9 | Global Insights Expansion | Implemented (10 sub-phases; absorbs Phase 11) | [Phase9_Plan.md](Phase9/Phase9_Plan.md) | landed on `main` |
+| 10 | Rebranding & New Identity | **Planned (next)** | — | not started |
 | ~~11~~ | ~~Usage Map & Daily Activity Charts~~ | ~~Planned~~ — **deleted; absorbed into Phase 9.5–9.10** | — | — |
 
 ## Schema state
