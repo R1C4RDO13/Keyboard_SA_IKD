@@ -22,6 +22,7 @@ Quick-access summary of phase completion. For detailed scope of each phase see [
 | 9.11 | Insights — TODAY range + vertical tabs | Implemented | [9.11 sub-plan](Phase9/sub_plans/9.11_today_filter_and_tabs.md) | landed on `main` |
 | 10 | Rebranding & New Identity (MoodScript) | **Planned (next)** | [Phase10_Plan.md](Phase10/Phase10_Plan.md) | not started |
 | ~~11~~ | ~~Usage Map & Daily Activity Charts~~ | ~~Planned~~ — **deleted; absorbed into Phase 9.5–9.10** | — | — |
+| 12 | Mood-Curated Emoji Section | **Planned** | [Phase12_Plan.md](Phase12/Phase12_Plan.md) | not started |
 
 ## Schema state
 
