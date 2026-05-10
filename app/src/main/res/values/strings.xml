@@ -332,9 +332,15 @@
          the calendar heatmap card is hidden under TODAY). -->
     <string name="dashboard_tab_empty_message">No data for this view in the selected range.</string>
     <!-- Phase 9.12: shorter tab labels for the top toggle group when the
-         section names overflow narrow widths. -->
+         section names overflow narrow widths.
+         Phase 9.14.2: further shortened to "Keys" + new "Trends" / "Mood"
+         / "Habits" alias keys so all six tabs fit at 360dp / 60dp per tab
+         in the new TabLayout (no horizontal scroll). -->
     <string name="dashboard_tab_label_daily_activity">Activity</string>
-    <string name="dashboard_tab_label_keystroke_dynamics">Keystrokes</string>
+    <string name="dashboard_tab_label_keystroke_dynamics">Keys</string>
+    <string name="dashboard_tab_label_trends">Trends</string>
+    <string name="dashboard_tab_label_mood">Mood</string>
+    <string name="dashboard_tab_label_habits">Habits</string>
     <string name="dashboard_value_placeholder">—</string>
     <string name="dashboard_action_view">Insights</string>
     <string name="dashboard_menu_refresh">Refresh</string>

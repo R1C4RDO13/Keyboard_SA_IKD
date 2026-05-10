@@ -55,67 +55,26 @@
                  segmented toggle below. The tab bar redesign (TabLayout +
                  icons) lands in 9.14.2. -->
 
-            <!-- Phase 9.12: top-of-screen tab toggle group. Same MaterialButton
-                 toggle styling as the range toggle below.
-                 Phase 9.14.1: Summary added as the first tab. -->
-            <HorizontalScrollView
+            <!-- Phase 9.14.2: Material 3 TabLayout replaces the Phase 9.12
+                 MaterialButtonToggleGroup. Mode FIXED + tabMinWidth=0 +
+                 tabGravity=fill so all six icon+label tabs distribute
+                 evenly across the screen with no horizontal scroll
+                 (Decision #2 / #3). The icon tint selector tracks the
+                 Fossify theme — primary on selected, controlNormal on
+                 unselected. TabLayoutMediator wires this to the pager
+                 in DashboardActivity (Decision #2). -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/dashboard_tab_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fillViewport="true"
-                android:scrollbars="none">
-
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/dashboard_tab_group"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:singleSelection="true"
-                    app:selectionRequired="true">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/dashboard_tab_summary"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_tab_label_summary" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/dashboard_tab_trends"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_section_trends" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/dashboard_tab_daily_activity"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_tab_label_daily_activity" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/dashboard_tab_mood"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_section_mood" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/dashboard_tab_keystroke_dynamics"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_tab_label_keystroke_dynamics" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/dashboard_tab_habits"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dashboard_section_habits" />
-
-                </com.google.android.material.button.MaterialButtonToggleGroup>
-
-            </HorizontalScrollView>
+                app:tabGravity="fill"
+                app:tabIconTint="@color/dashboard_tab_icon_tint"
+                app:tabIndicatorAnimationMode="elastic"
+                app:tabInlineLabel="false"
+                app:tabMinWidth="0dp"
+                app:tabMode="fixed"
+                app:tabSelectedTextColor="?attr/colorPrimary"
+                app:tabTextColor="?android:attr/textColorSecondary" />
 
             <!-- Range selector. Phase 9.11: Today added as the first option.
                  Phase 9.13: wrapped with a trailing info icon. -->

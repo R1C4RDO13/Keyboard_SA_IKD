@@ -8,10 +8,10 @@ import android.view.LayoutInflater
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
-import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.chip.Chip
+import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -43,16 +43,20 @@ import org.fossify.keyboard.helpers.WidgetInfo
 import org.fossify.keyboard.helpers.attachWidgetInfo
 
 /**
- * Phase 9.11/9.12: the Insights screen is now a thin host. The activity owns
- *  - the global header (KPI strip, tab toggle, range toggle, mood-filter chip row),
+ * Phase 9.11/9.12/9.14: the Insights screen is a thin host. The activity owns
+ *  - the global header (range toggle + mood-filter chip row),
  *  - the data hop (one `Dispatchers.IO` round-trip per `loadSnapshot`),
  *  - the empty-state view,
  *
- * and the rest lives in five `DashboardFragment` subclasses driven by a
- * [DashboardPagerAdapter] backing a [ViewPager2]. Phase 9.12 dropped the
- * NavigationRail in favour of a top-of-screen
- * [MaterialButtonToggleGroup] styled identically to the range toggle —
- * the user wanted the tab strip on top.
+ * and the rest lives in six `DashboardFragment` subclasses driven by a
+ * [DashboardPagerAdapter] backing a `ViewPager2`.
+ *
+ * Phase 9.14.1 added the **Summary** tab as the new index 0 (KPI grid
+ * lifted out of the activity chrome); 9.14.2 swapped the Phase 9.12
+ * `MaterialButtonToggleGroup` for a Material 3 `TabLayout` wired via
+ * [TabLayoutMediator], with one vector icon + short label per tab. The
+ * tab bar is `MODE_FIXED` + `tabMinWidth=0` so all six tabs distribute
+ * across a 360 dp screen with no horizontal scroll.
  *
  * Range, mood filter and active tab are persisted via
  * `onSaveInstanceState` (no new pref keys — Phase 9 Decision #2).
@@ -162,7 +166,7 @@ class DashboardActivity : SimpleActivity() {
         }
         binding.dashboardEmptyMessage.setTextColor(getProperTextColor())
         applyToggleGroupColors(binding.dashboardRangeGroup)
-        applyToggleGroupColors(binding.dashboardTabGroup)
+        applyTabLayoutColors()
         applyChipColors()
         // Phase 9.4: refresh chip-row visibility on every onResume — the
         // user may have just recorded their first mood entry.
@@ -183,42 +187,65 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
-     * Phase 9.12: wire the top tab toggle group to the ViewPager2 in both
-     * directions. Toggle taps drive `setCurrentItem`; pager scrolls
-     * (manual swipe) drive `check(buttonId)` so the toggle tracks the
-     * current page. Restore the last tab index from `savedInstanceState`.
+     * Phase 9.14.2: wire the new Material 3 [TabLayout] to the
+     * ViewPager2 via [TabLayoutMediator]. The mediator owns the
+     * two-way sync — tab taps drive `setCurrentItem`, pager scrolls
+     * drive `selectTab` — replacing the manual hand-roll from Phase
+     * 9.12. Each tab gets a vector icon and a short label; in
+     * `MODE_FIXED` with `tabMinWidth=0` Material distributes the six
+     * tabs evenly across the screen at 360 dp / 6 = 60 dp per tab,
+     * which fits at default font size (Section 4 — width verification).
      */
     private fun setupPagerAndToggle(savedInstanceState: Bundle?) {
         pagerAdapter = DashboardPagerAdapter(this)
         binding.dashboardViewPager.adapter = pagerAdapter
-        // Keep all five fragments in memory so swipe re-renders are instant
-        // and the legend strips / chart caches survive page changes.
+        // Keep every fragment in memory so swipe re-renders are instant
+        // and chart caches survive page changes.
         binding.dashboardViewPager.offscreenPageLimit = DashboardPagerAdapter.TAB_COUNT - 1
 
-        binding.dashboardTabGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked) return@addOnButtonCheckedListener
-            val target = tabButtonIdToTabIndex(checkedId)
-            if (target >= 0 && target != binding.dashboardViewPager.currentItem) {
-                binding.dashboardViewPager.currentItem = target
-            }
-        }
-
-        binding.dashboardViewPager.registerOnPageChangeCallback(
-            object : ViewPager2.OnPageChangeCallback() {
-                override fun onPageSelected(position: Int) {
-                    val buttonId = tabIndexToTabButtonId(position)
-                    if (binding.dashboardTabGroup.checkedButtonId != buttonId) {
-                        binding.dashboardTabGroup.check(buttonId)
-                    }
-                }
-            }
-        )
+        TabLayoutMediator(binding.dashboardTabLayout, binding.dashboardViewPager) { tab, position ->
+            tab.setIcon(tabIconResFor(position))
+            tab.setText(tabLabelResFor(position))
+            tab.contentDescription = getString(tabLabelResFor(position))
+        }.attach()
 
         // Phase 9.14.1: cold-launch default is the new Summary tab.
         val initialTab = savedInstanceState?.getInt(STATE_TAB_INDEX, DashboardPagerAdapter.TAB_SUMMARY)
             ?: DashboardPagerAdapter.TAB_SUMMARY
         binding.dashboardViewPager.setCurrentItem(initialTab, false)
-        binding.dashboardTabGroup.check(tabIndexToTabButtonId(initialTab))
+    }
+
+    /**
+     * Phase 9.14.2: TabLayout indicator + selected/unselected text
+     * colours follow the user's Fossify primary token. The icon tint
+     * comes from the `dashboard_tab_icon_tint.xml` selector — runtime
+     * theming for the indicator/text is set per-onResume to track theme
+     * changes.
+     */
+    private fun applyTabLayoutColors() {
+        val primary = getProperPrimaryColor()
+        binding.dashboardTabLayout.setSelectedTabIndicatorColor(primary)
+        binding.dashboardTabLayout.setTabTextColors(getProperTextColor(), primary)
+    }
+
+    private fun tabIconResFor(position: Int): Int = when (position) {
+        DashboardPagerAdapter.TAB_SUMMARY -> R.drawable.ic_dashboard_summary_vector
+        DashboardPagerAdapter.TAB_TRENDS -> R.drawable.ic_dashboard_trends_vector
+        DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.drawable.ic_dashboard_activity_vector
+        DashboardPagerAdapter.TAB_MOOD -> R.drawable.ic_dashboard_mood_vector
+        DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS -> R.drawable.ic_dashboard_keystrokes_vector
+        DashboardPagerAdapter.TAB_HABITS -> R.drawable.ic_dashboard_habits_vector
+        else -> R.drawable.ic_dashboard_summary_vector
+    }
+
+    private fun tabLabelResFor(position: Int): Int = when (position) {
+        DashboardPagerAdapter.TAB_SUMMARY -> R.string.dashboard_tab_label_summary
+        DashboardPagerAdapter.TAB_TRENDS -> R.string.dashboard_tab_label_trends
+        DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.string.dashboard_tab_label_daily_activity
+        DashboardPagerAdapter.TAB_MOOD -> R.string.dashboard_tab_label_mood
+        DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS -> R.string.dashboard_tab_label_keystroke_dynamics
+        DashboardPagerAdapter.TAB_HABITS -> R.string.dashboard_tab_label_habits
+        else -> R.string.dashboard_tab_label_summary
     }
 
     /**
@@ -437,26 +464,6 @@ class DashboardActivity : SimpleActivity() {
         R.id.dashboard_range_month -> IkdAggregator.Range.MONTH
         R.id.dashboard_range_all -> IkdAggregator.Range.ALL_TIME
         else -> IkdAggregator.Range.WEEK
-    }
-
-    private fun tabButtonIdToTabIndex(buttonId: Int): Int = when (buttonId) {
-        R.id.dashboard_tab_summary -> DashboardPagerAdapter.TAB_SUMMARY
-        R.id.dashboard_tab_trends -> DashboardPagerAdapter.TAB_TRENDS
-        R.id.dashboard_tab_daily_activity -> DashboardPagerAdapter.TAB_DAILY_ACTIVITY
-        R.id.dashboard_tab_mood -> DashboardPagerAdapter.TAB_MOOD
-        R.id.dashboard_tab_keystroke_dynamics -> DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS
-        R.id.dashboard_tab_habits -> DashboardPagerAdapter.TAB_HABITS
-        else -> -1
-    }
-
-    private fun tabIndexToTabButtonId(position: Int): Int = when (position) {
-        DashboardPagerAdapter.TAB_SUMMARY -> R.id.dashboard_tab_summary
-        DashboardPagerAdapter.TAB_TRENDS -> R.id.dashboard_tab_trends
-        DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.id.dashboard_tab_daily_activity
-        DashboardPagerAdapter.TAB_MOOD -> R.id.dashboard_tab_mood
-        DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS -> R.id.dashboard_tab_keystroke_dynamics
-        DashboardPagerAdapter.TAB_HABITS -> R.id.dashboard_tab_habits
-        else -> R.id.dashboard_tab_summary
     }
 
     companion object {
