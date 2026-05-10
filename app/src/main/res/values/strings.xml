@@ -315,6 +315,12 @@
     <string name="dashboard_range_week">Week</string>
     <string name="dashboard_range_month">Month</string>
     <string name="dashboard_range_all">All Time</string>
+    <!-- Phase 9.16: bucket-size hint shown below the active filter chip,
+         consistent across every Insights tab. -->
+    <string name="dashboard_bucket_label_format">Charts grouped by %1$s</string>
+    <string name="dashboard_bucket_unit_hourly">hour</string>
+    <string name="dashboard_bucket_unit_daily">day</string>
+    <string name="dashboard_bucket_unit_weekly">week</string>
     <!-- Phase 9.11: hourly bucket labels for the TODAY range. -->
     <string name="dashboard_hour_bucket_label">%1$02d:00</string>
     <!-- Phase 9.11: streak KPI under TODAY: just "Today" or the placeholder. -->

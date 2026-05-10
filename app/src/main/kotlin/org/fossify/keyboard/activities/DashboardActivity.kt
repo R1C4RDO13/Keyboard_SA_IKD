@@ -151,6 +151,7 @@ class DashboardActivity : SimpleActivity() {
             currentRange = newRange
             currentMoodFilter = newMood
             renderActiveFilterChip()
+            renderBucketLabel()
             if (rangeChanged || moodChanged) {
                 loadSnapshot()
             }
@@ -166,6 +167,7 @@ class DashboardActivity : SimpleActivity() {
         binding.dashboardEmptyMessage.setTextColor(getProperTextColor())
         applyChromeColors()
         renderActiveFilterChip()
+        renderBucketLabel()
         loadSnapshot()
     }
 
@@ -310,6 +312,7 @@ class DashboardActivity : SimpleActivity() {
             currentRange = IkdAggregator.Range.WEEK
             currentMoodFilter = null
             renderActiveFilterChip()
+            renderBucketLabel()
             if (rangeChanged || moodChanged) {
                 loadSnapshot()
             }
@@ -360,6 +363,24 @@ class DashboardActivity : SimpleActivity() {
             else -> rangeLabel
         }
         chip.beVisibleIf(true)
+    }
+
+    /**
+     * Phase 9.16: render the bucket-size hint below the active-filter chip.
+     * Maps the current `Range` to the bucket unit the X axis uses on the
+     * trend charts. Always visible; not gated on filter state.
+     */
+    private fun renderBucketLabel() {
+        val unitRes = when (currentRange) {
+            IkdAggregator.Range.TODAY -> R.string.dashboard_bucket_unit_hourly
+            IkdAggregator.Range.WEEK,
+            IkdAggregator.Range.MONTH -> R.string.dashboard_bucket_unit_daily
+            IkdAggregator.Range.ALL_TIME -> R.string.dashboard_bucket_unit_weekly
+        }
+        binding.dashboardBucketLabel.text = getString(
+            R.string.dashboard_bucket_label_format,
+            getString(unitRes),
+        )
     }
 
     private fun loadSnapshot() {

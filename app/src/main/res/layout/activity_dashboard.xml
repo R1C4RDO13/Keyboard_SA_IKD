@@ -99,6 +99,20 @@
                 app:closeIcon="@drawable/ic_close_vector"
                 app:closeIconVisible="true" />
 
+            <!-- Phase 9.16: bucket-size hint. The X-axis bucket of the
+                 trend charts depends on the active range — daily for
+                 Week/Month, weekly for All Time, hourly for Today. This
+                 small italic line surfaces that mapping consistently
+                 above every tab so the user is not surprised when the
+                 labels change. -->
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_bucket_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/small_margin"
+                android:textSize="@dimen/smaller_text_size"
+                android:textStyle="italic" />
+
         </LinearLayout>
 
         <!-- Phase 9.12: ViewPager2 fills the remaining vertical space. The
