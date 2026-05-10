@@ -37,8 +37,8 @@ class IkdHabitsAggregatorTest {
         productiveKeystrokes = productiveKeystrokes,
     )
 
-    private fun bucket(sessionCount: Int) = HabitsBucket(
-        label = "x",
+    private fun bucket(sessionCount: Int, label: String = "2026-05-01") = HabitsBucket(
+        label = label,
         sessionCount = sessionCount,
         avgSessionDurationMs = null,
         avgFlightMs = null,
@@ -49,33 +49,97 @@ class IkdHabitsAggregatorTest {
 
     @Test
     fun streak_emptyList_returnsZero() {
-        assertEquals(0, IkdHabitsAggregator.computeLongestStreak(emptyList()))
+        assertEquals(0, IkdHabitsAggregator.computeLongestStreak(emptyList(), Range.WEEK))
     }
 
     @Test
     fun streak_allZeros_returnsZero() {
-        val buckets = listOf(bucket(0), bucket(0), bucket(0))
-        assertEquals(0, IkdHabitsAggregator.computeLongestStreak(buckets))
+        val buckets = listOf(
+            bucket(0, "2026-05-01"),
+            bucket(0, "2026-05-02"),
+            bucket(0, "2026-05-03"),
+        )
+        assertEquals(0, IkdHabitsAggregator.computeLongestStreak(buckets, Range.WEEK))
     }
 
     @Test
-    fun streak_oneRunOfThreeWithGaps_returnsThree() {
-        // [3,0,4,5,0,1] → runs 1, 2, 1 → max 2
-        val counts = listOf(3, 0, 4, 5, 0, 1)
-        val buckets = counts.map { bucket(it) }
-        assertEquals(2, IkdHabitsAggregator.computeLongestStreak(buckets))
-    }
-
-    @Test
-    fun streak_threeContiguous_returnsThree() {
-        val buckets = listOf(bucket(1), bucket(1), bucket(1))
-        assertEquals(3, IkdHabitsAggregator.computeLongestStreak(buckets))
+    fun streak_threeConsecutiveDays_returnsThree() {
+        val buckets = listOf(
+            bucket(1, "2026-05-01"),
+            bucket(1, "2026-05-02"),
+            bucket(1, "2026-05-03"),
+        )
+        assertEquals(3, IkdHabitsAggregator.computeLongestStreak(buckets, Range.WEEK))
     }
 
     @Test
     fun streak_singleActiveBucket_returnsOne() {
-        val buckets = listOf(bucket(0), bucket(7), bucket(0))
-        assertEquals(1, IkdHabitsAggregator.computeLongestStreak(buckets))
+        val buckets = listOf(bucket(7, "2026-05-02"))
+        assertEquals(1, IkdHabitsAggregator.computeLongestStreak(buckets, Range.WEEK))
+    }
+
+    @Test
+    fun streak_isolatedDaysWithGaps_returnOne() {
+        // Phase 9.16 regression test: SQL only emits rows for active days.
+        // Three isolated days (May 1, 3, 5) used to walk as a streak of 3
+        // because the helper iterated rows blindly. The fix parses the
+        // labels and requires calendar-consecutive dates.
+        val buckets = listOf(
+            bucket(2, "2026-05-01"),
+            bucket(1, "2026-05-03"),
+            bucket(3, "2026-05-05"),
+        )
+        assertEquals(1, IkdHabitsAggregator.computeLongestStreak(buckets, Range.WEEK))
+    }
+
+    @Test
+    fun streak_mixedRunsWithGaps_returnsLongestRun() {
+        // Active days: May 1, 3, 4, 6 → runs of 1, 2, 1 → max 2.
+        val buckets = listOf(
+            bucket(3, "2026-05-01"),
+            bucket(4, "2026-05-03"),
+            bucket(5, "2026-05-04"),
+            bucket(1, "2026-05-06"),
+        )
+        assertEquals(2, IkdHabitsAggregator.computeLongestStreak(buckets, Range.WEEK))
+    }
+
+    @Test
+    fun streak_consecutiveWeeks_underAllTime_returnsRunLength() {
+        val buckets = listOf(
+            bucket(1, "2026-18"),
+            bucket(2, "2026-19"),
+            bucket(3, "2026-20"),
+        )
+        assertEquals(3, IkdHabitsAggregator.computeLongestStreak(buckets, Range.ALL_TIME))
+    }
+
+    @Test
+    fun streak_nonConsecutiveWeeks_breaks() {
+        val buckets = listOf(
+            bucket(1, "2026-18"),
+            bucket(2, "2026-20"), // skipped 19
+        )
+        assertEquals(1, IkdHabitsAggregator.computeLongestStreak(buckets, Range.ALL_TIME))
+    }
+
+    @Test
+    fun streak_consecutiveHours_underToday_returnsRunLength() {
+        val buckets = listOf(
+            bucket(2, "2026-05-10 09"),
+            bucket(1, "2026-05-10 10"),
+            bucket(3, "2026-05-10 11"),
+        )
+        assertEquals(3, IkdHabitsAggregator.computeLongestStreak(buckets, Range.TODAY))
+    }
+
+    @Test
+    fun streak_nonConsecutiveHours_breaks() {
+        val buckets = listOf(
+            bucket(1, "2026-05-10 09"),
+            bucket(2, "2026-05-10 12"), // 3-hour gap
+        )
+        assertEquals(1, IkdHabitsAggregator.computeLongestStreak(buckets, Range.TODAY))
     }
 
     // ---------- buildSnapshot ----------

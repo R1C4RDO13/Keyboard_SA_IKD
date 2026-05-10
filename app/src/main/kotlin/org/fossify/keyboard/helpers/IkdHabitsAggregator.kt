@@ -7,6 +7,12 @@ import org.fossify.keyboard.BuildConfig
 import org.fossify.keyboard.databases.IkdDatabase
 import org.fossify.keyboard.helpers.IkdAggregator.Range
 import org.fossify.keyboard.interfaces.HabitsBucketRow
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
 import java.util.Calendar
 import java.util.TimeZone
 import kotlin.system.measureTimeMillis
@@ -168,7 +174,7 @@ class IkdHabitsAggregator(private val db: IkdDatabase) {
                 null
             }
 
-            val streak = computeLongestStreak(buckets)
+            val streak = computeLongestStreak(buckets, range)
             val streakUnit = when (range) {
                 Range.TODAY -> StreakUnit.HOURS
                 Range.WEEK, Range.MONTH -> StreakUnit.DAYS
@@ -187,24 +193,85 @@ class IkdHabitsAggregator(private val db: IkdDatabase) {
         }
 
         /**
-         * Walks the bucket list (ascending key order) and counts maximal
-         * runs of `sessionCount > 0`. Returns the largest run length, or 0
-         * when the list is empty / no bucket has activity.
+         * Walks the active buckets (ascending key order) and counts maximal
+         * runs of *calendar-consecutive* keys. Returns the largest run
+         * length, or 0 when no bucket has activity.
          *
-         * No tolerance for gaps — a single zero-bucket breaks the streak.
+         * Phase 9.16 fix: the SQL `getHabitsBuckets` query only emits rows
+         * for buckets that have at least one session — empty days are
+         * absent from the result set, not present with `sessionCount = 0`.
+         * The previous implementation walked rows naively, so three
+         * isolated days (e.g. May 1, May 3, May 5) reported a streak of 3.
+         * The fix: parse adjacent bucket labels as dates/weeks/hours
+         * (per [range]) and only increment when they are calendar-
+         * consecutive. Non-consecutive labels reset the run length to 1.
          */
-        internal fun computeLongestStreak(buckets: List<HabitsBucket>): Int {
-            var longest = 0
-            var current = 0
-            for (bucket in buckets) {
-                if (bucket.sessionCount > 0) {
+        internal fun computeLongestStreak(buckets: List<HabitsBucket>, range: Range): Int {
+            val active = buckets.filter { it.sessionCount > 0 }
+            if (active.isEmpty()) return 0
+
+            var longest = 1
+            var current = 1
+            for (i in 1 until active.size) {
+                if (areConsecutive(active[i - 1].label, active[i].label, range)) {
                     current++
                     if (current > longest) longest = current
                 } else {
-                    current = 0
+                    current = 1
                 }
             }
             return longest
+        }
+
+        /**
+         * Phase 9.16: returns true when [curr] is exactly one calendar unit
+         * (day / week / hour, depending on [range]) after [prev]. Falls
+         * back to false on parse failure so a malformed label can't
+         * spuriously inflate a streak.
+         */
+        private fun areConsecutive(prev: String, curr: String, range: Range): Boolean {
+            return runCatching {
+                when (range) {
+                    Range.WEEK, Range.MONTH -> ChronoUnit.DAYS.between(
+                        LocalDate.parse(prev),
+                        LocalDate.parse(curr),
+                    ) == 1L
+                    Range.ALL_TIME -> areConsecutiveWeeks(prev, curr)
+                    Range.TODAY -> {
+                        val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH")
+                        ChronoUnit.HOURS.between(
+                            LocalDateTime.parse(prev, fmt),
+                            LocalDateTime.parse(curr, fmt),
+                        ) == 1L
+                    }
+                }
+            }.getOrDefault(false)
+        }
+
+        /**
+         * SQLite `%Y-%W` produces strings like "2026-18" — year + week
+         * number (Monday-based, 00 covers days before the first Monday of
+         * the year). Convert each to the Monday-of-that-week as a
+         * `LocalDate` and check the calendar delta is exactly 7 days.
+         * That handles year boundaries correctly: "2026-52" → "2027-00"
+         * is consecutive iff the Mondays are 7 days apart.
+         */
+        private fun areConsecutiveWeeks(prev: String, curr: String): Boolean {
+            val prevMonday = mondayOfWeek(prev) ?: return false
+            val currMonday = mondayOfWeek(curr) ?: return false
+            return ChronoUnit.DAYS.between(prevMonday, currMonday) == 7L
+        }
+
+        private fun mondayOfWeek(yearWeekLabel: String): LocalDate? {
+            val parts = yearWeekLabel.split("-")
+            if (parts.size != 2) return null
+            val year = parts[0].toIntOrNull() ?: return null
+            val week = parts[1].toIntOrNull() ?: return null
+            // SQLite %W: Monday-based, week 00 covers the partial first
+            // week (any days before the first Monday).
+            val jan1 = LocalDate.of(year, 1, 1)
+            val firstMonday = jan1.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+            return if (week == 0) jan1 else firstMonday.plusWeeks((week - 1).toLong())
         }
     }
 }

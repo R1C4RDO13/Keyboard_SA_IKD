@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 9.15: reusable KPI tile body for the Summary tab's 3x2 grid.
+
+    Inflated via `<include android:id="...">` from
+    `fragment_dashboard_summary.xml`, six times. Each include's child
+    bindings are reached via `ItemSummaryKpiTileBinding.bind(root)` from
+    `SummaryFragment`.
+
+    Phase 9.15 simplification (decision #2): the sparkline placeholder
+    strip and delta `MyTextView` from Phase 9.14.1 are removed — the
+    user's feedback was explicit ("the current tiles don't need more
+    details, so remove the lines"). Each tile is now just label + value:
+
+      - tiny uppercase label (smaller_text_size)
+      - big value (bigger_text_size, bold)
+
+    The card itself (the parent `MaterialCardView` in
+    `fragment_dashboard_summary.xml`) is the click target.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/normal_margin">
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/summary_tile_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAllCaps="true"
+        android:textSize="@dimen/smaller_text_size"
+        tools:text="Sessions" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/summary_tile_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/small_margin"
+        android:textSize="@dimen/bigger_text_size"
+        android:textStyle="bold"
+        tools:text="42" />
+
+</LinearLayout>

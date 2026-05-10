@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MoodScript — Phase 10 Identity Mockup</title>
+<style>
+  :root {
+    --bg: #f6f6f4;
+    --surface: #ffffff;
+    --ink: #1a1a1a;
+    --ink-soft: #555;
+    --ink-faint: #888;
+    --accent: #4a6fa5;
+    --accent-soft: #e8eef7;
+    --green: #2E7D32;
+    --amber: #F57F17;
+    --red: #C62828;
+    --border: #e2e2e0;
+    --radius: 12px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  /* Header */
+  header.brand {
+    display: flex; align-items: center; gap: 16px;
+    padding: 24px 0 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  header.brand .wordmark {
+    font-size: 32px; font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  header.brand .wordmark em {
+    font-style: normal;
+    background: linear-gradient(90deg, #5b8def 0%, #9d7be0 50%, #f59ea3 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  header.brand .tag {
+    color: var(--ink-faint); font-size: 14px;
+    margin-left: auto;
+  }
+
+  /* Section headers */
+  h2 {
+    font-size: 22px; font-weight: 600;
+    margin: 40px 0 8px;
+    letter-spacing: -0.01em;
+  }
+  h2 .section-num {
+    display: inline-block;
+    width: 28px; height: 28px;
+    line-height: 28px; text-align: center;
+    background: var(--ink); color: white;
+    border-radius: 50%;
+    font-size: 13px; font-weight: 700;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  .lede { color: var(--ink-soft); margin: 0 0 20px; max-width: 70ch; }
+
+  /* Decision cards */
+  .decisions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .decision {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .decision .label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  .decision .value {
+    font-size: 16px; font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .decision .detail {
+    font-size: 13px; color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 99px;
+  }
+  .badge.locked  { background: #e6f4ea; color: var(--green); }
+  .badge.open    { background: #fff4e0; color: var(--amber); }
+
+  /* Icon options */
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .icon-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column;
+  }
+  .icon-card.recommend {
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+  .icon-card .recommend-tag {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    background: var(--accent); color: white;
+    padding: 3px 8px; border-radius: 4px;
+    margin-bottom: 10px;
+    align-self: flex-start;
+  }
+  .icon-card h3 {
+    font-size: 18px; font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .icon-card .subtitle {
+    color: var(--ink-faint); font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .preview-large {
+    align-self: center;
+    margin-bottom: 16px;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  }
+  .preview-large svg { display: block; }
+  .palette-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .palette-tile {
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  }
+  .palette-tile svg { display: block; width: 100%; height: 100%; }
+  .palette-caption {
+    font-size: 11px; color: var(--ink-faint);
+    text-align: center; margin-bottom: 14px;
+  }
+  .icon-card .desc {
+    font-size: 14px; color: var(--ink-soft);
+    line-height: 1.55;
+    margin-bottom: 12px;
+  }
+  .pro-con {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+  .pro-con .pros, .pro-con .cons {
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    line-height: 1.5;
+  }
+  .pro-con .pros { background: #e6f4ea; color: var(--green); }
+  .pro-con .cons { background: #fdecec; color: var(--red); }
+  .pro-con strong { display: block; margin-bottom: 2px; font-weight: 700; }
+  .pick-row {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px;
+  }
+  .pick-row label {
+    display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer; user-select: none;
+  }
+  .pick-row .opt-id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--ink-faint); font-size: 12px;
+  }
+
+  /* Footer / next steps */
+  .next-steps {
+    margin-top: 40px;
+    padding: 20px 24px;
+    background: var(--accent-soft);
+    border-radius: var(--radius);
+    border-left: 4px solid var(--accent);
+  }
+  .next-steps h3 { margin: 0 0 8px; font-size: 16px; }
+  .next-steps ol { margin: 0; padding-left: 20px; color: var(--ink-soft); }
+  .next-steps ol li { margin-bottom: 4px; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: rgba(0,0,0,.05); padding: 1px 5px; border-radius: 3px;
+    font-size: 92%;
+  }
+  .hint { color: var(--ink-faint); font-size: 13px; font-style: italic; }
+</style>
+</head>
+<body>
+<main>
+
+<header class="brand">
+  <div class="wordmark"><em>MoodScript</em></div>
+  <div class="tag">Phase 10 — Rebranding &amp; New Identity</div>
+</header>
+
+<p class="lede">
+  Visual mockup to lock the rebrand. Decisions already made are pinned at the top;
+  the open question — which icon glyph — is below with five concrete options rendered
+  against the existing 19-colour launcher palette so you can see how each reads in real conditions.
+</p>
+
+<!-- ============================================ -->
+<!-- LOCKED DECISIONS                              -->
+<!-- ============================================ -->
+
+<h2><span class="section-num">1</span>Locked decisions</h2>
+<p class="lede">These came out of the planning conversation. Listed here for reference; not asking again.</p>
+
+<div class="decisions">
+
+  <div class="decision">
+    <div class="label"><span class="badge locked">locked</span> App name</div>
+    <div class="value">MoodScript</div>
+    <div class="detail"><strong>Mood</strong> + <strong>Script</strong>. Both pillars of the app in one word — emotional state (Mood) <em>and</em> the typing / keystroke data (Script) it's derived from. "Moodly" is already taken; this is the stronger replacement anyway.</div>
+  </div>
+
+  <div class="decision">
+    <div class="label"><span class="badge locked">locked</span> Scope</div>
+    <div class="value">Cosmetic only</div>
+    <div class="detail">Name + identity + About screen + new launcher glyph. <strong>No</strong> <code>applicationId</code> rename, <strong>no</strong> store/fastlane work, <strong>no</strong> <code>ikd.db</code> migration.</div>
+  </div>
+
+  <div class="decision">
+    <div class="label"><span class="badge locked">locked</span> About screen</div>
+    <div class="value">Local override</div>
+    <div class="detail">New <code>org.fossify.keyboard.activities.AboutActivity</code> centred on MoodScript with a small acknowledgement of the upstream Fossify project at the bottom.</div>
+  </div>
+
+  <div class="decision">
+    <div class="label"><span class="badge locked">locked</span> Palette</div>
+    <div class="value">Keep 19 colours</div>
+    <div class="detail">Existing Material-700 palette stays — versatile, costs nothing to keep. Icon picker (Settings → Customize Colors → App icon) untouched.</div>
+  </div>
+
+  <div class="decision">
+    <div class="label"><span class="badge locked">locked</span> Launcher glyph</div>
+    <div class="value">Single new design</div>
+    <div class="detail">One new foreground vector replaces the current keyboard-with-dots glyph. Applied across all 19 background colours via the existing adaptive-icon mechanism.</div>
+  </div>
+
+  <div class="decision">
+    <div class="label"><span class="badge locked">locked</span> Constraint</div>
+    <div class="value">White-on-colour foreground</div>
+    <div class="detail">Glyph must read cleanly on all 19 background colours, so it has to be a strong silhouette in white (or near-white). No multi-colour glyphs.</div>
+  </div>
+
+</div>
+
+<!-- ============================================ -->
+<!-- ICON GLYPH OPTIONS                            -->
+<!-- ============================================ -->
+
+<h2><span class="section-num">2</span>Icon glyph — pick one</h2>
+<p class="lede">
+  Seven candidates. Each shows a large preview, a strip of mini-tiles against eight representative background colours from the 19-colour palette,
+  and brief pros/cons. <span class="hint">Tip: open this file in your browser at full width; the radio buttons remember your pick on this page.</span>
+</p>
+
+<div class="icon-grid">
+
+  <!-- ========= OPTION A: Soft smiley face ========= -->
+  <div class="icon-card">
+    <h3>A · Soft smiley face</h3>
+    <div class="subtitle">Direct mood-app signal · most recognisable</div>
+
+    <div class="preview-large">
+      <svg width="128" height="128" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <rect width="512" height="512" fill="#5b8def"/>
+        <circle cx="200" cy="220" r="22" fill="#fff"/>
+        <circle cx="312" cy="220" r="22" fill="#fff"/>
+        <path d="M 180 300 Q 256 370, 332 300" stroke="#fff" stroke-width="22" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+
+    <div class="palette-row">
+      <!-- 8 representative palette tiles, glyph rendered in white on each -->
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#D32F2F"/><circle cx="38" cy="42" r="5" fill="#fff"/><circle cx="62" cy="42" r="5" fill="#fff"/><path d="M 34 60 Q 50 72, 66 60" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#7B1FA2"/><circle cx="38" cy="42" r="5" fill="#fff"/><circle cx="62" cy="42" r="5" fill="#fff"/><path d="M 34 60 Q 50 72, 66 60" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1976D2"/><circle cx="38" cy="42" r="5" fill="#fff"/><circle cx="62" cy="42" r="5" fill="#fff"/><path d="M 34 60 Q 50 72, 66 60" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#00796B"/><circle cx="38" cy="42" r="5" fill="#fff"/><circle cx="62" cy="42" r="5" fill="#fff"/><path d="M 34 60 Q 50 72, 66 60" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#388E3C"/><circle cx="38" cy="42" r="5" fill="#fff"/><circle cx="62" cy="42" r="5" fill="#fff"/><path d="M 34 60 Q 50 72, 66 60" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#FBC02D"/><circle cx="38" cy="42" r="5" fill="#fff"/><circle cx="62" cy="42" r="5" fill="#fff"/><path d="M 34 60 Q 50 72, 66 60" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#F57C00"/><circle cx="38" cy="42" r="5" fill="#fff"/><circle cx="62" cy="42" r="5" fill="#fff"/><path d="M 34 60 Q 50 72, 66 60" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#212121"/><circle cx="38" cy="42" r="5" fill="#fff"/><circle cx="62" cy="42" r="5" fill="#fff"/><path d="M 34 60 Q 50 72, 66 60" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+    </div>
+    <div class="palette-caption">red · purple · blue · teal · green · yellow · orange · grey-black</div>
+
+    <div class="desc">
+      A round face with two dot eyes and a soft smile arc. Reads instantly as a mood app —
+      no learning curve, no parsing required.
+    </div>
+
+    <div class="pro-con">
+      <div class="pros"><strong>Pros</strong>Universally legible · scales to launcher pixel sizes · "I check in on my mood here" is obvious</div>
+      <div class="cons"><strong>Cons</strong>Risks looking like Daylio / How We Feel / 100 other mood apps · doesn't hint at typing/keyboard at all</div>
+    </div>
+
+    <div class="pick-row">
+      <label><input type="radio" name="icon-pick" value="A"> Pick this one</label>
+      <span class="opt-id">option A</span>
+    </div>
+  </div>
+
+  <!-- ========= OPTION B: Concentric pulse rings ========= -->
+  <div class="icon-card">
+    <h3>B · Concentric pulse rings</h3>
+    <div class="subtitle">Abstract · mood radiating from a tap</div>
+
+    <div class="preview-large">
+      <svg width="128" height="128" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <rect width="512" height="512" fill="#9d7be0"/>
+        <circle cx="256" cy="256" r="32" fill="#fff"/>
+        <circle cx="256" cy="256" r="80" fill="none" stroke="#fff" stroke-width="14" opacity="0.7"/>
+        <circle cx="256" cy="256" r="130" fill="none" stroke="#fff" stroke-width="10" opacity="0.4"/>
+      </svg>
+    </div>
+
+    <div class="palette-row">
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#D32F2F"/><circle cx="50" cy="50" r="7" fill="#fff"/><circle cx="50" cy="50" r="17" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#7B1FA2"/><circle cx="50" cy="50" r="7" fill="#fff"/><circle cx="50" cy="50" r="17" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1976D2"/><circle cx="50" cy="50" r="7" fill="#fff"/><circle cx="50" cy="50" r="17" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#00796B"/><circle cx="50" cy="50" r="7" fill="#fff"/><circle cx="50" cy="50" r="17" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#388E3C"/><circle cx="50" cy="50" r="7" fill="#fff"/><circle cx="50" cy="50" r="17" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#FBC02D"/><circle cx="50" cy="50" r="7" fill="#fff"/><circle cx="50" cy="50" r="17" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#F57C00"/><circle cx="50" cy="50" r="7" fill="#fff"/><circle cx="50" cy="50" r="17" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#212121"/><circle cx="50" cy="50" r="7" fill="#fff"/><circle cx="50" cy="50" r="17" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/></svg></div>
+    </div>
+    <div class="palette-caption">same eight backgrounds — note how it stays calm/legible across all of them</div>
+
+    <div class="desc">
+      A central dot with two soft rings expanding outward. Reads as <em>"a tap, and something propagates"</em> —
+      maps to the project's whole mission: a single keystroke yields a signal about your state.
+      Distinct from existing mood apps; works equally well for "anxiety control" and "self-knowledge"
+      framing without painting a face on it.
+    </div>
+
+    <div class="pro-con">
+      <div class="pros"><strong>Pros</strong>Distinctive · scales beautifully · respects the wellness/calm tone · ages well</div>
+      <div class="cons"><strong>Cons</strong>Less literal — first-time install needs a tagline to land · could look like a wifi or radar icon at small sizes</div>
+    </div>
+
+    <div class="pick-row">
+      <label><input type="radio" name="icon-pick" value="B"> Pick this one</label>
+      <span class="opt-id">option B</span>
+    </div>
+  </div>
+
+  <!-- ========= OPTION C: Letter M wordmark ========= -->
+  <div class="icon-card">
+    <h3>C · "M" wordmark</h3>
+    <div class="subtitle">Brand initial · letter-mark approach</div>
+
+    <div class="preview-large">
+      <svg width="128" height="128" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <rect width="512" height="512" fill="#f59ea3"/>
+        <path d="M 130 360 L 130 170 Q 130 150, 150 150 L 165 150 Q 180 150, 188 168 L 256 320 L 324 168 Q 332 150, 347 150 L 362 150 Q 382 150, 382 170 L 382 360"
+              stroke="#fff" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+
+    <div class="palette-row">
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#D32F2F"/><path d="M 26 70 L 26 32 Q 26 28 30 28 L 33 28 Q 36 28 38 32 L 50 62 L 62 32 Q 64 28 67 28 L 70 28 Q 74 28 74 32 L 74 70" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#7B1FA2"/><path d="M 26 70 L 26 32 Q 26 28 30 28 L 33 28 Q 36 28 38 32 L 50 62 L 62 32 Q 64 28 67 28 L 70 28 Q 74 28 74 32 L 74 70" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1976D2"/><path d="M 26 70 L 26 32 Q 26 28 30 28 L 33 28 Q 36 28 38 32 L 50 62 L 62 32 Q 64 28 67 28 L 70 28 Q 74 28 74 32 L 74 70" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#00796B"/><path d="M 26 70 L 26 32 Q 26 28 30 28 L 33 28 Q 36 28 38 32 L 50 62 L 62 32 Q 64 28 67 28 L 70 28 Q 74 28 74 32 L 74 70" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#388E3C"/><path d="M 26 70 L 26 32 Q 26 28 30 28 L 33 28 Q 36 28 38 32 L 50 62 L 62 32 Q 64 28 67 28 L 70 28 Q 74 28 74 32 L 74 70" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#FBC02D"/><path d="M 26 70 L 26 32 Q 26 28 30 28 L 33 28 Q 36 28 38 32 L 50 62 L 62 32 Q 64 28 67 28 L 70 28 Q 74 28 74 32 L 74 70" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#F57C00"/><path d="M 26 70 L 26 32 Q 26 28 30 28 L 33 28 Q 36 28 38 32 L 50 62 L 62 32 Q 64 28 67 28 L 70 28 Q 74 28 74 32 L 74 70" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#212121"/><path d="M 26 70 L 26 32 Q 26 28 30 28 L 33 28 Q 36 28 38 32 L 50 62 L 62 32 Q 64 28 67 28 L 70 28 Q 74 28 74 32 L 74 70" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+    </div>
+    <div class="palette-caption">letter-marks read at all 8 backgrounds; rounded strokes keep it soft</div>
+
+    <div class="desc">
+      Letter <strong>M</strong> with rounded soft strokes, drawn as a single continuous path.
+      Most uniquely "MoodScript" — the brand initial is the icon. No glyph illustration needed; pure typography.
+    </div>
+
+    <div class="pro-con">
+      <div class="pros"><strong>Pros</strong>Most directly tied to the brand name · cheapest to design · timeless</div>
+      <div class="cons"><strong>Cons</strong>Doesn't say "mood" or "keyboard" or anything but "M" · risk of being confused for Microsoft / Medium / a thousand other M-mark apps</div>
+    </div>
+
+    <div class="pick-row">
+      <label><input type="radio" name="icon-pick" value="C"> Pick this one</label>
+      <span class="opt-id">option C</span>
+    </div>
+  </div>
+
+  <!-- ========= OPTION D: Speech bubble + mood dots ========= -->
+  <div class="icon-card">
+    <h3>D · Bubble + mood dots</h3>
+    <div class="subtitle">Daily check-in framing</div>
+
+    <div class="preview-large">
+      <svg width="128" height="128" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <rect width="512" height="512" fill="#0288D1"/>
+        <path d="M 140 160 L 372 160 Q 392 160, 392 180 L 392 310 Q 392 330, 372 330 L 280 330 L 240 380 L 240 330 L 140 330 Q 120 330, 120 310 L 120 180 Q 120 160, 140 160 Z"
+              fill="none" stroke="#fff" stroke-width="20" stroke-linejoin="round"/>
+        <circle cx="190" cy="245" r="18" fill="#fff"/>
+        <circle cx="256" cy="245" r="14" fill="#fff" opacity="0.7"/>
+        <circle cx="316" cy="245" r="22" fill="#fff" opacity="0.85"/>
+      </svg>
+    </div>
+
+    <div class="palette-row">
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#D32F2F"/><path d="M 28 32 L 72 32 Q 76 32 76 36 L 76 60 Q 76 64 72 64 L 56 64 L 48 74 L 48 64 L 28 64 Q 24 64 24 60 L 24 36 Q 24 32 28 32 Z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/><circle cx="38" cy="48" r="4" fill="#fff"/><circle cx="50" cy="48" r="3" fill="#fff" opacity="0.7"/><circle cx="62" cy="48" r="5" fill="#fff" opacity="0.85"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#7B1FA2"/><path d="M 28 32 L 72 32 Q 76 32 76 36 L 76 60 Q 76 64 72 64 L 56 64 L 48 74 L 48 64 L 28 64 Q 24 64 24 60 L 24 36 Q 24 32 28 32 Z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/><circle cx="38" cy="48" r="4" fill="#fff"/><circle cx="50" cy="48" r="3" fill="#fff" opacity="0.7"/><circle cx="62" cy="48" r="5" fill="#fff" opacity="0.85"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1976D2"/><path d="M 28 32 L 72 32 Q 76 32 76 36 L 76 60 Q 76 64 72 64 L 56 64 L 48 74 L 48 64 L 28 64 Q 24 64 24 60 L 24 36 Q 24 32 28 32 Z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/><circle cx="38" cy="48" r="4" fill="#fff"/><circle cx="50" cy="48" r="3" fill="#fff" opacity="0.7"/><circle cx="62" cy="48" r="5" fill="#fff" opacity="0.85"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#00796B"/><path d="M 28 32 L 72 32 Q 76 32 76 36 L 76 60 Q 76 64 72 64 L 56 64 L 48 74 L 48 64 L 28 64 Q 24 64 24 60 L 24 36 Q 24 32 28 32 Z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/><circle cx="38" cy="48" r="4" fill="#fff"/><circle cx="50" cy="48" r="3" fill="#fff" opacity="0.7"/><circle cx="62" cy="48" r="5" fill="#fff" opacity="0.85"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#388E3C"/><path d="M 28 32 L 72 32 Q 76 32 76 36 L 76 60 Q 76 64 72 64 L 56 64 L 48 74 L 48 64 L 28 64 Q 24 64 24 60 L 24 36 Q 24 32 28 32 Z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/><circle cx="38" cy="48" r="4" fill="#fff"/><circle cx="50" cy="48" r="3" fill="#fff" opacity="0.7"/><circle cx="62" cy="48" r="5" fill="#fff" opacity="0.85"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#FBC02D"/><path d="M 28 32 L 72 32 Q 76 32 76 36 L 76 60 Q 76 64 72 64 L 56 64 L 48 74 L 48 64 L 28 64 Q 24 64 24 60 L 24 36 Q 24 32 28 32 Z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/><circle cx="38" cy="48" r="4" fill="#fff"/><circle cx="50" cy="48" r="3" fill="#fff" opacity="0.7"/><circle cx="62" cy="48" r="5" fill="#fff" opacity="0.85"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#F57C00"/><path d="M 28 32 L 72 32 Q 76 32 76 36 L 76 60 Q 76 64 72 64 L 56 64 L 48 74 L 48 64 L 28 64 Q 24 64 24 60 L 24 36 Q 24 32 28 32 Z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/><circle cx="38" cy="48" r="4" fill="#fff"/><circle cx="50" cy="48" r="3" fill="#fff" opacity="0.7"/><circle cx="62" cy="48" r="5" fill="#fff" opacity="0.85"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#212121"/><path d="M 28 32 L 72 32 Q 76 32 76 36 L 76 60 Q 76 64 72 64 L 56 64 L 48 74 L 48 64 L 28 64 Q 24 64 24 60 L 24 36 Q 24 32 28 32 Z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/><circle cx="38" cy="48" r="4" fill="#fff"/><circle cx="50" cy="48" r="3" fill="#fff" opacity="0.7"/><circle cx="62" cy="48" r="5" fill="#fff" opacity="0.85"/></svg></div>
+    </div>
+    <div class="palette-caption">three dots inside a speech bubble — "how do you feel today?"</div>
+
+    <div class="desc">
+      Speech-bubble outline with three dots of varying sizes inside — like the typing-indicator dots
+      in a chat. Says <em>"check in here"</em> and quietly hints at the keyboard origin (the dots are also keystrokes).
+    </div>
+
+    <div class="pro-con">
+      <div class="pros"><strong>Pros</strong>Carries both the chat-bubble and the keystroke-dots reading · most "warm" / human of the five</div>
+      <div class="cons"><strong>Cons</strong>Most detail of any option — risks getting muddy at small launcher sizes · could read as a generic messaging app</div>
+    </div>
+
+    <div class="pick-row">
+      <label><input type="radio" name="icon-pick" value="D"> Pick this one</label>
+      <span class="opt-id">option D</span>
+    </div>
+  </div>
+
+  <!-- ========= OPTION E: Smile + pulse line (hybrid) ========= -->
+  <div class="icon-card">
+    <h3>E · Smile + pulse line</h3>
+    <div class="subtitle">Hybrid · mood + measurement in one mark</div>
+
+    <div class="preview-large">
+      <svg width="128" height="128" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <rect width="512" height="512" fill="#388E3C"/>
+        <!-- Smile arc -->
+        <path d="M 150 230 Q 256 360, 362 230" stroke="#fff" stroke-width="22" stroke-linecap="round" fill="none" opacity="0.55"/>
+        <!-- Pulse line crossing through -->
+        <path d="M 110 290 L 200 290 L 220 240 L 256 340 L 292 240 L 312 290 L 402 290"
+              stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+
+    <div class="palette-row">
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#D32F2F"/><path d="M 30 45 Q 50 70, 70 45" stroke="#fff" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.55"/><path d="M 22 57 L 40 57 L 44 47 L 50 67 L 56 47 L 60 57 L 78 57" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#7B1FA2"/><path d="M 30 45 Q 50 70, 70 45" stroke="#fff" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.55"/><path d="M 22 57 L 40 57 L 44 47 L 50 67 L 56 47 L 60 57 L 78 57" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1976D2"/><path d="M 30 45 Q 50 70, 70 45" stroke="#fff" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.55"/><path d="M 22 57 L 40 57 L 44 47 L 50 67 L 56 47 L 60 57 L 78 57" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#00796B"/><path d="M 30 45 Q 50 70, 70 45" stroke="#fff" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.55"/><path d="M 22 57 L 40 57 L 44 47 L 50 67 L 56 47 L 60 57 L 78 57" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#388E3C"/><path d="M 30 45 Q 50 70, 70 45" stroke="#fff" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.55"/><path d="M 22 57 L 40 57 L 44 47 L 50 67 L 56 47 L 60 57 L 78 57" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#FBC02D"/><path d="M 30 45 Q 50 70, 70 45" stroke="#fff" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.55"/><path d="M 22 57 L 40 57 L 44 47 L 50 67 L 56 47 L 60 57 L 78 57" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#F57C00"/><path d="M 30 45 Q 50 70, 70 45" stroke="#fff" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.55"/><path d="M 22 57 L 40 57 L 44 47 L 50 67 L 56 47 L 60 57 L 78 57" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#212121"/><path d="M 30 45 Q 50 70, 70 45" stroke="#fff" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.55"/><path d="M 22 57 L 40 57 L 44 47 L 50 67 L 56 47 L 60 57 L 78 57" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+    </div>
+    <div class="palette-caption">faint smile in background, clinical pulse line in foreground</div>
+
+    <div class="desc">
+      A faded smile arc behind a medical-style pulse line. Captures both halves of the mission —
+      mood (smile) and measurement (pulse). Slightly clinical but warm; reads as
+      <em>"this app reads my emotional pulse from how I type."</em>
+    </div>
+
+    <div class="pro-con">
+      <div class="pros"><strong>Pros</strong>Tells the whole story in one mark · most aligned with the IKD-research framing · differentiates from pure mood apps</div>
+      <div class="cons"><strong>Cons</strong>Two overlaid layers can crowd at launcher sizes · pulse line risks reading as a fitness/heart-rate app</div>
+    </div>
+
+    <div class="pick-row">
+      <label><input type="radio" name="icon-pick" value="E"> Pick this one</label>
+      <span class="opt-id">option E</span>
+    </div>
+  </div>
+
+  <!-- ========= OPTION F: Bigger centred keyboard cradled by concentric hearts ========= -->
+  <div class="icon-card">
+    <h3>F · Keyboard cradled by hearts</h3>
+    <div class="subtitle">Bigger centred keyboard (G-style) · concentric heart outlines as halo</div>
+
+    <div class="preview-large">
+      <svg width="128" height="128" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <rect width="512" height="512" fill="#C2185B"/>
+        <!-- Outer heart — s=1.50 (trimmed) -->
+        <path d="M 256 459 C 256 459, 37 301, 37 166 C 37 91, 101 53, 172 53 C 217 53, 247 80, 256 110 C 265 80, 295 53, 340 53 C 411 53, 475 91, 475 166 C 475 301, 256 459, 256 459 Z"
+              stroke="#fff" stroke-width="9" fill="none" opacity="0.27" stroke-linejoin="round"/>
+        <!-- Middle heart — s=1.25 -->
+        <path d="M 256 425 C 256 425, 74 294, 74 181 C 74 119, 127 87, 186 87 C 224 87, 249 110, 256 135 C 264 110, 289 87, 326 87 C 385 87, 439 119, 439 181 C 439 294, 256 425, 256 425 Z"
+              stroke="#fff" stroke-width="11" fill="none" opacity="0.45" stroke-linejoin="round"/>
+        <!-- Inner heart — s=1.00 (just barely outside keyboard) -->
+        <path d="M 256 391 C 256 391, 110 286, 110 196 C 110 146, 153 121, 200 121 C 230 121, 250 139, 256 159 C 262 139, 282 121, 312 121 C 359 121, 402 146, 402 196 C 402 286, 256 391, 256 391 Z"
+              stroke="#fff" stroke-width="13" fill="none" opacity="0.7" stroke-linejoin="round"/>
+        <!-- Centred keyboard, G-style: outline + solid dots/spacebar. 220x110 (scaled down from 260x130) -->
+        <rect x="146" y="201" width="220" height="110" rx="12" ry="12" fill="none" stroke="#fff" stroke-width="12"/>
+        <circle cx="190" cy="225" r="7" fill="#fff"/>
+        <circle cx="223" cy="225" r="7" fill="#fff"/>
+        <circle cx="256" cy="225" r="7" fill="#fff"/>
+        <circle cx="289" cy="225" r="7" fill="#fff"/>
+        <circle cx="322" cy="225" r="7" fill="#fff"/>
+        <circle cx="190" cy="258" r="7" fill="#fff"/>
+        <circle cx="223" cy="258" r="7" fill="#fff"/>
+        <circle cx="256" cy="258" r="7" fill="#fff"/>
+        <circle cx="289" cy="258" r="7" fill="#fff"/>
+        <circle cx="322" cy="258" r="7" fill="#fff"/>
+        <rect x="220" y="287" width="72" height="10" rx="5" fill="#fff"/>
+      </svg>
+    </div>
+
+    <div class="palette-row">
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#D32F2F"/><path d="M 50 90 C 50 90, 7 59, 7 32 C 7 18, 20 11, 34 11 C 42 11, 48 16, 50 22 C 52 16, 58 11, 66 11 C 80 11, 93 18, 93 32 C 93 59, 50 90, 50 90 Z" stroke="#fff" stroke-width="1.7" fill="none" opacity="0.27" stroke-linejoin="round"/><path d="M 50 83 C 50 83, 14 57, 14 35 C 14 23, 25 17, 36 17 C 44 17, 49 22, 50 26 C 52 22, 56 17, 64 17 C 75 17, 86 23, 86 35 C 86 57, 50 83, 50 83 Z" stroke="#fff" stroke-width="2.1" fill="none" opacity="0.5" stroke-linejoin="round"/><path d="M 50 76 C 50 76, 22 56, 22 38 C 22 28, 30 24, 39 24 C 45 24, 49 27, 50 31 C 51 27, 55 24, 61 24 C 70 24, 78 28, 78 38 C 78 56, 50 76, 50 76 Z" stroke="#fff" stroke-width="2.5" fill="none" opacity="0.75" stroke-linejoin="round"/><rect x="29" y="40" width="43" height="21" rx="2.4" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="45" r="1.5" fill="#fff"/><circle cx="44" cy="45" r="1.5" fill="#fff"/><circle cx="50" cy="45" r="1.5" fill="#fff"/><circle cx="56" cy="45" r="1.5" fill="#fff"/><circle cx="62" cy="45" r="1.5" fill="#fff"/><circle cx="38" cy="51" r="1.5" fill="#fff"/><circle cx="44" cy="51" r="1.5" fill="#fff"/><circle cx="50" cy="51" r="1.5" fill="#fff"/><circle cx="56" cy="51" r="1.5" fill="#fff"/><circle cx="62" cy="51" r="1.5" fill="#fff"/><rect x="43" y="57" width="14" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#7B1FA2"/><path d="M 50 90 C 50 90, 7 59, 7 32 C 7 18, 20 11, 34 11 C 42 11, 48 16, 50 22 C 52 16, 58 11, 66 11 C 80 11, 93 18, 93 32 C 93 59, 50 90, 50 90 Z" stroke="#fff" stroke-width="1.7" fill="none" opacity="0.27" stroke-linejoin="round"/><path d="M 50 83 C 50 83, 14 57, 14 35 C 14 23, 25 17, 36 17 C 44 17, 49 22, 50 26 C 52 22, 56 17, 64 17 C 75 17, 86 23, 86 35 C 86 57, 50 83, 50 83 Z" stroke="#fff" stroke-width="2.1" fill="none" opacity="0.5" stroke-linejoin="round"/><path d="M 50 76 C 50 76, 22 56, 22 38 C 22 28, 30 24, 39 24 C 45 24, 49 27, 50 31 C 51 27, 55 24, 61 24 C 70 24, 78 28, 78 38 C 78 56, 50 76, 50 76 Z" stroke="#fff" stroke-width="2.5" fill="none" opacity="0.75" stroke-linejoin="round"/><rect x="29" y="40" width="43" height="21" rx="2.4" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="45" r="1.5" fill="#fff"/><circle cx="44" cy="45" r="1.5" fill="#fff"/><circle cx="50" cy="45" r="1.5" fill="#fff"/><circle cx="56" cy="45" r="1.5" fill="#fff"/><circle cx="62" cy="45" r="1.5" fill="#fff"/><circle cx="38" cy="51" r="1.5" fill="#fff"/><circle cx="44" cy="51" r="1.5" fill="#fff"/><circle cx="50" cy="51" r="1.5" fill="#fff"/><circle cx="56" cy="51" r="1.5" fill="#fff"/><circle cx="62" cy="51" r="1.5" fill="#fff"/><rect x="43" y="57" width="14" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1976D2"/><path d="M 50 90 C 50 90, 7 59, 7 32 C 7 18, 20 11, 34 11 C 42 11, 48 16, 50 22 C 52 16, 58 11, 66 11 C 80 11, 93 18, 93 32 C 93 59, 50 90, 50 90 Z" stroke="#fff" stroke-width="1.7" fill="none" opacity="0.27" stroke-linejoin="round"/><path d="M 50 83 C 50 83, 14 57, 14 35 C 14 23, 25 17, 36 17 C 44 17, 49 22, 50 26 C 52 22, 56 17, 64 17 C 75 17, 86 23, 86 35 C 86 57, 50 83, 50 83 Z" stroke="#fff" stroke-width="2.1" fill="none" opacity="0.5" stroke-linejoin="round"/><path d="M 50 76 C 50 76, 22 56, 22 38 C 22 28, 30 24, 39 24 C 45 24, 49 27, 50 31 C 51 27, 55 24, 61 24 C 70 24, 78 28, 78 38 C 78 56, 50 76, 50 76 Z" stroke="#fff" stroke-width="2.5" fill="none" opacity="0.75" stroke-linejoin="round"/><rect x="29" y="40" width="43" height="21" rx="2.4" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="45" r="1.5" fill="#fff"/><circle cx="44" cy="45" r="1.5" fill="#fff"/><circle cx="50" cy="45" r="1.5" fill="#fff"/><circle cx="56" cy="45" r="1.5" fill="#fff"/><circle cx="62" cy="45" r="1.5" fill="#fff"/><circle cx="38" cy="51" r="1.5" fill="#fff"/><circle cx="44" cy="51" r="1.5" fill="#fff"/><circle cx="50" cy="51" r="1.5" fill="#fff"/><circle cx="56" cy="51" r="1.5" fill="#fff"/><circle cx="62" cy="51" r="1.5" fill="#fff"/><rect x="43" y="57" width="14" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#00796B"/><path d="M 50 90 C 50 90, 7 59, 7 32 C 7 18, 20 11, 34 11 C 42 11, 48 16, 50 22 C 52 16, 58 11, 66 11 C 80 11, 93 18, 93 32 C 93 59, 50 90, 50 90 Z" stroke="#fff" stroke-width="1.7" fill="none" opacity="0.27" stroke-linejoin="round"/><path d="M 50 83 C 50 83, 14 57, 14 35 C 14 23, 25 17, 36 17 C 44 17, 49 22, 50 26 C 52 22, 56 17, 64 17 C 75 17, 86 23, 86 35 C 86 57, 50 83, 50 83 Z" stroke="#fff" stroke-width="2.1" fill="none" opacity="0.5" stroke-linejoin="round"/><path d="M 50 76 C 50 76, 22 56, 22 38 C 22 28, 30 24, 39 24 C 45 24, 49 27, 50 31 C 51 27, 55 24, 61 24 C 70 24, 78 28, 78 38 C 78 56, 50 76, 50 76 Z" stroke="#fff" stroke-width="2.5" fill="none" opacity="0.75" stroke-linejoin="round"/><rect x="29" y="40" width="43" height="21" rx="2.4" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="45" r="1.5" fill="#fff"/><circle cx="44" cy="45" r="1.5" fill="#fff"/><circle cx="50" cy="45" r="1.5" fill="#fff"/><circle cx="56" cy="45" r="1.5" fill="#fff"/><circle cx="62" cy="45" r="1.5" fill="#fff"/><circle cx="38" cy="51" r="1.5" fill="#fff"/><circle cx="44" cy="51" r="1.5" fill="#fff"/><circle cx="50" cy="51" r="1.5" fill="#fff"/><circle cx="56" cy="51" r="1.5" fill="#fff"/><circle cx="62" cy="51" r="1.5" fill="#fff"/><rect x="43" y="57" width="14" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#388E3C"/><path d="M 50 90 C 50 90, 7 59, 7 32 C 7 18, 20 11, 34 11 C 42 11, 48 16, 50 22 C 52 16, 58 11, 66 11 C 80 11, 93 18, 93 32 C 93 59, 50 90, 50 90 Z" stroke="#fff" stroke-width="1.7" fill="none" opacity="0.27" stroke-linejoin="round"/><path d="M 50 83 C 50 83, 14 57, 14 35 C 14 23, 25 17, 36 17 C 44 17, 49 22, 50 26 C 52 22, 56 17, 64 17 C 75 17, 86 23, 86 35 C 86 57, 50 83, 50 83 Z" stroke="#fff" stroke-width="2.1" fill="none" opacity="0.5" stroke-linejoin="round"/><path d="M 50 76 C 50 76, 22 56, 22 38 C 22 28, 30 24, 39 24 C 45 24, 49 27, 50 31 C 51 27, 55 24, 61 24 C 70 24, 78 28, 78 38 C 78 56, 50 76, 50 76 Z" stroke="#fff" stroke-width="2.5" fill="none" opacity="0.75" stroke-linejoin="round"/><rect x="29" y="40" width="43" height="21" rx="2.4" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="45" r="1.5" fill="#fff"/><circle cx="44" cy="45" r="1.5" fill="#fff"/><circle cx="50" cy="45" r="1.5" fill="#fff"/><circle cx="56" cy="45" r="1.5" fill="#fff"/><circle cx="62" cy="45" r="1.5" fill="#fff"/><circle cx="38" cy="51" r="1.5" fill="#fff"/><circle cx="44" cy="51" r="1.5" fill="#fff"/><circle cx="50" cy="51" r="1.5" fill="#fff"/><circle cx="56" cy="51" r="1.5" fill="#fff"/><circle cx="62" cy="51" r="1.5" fill="#fff"/><rect x="43" y="57" width="14" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#FBC02D"/><path d="M 50 90 C 50 90, 7 59, 7 32 C 7 18, 20 11, 34 11 C 42 11, 48 16, 50 22 C 52 16, 58 11, 66 11 C 80 11, 93 18, 93 32 C 93 59, 50 90, 50 90 Z" stroke="#fff" stroke-width="1.7" fill="none" opacity="0.27" stroke-linejoin="round"/><path d="M 50 83 C 50 83, 14 57, 14 35 C 14 23, 25 17, 36 17 C 44 17, 49 22, 50 26 C 52 22, 56 17, 64 17 C 75 17, 86 23, 86 35 C 86 57, 50 83, 50 83 Z" stroke="#fff" stroke-width="2.1" fill="none" opacity="0.5" stroke-linejoin="round"/><path d="M 50 76 C 50 76, 22 56, 22 38 C 22 28, 30 24, 39 24 C 45 24, 49 27, 50 31 C 51 27, 55 24, 61 24 C 70 24, 78 28, 78 38 C 78 56, 50 76, 50 76 Z" stroke="#fff" stroke-width="2.5" fill="none" opacity="0.75" stroke-linejoin="round"/><rect x="29" y="40" width="43" height="21" rx="2.4" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="45" r="1.5" fill="#fff"/><circle cx="44" cy="45" r="1.5" fill="#fff"/><circle cx="50" cy="45" r="1.5" fill="#fff"/><circle cx="56" cy="45" r="1.5" fill="#fff"/><circle cx="62" cy="45" r="1.5" fill="#fff"/><circle cx="38" cy="51" r="1.5" fill="#fff"/><circle cx="44" cy="51" r="1.5" fill="#fff"/><circle cx="50" cy="51" r="1.5" fill="#fff"/><circle cx="56" cy="51" r="1.5" fill="#fff"/><circle cx="62" cy="51" r="1.5" fill="#fff"/><rect x="43" y="57" width="14" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#F57C00"/><path d="M 50 90 C 50 90, 7 59, 7 32 C 7 18, 20 11, 34 11 C 42 11, 48 16, 50 22 C 52 16, 58 11, 66 11 C 80 11, 93 18, 93 32 C 93 59, 50 90, 50 90 Z" stroke="#fff" stroke-width="1.7" fill="none" opacity="0.27" stroke-linejoin="round"/><path d="M 50 83 C 50 83, 14 57, 14 35 C 14 23, 25 17, 36 17 C 44 17, 49 22, 50 26 C 52 22, 56 17, 64 17 C 75 17, 86 23, 86 35 C 86 57, 50 83, 50 83 Z" stroke="#fff" stroke-width="2.1" fill="none" opacity="0.5" stroke-linejoin="round"/><path d="M 50 76 C 50 76, 22 56, 22 38 C 22 28, 30 24, 39 24 C 45 24, 49 27, 50 31 C 51 27, 55 24, 61 24 C 70 24, 78 28, 78 38 C 78 56, 50 76, 50 76 Z" stroke="#fff" stroke-width="2.5" fill="none" opacity="0.75" stroke-linejoin="round"/><rect x="29" y="40" width="43" height="21" rx="2.4" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="45" r="1.5" fill="#fff"/><circle cx="44" cy="45" r="1.5" fill="#fff"/><circle cx="50" cy="45" r="1.5" fill="#fff"/><circle cx="56" cy="45" r="1.5" fill="#fff"/><circle cx="62" cy="45" r="1.5" fill="#fff"/><circle cx="38" cy="51" r="1.5" fill="#fff"/><circle cx="44" cy="51" r="1.5" fill="#fff"/><circle cx="50" cy="51" r="1.5" fill="#fff"/><circle cx="56" cy="51" r="1.5" fill="#fff"/><circle cx="62" cy="51" r="1.5" fill="#fff"/><rect x="43" y="57" width="14" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#212121"/><path d="M 50 90 C 50 90, 7 59, 7 32 C 7 18, 20 11, 34 11 C 42 11, 48 16, 50 22 C 52 16, 58 11, 66 11 C 80 11, 93 18, 93 32 C 93 59, 50 90, 50 90 Z" stroke="#fff" stroke-width="1.7" fill="none" opacity="0.27" stroke-linejoin="round"/><path d="M 50 83 C 50 83, 14 57, 14 35 C 14 23, 25 17, 36 17 C 44 17, 49 22, 50 26 C 52 22, 56 17, 64 17 C 75 17, 86 23, 86 35 C 86 57, 50 83, 50 83 Z" stroke="#fff" stroke-width="2.1" fill="none" opacity="0.5" stroke-linejoin="round"/><path d="M 50 76 C 50 76, 22 56, 22 38 C 22 28, 30 24, 39 24 C 45 24, 49 27, 50 31 C 51 27, 55 24, 61 24 C 70 24, 78 28, 78 38 C 78 56, 50 76, 50 76 Z" stroke="#fff" stroke-width="2.5" fill="none" opacity="0.75" stroke-linejoin="round"/><rect x="29" y="40" width="43" height="21" rx="2.4" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="45" r="1.5" fill="#fff"/><circle cx="44" cy="45" r="1.5" fill="#fff"/><circle cx="50" cy="45" r="1.5" fill="#fff"/><circle cx="56" cy="45" r="1.5" fill="#fff"/><circle cx="62" cy="45" r="1.5" fill="#fff"/><circle cx="38" cy="51" r="1.5" fill="#fff"/><circle cx="44" cy="51" r="1.5" fill="#fff"/><circle cx="50" cy="51" r="1.5" fill="#fff"/><circle cx="56" cy="51" r="1.5" fill="#fff"/><circle cx="62" cy="51" r="1.5" fill="#fff"/><rect x="43" y="57" width="14" height="2" rx="1" fill="#fff"/></svg></div>
+    </div>
+    <div class="palette-caption">centred keyboard (slightly smaller) · three concentric hearts with breathing room</div>
+
+    <div class="desc">
+      A larger version of the Fossify keyboard glyph (260×130, ~23% bigger than the original) sits
+      centred at the icon's middle in G's outline style — stroke-only rectangle with solid white
+      dots and spacebar inside. Three concentric complete heart outlines wrap around it like a halo,
+      fading outward. Says <em>"this keyboard is held by care."</em> Both brand pillars in one mark —
+      bigger keyboard reads at any size; hearts add the wellbeing dimension.
+    </div>
+
+    <div class="pro-con">
+      <div class="pros"><strong>Pros</strong>Keyboard is the unmissable focal point · matches G's outline-style for visual consistency across options · hearts cradle, don't crowd · scales well at notification icon sizes (24dp)</div>
+      <div class="cons"><strong>Cons</strong>Three concentric outlines can read as a "wedding / valentines" icon at first glance · heart imagery is wellness-app territory · slightly busy in the centre where keyboard outline + inner heart sit close together</div>
+    </div>
+
+    <div class="pick-row">
+      <label><input type="radio" name="icon-pick" value="F"> Pick this one</label>
+      <span class="opt-id">option F</span>
+    </div>
+  </div>
+
+  <!-- ========= OPTION G: Original Fossify keyboard glyph + pulse arcs above ========= -->
+  <div class="icon-card recommend">
+    <span class="recommend-tag">Updated · matches original glyph</span>
+    <h3>G · Tiny keyboard + pulse arcs</h3>
+    <div class="subtitle">Original Fossify keyboard glyph at the base · pulse arcs above</div>
+
+    <div class="preview-large">
+      <svg width="128" height="128" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <rect width="512" height="512" fill="#5b8def"/>
+        <!-- Three pulse arcs emanating upward from the keyboard's top edge -->
+        <path d="M 196 320 A 60 60 0 0 1 316 320" stroke="#fff" stroke-width="14" fill="none" opacity="0.7" stroke-linecap="round"/>
+        <path d="M 156 320 A 100 100 0 0 1 356 320" stroke="#fff" stroke-width="11" fill="none" opacity="0.45" stroke-linecap="round"/>
+        <path d="M 116 320 A 140 140 0 0 1 396 320" stroke="#fff" stroke-width="9" fill="none" opacity="0.27" stroke-linecap="round"/>
+        <!-- Tiny keyboard glyph (matches original Fossify proportions: 212 x 106) -->
+        <rect x="150" y="320" width="212" height="106" rx="14" ry="14" fill="none" stroke="#fff" stroke-width="14"/>
+        <!-- Two rows of 5 dot keys, matching original positions -->
+        <circle cx="192.4" cy="343" r="7" fill="#fff"/>
+        <circle cx="224.2" cy="343" r="7" fill="#fff"/>
+        <circle cx="256"   cy="343" r="7" fill="#fff"/>
+        <circle cx="287.8" cy="343" r="7" fill="#fff"/>
+        <circle cx="319.6" cy="343" r="7" fill="#fff"/>
+        <circle cx="192.4" cy="375" r="7" fill="#fff"/>
+        <circle cx="224.2" cy="375" r="7" fill="#fff"/>
+        <circle cx="256"   cy="375" r="7" fill="#fff"/>
+        <circle cx="287.8" cy="375" r="7" fill="#fff"/>
+        <circle cx="319.6" cy="375" r="7" fill="#fff"/>
+        <!-- Spacebar pill -->
+        <rect x="221.4" y="403" width="69.2" height="10" rx="5" fill="#fff"/>
+      </svg>
+    </div>
+
+    <div class="palette-row">
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#D32F2F"/><path d="M 38 62 A 12 12 0 0 1 62 62" stroke="#fff" stroke-width="2.6" fill="none" opacity="0.7" stroke-linecap="round"/><path d="M 30 62 A 20 20 0 0 1 70 62" stroke="#fff" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round"/><rect x="29" y="62" width="42" height="21" rx="2.7" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="67" r="1.5" fill="#fff"/><circle cx="44" cy="67" r="1.5" fill="#fff"/><circle cx="50" cy="67" r="1.5" fill="#fff"/><circle cx="56" cy="67" r="1.5" fill="#fff"/><circle cx="62" cy="67" r="1.5" fill="#fff"/><circle cx="38" cy="73" r="1.5" fill="#fff"/><circle cx="44" cy="73" r="1.5" fill="#fff"/><circle cx="50" cy="73" r="1.5" fill="#fff"/><circle cx="56" cy="73" r="1.5" fill="#fff"/><circle cx="62" cy="73" r="1.5" fill="#fff"/><rect x="44" y="78.5" width="12" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#7B1FA2"/><path d="M 38 62 A 12 12 0 0 1 62 62" stroke="#fff" stroke-width="2.6" fill="none" opacity="0.7" stroke-linecap="round"/><path d="M 30 62 A 20 20 0 0 1 70 62" stroke="#fff" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round"/><rect x="29" y="62" width="42" height="21" rx="2.7" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="67" r="1.5" fill="#fff"/><circle cx="44" cy="67" r="1.5" fill="#fff"/><circle cx="50" cy="67" r="1.5" fill="#fff"/><circle cx="56" cy="67" r="1.5" fill="#fff"/><circle cx="62" cy="67" r="1.5" fill="#fff"/><circle cx="38" cy="73" r="1.5" fill="#fff"/><circle cx="44" cy="73" r="1.5" fill="#fff"/><circle cx="50" cy="73" r="1.5" fill="#fff"/><circle cx="56" cy="73" r="1.5" fill="#fff"/><circle cx="62" cy="73" r="1.5" fill="#fff"/><rect x="44" y="78.5" width="12" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1976D2"/><path d="M 38 62 A 12 12 0 0 1 62 62" stroke="#fff" stroke-width="2.6" fill="none" opacity="0.7" stroke-linecap="round"/><path d="M 30 62 A 20 20 0 0 1 70 62" stroke="#fff" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round"/><rect x="29" y="62" width="42" height="21" rx="2.7" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="67" r="1.5" fill="#fff"/><circle cx="44" cy="67" r="1.5" fill="#fff"/><circle cx="50" cy="67" r="1.5" fill="#fff"/><circle cx="56" cy="67" r="1.5" fill="#fff"/><circle cx="62" cy="67" r="1.5" fill="#fff"/><circle cx="38" cy="73" r="1.5" fill="#fff"/><circle cx="44" cy="73" r="1.5" fill="#fff"/><circle cx="50" cy="73" r="1.5" fill="#fff"/><circle cx="56" cy="73" r="1.5" fill="#fff"/><circle cx="62" cy="73" r="1.5" fill="#fff"/><rect x="44" y="78.5" width="12" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#00796B"/><path d="M 38 62 A 12 12 0 0 1 62 62" stroke="#fff" stroke-width="2.6" fill="none" opacity="0.7" stroke-linecap="round"/><path d="M 30 62 A 20 20 0 0 1 70 62" stroke="#fff" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round"/><rect x="29" y="62" width="42" height="21" rx="2.7" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="67" r="1.5" fill="#fff"/><circle cx="44" cy="67" r="1.5" fill="#fff"/><circle cx="50" cy="67" r="1.5" fill="#fff"/><circle cx="56" cy="67" r="1.5" fill="#fff"/><circle cx="62" cy="67" r="1.5" fill="#fff"/><circle cx="38" cy="73" r="1.5" fill="#fff"/><circle cx="44" cy="73" r="1.5" fill="#fff"/><circle cx="50" cy="73" r="1.5" fill="#fff"/><circle cx="56" cy="73" r="1.5" fill="#fff"/><circle cx="62" cy="73" r="1.5" fill="#fff"/><rect x="44" y="78.5" width="12" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#388E3C"/><path d="M 38 62 A 12 12 0 0 1 62 62" stroke="#fff" stroke-width="2.6" fill="none" opacity="0.7" stroke-linecap="round"/><path d="M 30 62 A 20 20 0 0 1 70 62" stroke="#fff" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round"/><rect x="29" y="62" width="42" height="21" rx="2.7" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="67" r="1.5" fill="#fff"/><circle cx="44" cy="67" r="1.5" fill="#fff"/><circle cx="50" cy="67" r="1.5" fill="#fff"/><circle cx="56" cy="67" r="1.5" fill="#fff"/><circle cx="62" cy="67" r="1.5" fill="#fff"/><circle cx="38" cy="73" r="1.5" fill="#fff"/><circle cx="44" cy="73" r="1.5" fill="#fff"/><circle cx="50" cy="73" r="1.5" fill="#fff"/><circle cx="56" cy="73" r="1.5" fill="#fff"/><circle cx="62" cy="73" r="1.5" fill="#fff"/><rect x="44" y="78.5" width="12" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#FBC02D"/><path d="M 38 62 A 12 12 0 0 1 62 62" stroke="#fff" stroke-width="2.6" fill="none" opacity="0.7" stroke-linecap="round"/><path d="M 30 62 A 20 20 0 0 1 70 62" stroke="#fff" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round"/><rect x="29" y="62" width="42" height="21" rx="2.7" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="67" r="1.5" fill="#fff"/><circle cx="44" cy="67" r="1.5" fill="#fff"/><circle cx="50" cy="67" r="1.5" fill="#fff"/><circle cx="56" cy="67" r="1.5" fill="#fff"/><circle cx="62" cy="67" r="1.5" fill="#fff"/><circle cx="38" cy="73" r="1.5" fill="#fff"/><circle cx="44" cy="73" r="1.5" fill="#fff"/><circle cx="50" cy="73" r="1.5" fill="#fff"/><circle cx="56" cy="73" r="1.5" fill="#fff"/><circle cx="62" cy="73" r="1.5" fill="#fff"/><rect x="44" y="78.5" width="12" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#F57C00"/><path d="M 38 62 A 12 12 0 0 1 62 62" stroke="#fff" stroke-width="2.6" fill="none" opacity="0.7" stroke-linecap="round"/><path d="M 30 62 A 20 20 0 0 1 70 62" stroke="#fff" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round"/><rect x="29" y="62" width="42" height="21" rx="2.7" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="67" r="1.5" fill="#fff"/><circle cx="44" cy="67" r="1.5" fill="#fff"/><circle cx="50" cy="67" r="1.5" fill="#fff"/><circle cx="56" cy="67" r="1.5" fill="#fff"/><circle cx="62" cy="67" r="1.5" fill="#fff"/><circle cx="38" cy="73" r="1.5" fill="#fff"/><circle cx="44" cy="73" r="1.5" fill="#fff"/><circle cx="50" cy="73" r="1.5" fill="#fff"/><circle cx="56" cy="73" r="1.5" fill="#fff"/><circle cx="62" cy="73" r="1.5" fill="#fff"/><rect x="44" y="78.5" width="12" height="2" rx="1" fill="#fff"/></svg></div>
+      <div class="palette-tile"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#212121"/><path d="M 38 62 A 12 12 0 0 1 62 62" stroke="#fff" stroke-width="2.6" fill="none" opacity="0.7" stroke-linecap="round"/><path d="M 30 62 A 20 20 0 0 1 70 62" stroke="#fff" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round"/><rect x="29" y="62" width="42" height="21" rx="2.7" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="38" cy="67" r="1.5" fill="#fff"/><circle cx="44" cy="67" r="1.5" fill="#fff"/><circle cx="50" cy="67" r="1.5" fill="#fff"/><circle cx="56" cy="67" r="1.5" fill="#fff"/><circle cx="62" cy="67" r="1.5" fill="#fff"/><circle cx="38" cy="73" r="1.5" fill="#fff"/><circle cx="44" cy="73" r="1.5" fill="#fff"/><circle cx="50" cy="73" r="1.5" fill="#fff"/><circle cx="56" cy="73" r="1.5" fill="#fff"/><circle cx="62" cy="73" r="1.5" fill="#fff"/><rect x="44" y="78.5" width="12" height="2" rx="1" fill="#fff"/></svg></div>
+    </div>
+    <div class="palette-caption">same Fossify keyboard glyph as today · pulse arcs added above</div>
+
+    <div class="desc">
+      The original Fossify keyboard glyph (rounded rectangle with two rows of 5 key dots and a spacebar)
+      sits at the base, with two soft pulse arcs fanning upward. Says
+      <em>"the keyboard is still the keyboard — but now it broadcasts a signal."</em>
+      Smallest visual change from today, biggest gain in meaning.
+    </div>
+
+    <div class="pro-con">
+      <div class="pros"><strong>Pros</strong>Unambiguously a keyboard · matches the existing app's iconography for continuity · arcs add the MoodScript dimension cleanly without crowding · scales well</div>
+      <div class="cons"><strong>Cons</strong>Most conservative of the seven — risk of being mistaken for "the same Fossify icon" · arcs could read as wifi to a casual glance</div>
+    </div>
+
+    <div class="pick-row">
+      <label><input type="radio" name="icon-pick" value="G"> Pick this one</label>
+      <span class="opt-id">option G</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================ -->
+<!-- NEXT STEPS                                    -->
+<!-- ============================================ -->
+
+<div class="next-steps">
+  <h3>Next steps once you've picked</h3>
+  <ol>
+    <li>Tell me which option (A / B / C / D / E / F / G) and any tweaks you'd want.</li>
+    <li>I write the final plan file at <code>roadmap/Phase10/Phase10_Plan.md</code> with the chosen glyph as the only icon-design decision still encoded as a vector path.</li>
+    <li>Plan covers: <code>donottranslate.xml</code> + <code>strings.xml</code> rename, local <code>AboutActivity</code> override + layout + strings, replacement <code>ic_launcher_foreground.xml</code> + <code>ic_launcher_monochrome.xml</code>, <code>redirection_note</code> string update, <code>README.md</code> credit refresh.</li>
+    <li>You approve the plan; I switch to implementation mode and ship it.</li>
+  </ol>
+</div>
+
+</main>
+</body>
+</html>
