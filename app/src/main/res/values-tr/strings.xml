@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Klavye</string>
-    <string name="redirection_note">Fossify Klavye\'yi kullanabilmek için lütfen bir sonraki ekranda Fossify Klavye\'yi etkinleştirin. Etkinleştirdikten sonra \"geri\" tuşunu kullanın.</string>
+    <string name="redirection_note">MoodScript\'yi kullanabilmek için lütfen bir sonraki ekranda MoodScript\'yi etkinleştirin. Etkinleştirdikten sonra \"geri\" tuşunu kullanın.</string>
     <string name="change_keyboard">Klavyeyi Değiştir</string>
     <string name="manage_clipboard_items">Pano ögelerini yönet</string>
     <string name="manage_clipboard_empty">Panonuz boş.</string>

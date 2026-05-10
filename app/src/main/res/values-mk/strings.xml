@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Тастатура</string>
-    <string name="redirection_note">Ве молиме овозможете ја Fossify тастатурата на следниот екран, за да биде достапна. Штом ја овозможите, притиснете „Назад“ еднаш.</string>
+    <string name="redirection_note">Ве молиме овозможете ја MoodScript на следниот екран, за да биде достапна. Штом ја овозможите, притиснете „Назад“ еднаш.</string>
 </resources>

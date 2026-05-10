@@ -17,7 +17,6 @@
     <string name="import_clipboard_items">นำเข้ารายการคลิปบอร์ด</string>
     <string name="keycode_delete">ลบ</string>
     <string name="emojis">อิโมจิ</string>
-    <string name="app_launcher_name">แป้นพิมพ์</string>
     <string name="change_keyboard">เปลี่ยนแป้นพิมพ์</string>
     <string name="symbols">สัญลักษณ์</string>
     <string name="manage_clipboard_empty">คลิปบอร์ดของคุณว่างอยู่</string>

@@ -3,8 +3,7 @@
     <string name="clear_clipboard_data">Glan sonraí na gearrthaisce</string>
     <string name="travel_and_places">Taisteal agus áiteanna</string>
     <string name="activities">Gníomhaíochtaí</string>
-    <string name="app_launcher_name">Méarchlár</string>
-    <string name="redirection_note">Cumasaigh Méarchlár Fossify ar an gcéad scáileán eile, chun méarchlár a chur ar fáil. Brúigh \'Ar ais\' nuair a chumasaítear é.</string>
+    <string name="redirection_note">Cumasaigh MoodScript ar an gcéad scáileán eile, chun méarchlár a chur ar fáil. Brúigh \'Ar ais\' nuair a chumasaítear é.</string>
     <string name="change_keyboard">Athraigh an Méarchlár</string>
     <string name="manage_clipboard_items">Bainistigh míreanna gearrthaisce</string>
     <string name="manage_clipboard_empty">Tá do ghearrthaisce folamh.</string>

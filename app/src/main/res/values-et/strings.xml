@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Klahvistik</string>
     <string name="change_keyboard">Muuda klaviatuuri</string>
     <string name="manage_clipboard_items">Halda kirjeid lõikelaual</string>
     <string name="manage_clipboard_empty">Lõikelaud on tühi.</string>
@@ -31,7 +30,7 @@
     <string name="show_numbers_row">Näita numbreid eraldi real</string>
     <string name="start_sentences_capitalized">Alusta lauseid suurtähega</string>
     <string name="emojis">Emojid</string>
-    <string name="redirection_note">Palun võta järgmises ekraanivaates Fossify klaviatuur kasutusele. Kui see on tehtud, siis vajuta „Tagasi“ nuppu.</string>
+    <string name="redirection_note">Palun võta järgmises ekraanivaates MoodScript kasutusele. Kui see on tehtud, siis vajuta „Tagasi“ nuppu.</string>
     <string name="keycode_shift">Shift</string>
     <string name="voice_typing_method">Hääljuhtimisega trükkimise meetod</string>
     <string name="switch_to_voice_typing">Kasuta hääljuhtimisega trükkimist</string>

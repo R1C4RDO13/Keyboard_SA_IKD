@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Tastatūra</string>
     <string name="change_keyboard">Mainīt tastatūru</string>
     <string name="manage_clipboard_items">Vadīt starpliktuves datus</string>
     <string name="manage_clipboard_empty">Jūsu starpliktuve ir tukša.</string>
@@ -30,7 +29,7 @@
     <string name="show_numbers_row">Rādīt ciparus atsevišķā rindā</string>
     <string name="start_sentences_capitalized">Sākt teikumus ar lielo burtu</string>
     <string name="emojis">Emocijzīmes</string>
-    <string name="redirection_note">Lūgums nākamajā ekrānā iespējot Fossify tastatūru, lai padarītu to pieejamu. Jāspiež \"Atpakaļ\", tiklīdz iespējota.</string>
+    <string name="redirection_note">Lūgums nākamajā ekrānā iespējot MoodScript, lai padarītu to pieejamu. Jāspiež \"Atpakaļ\", tiklīdz iespējota.</string>
     <string name="manage_keyboard_languages">Pārvaldīt tastatūras valodas</string>
     <string name="smileys_and_emotions">Smaidiņi un sajūtas</string>
     <string name="people_and_body">Cilvēki un ķermenis</string>

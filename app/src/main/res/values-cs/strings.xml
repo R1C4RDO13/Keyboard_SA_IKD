@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Klávesnice</string>
     <string name="change_keyboard">Změnit klávesnici</string>
     <string name="manage_clipboard_items">Spravovat položky schránky</string>
     <string name="manage_clipboard_empty">Vaše schránka je prázdná.</string>
@@ -32,7 +31,7 @@
     <string name="keycode_shift">Shift</string>
     <string name="keycode_enter">Enter</string>
     <string name="keycode_space">Mezerník</string>
-    <string name="redirection_note">Na další obrazovce prosím povolte Fossify Keyboard, abyste ji zařadili mezi dostupné klávesnice. Jakmile budete mít hotovo, klepněte na „Zpět“.</string>
+    <string name="redirection_note">Na další obrazovce prosím povolte MoodScript, abyste ji zařadili mezi dostupné klávesnice. Jakmile budete mít hotovo, klepněte na „Zpět“.</string>
     <string name="manage_keyboard_languages">Správa jazyků klávesnice</string>
     <string name="voice_typing_method">Způsob psaní hlasem</string>
     <string name="switch_to_voice_typing">Přepnout na psaní hlasem</string>

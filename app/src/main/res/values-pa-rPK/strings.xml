@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">کیبورڈ</string>
     <string name="change_keyboard">کیبورڈ بدلو</string>
     <string name="manage_clipboard_items">کاپی پیٹ چیزاں دیاں سیٹنگاں</string>
     <string name="manage_clipboard_empty">کوئی کاپی نہیں اے۔</string>

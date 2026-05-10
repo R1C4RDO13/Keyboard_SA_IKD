@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">poki sitelen</string>
-    <string name="redirection_note">o ken e poki sitelen Fossify lon poki poka la poki sitelen li pali. ijo li pali la o luka e \'o monsi\'.</string>
+    <string name="redirection_note">o ken e poki MoodScript lon poki poka la poki sitelen li pali. ijo li pali la o luka e \'o monsi\'.</string>
     <string name="change_keyboard">o ante e poki sitelen</string>
     <string name="manage_clipboard_items">o lawa e ijo pi poki sitelen tenpo</string>
     <string name="manage_clipboard_empty">poki sitelen tenpo sina li ale ala.</string>

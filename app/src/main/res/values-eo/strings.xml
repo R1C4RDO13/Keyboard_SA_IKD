@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Klavaro</string>
     <string name="change_keyboard">Ŝanĝi Klavaron</string>
     <string name="manage_clipboard_items">Administri tondujajn erojn</string>
     <string name="clear_clipboard_data">Forigi tondujajn datumojn</string>
     <string name="show_popup">Montri ŝprucfenestron ĉe klavopremo</string>
-    <string name="redirection_note">Bonvolu ebligi Fossify-Klavaron sur la sekva ekrano, por fari ĝin disponebla klavaro. Premu \'Reen\' unufoje ebligita.</string>
+    <string name="redirection_note">Bonvolu ebligi MoodScript sur la sekva ekrano, por fari ĝin disponebla klavaro. Premu \'Reen\' unufoje ebligita.</string>
     <string name="manage_clipboard_empty">Via tondujo estas malplena.</string>
     <string name="clipboard_pinned">Alpinglita</string>
     <string name="manage_clipboard_label">Post kiam vi kopios iom da teksto, ĝi aperos ĉi tie. Vi ankaŭ povas alpingli klipojn por ke ili ne malaperi poste.</string>

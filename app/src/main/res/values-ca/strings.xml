@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Teclat</string>
     <string name="change_keyboard">Canvia el teclat</string>
     <string name="manage_clipboard_items">Gestió dels elements del porta-retalls</string>
     <string name="manage_clipboard_empty">El porta-retalls està buit.</string>
@@ -32,7 +31,7 @@
     <string name="clipboard_recent">Recent</string>
     <string name="pin_text">Fixa el text</string>
     <string name="emojis">Emojis</string>
-    <string name="redirection_note">Activeu el Fossify Keyboard a la pantalla següent, per a fer-lo disponible. Premeu «Enrere» una vegada activat.</string>
+    <string name="redirection_note">Activeu el MoodScript a la pantalla següent, per a fer-lo disponible. Premeu «Enrere» una vegada activat.</string>
     <string name="switch_to_voice_typing">Canvia a escriptura per veu</string>
     <string name="manage_keyboard_languages">Gestió dels idiomes del teclat</string>
     <string name="voice_typing_method">Mètode d\'escriptura per veu</string>

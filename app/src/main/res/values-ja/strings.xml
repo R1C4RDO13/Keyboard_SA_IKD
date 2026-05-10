@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">キーボード</string>
     <string name="change_keyboard">キーボードを変更する</string>
     <string name="manage_clipboard_items">クリップボードアイテムの管理</string>
     <string name="manage_clipboard_empty">クリップボードが空です。</string>
@@ -30,7 +29,7 @@
     <string name="show_key_borders">キー枠を表示する</string>
     <string name="show_numbers_row">数字を別の行に表示する</string>
     <string name="emojis">絵文字</string>
-    <string name="redirection_note">使用可能なキーボードにするには、次の画面で Fossify キーボードを有効にしてください。有効にしたら、「戻る」を押してください。</string>
+    <string name="redirection_note">使用可能なキーボードにするには、次の画面で MoodScriptを有効にしてください。有効にしたら、「戻る」を押してください。</string>
     <string name="start_sentences_capitalized">文頭を大文字で始める</string>
     <string name="activities">活動</string>
     <string name="keycode_space">スペースバー</string>

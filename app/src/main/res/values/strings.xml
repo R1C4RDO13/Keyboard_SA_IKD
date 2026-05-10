@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Keyboard</string>
-    <string name="redirection_note">Please enable Fossify Keyboard on the next screen, to make it an available keyboard. Press \'Back\' once enabled.</string>
+    <string name="app_launcher_name" translatable="false">MoodScript</string>
+    <string name="redirection_note">Please enable MoodScript on the next screen, to make it an available keyboard. Press \'Back\' once enabled.</string>
     <string name="change_keyboard">Change Keyboard</string>
     <!-- Clipboard -->
     <string name="manage_clipboard_items">Manage clipboard items</string>
@@ -438,6 +438,15 @@
     <string name="session_dashboard_chart_gyro">Gyro magnitude (rad/s)</string>
     <string name="session_dashboard_chart_accel">Accel magnitude (m/s²)</string>
     <string name="session_dashboard_chart_no_data">No data</string>
+
+    <!-- About screen (Phase 10 — MoodScript) -->
+    <string name="moodscript_about_title">About MoodScript</string>
+    <string name="moodscript_about_intro">MoodScript — A research-grade behavioural-analytics keyboard.\n\nMoodScript captures keystroke timing, kinematic sensor data, and self-reported mood signals during everyday typing, then turns them into private on-device insights about anxiety, routine, and wellbeing. All data stays on this device — nothing is transmitted over the network.</string>
+    <string name="moodscript_about_credit" translatable="false">Built on Fossify Keyboard, an open-source privacy-focused Android keyboard. All upstream features remain functional.</string>
+    <string name="moodscript_about_upstream_link" translatable="false">https://github.com/FossifyOrg/Keyboard</string>
+    <string name="moodscript_about_version_label">Version</string>
+    <string name="moodscript_about_license_label">License</string>
+    <string name="moodscript_about_license_value" translatable="false">GPL-3.0</string>
 
     <!--
         Haven't found some strings? There's more at

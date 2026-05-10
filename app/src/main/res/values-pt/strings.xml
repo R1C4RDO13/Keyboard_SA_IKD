@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Teclado</string>
     <string name="change_keyboard">Trocar de teclado</string>
     <string name="manage_clipboard_items">Gerir itens na área de transferência</string>
     <string name="manage_clipboard_empty">Área de transferência vazia.</string>
@@ -32,7 +31,7 @@
     <string name="keycode_shift">Shift</string>
     <string name="keycode_enter">Enter</string>
     <string name="emojis">Emojis</string>
-    <string name="redirection_note">Ative o teclado Fossify no próximo ecrã e defina-o para ser utilizado por omissão. Prima \'Recuar\' assim que o ativar.</string>
+    <string name="redirection_note">Ative o MoodScript no próximo ecrã e defina-o para ser utilizado por omissão. Prima \'Recuar\' assim que o ativar.</string>
     <string name="manage_keyboard_languages">Gerir idiomas</string>
     <string name="food_and_drink">Comida e bebida</string>
     <string name="symbols">Símbolos</string>
