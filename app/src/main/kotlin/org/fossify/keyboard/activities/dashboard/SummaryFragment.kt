@@ -5,6 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.google.android.material.card.MaterialCardView
+import org.fossify.commons.extensions.getProperBackgroundColor
+import org.fossify.commons.extensions.getProperPrimaryColor
+import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.keyboard.R
 import org.fossify.keyboard.activities.DashboardActivity
@@ -78,10 +81,7 @@ class SummaryFragment : DashboardFragment() {
         val ctx = context ?: return
         val view = _binding ?: return
 
-        // Phase 9.12 theming discipline — push the user's Fossify text
-        // colours over every label / value before populating, so a fresh
-        // attach picks up the right tokens before the first paint.
-        activity?.updateTextColors(view.root)
+        applyThemeColors()
 
         val placeholder = ctx.getString(R.string.dashboard_value_placeholder)
         val locale = Locale.getDefault()
@@ -142,6 +142,50 @@ class SummaryFragment : DashboardFragment() {
             view.summaryTileStreakBody,
             label = ctx.getString(R.string.summary_tile_label_streak),
             value = streakLabel(ctx, habits, placeholder),
+        )
+    }
+
+    /**
+     * Phase 9.14: theming pass — same discipline as `HabitsFragment` /
+     * `EventFeedActivity.applyThemeColors`. MaterialCardView's default
+     * `?attr/colorSurface` does not track Fossify's runtime background
+     * token, so on a custom theme each tile would render as an unthemed
+     * white slab. Tinting the cards to `getProperBackgroundColor()` and
+     * the value labels to `getProperPrimaryColor()` brings the Summary
+     * tab in line with the Phase 9.12 / 9.13 fragments.
+     */
+    private fun applyThemeColors() {
+        val ctx = context ?: return
+        val view = _binding ?: return
+        val activity = activity ?: return
+        activity.updateTextColors(view.root)
+
+        val cardBg = ctx.getProperBackgroundColor()
+        view.summaryTileSessions.setCardBackgroundColor(cardBg)
+        view.summaryTileTypingTime.setCardBackgroundColor(cardBg)
+        view.summaryTileWpm.setCardBackgroundColor(cardBg)
+        view.summaryTileErrorRate.setCardBackgroundColor(cardBg)
+        view.summaryTileAvgSession.setCardBackgroundColor(cardBg)
+        view.summaryTileStreak.setCardBackgroundColor(cardBg)
+
+        val primary = ctx.getProperPrimaryColor()
+        val textColor = ctx.getProperTextColor()
+        for (body in tileBodies()) {
+            body.summaryTileValue.setTextColor(primary)
+            body.summaryTileLabel.setTextColor(textColor)
+            body.summaryTileDelta.setTextColor(textColor)
+        }
+    }
+
+    private fun tileBodies(): List<ItemSummaryKpiTileBinding> {
+        val view = _binding ?: return emptyList()
+        return listOf(
+            view.summaryTileSessionsBody,
+            view.summaryTileTypingTimeBody,
+            view.summaryTileWpmBody,
+            view.summaryTileErrorRateBody,
+            view.summaryTileAvgSessionBody,
+            view.summaryTileStreakBody,
         )
     }
 
