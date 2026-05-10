@@ -3,7 +3,9 @@ package org.fossify.keyboard.helpers
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
+import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import org.fossify.commons.extensions.baseConfig
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
@@ -55,10 +57,22 @@ fun Context.showWidgetInfo(info: WidgetInfo) {
     }
     binding.widgetInfoRoot.setBackgroundColor(backgroundColor)
 
+    // Mirrors the Fossify dialog convention from ContextExt.setupDialogStuff:
+    // if primary == background (themes where the two collapse), the positive
+    // button uses textColor instead of primaryColor so it stays legible.
+    val dialogButtonColor = if (primaryColor == baseConfig.backgroundColor) {
+        textColor
+    } else {
+        primaryColor
+    }
+
     MaterialAlertDialogBuilder(this)
         .setView(binding.root)
         .setPositiveButton(R.string.widget_info_close, null)
         .show()
+        .also { dialog ->
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(dialogButtonColor)
+        }
 }
 
 /**
