@@ -370,11 +370,19 @@ class DashboardActivity : SimpleActivity() {
     }
 
     /**
-     * Phase 9.16: render the bucket-size hint below the active-filter chip.
-     * Maps the current `Range` to the bucket unit the X axis uses on the
-     * trend charts. Always visible; not gated on filter state.
+     * Phase 9.16: render the scope + bucket-size hint below the active-
+     * filter chip. Combines two pieces — the range scope ("Past 7 days")
+     * and the bucket unit ("grouped by day") — into one italic line so
+     * the user sees both *what* time window the charts cover and *how*
+     * the X axis is bucketed. Always visible; not gated on filter state.
      */
     private fun renderBucketLabel() {
+        val scopeRes = when (currentRange) {
+            IkdAggregator.Range.TODAY -> R.string.dashboard_bucket_scope_today
+            IkdAggregator.Range.WEEK -> R.string.dashboard_bucket_scope_week
+            IkdAggregator.Range.MONTH -> R.string.dashboard_bucket_scope_month
+            IkdAggregator.Range.ALL_TIME -> R.string.dashboard_bucket_scope_all
+        }
         val unitRes = when (currentRange) {
             IkdAggregator.Range.TODAY -> R.string.dashboard_bucket_unit_hourly
             IkdAggregator.Range.WEEK,
@@ -383,6 +391,7 @@ class DashboardActivity : SimpleActivity() {
         }
         binding.dashboardBucketLabel.text = getString(
             R.string.dashboard_bucket_label_format,
+            getString(scopeRes),
             getString(unitRes),
         )
     }
