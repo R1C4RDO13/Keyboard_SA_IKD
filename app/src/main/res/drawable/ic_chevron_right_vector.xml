@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Phase 8.5: right-chevron mood-bar toggle. Fill is hard-coded
+         to opaque white because `?attr/colorControlNormal` doesn't
+         resolve in the keyboard's IME context — the alpha collapsed to
+         zero, so `applyColorFilter(mTextColor)` had nothing to tint
+         (SRC_IN preserves the source alpha). White at α=255 gives the
+         runtime tint in `setupKeyboard` something to recolour to
+         `mTextColor`, matching every other top-bar icon.
+         Rotation is driven at runtime in MyKeyboardView
+         (`applyMoodBarLayout`): 0° = `>` when collapsed (tap to open),
+         180° = `<` when expanded (tap to close). -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10,6L8.59,7.41 13.17,12 8.59,16.59 10,18l6,-6z" />
+</vector>

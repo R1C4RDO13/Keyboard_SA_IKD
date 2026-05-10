@@ -40,6 +40,19 @@
     <dimen name="mood_bubble_vertical_padding">6dp</dimen>
     <dimen name="mood_bubble_anchor_margin">6dp</dimen>
 
+    <!-- Phase 8.5 — collapsible mood bar chevron icon. Sized smaller than
+         the slot buttons so the chip silhouette stays compact. -->
+    <dimen name="mood_bar_chevron_size">28dp</dimen>
+
+    <!-- Phase 8.5 — collapsed-state indicator (the chip emoji). Wider
+         than a slot so the chip reads as a deliberate "your mood"
+         affordance and is easier to tap. Glyph size is bumped well
+         above the slot's 20sp so the chip reads from a glance even
+         at thumb-distance — the emoji overflows the view bounds but
+         the parent has `clipChildren="false"`, so rendering is safe. -->
+    <dimen name="mood_bar_collapsed_indicator_width">48dp</dimen>
+    <dimen name="mood_bar_collapsed_indicator_text_size">28sp</dimen>
+
     <!-- Phase 9.5 — calendar / circadian heatmap cells -->
     <dimen name="heatmap_cell_min_size_dp">12dp</dimen>
     <dimen name="heatmap_cell_corner_dp">2dp</dimen>

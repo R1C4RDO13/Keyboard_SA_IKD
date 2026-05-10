@@ -35,11 +35,14 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
 import android.view.inputmethod.EditorInfo
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.inline.InlineContentView
 import androidx.annotation.RequiresApi
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.view.ViewCompat
@@ -102,6 +105,7 @@ import org.fossify.keyboard.helpers.LANGUAGE_TURKISH_Q
 import org.fossify.keyboard.helpers.LANGUAGE_VIETNAMESE_TELEX
 import org.fossify.keyboard.helpers.LANGUAGE_VN_TELEX
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
+import org.fossify.keyboard.helpers.MOOD_INACTIVITY_TIMEOUT_MS
 import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.helpers.MAX_KEYS_PER_MINI_ROW
 import org.fossify.keyboard.helpers.MyKeyboard
@@ -190,6 +194,18 @@ class MyKeyboardView @JvmOverloads constructor(
     private var mMoodBubbleText: TextView? = null
     private val mMoodBubbleHandler by lazy { Handler(Looper.getMainLooper()) }
     private val mMoodBubbleDismissRunnable = Runnable { mMoodBubblePopup?.dismiss() }
+
+    // Phase 8.5: deferred auto-collapse after a slot tap (Decision #10).
+    // The Runnable runs on the main-thread Handler created above; cancelled
+    // in `onDetachedFromWindow` and any time the bar is manually collapsed
+    // before the delay elapses.
+    private val mMoodCollapseHandler by lazy { Handler(Looper.getMainLooper()) }
+    private val mMoodAutoCollapseRunnable = Runnable {
+        if (context.config.moodBarExpanded) {
+            context.config.moodBarExpanded = false
+            applyMoodBarLayout(expanded = false, animate = true)
+        }
+    }
 
     private val mCoordinates = IntArray(2)
     private val mPopupKeyboard: PopupWindow
@@ -314,6 +330,24 @@ class MyKeyboardView @JvmOverloads constructor(
         // tap before auto-dismissing. Long enough to read the first-person
         // string at a glance; short enough not to obscure typing.
         private const val MOOD_BUBBLE_AUTO_DISMISS_MS = 1500L
+
+        // Phase 8.5: collapse / expand animation cadences. Mirrors the
+        // Phase 6 `applySensorExpansion` discipline — short enough to feel
+        // crisp, long enough that the cross-fade doesn't read as a flicker.
+        private const val MOOD_BAR_CHEVRON_ROT_MS = 150L
+        private const val MOOD_BAR_LAYOUT_FADE_MS = 200L
+        // Chevron rotation targets. Right-chevron at rest (`0°`) reads
+        // as `>` and means "tap to expand" when the bar is collapsed.
+        // Flipped to `180°` it reads as `<` and means "tap to collapse"
+        // when expanded.
+        private const val MOOD_BAR_CHEVRON_ROT_EXPANDED = 180f
+        private const val MOOD_BAR_CHEVRON_ROT_COLLAPSED = 0f
+        // Phase 8.5: small delay between a slot tap and the auto-collapse
+        // (Decision #10). Lets the user see the highlight settle on the
+        // newly-tapped slot before the bar collapses around the chip.
+        // Long enough that the Phase 8.4 dance (~360 ms) finishes first
+        // when both phases are landed.
+        private const val MOOD_BAR_AUTO_COLLAPSE_DELAY_MS = 380L
     }
 
     init {
@@ -399,6 +433,11 @@ class MyKeyboardView @JvmOverloads constructor(
 
         if (visibility == VISIBLE) {
             setupKeyboard(changedView)
+            // Phase 8.5: re-apply the persisted expand/collapse layout
+            // without animating so the user never sees a frame of the
+            // wrong layout on visibility change. `refreshMoodBarFromState`
+            // below re-runs the staleness check + highlight derivation.
+            applyMoodBarLayout(expanded = context.config.moodBarExpanded, animate = false)
             // Phase 8: re-derive the mood-bar highlight whenever the view
             // becomes visible — covers re-open into the same session id
             // with a previously-tapped emotion (e.g., after rotation).
@@ -598,6 +637,12 @@ class MyKeyboardView @JvmOverloads constructor(
             // Highlighted-vs-dim styling is handled per-slot via alpha
             // and background drawable in `applyMoodBarHighlight()`.
             applyMoodBarTint()
+            // Phase 8.5: tint the collapse/expand chevron with the
+            // keyboard's text colour. The vector's `?attr/colorControlNormal`
+            // resolves against the IME context, which on some Fossify
+            // themes lands on a colour that's invisible against the
+            // toolbar background (user-reported "I don't see < >").
+            moodBarToggleChevron.applyColorFilter(mTextColor)
             voiceInputButton.applyColorFilter(mTextColor)
             voiceInputButton.beGoneIf(mVoiceInputMethod.isEmpty())
 
@@ -674,9 +719,46 @@ class MyKeyboardView @JvmOverloads constructor(
                     onMoodSlotClicked(score, tappedView)
                 }
             }
+
+            // Phase 8.5: collapsed indicator + chevron both toggle the bar.
+            // Tapping the indicator is the discoverable expansion path
+            // (chip itself is the tap target — Decision #10's
+            // "discoverability" line); tapping the chevron is the
+            // explicit toggle path. Both vibrate (consistent with the rest
+            // of the keyboard top-bar buttons) and route through the same
+            // helper so the state machine has a single source of truth.
+            moodBarCollapsedIndicator.setOnLongClickListener {
+                context.toast(R.string.mood_bar_toggle_content_description); true
+            }
+            moodBarCollapsedIndicator.setOnClickListener {
+                vibrateIfNeeded()
+                toggleMoodBarExpanded()
+            }
+            moodBarToggleChevron.setOnLongClickListener {
+                context.toast(R.string.mood_bar_toggle_content_description); true
+            }
+            moodBarToggleChevron.setOnClickListener {
+                vibrateIfNeeded()
+                toggleMoodBarExpanded()
+            }
         }
+        // Phase 8.5: pre-flip the bar to its persisted state without
+        // animating so the user never sees a frame of the wrong layout.
+        applyMoodBarLayout(expanded = context.config.moodBarExpanded, animate = false)
         // Initial state: 🛡️ highlighted iff privacy is on, no row otherwise.
         refreshMoodBarFromState()
+    }
+
+    /**
+     * Phase 8.5: flip `Config.moodBarExpanded` and run the layout animation.
+     * Cancels any pending auto-collapse before flipping — a manual chevron
+     * tap during the auto-collapse delay should be honoured immediately.
+     */
+    private fun toggleMoodBarExpanded() {
+        mMoodCollapseHandler.removeCallbacks(mMoodAutoCollapseRunnable)
+        val nextExpanded = !context.config.moodBarExpanded
+        context.config.moodBarExpanded = nextExpanded
+        applyMoodBarLayout(expanded = nextExpanded, animate = true)
     }
 
     /**
@@ -721,6 +803,25 @@ class MyKeyboardView @JvmOverloads constructor(
                 }
             }
         }
+        // Phase 8.5: auto-collapse after every slot tap (Decision #10) so
+        // the user sees their selection echoed in the chip without an
+        // extra chevron tap. Re-collapse for deselect taps too — the
+        // chip switches to placeholder 🙂, which is itself the feedback.
+        // The delay lets Phase 8.4's dance (~360 ms) play out before the
+        // bar collapses; if 8.4 is not landed yet, the small delay is
+        // imperceptible but still gives the highlight time to settle.
+        scheduleAutoCollapse()
+    }
+
+    /**
+     * Phase 8.5: schedule a deferred collapse after a slot tap. Cancels
+     * any prior pending collapse so a rapid second tap restarts the timer
+     * rather than firing a stale collapse mid-dance.
+     */
+    private fun scheduleAutoCollapse() {
+        if (!context.config.moodBarExpanded) return
+        mMoodCollapseHandler.removeCallbacks(mMoodAutoCollapseRunnable)
+        mMoodCollapseHandler.postDelayed(mMoodAutoCollapseRunnable, MOOD_BAR_AUTO_COLLAPSE_DELAY_MS)
     }
 
     /**
@@ -831,19 +932,51 @@ class MyKeyboardView @JvmOverloads constructor(
      */
     fun refreshMoodBarFromState() {
         applyMoodBarVisibility()
+        // Phase 8.5: secondary on-show staleness check — covers the
+        // long-attached-IME edge case where `onStartInputView` doesn't
+        // re-fire between sessions. Bounded read + arithmetic + at-most-one
+        // Config write, no DAO touch (Decision #9 is "clear the standing
+        // rating only; do not flip privacy" — `applyMoodBarHighlight`
+        // below honours whichever state remains).
+        maybeResetStaleStandingMood()
         if (context.config.privacyModeEnabled) {
             applyMoodBarHighlight(MOOD_SLOT_PRIVACY)
             return
         }
-        // Privacy is off — clear the highlight first, then ask the DB if a
-        // mood row exists for the in-flight session and restore it if so.
-        applyMoodBarHighlight(null)
+        // Privacy is off — start with the standing rating from Config (so
+        // a re-entry into the keyboard pre-highlights the chip), then ask
+        // the DB if an explicit `mood_entries` row exists for the in-flight
+        // session. The DB row always wins ("row exists" path beats the
+        // standing rating; see §3 of `Phase8.5_Plan.md`).
+        val standing = context.config.lastMoodScore
+        if (MoodEmoji.isStandingScore(standing)) {
+            applyMoodBarHighlight(standing)
+        } else {
+            applyMoodBarHighlight(null)
+        }
         moodScope.launch {
             val mood = moodController.getMoodForActiveSession()
             val score = mood?.moodScore
             if (score != null && MoodEmoji.isValidScore(score)) {
                 applyMoodBarHighlight(score)
             }
+        }
+    }
+
+    /**
+     * Phase 8.5: secondary inactivity check. Mirrors the IME's
+     * `maybeResetStaleMood` so that a refresh triggered by something other
+     * than `onStartInputView` (theme change, settings toggle, visibility
+     * change) still expires a stale standing rating. No-op when no
+     * standing rating exists.
+     */
+    private fun maybeResetStaleStandingMood() {
+        val cfg = context.config
+        if (!MoodEmoji.isStandingScore(cfg.lastMoodScore)) return
+        val last = cfg.lastMoodActivityTimestamp
+        if (last <= 0L) return
+        if (System.currentTimeMillis() - last > MOOD_INACTIVITY_TIMEOUT_MS) {
+            cfg.lastMoodScore = MoodEmoji.SCORE_NONE
         }
     }
 
@@ -864,16 +997,199 @@ class MyKeyboardView @JvmOverloads constructor(
         val binding = keyboardViewBinding ?: return
         val visible = context.config.showMoodBar
         binding.moodBar.visibility = if (visible) View.VISIBLE else View.GONE
-        val defaultVisibility = if (visible) View.GONE else View.VISIBLE
-        binding.clipboardClear.visibility = defaultVisibility
-        binding.suggestionsHolder.visibility = defaultVisibility
         if (visible) {
+            // Phase 8.5: bar owns the leading edge. Hide clipboard_clear /
+            // suggestions / voice so they don't fight the chip for space;
+            // suggestions stays anchored to `endOf(mood_bar)` per the XML.
+            binding.clipboardClear.visibility = View.GONE
+            binding.suggestionsHolder.visibility = View.VISIBLE
             // voiceInputButton is hidden whenever the bar takes over; its
-            // own gating (mVoiceInputMethod.isEmpty) is re-applied below
-            // when the bar is off so we never force-show it incorrectly.
+            // own gating (mVoiceInputMethod.isEmpty) is re-applied in the
+            // else branch so we never force-show it incorrectly.
             binding.voiceInputButton.visibility = View.GONE
+            // Phase 8.5: suggestions anchored to endOf(mood_bar) per XML.
+            // No constraint mutation needed — the XML default applies.
+            applyMoodBarConstraints(barOn = true)
         } else {
+            // Phase 8.5: when the mood bar is hidden, the XML constraint
+            // `suggestions_holder.start = endOf(mood_bar)` would orphan
+            // suggestions at the leading edge (constraints persist when
+            // their target is GONE). Re-anchor at runtime to
+            // `endOf(clipboard_clear)` so the pre-Phase-8 layout returns.
+            binding.clipboardClear.visibility = View.VISIBLE
+            binding.suggestionsHolder.visibility = View.VISIBLE
             binding.voiceInputButton.beGoneIf(mVoiceInputMethod.isEmpty())
+            applyMoodBarConstraints(barOn = false)
+        }
+    }
+
+    /**
+     * Phase 8.5: re-anchor `suggestions_holder` based on whether the mood
+     * bar is on or off (Decision #3). When the bar is on, suggestions
+     * trails it. When the bar is off, suggestions trails `clipboard_clear`,
+     * the pre-Phase-8 leading anchor.
+     *
+     * Driven by a `ConstraintSet` clone of `toolbar_holder` rather than by
+     * mutating LayoutParams in-place — `ConstraintSet` is the canonical
+     * way to flip anchors on a `ConstraintLayout` without losing the
+     * other constraints already set in XML.
+     */
+    private fun applyMoodBarConstraints(barOn: Boolean) {
+        val binding = keyboardViewBinding ?: return
+        val toolbar = binding.toolbarHolder as? ConstraintLayout ?: return
+        val set = ConstraintSet().apply { clone(toolbar) }
+        set.clear(R.id.suggestions_holder, ConstraintSet.START)
+        val anchor = if (barOn) R.id.mood_bar else R.id.clipboard_clear
+        set.connect(
+            R.id.suggestions_holder,
+            ConstraintSet.START,
+            anchor,
+            ConstraintSet.END,
+        )
+        set.applyTo(toolbar)
+    }
+
+    /**
+     * Phase 8.5: flip the bar between collapsed (single-slot chip) and
+     * expanded (seven slots + chevron). Mirrors Phase 6's
+     * `applySensorExpansion` discipline: takes an `animate` flag so
+     * `onVisibilityChanged(VISIBLE)` and `setupMoodBar` can pre-flip the
+     * layout to its persisted state without the cross-fade flickering
+     * on first paint.
+     *
+     * Cancels any in-flight slot animations + auto-collapse callbacks
+     * before flipping so the cross-fade always starts from a clean state.
+     * The chevron rotation, indicator/slots cross-fade, and (the rare
+     * case where the user mid-dance flips the bar) the dance animator
+     * all compose: `View.animate().cancel()` cancels the chained call,
+     * and the dance's `AnimatorSet` is cancelled separately.
+     */
+    private fun applyMoodBarLayout(expanded: Boolean, animate: Boolean) {
+        val binding = keyboardViewBinding ?: return
+        val indicator = binding.moodBarCollapsedIndicator
+        val slots = binding.moodBarExpandedSlots
+        val chevron = binding.moodBarToggleChevron
+        cancelMoodLayoutAnimators()
+        val rotTarget = if (expanded) MOOD_BAR_CHEVRON_ROT_EXPANDED else MOOD_BAR_CHEVRON_ROT_COLLAPSED
+        if (!animate) {
+            chevron.rotation = rotTarget
+            if (expanded) {
+                indicator.alpha = 0f
+                indicator.visibility = View.GONE
+            } else {
+                // Re-derive the indicator's intended emoji + alpha from
+                // the current highlight before showing it. Skipping this
+                // would leave the placeholder 🙂 at α=1.0 (looks selected).
+                applyMoodBarCollapsedIndicator(highlightedMoodSlot)
+                indicator.visibility = View.VISIBLE
+            }
+            slots.alpha = if (expanded) 1f else 0f
+            slots.visibility = if (expanded) View.VISIBLE else View.GONE
+            return
+        }
+        chevron.animate()
+            .rotation(rotTarget)
+            .setDuration(MOOD_BAR_CHEVRON_ROT_MS)
+            .start()
+        if (expanded) {
+            // Hide the collapsed chip; cross-fade the expanded slots in.
+            indicator.animate()
+                .alpha(0f)
+                .setDuration(MOOD_BAR_LAYOUT_FADE_MS)
+                .withEndAction { indicator.visibility = View.GONE }
+                .start()
+            slots.alpha = 0f
+            slots.visibility = View.VISIBLE
+            slots.animate()
+                .alpha(1f)
+                .setDuration(MOOD_BAR_LAYOUT_FADE_MS)
+                .start()
+        } else {
+            slots.animate()
+                .alpha(0f)
+                .setDuration(MOOD_BAR_LAYOUT_FADE_MS)
+                .withEndAction { slots.visibility = View.GONE }
+                .start()
+            // Hotfix: re-derive the indicator's intended alpha so the
+            // dim placeholder (🙂 at α=0.45) doesn't get cross-faded to
+            // α=1.0 — that bug made the deselect path read identically
+            // to the select path because the placeholder ended up at full
+            // alpha after a deselect-then-auto-collapse.
+            applyMoodBarCollapsedIndicator(highlightedMoodSlot)
+            val targetAlpha = indicator.alpha
+            indicator.alpha = 0f
+            indicator.visibility = View.VISIBLE
+            indicator.animate()
+                .alpha(targetAlpha)
+                .setDuration(MOOD_BAR_LAYOUT_FADE_MS)
+                .start()
+        }
+    }
+
+    /**
+     * Phase 8.5: cancel only the layout cross-fade animators (collapsed
+     * indicator + slots container + chevron rotation). The seven per-slot
+     * highlight animations are deliberately NOT cancelled here — they
+     * carry the "which slot is selected" feedback and cancelling them
+     * mid-flight from a layout change (e.g. tapping the chip during the
+     * highlight settle) would freeze a slot at scaleX≈1.05, alpha≈0.5,
+     * making the selected mood look unselected on re-expand. Per-slot
+     * cancel-before-restart already lives inside `applyMoodBarHighlight`,
+     * and the Phase 8.4 dance owns its own cancellation graph.
+     */
+    private fun cancelMoodLayoutAnimators() {
+        val binding = keyboardViewBinding ?: return
+        binding.moodBarCollapsedIndicator.animate().cancel()
+        binding.moodBarExpandedSlots.animate().cancel()
+        binding.moodBarToggleChevron.animate().cancel()
+    }
+
+    /**
+     * Phase 8.5: full cleanup for `onDetachedFromWindow`. Cancels the
+     * layout cross-fade animators AND every per-slot highlight animation
+     * so a leaked frame callback can't keep the view alive past detach.
+     */
+    private fun cancelAllMoodAnimators() {
+        cancelMoodLayoutAnimators()
+        val binding = keyboardViewBinding ?: return
+        listOf(
+            binding.moodBarPrivacy,
+            binding.moodBarHappiness,
+            binding.moodBarSurprise,
+            binding.moodBarDisgust,
+            binding.moodBarSadness,
+            binding.moodBarFear,
+            binding.moodBarAnger,
+        ).forEach { it.animate().cancel() }
+    }
+
+    /**
+     * Phase 8.5: recompute the collapsed-indicator emoji + alpha from the
+     * current state. Re-runs whenever `applyMoodBarHighlight` is called
+     * (i.e., every state transition) so the chip stays in sync with the
+     * expanded bar's highlighted slot.
+     *
+     * Display table (matches §3 of `Phase8.5_Plan.md`):
+     *   privacy on                          → 🛡️ at α=1.0
+     *   privacy off, no highlight (no rating) → 🙂 at α=0.45 (placeholder)
+     *   privacy off, highlight = score 1..6 → emoji at α=1.0
+     */
+    private fun applyMoodBarCollapsedIndicator(slot: Int?) {
+        val binding = keyboardViewBinding ?: return
+        val indicator = binding.moodBarCollapsedIndicator
+        when {
+            slot == MOOD_SLOT_PRIVACY -> {
+                indicator.text = resources.getString(R.string.mood_bar_privacy_emoji)
+                indicator.alpha = MOOD_BAR_ALPHA_SELECTED
+            }
+            slot != null && MoodEmoji.isValidScore(slot) -> {
+                indicator.text = MoodEmoji.emojiFor(slot)
+                indicator.alpha = MOOD_BAR_ALPHA_SELECTED
+            }
+            else -> {
+                indicator.text = resources.getString(R.string.mood_bar_collapsed_placeholder)
+                indicator.alpha = MOOD_BAR_ALPHA_DIMMED
+            }
         }
     }
 
@@ -895,11 +1211,24 @@ class MyKeyboardView @JvmOverloads constructor(
         )
         all.forEach { (view, idx) ->
             val isSelected = slot != null && slot == idx
-            view.alpha = if (isSelected) MOOD_BAR_ALPHA_SELECTED else MOOD_BAR_ALPHA_DIMMED
-            val scale = if (isSelected) MOOD_BAR_SCALE_SELECTED else MOOD_BAR_SCALE_DIMMED
-            view.scaleX = scale
-            view.scaleY = scale
+            val targetAlpha = if (isSelected) MOOD_BAR_ALPHA_SELECTED else MOOD_BAR_ALPHA_DIMMED
+            val targetScale = if (isSelected) MOOD_BAR_SCALE_SELECTED else MOOD_BAR_SCALE_DIMMED
+            // Phase 8.5 hotfix: SNAP to target values directly (no animation).
+            // The animated approach was unreliable because slot animations
+            // started while the container was GONE didn't always render —
+            // the user-reported "selected mood not brighter than others on
+            // open" is the symptom. The Phase-8.4 dance still provides
+            // tactile feedback for the just-tapped slot; non-tapped slots
+            // don't need a transition since they cross-fade with the
+            // container alpha animation.
+            view.animate().cancel()
+            view.alpha = targetAlpha
+            view.scaleX = targetScale
+            view.scaleY = targetScale
         }
+        // Phase 8.5: keep the collapsed-state chip in sync with the
+        // expanded bar's highlighted slot.
+        applyMoodBarCollapsedIndicator(slot)
     }
 
     /**
@@ -2381,6 +2710,21 @@ class MyKeyboardView @JvmOverloads constructor(
         // callback can't keep this view alive past detach.
         currentMoodDanceAnimator?.cancel()
         currentMoodDanceAnimator = null
+        // Phase 8.5: drop any pending auto-collapse callback + cancel
+        // every animator on the mood-bar surface (cross-fade + per-slot
+        // highlights) so a re-attach starts from a clean state.
+        mMoodCollapseHandler.removeCallbacks(mMoodAutoCollapseRunnable)
+        cancelAllMoodAnimators()
+        // Phase 8.5 focus-loss collapse: clear the persisted expansion
+        // state ONLY when the view is actually being torn down. Doing
+        // this from the IME's onFinishInputView would desync Config and
+        // the live view across input-field switches (where the IME stays
+        // attached); the next scheduleAutoCollapse would then read
+        // moodBarExpanded=false, hit its guard, and never post the
+        // collapse runnable — stranding the bar in the expanded state.
+        if (context.config.moodBarExpanded) {
+            context.config.moodBarExpanded = false
+        }
     }
 
     private fun dismissPopupKeyboard() {

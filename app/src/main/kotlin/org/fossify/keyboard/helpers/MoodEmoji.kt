@@ -68,9 +68,25 @@ object MoodEmoji {
     /** True when [score] is a valid ordinal valence id (1..6). */
     fun isValidScore(score: Int): Boolean = score in SCORE_HAPPINESS..SCORE_ANGER
 
+    /**
+     * Phase 8.5: alias of [isValidScore] used by `Config.lastMoodScore`
+     * read sites that want to express "is this a real standing rating"
+     * rather than "is this a valid DB row score". Behaviourally identical
+     * — the sentinel `SCORE_NONE = 0` is the only excluded value.
+     */
+    fun isStandingScore(score: Int): Boolean = isValidScore(score)
+
     /** Resource id for the privacy slot's accessibility label. */
     val privacyLabelRes: Int = R.string.privacy_label_on
 
+    /**
+     * Phase 8.5: sentinel for "no standing rating". Stored in
+     * `Config.lastMoodScore` when (a) the user has never tapped a slot,
+     * (b) the user explicitly deselected via Phase-8.2's
+     * `clearMoodForActiveSession`, (c) Phase 8's `enablePrivacyAndClearMood`
+     * fired, or (d) the inactivity-reset path zeroed it.
+     */
+    const val SCORE_NONE: Int = 0
     const val SCORE_HAPPINESS: Int = 1
     const val SCORE_SURPRISE: Int = 2
     const val SCORE_DISGUST: Int = 3

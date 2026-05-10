@@ -131,6 +131,8 @@ import org.fossify.keyboard.helpers.EVENT_CATEGORY_ENTER
 import org.fossify.keyboard.helpers.EVENT_CATEGORY_OTHER
 import org.fossify.keyboard.helpers.EVENT_CATEGORY_SPACE
 import org.fossify.keyboard.helpers.IME_EDIT_GRACE_MS
+import org.fossify.keyboard.helpers.MOOD_INACTIVITY_TIMEOUT_MS
+import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.helpers.cachedVNTelexData
 import org.fossify.keyboard.helpers.KinematicSensorHelper
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
@@ -222,6 +224,15 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
             ViewCompat.requestApplyInsets(binding.keyboardHolder)
         }
 
+        // Phase 8.5: primary on-show staleness check. Runs BEFORE
+        // `LiveCaptureSessionStore.startSession(...)` so that any
+        // racing read of `Config.lastMoodScore` (e.g. from
+        // `MyKeyboardView.refreshMoodBarFromState` on the same frame)
+        // sees the cleared value. The check is one Config read, two
+        // longs of arithmetic, and at most one Config write — never
+        // touches sensors, sessions, or events.
+        maybeResetStaleMood()
+
         if (sensorHelper == null) {
             sensorHelper = KinematicSensorHelper(
                 context = this,
@@ -261,6 +272,33 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         super.onFinishInputView(finishingInput)
         LiveCaptureSessionStore.stopSession()
         sensorHelper?.stop()
+        // Phase 8.5: best-effort backstop for the inactivity-reset
+        // timestamp. Only updated when a standing rating actually
+        // exists; otherwise this is the "user never set a mood" path
+        // and a timestamp serves no purpose. Bounded to one cold-path
+        // SharedPreferences write per IME-detach.
+        if (MoodEmoji.isStandingScore(config.lastMoodScore)) {
+            config.lastMoodActivityTimestamp = System.currentTimeMillis()
+        }
+    }
+
+    /**
+     * Phase 8.5: clear `Config.lastMoodScore` when the time since the last
+     * meaningful mood-bar interaction exceeds [MOOD_INACTIVITY_TIMEOUT_MS]
+     * (one hour). No-op when no standing rating exists or when the
+     * recorded timestamp is `0L` (never written). The reset is
+     * deliberately scoped: privacy mode is NOT flipped here — the next
+     * `MyKeyboardView.refreshMoodBarFromState` call lets the existing
+     * `Config.privacyModeEnabled` path take over (Decision #9).
+     */
+    private fun maybeResetStaleMood() {
+        if (!MoodEmoji.isStandingScore(config.lastMoodScore)) return
+        val last = config.lastMoodActivityTimestamp
+        if (last <= 0L) return
+        val now = System.currentTimeMillis()
+        if (now - last > MOOD_INACTIVITY_TIMEOUT_MS) {
+            config.lastMoodScore = MoodEmoji.SCORE_NONE
+        }
     }
 
     override fun onPress(primaryCode: Int) {
