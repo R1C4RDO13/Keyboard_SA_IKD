@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 9.13: themed body for the widget-info popup.
+
+    Layout: title, description paragraph, "How to read it" subhead +
+    paragraph, optional "Formula" subhead + monospaced block. The
+    formula header + body stay GONE for widgets without math (counts,
+    distributions). All colours are tinted from the activity at
+    `showWidgetInfo` time so the popup tracks the user's Fossify theme.
+-->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/widget_info_root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/activity_margin">
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/widget_info_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/bigger_text_size"
+            android:textStyle="bold" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/widget_info_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:textSize="@dimen/normal_text_size" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/widget_info_interpretation_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:text="@string/widget_info_interpretation_header"
+            android:textSize="@dimen/smaller_text_size"
+            android:textStyle="bold" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/widget_info_interpretation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/small_margin"
+            android:textSize="@dimen/normal_text_size" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/widget_info_formula_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:text="@string/widget_info_formula_header"
+            android:textSize="@dimen/smaller_text_size"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/widget_info_formula"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/small_margin"
+            android:fontFamily="monospace"
+            android:textSize="@dimen/smaller_text_size"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

@@ -43,6 +43,8 @@ import org.fossify.keyboard.helpers.LiveCaptureSessionStore
 import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.helpers.SENSOR_DISPLAY_MODE_AXES
 import org.fossify.keyboard.helpers.SENSOR_DISPLAY_MODE_MAGNITUDE
+import org.fossify.keyboard.helpers.WidgetInfo
+import org.fossify.keyboard.helpers.attachWidgetInfo
 import org.fossify.keyboard.models.KeyTimingEvent
 import org.fossify.keyboard.models.MoodEntry
 import org.fossify.keyboard.models.SensorReadingEvent
@@ -153,6 +155,7 @@ class EventFeedActivity : SimpleActivity() {
         if (isDbBackedMode) {
             binding.eventFeedSessionDashboard.beVisible()
             binding.eventFeedLiveContainer.beGone()
+            setupWidgetInfo()
         } else {
             binding.eventFeedSessionDashboard.beGone()
             binding.eventFeedLiveContainer.beVisible()
@@ -212,6 +215,45 @@ class EventFeedActivity : SimpleActivity() {
             toggle.setIcon(iconRes)
             toggle.contentDescription = getString(cdRes)
         }
+    }
+
+    /**
+     * Phase 9.13: bind the four DB-backed-mode info icons to themed
+     * popups grounded in the per-session loaders' actual SQL.
+     */
+    private fun setupWidgetInfo() {
+        binding.sessionDashboardKpiInfoButton.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_session_kpi_strip_title,
+                descriptionRes = R.string.info_session_kpi_strip_desc,
+                interpretationRes = R.string.info_session_kpi_strip_interpretation,
+                formulaRes = R.string.info_session_kpi_strip_formula,
+            ),
+        )
+        binding.sessionDashboardIkdInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_session_ikd_chart_title,
+                descriptionRes = R.string.info_session_ikd_chart_desc,
+                interpretationRes = R.string.info_session_ikd_chart_interpretation,
+                formulaRes = R.string.info_session_ikd_chart_formula,
+            ),
+        )
+        binding.sessionDashboardGyroInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_session_gyro_chart_title,
+                descriptionRes = R.string.info_session_gyro_chart_desc,
+                interpretationRes = R.string.info_session_gyro_chart_interpretation,
+                formulaRes = R.string.info_session_gyro_chart_formula,
+            ),
+        )
+        binding.sessionDashboardAccelInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_session_accel_chart_title,
+                descriptionRes = R.string.info_session_accel_chart_desc,
+                interpretationRes = R.string.info_session_accel_chart_interpretation,
+                formulaRes = R.string.info_session_accel_chart_formula,
+            ),
+        )
     }
 
     private fun applyThemeColors() {

@@ -8,6 +8,8 @@ import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.FragmentDashboardTrendsBinding
+import org.fossify.keyboard.helpers.WidgetInfo
+import org.fossify.keyboard.helpers.attachWidgetInfo
 
 /**
  * Phase 9.11: Trends tab. Three IKD line charts (Speed / IKD / Error
@@ -26,7 +28,56 @@ class TrendsFragment : DashboardFragment() {
         savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentDashboardTrendsBinding.inflate(inflater, container, false)
+        attachWidgetInfoButtons()
         return binding.root
+    }
+
+    /**
+     * Phase 9.13: bind tap-to-explain dialogs to each chart's info icon.
+     * Each [WidgetInfo] points at copy in `strings_widget_info.xml` that
+     * mirrors the actual aggregator + DAO formula.
+     */
+    private fun attachWidgetInfoButtons() {
+        binding.dashboardChartSpeedInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_trends_speed_title,
+                descriptionRes = R.string.info_trends_speed_desc,
+                interpretationRes = R.string.info_trends_speed_interpretation,
+                formulaRes = R.string.info_trends_speed_formula,
+            ),
+        )
+        binding.dashboardChartIkdInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_trends_ikd_title,
+                descriptionRes = R.string.info_trends_ikd_desc,
+                interpretationRes = R.string.info_trends_ikd_interpretation,
+                formulaRes = R.string.info_trends_ikd_formula,
+            ),
+        )
+        binding.dashboardChartErrorInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_trends_error_rate_title,
+                descriptionRes = R.string.info_trends_error_rate_desc,
+                interpretationRes = R.string.info_trends_error_rate_interpretation,
+                formulaRes = R.string.info_trends_error_rate_formula,
+            ),
+        )
+        binding.dashboardChartGyroInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_trends_gyro_title,
+                descriptionRes = R.string.info_trends_gyro_desc,
+                interpretationRes = R.string.info_trends_gyro_interpretation,
+                formulaRes = R.string.info_trends_gyro_formula,
+            ),
+        )
+        binding.dashboardChartAccelInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_trends_accel_title,
+                descriptionRes = R.string.info_trends_accel_desc,
+                interpretationRes = R.string.info_trends_accel_interpretation,
+                formulaRes = R.string.info_trends_accel_formula,
+            ),
+        )
     }
 
     override fun onDestroyView() {
@@ -68,7 +119,7 @@ class TrendsFragment : DashboardFragment() {
         val hasGyro = gyroValues.any { it != null }
         val hasAccel = accelValues.any { it != null }
 
-        view.dashboardChartGyroTitle.beVisibleIf(hasGyro)
+        view.dashboardChartGyroTitleRow.beVisibleIf(hasGyro)
         view.dashboardChartGyro.beVisibleIf(hasGyro)
         if (hasGyro) {
             view.dashboardChartGyro.setData(
@@ -78,7 +129,7 @@ class TrendsFragment : DashboardFragment() {
             )
         }
 
-        view.dashboardChartAccelTitle.beVisibleIf(hasAccel)
+        view.dashboardChartAccelTitleRow.beVisibleIf(hasAccel)
         view.dashboardChartAccel.beVisibleIf(hasAccel)
         if (hasAccel) {
             view.dashboardChartAccel.setData(

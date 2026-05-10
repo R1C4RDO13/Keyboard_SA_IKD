@@ -5,6 +5,7 @@
     KPI strip at the activity level (Avg session + Longest streak), and
     Sessions / Typing time were already there. Only the four trend charts
     plus the Phase 9.10 backspaces-vs-autocorrects scatter remain.
+    Phase 9.13: every chart title row now hosts a tap-to-explain info icon.
 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -21,13 +22,34 @@
         android:padding="@dimen/normal_margin">
 
         <!-- Phase 9.3: Habits trend charts. -->
-        <org.fossify.commons.views.MyTextView
-            android:id="@+id/dashboard_chart_habits_session_duration_title"
+        <LinearLayout
+            android:id="@+id/dashboard_chart_habits_session_duration_title_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/dashboard_chart_habits_session_duration_title"
-            android:textStyle="bold"
-            android:visibility="gone" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_habits_session_duration_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_chart_habits_session_duration_title"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/dashboard_chart_habits_session_duration_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="@dimen/small_margin"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/widget_info_content_description"
+                android:focusable="true"
+                android:src="@drawable/ic_info_outline_vector" />
+
+        </LinearLayout>
 
         <org.fossify.keyboard.views.IkdLineChartView
             android:id="@+id/dashboard_chart_habits_session_duration"
@@ -36,14 +58,35 @@
             android:layout_marginTop="@dimen/small_margin"
             android:visibility="gone" />
 
-        <org.fossify.commons.views.MyTextView
-            android:id="@+id/dashboard_chart_habits_sessions_title"
+        <LinearLayout
+            android:id="@+id/dashboard_chart_habits_sessions_title_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/normal_margin"
-            android:text="@string/dashboard_chart_habits_sessions_title"
-            android:textStyle="bold"
-            android:visibility="gone" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_habits_sessions_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_chart_habits_sessions_title"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/dashboard_chart_habits_sessions_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="@dimen/small_margin"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/widget_info_content_description"
+                android:focusable="true"
+                android:src="@drawable/ic_info_outline_vector" />
+
+        </LinearLayout>
 
         <org.fossify.keyboard.views.IkdLineChartView
             android:id="@+id/dashboard_chart_habits_sessions"
@@ -52,14 +95,35 @@
             android:layout_marginTop="@dimen/small_margin"
             android:visibility="gone" />
 
-        <org.fossify.commons.views.MyTextView
-            android:id="@+id/dashboard_chart_habits_error_rate_title"
+        <LinearLayout
+            android:id="@+id/dashboard_chart_habits_error_rate_title_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/normal_margin"
-            android:text="@string/dashboard_chart_habits_error_rate_title"
-            android:textStyle="bold"
-            android:visibility="gone" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_habits_error_rate_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_chart_habits_error_rate_title"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/dashboard_chart_habits_error_rate_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="@dimen/small_margin"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/widget_info_content_description"
+                android:focusable="true"
+                android:src="@drawable/ic_info_outline_vector" />
+
+        </LinearLayout>
 
         <org.fossify.keyboard.views.IkdLineChartView
             android:id="@+id/dashboard_chart_habits_error_rate"
@@ -68,14 +132,35 @@
             android:layout_marginTop="@dimen/small_margin"
             android:visibility="gone" />
 
-        <org.fossify.commons.views.MyTextView
-            android:id="@+id/dashboard_chart_habits_flight_title"
+        <LinearLayout
+            android:id="@+id/dashboard_chart_habits_flight_title_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/normal_margin"
-            android:text="@string/dashboard_chart_habits_flight_title"
-            android:textStyle="bold"
-            android:visibility="gone" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_habits_flight_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_chart_habits_flight_title"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/dashboard_chart_habits_flight_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="@dimen/small_margin"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/widget_info_content_description"
+                android:focusable="true"
+                android:src="@drawable/ic_info_outline_vector" />
+
+        </LinearLayout>
 
         <org.fossify.keyboard.views.IkdLineChartView
             android:id="@+id/dashboard_chart_habits_flight"
@@ -100,11 +185,31 @@
                 android:orientation="vertical"
                 android:padding="@dimen/normal_margin">
 
-                <org.fossify.commons.views.MyTextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/dashboard_chart_activity_quality_title"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_chart_activity_quality_title"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/dashboard_activity_quality_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
 
                 <com.github.mikephil.charting.charts.ScatterChart
                     android:id="@+id/dashboard_activity_quality_chart"

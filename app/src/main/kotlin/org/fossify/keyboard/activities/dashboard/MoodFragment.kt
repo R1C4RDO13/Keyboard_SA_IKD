@@ -19,6 +19,8 @@ import org.fossify.keyboard.databinding.ItemMoodLegendSwatchBinding
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
+import org.fossify.keyboard.helpers.WidgetInfo
+import org.fossify.keyboard.helpers.attachWidgetInfo
 import org.fossify.keyboard.views.IkdStackedBarChartView
 
 /**
@@ -42,7 +44,28 @@ class MoodFragment : DashboardFragment() {
         savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentDashboardMoodBinding.inflate(inflater, container, false)
+        attachWidgetInfoButtons()
         return binding.root
+    }
+
+    /** Phase 9.13: bind tap-to-explain dialogs to each card's info icon. */
+    private fun attachWidgetInfoButtons() {
+        binding.dashboardMoodStackedChartInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_mood_mix_title,
+                descriptionRes = R.string.info_mood_mix_desc,
+                interpretationRes = R.string.info_mood_mix_interpretation,
+                formulaRes = R.string.info_mood_mix_formula,
+            ),
+        )
+        binding.dashboardMoodDistributionInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_mood_distribution_title,
+                descriptionRes = R.string.info_mood_distribution_desc,
+                interpretationRes = R.string.info_mood_distribution_interpretation,
+                formulaRes = R.string.info_mood_distribution_formula,
+            ),
+        )
     }
 
     override fun onDestroyView() {

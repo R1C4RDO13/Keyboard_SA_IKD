@@ -4,6 +4,7 @@
     keypress bar (9.5), 24-hour bar (9.6), circadian heatmap (9.6), and
     the Usage Map bubble chart (9.9). All five cards are GONE by default;
     the activity flips visibility per snapshot just like before.
+    Phase 9.13: each card title row gets a tap-to-explain info icon.
 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -34,11 +35,31 @@
                 android:orientation="vertical"
                 android:padding="@dimen/normal_margin">
 
-                <org.fossify.commons.views.MyTextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/dashboard_chart_calendar_heatmap_title"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_chart_calendar_heatmap_title"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/dashboard_calendar_heatmap_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
 
                 <org.fossify.keyboard.views.IkdHeatmapView
                     android:id="@+id/dashboard_calendar_heatmap"
@@ -66,11 +87,31 @@
                 android:orientation="vertical"
                 android:padding="@dimen/normal_margin">
 
-                <org.fossify.commons.views.MyTextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/dashboard_chart_daily_keypress_title"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_chart_daily_keypress_title"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/dashboard_daily_keypress_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
 
                 <org.fossify.keyboard.views.IkdLineChartView
                     android:id="@+id/dashboard_daily_keypress_chart"
@@ -98,11 +139,31 @@
                 android:orientation="vertical"
                 android:padding="@dimen/normal_margin">
 
-                <org.fossify.commons.views.MyTextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/dashboard_chart_hourly_title"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_chart_hourly_title"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/dashboard_hourly_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
 
                 <org.fossify.keyboard.views.IkdLineChartView
                     android:id="@+id/dashboard_hourly_chart"
@@ -131,11 +192,31 @@
                 android:orientation="vertical"
                 android:padding="@dimen/normal_margin">
 
-                <org.fossify.commons.views.MyTextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/dashboard_chart_circadian_title"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_chart_circadian_title"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/dashboard_circadian_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
 
                 <org.fossify.commons.views.MyTextView
                     android:id="@+id/dashboard_circadian_subtitle"
@@ -171,11 +252,31 @@
                 android:orientation="vertical"
                 android:padding="@dimen/normal_margin">
 
-                <org.fossify.commons.views.MyTextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/dashboard_chart_usage_map_title"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_chart_usage_map_title"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/dashboard_usage_map_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
 
                 <org.fossify.keyboard.views.IkdBubbleMapView
                     android:id="@+id/dashboard_usage_map"

@@ -50,12 +50,21 @@
 
             <!-- Phase 9.12: Global KPI strip — 6 cells (Sessions / Typing time
                  / Avg WPM / Error rate / Avg session / Longest streak). Wrapped
-                 in a HorizontalScrollView so 6 cells fit on narrow screens. -->
-            <HorizontalScrollView
+                 in a HorizontalScrollView so 6 cells fit on narrow screens.
+                 Phase 9.13: outer LinearLayout adds a tap-to-explain info icon
+                 on the right edge (one popup covers all six cells). -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fillViewport="true"
-                android:scrollbars="none">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <HorizontalScrollView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fillViewport="true"
+                    android:scrollbars="none">
 
                 <LinearLayout
                     android:id="@+id/dashboard_kpi_strip"
@@ -217,7 +226,20 @@
 
                 </LinearLayout>
 
-            </HorizontalScrollView>
+                </HorizontalScrollView>
+
+                <ImageView
+                    android:id="@+id/dashboard_kpi_info_button"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="@dimen/small_margin"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:contentDescription="@string/widget_info_content_description"
+                    android:focusable="true"
+                    android:src="@drawable/ic_info_outline_vector" />
+
+            </LinearLayout>
 
             <!-- Phase 9.12: top-of-screen tab toggle group. Same MaterialButton
                  toggle styling as the range toggle below — the user asked for
@@ -277,12 +299,20 @@
 
             </HorizontalScrollView>
 
-            <!-- Range selector. Phase 9.11: Today added as the first option. -->
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/dashboard_range_group"
+            <!-- Range selector. Phase 9.11: Today added as the first option.
+                 Phase 9.13: wrapped with a trailing info icon. -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/small_margin"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/dashboard_range_group"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
                 app:singleSelection="true"
                 app:selectionRequired="true">
 
@@ -320,26 +350,61 @@
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
+                <ImageView
+                    android:id="@+id/dashboard_range_info_button"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="@dimen/small_margin"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:contentDescription="@string/widget_info_content_description"
+                    android:focusable="true"
+                    android:src="@drawable/ic_info_outline_vector" />
+
+            </LinearLayout>
+
             <!-- Phase 9.4: Mood Filter chip row (gone until first MoodEntry).
                  Phase 9.11: stays in the global header so chip-row state
                  applies to every tab. Phase 9.12: moved below the range
-                 toggle since the tab toggle is the new top control. -->
-            <HorizontalScrollView
+                 toggle since the tab toggle is the new top control.
+                 Phase 9.13: wraps the chip strip with a trailing info icon.
+                 The wrapper hides/shows together with the strip. -->
+            <LinearLayout
                 android:id="@+id/dashboard_mood_filter_strip"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/small_margin"
-                android:fillViewport="false"
-                android:scrollbars="none"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:visibility="gone">
 
-                <LinearLayout
-                    android:id="@+id/dashboard_mood_filter_container"
-                    android:layout_width="wrap_content"
+                <HorizontalScrollView
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal" />
+                    android:layout_weight="1"
+                    android:fillViewport="false"
+                    android:scrollbars="none">
 
-            </HorizontalScrollView>
+                    <LinearLayout
+                        android:id="@+id/dashboard_mood_filter_container"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+
+                </HorizontalScrollView>
+
+                <ImageView
+                    android:id="@+id/dashboard_mood_filter_info_button"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="@dimen/small_margin"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:contentDescription="@string/widget_info_content_description"
+                    android:focusable="true"
+                    android:src="@drawable/ic_info_outline_vector" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

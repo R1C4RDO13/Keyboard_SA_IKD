@@ -24,6 +24,8 @@ import org.fossify.keyboard.databinding.FragmentDashboardKeystrokeDynamicsBindin
 import org.fossify.keyboard.databinding.ItemOrientationLegendBinding
 import org.fossify.keyboard.helpers.IkdDistributionAggregator
 import org.fossify.keyboard.helpers.IkdOrientationAggregator
+import org.fossify.keyboard.helpers.WidgetInfo
+import org.fossify.keyboard.helpers.attachWidgetInfo
 
 /**
  * Phase 9.11: Keystroke Dynamics tab. Three log-scale histograms over
@@ -41,7 +43,44 @@ class KeystrokeDynamicsFragment : DashboardFragment() {
         savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentDashboardKeystrokeDynamicsBinding.inflate(inflater, container, false)
+        attachWidgetInfoButtons()
         return binding.root
+    }
+
+    /** Phase 9.13: bind tap-to-explain dialogs to each card's info icon. */
+    private fun attachWidgetInfoButtons() {
+        binding.dashboardIkdDistributionInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_kd_ikd_distribution_title,
+                descriptionRes = R.string.info_kd_ikd_distribution_desc,
+                interpretationRes = R.string.info_kd_ikd_distribution_interpretation,
+                formulaRes = R.string.info_kd_ikd_distribution_formula,
+            ),
+        )
+        binding.dashboardDwellDistributionInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_kd_dwell_distribution_title,
+                descriptionRes = R.string.info_kd_dwell_distribution_desc,
+                interpretationRes = R.string.info_kd_dwell_distribution_interpretation,
+                formulaRes = R.string.info_kd_dwell_distribution_formula,
+            ),
+        )
+        binding.dashboardFlightDistributionInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_kd_flight_distribution_title,
+                descriptionRes = R.string.info_kd_flight_distribution_desc,
+                interpretationRes = R.string.info_kd_flight_distribution_interpretation,
+                formulaRes = R.string.info_kd_flight_distribution_formula,
+            ),
+        )
+        binding.dashboardOrientationInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_kd_orientation_title,
+                descriptionRes = R.string.info_kd_orientation_desc,
+                interpretationRes = R.string.info_kd_orientation_interpretation,
+                formulaRes = R.string.info_kd_orientation_formula,
+            ),
+        )
     }
 
     override fun onDestroyView() {

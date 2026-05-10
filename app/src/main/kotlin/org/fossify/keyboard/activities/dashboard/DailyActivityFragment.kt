@@ -12,6 +12,8 @@ import org.fossify.commons.extensions.updateTextColors
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.FragmentDashboardDailyActivityBinding
 import org.fossify.keyboard.helpers.IkdActivityAggregator
+import org.fossify.keyboard.helpers.WidgetInfo
+import org.fossify.keyboard.helpers.attachWidgetInfo
 import org.fossify.keyboard.interfaces.HourWeekdayRow
 import org.fossify.keyboard.views.IkdBubbleMapView
 import org.fossify.keyboard.views.IkdHeatmapView
@@ -44,7 +46,52 @@ class DailyActivityFragment : DashboardFragment() {
         savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentDashboardDailyActivityBinding.inflate(inflater, container, false)
+        attachWidgetInfoButtons()
         return binding.root
+    }
+
+    /** Phase 9.13: bind tap-to-explain dialogs to each card's info icon. */
+    private fun attachWidgetInfoButtons() {
+        binding.dashboardCalendarHeatmapInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_daily_calendar_heatmap_title,
+                descriptionRes = R.string.info_daily_calendar_heatmap_desc,
+                interpretationRes = R.string.info_daily_calendar_heatmap_interpretation,
+                formulaRes = R.string.info_daily_calendar_heatmap_formula,
+            ),
+        )
+        binding.dashboardDailyKeypressInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_daily_keypress_title,
+                descriptionRes = R.string.info_daily_keypress_desc,
+                interpretationRes = R.string.info_daily_keypress_interpretation,
+                formulaRes = R.string.info_daily_keypress_formula,
+            ),
+        )
+        binding.dashboardHourlyInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_daily_hourly_title,
+                descriptionRes = R.string.info_daily_hourly_desc,
+                interpretationRes = R.string.info_daily_hourly_interpretation,
+                formulaRes = R.string.info_daily_hourly_formula,
+            ),
+        )
+        binding.dashboardCircadianInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_daily_circadian_title,
+                descriptionRes = R.string.info_daily_circadian_desc,
+                interpretationRes = R.string.info_daily_circadian_interpretation,
+                formulaRes = R.string.info_daily_circadian_formula,
+            ),
+        )
+        binding.dashboardUsageMapInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_daily_usage_map_title,
+                descriptionRes = R.string.info_daily_usage_map_desc,
+                interpretationRes = R.string.info_daily_usage_map_interpretation,
+                formulaRes = R.string.info_daily_usage_map_formula,
+            ),
+        )
     }
 
     override fun onDestroyView() {

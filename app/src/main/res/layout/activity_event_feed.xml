@@ -74,6 +74,10 @@
                     app:cardCornerRadius="@dimen/card_corner_radius"
                     app:cardElevation="@dimen/card_elevation">
 
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
                     <LinearLayout
                         android:id="@+id/session_dashboard_kpi_strip"
                         android:layout_width="match_parent"
@@ -206,6 +210,20 @@
 
                     </LinearLayout>
 
+                    <ImageView
+                        android:id="@+id/session_dashboard_kpi_info_button"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="top|end"
+                        android:layout_margin="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                    </FrameLayout>
+
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Secondary chip row (3 smaller cells: avg IKD / dwell / flight) -->
@@ -295,13 +313,34 @@
                     android:textSize="@dimen/smaller_text_size" />
 
                 <!-- IKD chart card -->
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/session_dashboard_ikd_title"
+                <LinearLayout
+                    android:id="@+id/session_dashboard_ikd_title_row"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/normal_margin"
-                    android:text="@string/session_dashboard_chart_ikd"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_dashboard_ikd_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_dashboard_chart_ikd"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/session_dashboard_ikd_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/session_dashboard_ikd_card"
@@ -335,13 +374,34 @@
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Gyro chart card -->
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/session_dashboard_gyro_title"
+                <LinearLayout
+                    android:id="@+id/session_dashboard_gyro_title_row"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/normal_margin"
-                    android:text="@string/session_dashboard_chart_gyro"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_dashboard_gyro_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_dashboard_chart_gyro"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/session_dashboard_gyro_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/session_dashboard_gyro_card"
@@ -375,13 +435,34 @@
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Accel chart card -->
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/session_dashboard_accel_title"
+                <LinearLayout
+                    android:id="@+id/session_dashboard_accel_title_row"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/normal_margin"
-                    android:text="@string/session_dashboard_chart_accel"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/session_dashboard_accel_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/session_dashboard_chart_accel"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/session_dashboard_accel_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/session_dashboard_accel_card"

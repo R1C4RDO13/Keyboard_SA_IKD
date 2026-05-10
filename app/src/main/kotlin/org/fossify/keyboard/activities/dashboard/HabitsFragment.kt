@@ -20,10 +20,11 @@ import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.updateTextColors
-import org.fossify.commons.views.MyTextView
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.FragmentDashboardHabitsBinding
 import org.fossify.keyboard.helpers.IkdQualityAggregator
+import org.fossify.keyboard.helpers.WidgetInfo
+import org.fossify.keyboard.helpers.attachWidgetInfo
 import org.fossify.keyboard.views.IkdLineChartView
 
 /**
@@ -47,7 +48,52 @@ class HabitsFragment : DashboardFragment() {
         savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentDashboardHabitsBinding.inflate(inflater, container, false)
+        attachWidgetInfoButtons()
         return binding.root
+    }
+
+    /** Phase 9.13: bind tap-to-explain dialogs to each chart's info icon. */
+    private fun attachWidgetInfoButtons() {
+        binding.dashboardChartHabitsSessionDurationInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_habits_session_duration_title,
+                descriptionRes = R.string.info_habits_session_duration_desc,
+                interpretationRes = R.string.info_habits_session_duration_interpretation,
+                formulaRes = R.string.info_habits_session_duration_formula,
+            ),
+        )
+        binding.dashboardChartHabitsSessionsInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_habits_sessions_title,
+                descriptionRes = R.string.info_habits_sessions_desc,
+                interpretationRes = R.string.info_habits_sessions_interpretation,
+                formulaRes = R.string.info_habits_sessions_formula,
+            ),
+        )
+        binding.dashboardChartHabitsErrorRateInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_habits_error_rate_title,
+                descriptionRes = R.string.info_habits_error_rate_desc,
+                interpretationRes = R.string.info_habits_error_rate_interpretation,
+                formulaRes = R.string.info_habits_error_rate_formula,
+            ),
+        )
+        binding.dashboardChartHabitsFlightInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_habits_flight_title,
+                descriptionRes = R.string.info_habits_flight_desc,
+                interpretationRes = R.string.info_habits_flight_interpretation,
+                formulaRes = R.string.info_habits_flight_formula,
+            ),
+        )
+        binding.dashboardActivityQualityInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_habits_quality_title,
+                descriptionRes = R.string.info_habits_quality_desc,
+                interpretationRes = R.string.info_habits_quality_interpretation,
+                formulaRes = R.string.info_habits_quality_formula,
+            ),
+        )
     }
 
     override fun onDestroyView() {
@@ -65,13 +111,13 @@ class HabitsFragment : DashboardFragment() {
 
         val visible = habits.totalSessions > 0
         if (!visible) {
-            view.dashboardChartHabitsSessionDurationTitle.beGone()
+            view.dashboardChartHabitsSessionDurationTitleRow.beGone()
             view.dashboardChartHabitsSessionDuration.beGone()
-            view.dashboardChartHabitsSessionsTitle.beGone()
+            view.dashboardChartHabitsSessionsTitleRow.beGone()
             view.dashboardChartHabitsSessions.beGone()
-            view.dashboardChartHabitsErrorRateTitle.beGone()
+            view.dashboardChartHabitsErrorRateTitleRow.beGone()
             view.dashboardChartHabitsErrorRate.beGone()
-            view.dashboardChartHabitsFlightTitle.beGone()
+            view.dashboardChartHabitsFlightTitleRow.beGone()
             view.dashboardChartHabitsFlight.beGone()
             view.dashboardActivityQualityCard.beGone()
             view.fragmentHabitsEmptyMessage.beVisible()
@@ -86,14 +132,14 @@ class HabitsFragment : DashboardFragment() {
         val flightMs = habits.buckets.map { it.avgFlightMs?.toFloat() }
 
         bindHabitsChart(
-            title = view.dashboardChartHabitsSessionDurationTitle,
+            titleRow = view.dashboardChartHabitsSessionDurationTitleRow,
             chart = view.dashboardChartHabitsSessionDuration,
             labels = labels,
             values = durationMinutes,
             yLabel = getString(R.string.dashboard_chart_habits_session_duration_y_label),
         )
         bindHabitsChart(
-            title = view.dashboardChartHabitsSessionsTitle,
+            titleRow = view.dashboardChartHabitsSessionsTitleRow,
             chart = view.dashboardChartHabitsSessions,
             labels = labels,
             // sessionCount: zero is meaningful; render as zeros, never null.
@@ -102,14 +148,14 @@ class HabitsFragment : DashboardFragment() {
             showAsZeros = true,
         )
         bindHabitsChart(
-            title = view.dashboardChartHabitsErrorRateTitle,
+            titleRow = view.dashboardChartHabitsErrorRateTitleRow,
             chart = view.dashboardChartHabitsErrorRate,
             labels = labels,
             values = errorPct,
             yLabel = getString(R.string.dashboard_chart_habits_error_rate_y_label),
         )
         bindHabitsChart(
-            title = view.dashboardChartHabitsFlightTitle,
+            titleRow = view.dashboardChartHabitsFlightTitleRow,
             chart = view.dashboardChartHabitsFlight,
             labels = labels,
             values = flightMs,
@@ -201,7 +247,7 @@ class HabitsFragment : DashboardFragment() {
     }
 
     private fun bindHabitsChart(
-        title: MyTextView,
+        titleRow: View,
         chart: IkdLineChartView,
         labels: List<String>,
         values: List<Float?>,
@@ -209,7 +255,7 @@ class HabitsFragment : DashboardFragment() {
         showAsZeros: Boolean = false,
     ) {
         val hasData = showAsZeros && labels.isNotEmpty() || values.any { it != null }
-        title.beVisibleIf(hasData)
+        titleRow.beVisibleIf(hasData)
         chart.beVisibleIf(hasData)
         if (hasData) {
             chart.setData(labels, values, yLabel)

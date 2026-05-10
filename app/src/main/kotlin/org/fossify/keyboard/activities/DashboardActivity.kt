@@ -40,6 +40,8 @@ import org.fossify.keyboard.extensions.moodDB
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
+import org.fossify.keyboard.helpers.WidgetInfo
+import org.fossify.keyboard.helpers.attachWidgetInfo
 import java.util.Locale
 
 /**
@@ -124,6 +126,40 @@ class DashboardActivity : SimpleActivity() {
         setupListeners()
         setupMoodFilterChips()
         setupPagerAndToggle(savedInstanceState)
+        setupWidgetInfo()
+    }
+
+    /**
+     * Phase 9.13: wire the three header info icons to themed
+     * [WidgetInfoDialog] popups. The KPI strip icon explains all six
+     * cells together; the range and mood-filter icons explain those
+     * controls. Per-fragment chart icons are wired by each fragment.
+     */
+    private fun setupWidgetInfo() {
+        binding.dashboardKpiInfoButton.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_global_kpi_strip_title,
+                descriptionRes = R.string.info_global_kpi_strip_desc,
+                interpretationRes = R.string.info_global_kpi_strip_interpretation,
+                formulaRes = R.string.info_global_kpi_strip_formula,
+            ),
+        )
+        binding.dashboardRangeInfoButton.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_global_range_title,
+                descriptionRes = R.string.info_global_range_desc,
+                interpretationRes = R.string.info_global_range_interpretation,
+                formulaRes = null,
+            ),
+        )
+        binding.dashboardMoodFilterInfoButton.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_global_mood_filter_title,
+                descriptionRes = R.string.info_global_mood_filter_desc,
+                interpretationRes = R.string.info_global_mood_filter_interpretation,
+                formulaRes = null,
+            ),
+        )
     }
 
     override fun onResume() {

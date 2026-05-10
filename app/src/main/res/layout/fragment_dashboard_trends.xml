@@ -3,6 +3,8 @@
     Phase 9.11: Trends tab content. Three IKD line charts (WPM / Avg IKD /
     Error rate) plus the Phase 9.2 gyro/accel global trend charts. The
     section header is gone — the NavigationRail label replaces it.
+    Phase 9.13: each chart title shares its row with a tap-to-explain
+    info icon.
 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/fragment_trends_scroll"
@@ -18,11 +20,31 @@
         android:padding="@dimen/normal_margin">
 
         <!-- Speed chart -->
-        <org.fossify.commons.views.MyTextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/dashboard_chart_speed"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <org.fossify.commons.views.MyTextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_chart_speed"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/dashboard_chart_speed_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="@dimen/small_margin"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/widget_info_content_description"
+                android:focusable="true"
+                android:src="@drawable/ic_info_outline_vector" />
+
+        </LinearLayout>
 
         <org.fossify.keyboard.views.IkdLineChartView
             android:id="@+id/dashboard_chart_speed"
@@ -31,12 +53,32 @@
             android:layout_marginTop="@dimen/small_margin" />
 
         <!-- IKD chart -->
-        <org.fossify.commons.views.MyTextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/normal_margin"
-            android:text="@string/dashboard_chart_ikd"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <org.fossify.commons.views.MyTextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_chart_ikd"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/dashboard_chart_ikd_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="@dimen/small_margin"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/widget_info_content_description"
+                android:focusable="true"
+                android:src="@drawable/ic_info_outline_vector" />
+
+        </LinearLayout>
 
         <org.fossify.keyboard.views.IkdLineChartView
             android:id="@+id/dashboard_chart_ikd"
@@ -45,12 +87,32 @@
             android:layout_marginTop="@dimen/small_margin" />
 
         <!-- Error rate chart -->
-        <org.fossify.commons.views.MyTextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/normal_margin"
-            android:text="@string/dashboard_chart_error"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <org.fossify.commons.views.MyTextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_chart_error"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/dashboard_chart_error_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="@dimen/small_margin"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/widget_info_content_description"
+                android:focusable="true"
+                android:src="@drawable/ic_info_outline_vector" />
+
+        </LinearLayout>
 
         <org.fossify.keyboard.views.IkdLineChartView
             android:id="@+id/dashboard_chart_error"
@@ -59,14 +121,35 @@
             android:layout_marginTop="@dimen/small_margin" />
 
         <!-- Phase 9.2: Gyro magnitude trend chart -->
-        <org.fossify.commons.views.MyTextView
-            android:id="@+id/dashboard_chart_gyro_title"
+        <LinearLayout
+            android:id="@+id/dashboard_chart_gyro_title_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/normal_margin"
-            android:text="@string/dashboard_chart_gyro_title"
-            android:textStyle="bold"
-            android:visibility="gone" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_gyro_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_chart_gyro_title"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/dashboard_chart_gyro_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="@dimen/small_margin"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/widget_info_content_description"
+                android:focusable="true"
+                android:src="@drawable/ic_info_outline_vector" />
+
+        </LinearLayout>
 
         <org.fossify.keyboard.views.IkdLineChartView
             android:id="@+id/dashboard_chart_gyro"
@@ -76,14 +159,35 @@
             android:visibility="gone" />
 
         <!-- Phase 9.2: Accel magnitude trend chart -->
-        <org.fossify.commons.views.MyTextView
-            android:id="@+id/dashboard_chart_accel_title"
+        <LinearLayout
+            android:id="@+id/dashboard_chart_accel_title_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/normal_margin"
-            android:text="@string/dashboard_chart_accel_title"
-            android:textStyle="bold"
-            android:visibility="gone" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_accel_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_chart_accel_title"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/dashboard_chart_accel_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="@dimen/small_margin"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/widget_info_content_description"
+                android:focusable="true"
+                android:src="@drawable/ic_info_outline_vector" />
+
+        </LinearLayout>
 
         <org.fossify.keyboard.views.IkdLineChartView
             android:id="@+id/dashboard_chart_accel"

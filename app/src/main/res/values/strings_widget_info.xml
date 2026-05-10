@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 9.13: widget-info popover copy.
+
+    Naming convention: info_<surface>_<widget>_(title|desc|interpretation|formula).
+
+    Caps: title <= 50, description <= 280, interpretation <= 280,
+    formula <= 200. Reading style: second-person, present tense.
+
+    Every description is grounded in current code (aggregator + DAO @Query
+    + view binding). Where a metric varies under different ranges (TODAY
+    is hourly, ALL_TIME is weekly), the copy says so explicitly.
+-->
+<resources>
+
+    <!-- Shared strings ============================================== -->
+    <string name="widget_info_close">Got it</string>
+    <string name="widget_info_interpretation_header">How to read it</string>
+    <string name="widget_info_formula_header">Formula</string>
+    <string name="widget_info_content_description">More info about this metric</string>
+
+
+    <!-- ===========================================================
+         GLOBAL DASHBOARD
+         =========================================================== -->
+
+    <!-- KPI strip header (covers all six cells in one popup) -->
+    <string name="info_global_kpi_strip_title">Headline metrics</string>
+    <string name="info_global_kpi_strip_desc">Six top-line numbers for the selected range and mood filter: Sessions, Typing time, WPM, Error rate, Avg session, Longest streak. Each cell is computed from the same data hop and updates together.</string>
+    <string name="info_global_kpi_strip_interpretation">Sessions, Typing time and Avg session move in lockstep with how often you used the keyboard. WPM and Error rate are quality numbers; Longest streak rewards consistency rather than volume.</string>
+    <string name="info_global_kpi_strip_formula">Sessions = COUNT(sessions)\nTyping time = SUM(ended_at − started_at) / 60000 min\nWPM = keystrokes / 5 / typing_minutes\nError rate = 100 × Σ correction_weight / productive_keystrokes\nAvg session = Σ duration / Σ sessions\nLongest streak = longest run of buckets with ≥1 session</string>
+
+    <!-- Range toggle -->
+    <string name="info_global_range_title">Time range</string>
+    <string name="info_global_range_desc">Picks the time window every chart and KPI on this screen aggregates over. Today uses hourly buckets within the current local day. Week is 7 daily buckets, Month is 30 daily buckets, All Time uses weekly buckets back to your earliest session.</string>
+    <string name="info_global_range_interpretation">Use Today to debug a single day; Week and Month for habits and trends; All Time for the long-running picture. Some charts (calendar heatmap, daily keypress bar, Usage Map) hide under Today because they degenerate on hourly data.</string>
+
+    <!-- Mood filter chip row -->
+    <string name="info_global_mood_filter_title">Mood filter</string>
+    <string name="info_global_mood_filter_desc">Restricts every aggregator on the screen to sessions you tagged with the matching mood. Tapping an active chip toggles back to All. The row is hidden until you record your first mood entry from the keyboard top bar.</string>
+    <string name="info_global_mood_filter_interpretation">Pick a mood to see how that mood\'s sessions compare. The Mood mix and Distribution panels stay unfiltered on purpose so a single chip never collapses them to one column.</string>
+
+
+    <!-- Trends fragment ============================================ -->
+
+    <string name="info_trends_speed_title">WPM over time</string>
+    <string name="info_trends_speed_desc">Words per minute per bucket. Each bucket is one day under Week or Month, one hour under Today, and one ISO week under All Time. Autocorrect events are excluded from the keystroke count; emoji taps and backspaces are included.</string>
+    <string name="info_trends_speed_interpretation">A higher line means faster typing in that bucket. Gaps appear when a bucket has no captured sessions — they show as line breaks instead of fake zeros.</string>
+    <string name="info_trends_speed_formula">WPM = keystrokes / 5 / (bucket_typing_minutes)\nkeystrokes = COUNT(*) − COUNT(AUTOCORRECT)</string>
+
+    <string name="info_trends_ikd_title">Average IKD</string>
+    <string name="info_trends_ikd_desc">Average inter-key delay in milliseconds — the time between consecutive key-up events in the bucket. The first event of every session is excluded (it carries the −1 sentinel since there is no previous key).</string>
+    <string name="info_trends_ikd_interpretation">Lower is faster. Spikes usually mean pauses or thinking time mixed in. Bucket size varies with the selected range.</string>
+    <string name="info_trends_ikd_formula">avgIkdMs = AVG(ikd_ms WHERE ikd_ms ≥ 0) per bucket</string>
+
+    <string name="info_trends_error_rate_title">Error rate over time</string>
+    <string name="info_trends_error_rate_desc">Percentage of effort spent correcting per bucket. Numerator is the sum of correction weights (BACKSPACE = chars deleted; AUTOCORRECT = replaced span length). Denominator is productive keystrokes — events that produced kept text.</string>
+    <string name="info_trends_error_rate_interpretation" formatted="false">A bucket reading 10 % roughly means one in ten useful keystrokes was effectively reversed. Buckets with no productive keystrokes show as gaps rather than zero.</string>
+    <string name="info_trends_error_rate_formula">errorRate = 100 × Σ correction_weight / productive_keystrokes\nproductive_keystrokes = events − BACKSPACE − AUTOCORRECT</string>
+
+    <string name="info_trends_gyro_title">Gyro magnitude trend</string>
+    <string name="info_trends_gyro_desc">Average device rotation speed (rad/s) per bucket while you were typing. SQLite averages the squared magnitude on the gyro samples; the loader takes the square root in Kotlin to get the line value.</string>
+    <string name="info_trends_gyro_interpretation">Higher means more hand or device movement during typing. Hidden when no session in the range had gyro capture enabled.</string>
+    <string name="info_trends_gyro_formula">gyroMag = √( AVG(x² + y² + z²) ) per bucket</string>
+
+    <string name="info_trends_accel_title">Accel magnitude trend</string>
+    <string name="info_trends_accel_desc">Average linear acceleration magnitude (m/s²) per bucket while you were typing. Averaged in SQL as squared magnitude, square-rooted in Kotlin per row.</string>
+    <string name="info_trends_accel_interpretation">Higher usually means walking or otherwise unstable typing. Hidden when no session in the range had accel capture enabled.</string>
+    <string name="info_trends_accel_formula">accelMag = √( AVG(x² + y² + z²) ) per bucket</string>
+
+
+    <!-- Daily Activity fragment ==================================== -->
+
+    <string name="info_daily_calendar_heatmap_title">Calendar heatmap</string>
+    <string name="info_daily_calendar_heatmap_desc">One cell per day in the selected range, coloured by total keystrokes for that day. AUTOCORRECT events are excluded — only kept-text keystrokes count. Hidden under the Today range because a single cell tells you nothing.</string>
+    <string name="info_daily_calendar_heatmap_interpretation">Darker cells = busier days. Empty cells mean no captured activity on that day (or capture was off).</string>
+    <string name="info_daily_calendar_heatmap_formula">cell_value = COUNT(*) WHERE event_category != \'AUTOCORRECT\'</string>
+
+    <string name="info_daily_keypress_title">Daily keypress bar</string>
+    <string name="info_daily_keypress_desc">Same per-day keystroke counts as the heatmap, plotted as a line over the selected range. Hidden under Today.</string>
+    <string name="info_daily_keypress_interpretation">A jagged line means inconsistent activity day-to-day. Long flat sections are quiet stretches.</string>
+    <string name="info_daily_keypress_formula">value = COUNT(*) WHERE event_category != \'AUTOCORRECT\'</string>
+
+    <string name="info_daily_hourly_title">Hourly distribution (24 h)</string>
+    <string name="info_daily_hourly_desc">Total keystrokes by hour of day across every session in the selected range. Each row is one hour, 0–23, in your local time zone. AUTOCORRECT events excluded.</string>
+    <string name="info_daily_hourly_interpretation">Tall bars are your high-typing hours; flat regions are downtime. Folding many days together makes the daily rhythm visible even on small samples.</string>
+    <string name="info_daily_hourly_formula">value = COUNT(*) GROUP BY hour</string>
+
+    <string name="info_daily_circadian_title">Circadian heatmap</string>
+    <string name="info_daily_circadian_desc">A 24 × 7 grid of total keystrokes by hour of day and day of week. Range-independent on purpose — always all-time data — because a single week or month is too sparse for a circadian pattern.</string>
+    <string name="info_daily_circadian_interpretation">Bright rows are your typing windows; bright columns are your active weekdays. A bright column with dim neighbours points to a recurring routine.</string>
+    <string name="info_daily_circadian_formula">cell = COUNT(*) GROUP BY weekday, hour (all-time)</string>
+
+    <string name="info_daily_usage_map_title">Usage map</string>
+    <string name="info_daily_usage_map_desc">A bubble per active (day, hour) cell. Bubble area scales with the keystroke count for that cell. Hidden under Today since the X axis collapses to one date.</string>
+    <string name="info_daily_usage_map_interpretation">A solid horizontal band means a routine — same hour, many days. Vertical bands mean burst days. Tap a bubble to see its day, hour and count.</string>
+    <string name="info_daily_usage_map_formula">bubble = COUNT(*) per (day, hour)</string>
+
+
+    <!-- Mood fragment ============================================== -->
+
+    <string name="info_mood_mix_title">Mood mix over time</string>
+    <string name="info_mood_mix_desc">Stacked bar per bucket showing how each Ekman category contributed to that bucket. Each segment is the percentage of mood entries in that bucket carrying that score. Bucket width matches the selected range.</string>
+    <string name="info_mood_mix_interpretation">A column dominated by one colour means one mood ran the bucket. Even splits mean a varied bucket. The chart stays unfiltered so a single chip never collapses it to one column.</string>
+    <string name="info_mood_mix_formula">segment_pct = 100 × count_of_mood / total_in_bucket</string>
+
+    <string name="info_mood_distribution_title">Mood distribution</string>
+    <string name="info_mood_distribution_desc">Absolute count of mood entries per Ekman category over the selected range. Each row pairs the emoji with a horizontal bar scaled to that category\'s share of the total.</string>
+    <string name="info_mood_distribution_interpretation">A long bar is a frequently-tapped mood. The bar width reflects share of total entries, not number of sessions.</string>
+    <string name="info_mood_distribution_formula">row = COUNT(mood_entries) GROUP BY mood_score</string>
+
+
+    <!-- Keystroke Dynamics fragment ================================ -->
+
+    <string name="info_kd_ikd_distribution_title">IKD distribution</string>
+    <string name="info_kd_ikd_distribution_desc">Histogram of inter-key delays. Buckets are log-scale: 10–20, 20–40, 40–80, … 5120–10240 ms. Anything above 10240 ms lands in the outlier annotation. Sub-10 ms rows are dropped (they\'re first-event sentinels).</string>
+    <string name="info_kd_ikd_distribution_interpretation">A peak in the 80–320 ms range is typical natural typing. A second hump above 1280 ms is pause-driven typing. The "+ outliers" label counts very long inter-key gaps separately.</string>
+    <string name="info_kd_ikd_distribution_formula">IKD = (key-up of N+1) − (key-up of N), excluding −1 sentinels</string>
+
+    <string name="info_kd_dwell_distribution_title">Dwell-time distribution</string>
+    <string name="info_kd_dwell_distribution_desc">Histogram of how long each individual key was held down (key-down to key-up of the same key). Same log-scale buckets as the IKD chart. Outliers above 10240 ms are counted separately.</string>
+    <string name="info_kd_dwell_distribution_interpretation">A tight peak around 40–80 ms is light, glancing taps. Longer tails mean lingering presses. Dwell is a per-key property and is independent of how fast you move between keys.</string>
+    <string name="info_kd_dwell_distribution_formula">dwell = key-up timestamp − key-down timestamp (per key)</string>
+
+    <string name="info_kd_flight_distribution_title">Flight-time distribution</string>
+    <string name="info_kd_flight_distribution_desc">Histogram of the gap between releasing one key and pressing the next (key-up of N to key-down of N+1). Same log-scale buckets and outlier handling as the IKD and dwell histograms.</string>
+    <string name="info_kd_flight_distribution_interpretation">Short flights are smooth typing. A heavy tail above 320 ms suggests visible pauses while moving fingers between keys.</string>
+    <string name="info_kd_flight_distribution_formula">flight = (key-down of N+1) − (key-up of N)</string>
+
+    <string name="info_kd_orientation_title">Orientation breakdown</string>
+    <string name="info_kd_orientation_desc">Donut over sessions in the selected range, partitioned by device orientation at session start: Portrait, Landscape, or Unknown. Unknown covers sessions where orientation capture was disabled or pre-Phase-2 sessions that never wrote the column.</string>
+    <string name="info_kd_orientation_interpretation">Each slice is sized by session count. The legend below the donut shows each slice\'s share of total typing time alongside its session count.</string>
+    <string name="info_kd_orientation_formula">slice = COUNT(sessions) GROUP BY orientation</string>
+
+
+    <!-- Habits fragment ============================================ -->
+
+    <string name="info_habits_session_duration_title">Avg session duration</string>
+    <string name="info_habits_session_duration_desc">Average length of a session per bucket, in minutes. Sessions still in flight (no ended_at) are counted as zero duration in the SUM but still bump sessionCount, so very short or in-progress sessions can pull the average down.</string>
+    <string name="info_habits_session_duration_interpretation">A higher line means longer typing bouts. Sudden dips often correspond to days with quick one-off sessions (a single message, an OTP code).</string>
+    <string name="info_habits_session_duration_formula">avg_minutes = SUM(duration_ms) / sessions / 60000</string>
+
+    <string name="info_habits_sessions_title">Sessions per period</string>
+    <string name="info_habits_sessions_desc">Number of sessions in each bucket. Bucket width follows the range: hourly under Today, daily under Week and Month, weekly under All Time. Zero-bucket runs render as zero rather than line breaks since absence is meaningful here.</string>
+    <string name="info_habits_sessions_interpretation">A flat line at zero is a stretch when the keyboard wasn\'t opened. Tall spikes are heavy days; this chart pairs naturally with the duration chart above.</string>
+    <string name="info_habits_sessions_formula">value = COUNT(sessions) per bucket</string>
+
+    <string name="info_habits_error_rate_title">Avg error rate</string>
+    <string name="info_habits_error_rate_desc">Per-bucket error rate. Numerator: sum of correction weights (BACKSPACE chars deleted + AUTOCORRECT replaced spans). Denominator on this Habits chart is the bucket\'s non-autocorrect keystroke count, including BACKSPACE.</string>
+    <string name="info_habits_error_rate_interpretation">Reads slightly differently from the Trends error chart and the global KPI. Trends and the KPI use productive keystrokes (excluding both BACKSPACE and AUTOCORRECT). Numbers here are usually a touch lower for the same data.</string>
+    <string name="info_habits_error_rate_formula">errorRate = 100 × Σ correction_weight / non_autocorrect_keystrokes</string>
+
+    <string name="info_habits_flight_title">Avg flight time</string>
+    <string name="info_habits_flight_desc">Average flight time per bucket — the gap between releasing one key and pressing the next. The first event of every session is excluded (no previous key to measure from).</string>
+    <string name="info_habits_flight_interpretation">Lower values mean smoother sequencing between keys; spikes suggest pause-heavy sessions in that bucket.</string>
+    <string name="info_habits_flight_formula">avgFlightMs = AVG(flight_time_ms WHERE ≥ 0) per bucket</string>
+
+    <string name="info_habits_quality_title">Activity quality scatter</string>
+    <string name="info_habits_quality_desc" formatted="false">One point per day in the selected range. X axis = backspaces that day, Y axis = autocorrections that day. The newest day is fully opaque; older days fade toward 20 % alpha so the most recent dot stands out.</string>
+    <string name="info_habits_quality_interpretation">A point near the origin is a "clear-mind day" — few corrections of either kind. Points far up are autocorrect-heavy; far right are backspace-heavy. Tap a point for the date and counts.</string>
+    <string name="info_habits_quality_formula">x = COUNT(BACKSPACE), y = COUNT(AUTOCORRECT) per day</string>
+
+
+    <!-- ===========================================================
+         PER-SESSION DASHBOARD (EventFeedActivity DB-backed mode)
+         =========================================================== -->
+
+    <string name="info_session_kpi_strip_title">Session metrics</string>
+    <string name="info_session_kpi_strip_desc">Five headline numbers for this session: Events, Typing time, WPM, Error rate, and Mood (when tagged). Computed off one SQL round-trip via IkdSessionStatsLoader.</string>
+    <string name="info_session_kpi_strip_interpretation">Events counts every captured key — including autocorrects. WPM and Error rate use the same formulas as the global KPI strip but scoped to this session. Mood appears only if you tagged this session from the keyboard.</string>
+    <string name="info_session_kpi_strip_formula">Events = COUNT(*)\nTyping time = ended_at − started_at\nWPM = keystrokes / 5 / minutes\nError rate = 100 × Σ correction_weight / productive_keystrokes</string>
+
+    <string name="info_session_mood_title">Mood for this session</string>
+    <string name="info_session_mood_desc">The Ekman category you tagged this session with from the keyboard top bar. Only the integer ordinal is stored — the emoji is rendered in the app from the score.</string>
+    <string name="info_session_mood_interpretation">Visible only when you actually tapped a mood for this session. Clearing it requires re-tapping the privacy shield from the mood bar at the time of capture.</string>
+
+    <string name="info_session_ikd_chart_title">IKD over time (this session)</string>
+    <string name="info_session_ikd_chart_desc">Average inter-key delay in milliseconds at every bucket within this session. Bucket width auto-scales: target 200 buckets across the session length, with a 50 ms floor.</string>
+    <string name="info_session_ikd_chart_interpretation">Drift upward over the session length usually means fatigue or pauses creeping in; sustained low IKD is sustained focus. Gaps mark sub-buckets that were sentinel-only.</string>
+    <string name="info_session_ikd_chart_formula">avgIkdMs = AVG(ikd_ms WHERE ≥ 0) per bucket\nbucket_width = max(50, ⌈duration / 200⌉) ms</string>
+
+    <string name="info_session_gyro_chart_title">Gyro magnitude (this session)</string>
+    <string name="info_session_gyro_chart_desc">Average gyroscope rotation speed magnitude in this session, per bucket. SQL averages the squared magnitude; the loader takes √ in Kotlin per row. Hidden when no gyro samples were captured for this session.</string>
+    <string name="info_session_gyro_chart_interpretation">Higher means more hand rotation while typing. Sudden spikes often coincide with re-grabbing the device or context-switching.</string>
+    <string name="info_session_gyro_chart_formula">gyroMag = √( AVG(x² + y² + z²) ) per bucket</string>
+
+    <string name="info_session_accel_chart_title">Accel magnitude (this session)</string>
+    <string name="info_session_accel_chart_desc">Average linear acceleration magnitude in this session, per bucket. Same √(AVG(x²+y²+z²)) formulation as the gyro chart. Hidden when no accel samples were captured.</string>
+    <string name="info_session_accel_chart_interpretation">Higher usually means walking or otherwise unstable typing during this session. Stable lines mean a stationary surface.</string>
+    <string name="info_session_accel_chart_formula">accelMag = √( AVG(x² + y² + z²) ) per bucket</string>
+
+</resources>
