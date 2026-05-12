@@ -23,7 +23,8 @@ Quick-access summary of phase completion. For detailed scope of each phase see [
 | 10 | Rebranding & New Identity (MoodScript) | **Planned (next)** | [Phase10_Plan.md](Phase10/Phase10_Plan.md) | not started |
 | ~~11~~ | ~~Usage Map & Daily Activity Charts~~ | ~~Planned~~ — **deleted; absorbed into Phase 9.5–9.10** | — | — |
 | 12 | Mood-Curated Emoji Section | **Planned** | [Phase12_Plan.md](Phase12/Phase12_Plan.md) | not started |
-| 13 | Gamification: Badges (Mood + Keyboard) | **Planned** | [Phase13_Plan.md](Phase13/Phase13_Plan.md) | not started |
+| 13 | Persistent Right-Anchored Mood Bar (visible inside emoji drawer) | Implemented | [Phase13_Plan.md](Phase13/Phase13_Plan.md) | landed on `main` |
+| 14 | Gamification: Badges (Mood + Keyboard) | **Planned** | [Phase14_Plan.md](Phase14/Phase14_Plan.md) | not started |
 
 ## Schema state
 

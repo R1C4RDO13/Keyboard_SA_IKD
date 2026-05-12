@@ -11,7 +11,7 @@ import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.keyboard.databinding.ItemEmojiBinding
 import org.fossify.keyboard.databinding.ItemEmojiCategoryTitleBinding
 import org.fossify.keyboard.helpers.EmojiData
-import org.fossify.keyboard.helpers.getCategoryTitleRes
+import org.fossify.keyboard.helpers.getCategoryTitle
 
 class EmojisAdapter(
     val context: Context,
@@ -74,7 +74,12 @@ class EmojisAdapter(
     inner class EmojiCategoryViewHolder(val binding: ItemEmojiCategoryTitleBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bindView(category: Item.Category) {
             binding.emojiCategoryTitle.apply {
-                text = context.getString(getCategoryTitleRes(category.value))
+                // Phase 12: resolve via getCategoryTitle so the curated
+                // mood pseudo-category "mood_curated:<emoji>" is rendered
+                // as "Mood: <emoji>" via the localized format string,
+                // while the existing nine categories + recents continue
+                // to use a plain getString(resId).
+                text = getCategoryTitle(context, category.value)
                 setTextColor(textColor.adjustAlpha(0.6f))
             }
         }

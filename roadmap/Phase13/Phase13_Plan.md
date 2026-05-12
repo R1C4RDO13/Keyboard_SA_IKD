@@ -1,341 +1,296 @@
-# Phase 13 — Gamification: Badges (Mood + Keyboard)
+# Phase 13 — Persistent Right-Anchored Mood Bar (visible inside the emoji drawer)
 
 **Status:** Planned
-**Depends on:** Phase 8 (mood entries in `ikd.db`), Phase 9 (Insights dashboard tab structure), Phase 9.15 (current 5-tab layout: Summary · Trends · Daily Activity · Keystroke Dynamics · Habits)
+**Depends on:** Phase 8 / 8.1 / 8.2 / 8.5 (the existing collapsible mood bar UI + `IkdMoodBarController` + standing-mood persistence), Phase 12 (mood-curated emoji section — Phase 13 makes the user's mood actually *changeable* while the curated section is on screen)
 **Branch:** Implementation lands directly on `main` (small focused commits per logical change), per recent project hygiene.
-**Scope (one sentence):** Add a starter set of **~13 badges** that reward consistent mood cataloging and keyboard usage, surfaced as a new sixth **"Achievements"** tab in the Insights dashboard, with a brief in-app snackbar when a new badge unlocks.
+**Scope (one sentence):** Move the keyboard's mood bar from its current leading-edge anchor to the **trailing edge** and lift it into an overlay layer above both the regular keyboard toolbar **and** the emoji drawer, so the user can swap their mood without closing the drawer — which in turn re-curates the Phase 12 mood section immediately.
+
+> **Phase numbering note.** Phase 12 (mood-curated emoji section) landed at `bf305176`. This feature picks up from there as Phase 13.
 
 ---
 
 ## 1. Why this change
 
-The roadmap up to Phase 12 builds a complete passive-data + insights loop, but it doesn't *reward* the user for keeping that loop alive. Two of MoodScript's core pillars — **routine management** and **mood cataloging** — only pay off when the user actually engages over time. Lightweight gamification is the standard, low-friction way to bridge that engagement gap:
+The Phase 12 curated section is keyed on `Config.lastMoodScore`. Today, that value can only be flipped via the mood bar in the keyboard's **toolbar** — and the toolbar is hidden the moment the emoji drawer opens (`emoji_palette_holder` constrained to `top_toTopOf="@+id/toolbar_holder"`, covering everything). Result: the user has to **close the drawer, change mood, reopen the drawer** to see a different curated set. That round-trip kills the feature's main promise (Phase 12 §1: "the drawer respects the bar's selection").
 
-- A user who logs mood 7 days in a row gets a small visual confirmation that the routine is forming.
-- A user who reaches 10,000 keystrokes sees that the keyboard is working (and is being measured) silently in the background.
-- Because the badges live inside Insights — already the user's regular touchpoint with the captured data — they don't introduce a new attention channel.
+Phase 13 makes the mood bar a first-class persistent UI element:
 
-This phase deliberately keeps the gamification layer *additive and reversible*: badges are derived from existing tables (no new captured data, no privacy posture change), live behind their own tab so users who don't care can ignore them, and the unlock signal is an in-app snackbar (no system notifications, no permissions).
+- Visible in **both** the regular keyboard view and the emoji drawer
+- Anchored on the **trailing edge** (right side) so it never collides with the emoji drawer's leading-edge close button + label
+- Same Phase 8.5 collapsed chip ↔ expanded slots semantics, same Phase 8.4 dance, same Phase 8.2 chat-bubble feedback — purely a re-position + re-layer
+- When the user changes mood while the drawer is open, the drawer's adapter rebuilds with the new curated section at the top (Phase 12 §5.3 already reads `Config.lastMoodScore` on every `setupEmojis` call — Phase 13 just adds a refresh trigger)
+
+No new capture-path code, no schema change, no DAO touch, no new aggregator.
 
 ---
 
 ## 2. Branch & Layering Discipline
 
-Read-side feature with one schema bump. The capture path stays frozen.
+UI + view-position only. The Phase 8.5 freeze is largely respected — the mood-bar widget *itself* doesn't get rewired, only its parent and anchors. The emoji drawer's adapter pipeline is reopened in a narrow, additive way.
 
 ### Reopened files
 
 | File | Why reopened | Edit shape |
 |---|---|---|
-| `databases/IkdDatabase.kt` | Schema bump 3 → 4 (add `badges` table); register `BadgeDao` | One new `Migration(3, 4)` registered on the builder; `version = 4`; new `abstract fun BadgeDao(): BadgeDao` |
-| `extensions/ContextExt.kt` | Lazy singleton accessor for `IkdBadgeEvaluator`, mirroring existing `Context.ikdAggregator` etc. | One new `val Context.ikdBadgeEvaluator` |
-| `activities/DashboardActivity.kt` | Run badge evaluator alongside existing aggregators on `loadDashboard`; show snackbar on newly-unlocked badge(s) | Add one new evaluator call to the existing `Dispatchers.IO` hop. On result, if `NewlyUnlocked` list is non-empty, render a `Snackbar` at the bottom of the activity with the badge title (e.g. `"🌱 First Mood unlocked!"`). Multiple unlocks chain queue snackbars (or batch into one with first title + `"+N more"`) |
-| `activities/dashboard/DashboardPagerAdapter.kt` | Add 6th tab | `TAB_COUNT = 6`; new `TAB_ACHIEVEMENTS = 5`; new branch in `createFragment` returning `AchievementsFragment()` |
-| `activities/DashboardActivity.kt` (tab title array, `TabLayoutMediator` setup, `STATE_TAB_INDEX` saved-instance handling) | Display the 6th tab label and icon | Add Achievements label string and icon to the existing tab arrays |
-| `res/values/strings.xml` | New strings for the tab title, snackbar template, and 13 badge titles + descriptions | Additive only |
-| `res/values/colors.xml` and `res/values-night/colors.xml` | Locked-state and unlocked-state badge tint tokens | Additive only — `badge_locked_tint`, `badge_unlocked_glow`, plus a faded surface for locked cards |
+| `res/layout/keyboard_view_keyboard.xml` | The `mood_bar` LinearLayout moves out of `toolbar_holder` and becomes a direct child of `keyboard_holder` so it can render above both `toolbar_holder` and `emoji_palette_holder`. Trailing-edge anchor (`end_toEndOf="parent"`). Declared AFTER `emoji_palette_holder` in the XML so it sits on top in z-order. Right-side toolbar items (`voice_input_button`, `pinned_clipboard_items`, `settings_cog`) shift left to make room | Move the `<LinearLayout android:id="@+id/mood_bar">` block. Re-anchor `suggestions_holder.end_toStartOf` to point at the *first* right-side icon now visible (`voice_input_button`), unchanged from today. Re-anchor `settings_cog.end_toEndOf` to `startOf("@+id/mood_bar")` instead of `parent`. The bar gets `app:elevation="4dp"` so the system shadow makes it visually float over the emoji drawer's top bar. `clipChildren="false"` on `keyboard_holder` so the Phase 8.4 dance peak (1.6×) and the Phase 8.2 chat bubble are not clipped by the root |
+| `views/MyKeyboardView.kt` | `applyMoodBarVisibility` and `applyMoodBarConstraints` reference `clipboard_clear` and `suggestions_holder` for the **leading-edge** layout — those references need to flip to the **trailing-edge** equivalents. `setupMoodBar` keeps every click handler verbatim. A new private helper `notifyEmojiAdapterMoodChanged()` fires on every successful `onMoodSlotClicked` write so the emoji drawer rebuilds while it's open | `applyMoodBarVisibility`: keep `clipboard_clear` always-visible (no longer covered by the bar), hide-or-show `settings_cog` based on `Config.showMoodBar` (it's the right-side neighbour now). `applyMoodBarConstraints`: re-anchor `suggestions_holder.end_toStartOf` between two states — `startOf(mood_bar)` when the bar is on, `startOf(voice_input_button)` when it's off. `onMoodSlotClicked`: after the controller call resolves, call `notifyEmojiAdapterMoodChanged()` which checks `emojiPaletteHolder.isVisible` and re-runs `setupEmojis()` if so. No new mood-bar fields, no new pref keys |
+| `helpers/EmojiHelper.kt` | The `mood_curated:<emoji>` category title rebuilds when the drawer is re-prepared (Phase 12 §5.2). Phase 13 doesn't change `EmojiHelper`, but the curated section's emoji glyph must refresh against the **new** standing score on a mid-drawer mood swap | No edit. Verify behaviour on-device — `getCategoryTitle(context, category)` is called fresh by the adapter on every rebind, so a fresh `setupEmojis` call automatically picks up the new glyph |
+| `views/MyKeyboardView.kt` (`setupEmojis`, `prepareEmojiItems`) | Same file as above. The Phase 12 `addCuratedMoodSection(items)` call sits at the top of `prepareEmojiItems` and reads `Config.lastMoodScore` once. Phase 13 needs this to re-fire when mood changes mid-drawer | No change to `prepareEmojiItems` body. The trigger is the new `notifyEmojiAdapterMoodChanged()` helper above, which calls `setupEmojis()` — which already calls `prepareEmojiItems(filteredEmojis)` on `Dispatchers.IO` and posts the new adapter back to the main thread |
 
 ### New files
 
-| File | Purpose |
-|---|---|
-| `models/Badge.kt` | Room entity — `@Entity(tableName = "badges")` with `id: Long`, `badgeKey: String` (`@ColumnInfo(name = "badge_key")`, unique index), `unlockedAt: Long` (`@ColumnInfo(name = "unlocked_at")`) |
-| `interfaces/BadgeDao.kt` | DAO — `@Insert(onConflict = REPLACE) suspend fun upsert(...)`, `@Query("SELECT badge_key FROM badges") suspend fun getAllUnlockedKeys(): List<String>`, `@Query("SELECT * FROM badges ORDER BY unlocked_at DESC") suspend fun getAllUnlocked(): List<Badge>` |
-| `helpers/IkdBadgeCatalog.kt` | Static catalog: list of `BadgeDef(key, emoji, titleRes, descRes, criteria)` for all 13 starter badges. Pure data — no Room, no I/O |
-| `helpers/IkdBadgeEvaluator.kt` | `suspend fun evaluate(): EvaluationResult` on `Dispatchers.IO`. Reads existing tables (mood_entries, ikd_events, sessions), computes which badges should be unlocked, persists new unlocks via `BadgeDao.upsert(...)`. Returns `EvaluationResult(allUnlocked: List<Badge>, newlyUnlocked: List<BadgeDef>)`. Pure derivation lives on `Companion.evaluateBadges(criteria, snapshot)` for unit testing — same pattern as `IkdAggregator.Companion.buildSnapshot` |
-| `activities/dashboard/AchievementsFragment.kt` | Sixth dashboard fragment. Extends `DashboardFragment` so it picks up the existing payload-host plumbing. Renders a 2-column `RecyclerView.GridLayoutManager` of badge cards (locked = grey-tinted, alpha 0.45; unlocked = full-colour with subtle glow). Card layout uses `item_badge_card.xml` |
-| `adapters/BadgeAdapter.kt` | RecyclerView adapter with one viewType. Bind: emoji, title, description, locked/unlocked state, unlock date (when unlocked) |
-| `res/layout/fragment_dashboard_achievements.xml` | Card section header + RecyclerView + empty-state TextView ("No badges unlocked yet — keep typing and logging mood!") |
-| `res/layout/item_badge_card.xml` | One badge card: large emoji, title (`bigger_text_size`), description (`smaller_text_size`), unlock date (gone when locked). Wrapped in `MaterialCardView`. Same `card_corner_radius` / `card_elevation` from `dimens.xml` as the rest of the dashboard cards |
-| `app/src/test/.../IkdBadgeEvaluatorTest.kt` | JVM unit tests for `Companion.evaluateBadges` — one fixture per criterion, plus an "all-locked" baseline fixture and an "all-unlocked" check |
-| `app/src/androidTest/.../IkdDatabaseMigrationTest.kt` *(extend)* | Add `migrate_3_to_4_addsBadgesTableAndIndex` test confirming v3 data is preserved and the `badges` table + unique index land correctly |
+None. No new drawables (the chip uses Phase 8.5's `mood_bar_background`), no new dimens, no new strings, no new pref keys.
 
 ### Still forbidden (everything earlier phases froze)
 
 | File | Reason |
 |---|---|
-| All capture-path code (`SimpleKeyboardIME.kt`, `LiveCaptureSessionStore.kt`, `KinematicSensorHelper.kt`, `IkdRetentionWorker.kt`) | Frozen since Phase 7.1 |
-| `models/IkdEvent.kt`, `models/SensorSample.kt`, `models/SessionRecord.kt`, `models/MoodEntry.kt` | No edits to existing entities |
-| `helpers/IkdCsvWriter.kt` | CSV format frozen — badges are derived state, not captured data, and never appear in the CSV |
-| All read pipelines other than the new evaluator (`IkdAggregator`, `IkdSessionStatsLoader`, `IkdSessionChartLoader`, `IkdMoodLoader`, `IkdMoodAggregator`, plus the Phase 9 sub-phase aggregators) | Frozen — the new evaluator queries the existing tables independently |
-| `views/IkdLineChartView.kt`, `views/IkdStackedBarChartView.kt`, `views/IkdHeatmapView.kt`, `views/IkdBubbleMapView.kt` | Chart wrappers untouched |
-| `helpers/Config.kt`, `helpers/Constants.kt` | No new prefs (all badge state lives in the DB) |
-| `helpers/IkdMoodBarController.kt`, `helpers/MoodEmoji.kt`, `views/MyKeyboardView.kt` and the keyboard top-bar XML | Mood-bar UX unchanged |
+| All capture-path code (`SimpleKeyboardIME.kt`, `LiveCaptureSessionStore.kt`, `KinematicSensorHelper.kt`, `IkdRetentionWorker.kt`) | Capture pipeline frozen since Phase 7.1 |
+| All schema (`databases/IkdDatabase.kt`, `models/IkdEvent.kt`, `models/SensorSample.kt`, `models/SessionRecord.kt`, `models/MoodEntry.kt`) | No migration. `IkdDatabase.version` stays at 3 |
+| All read pipelines (`IkdAggregator`, `IkdSessionStatsLoader`, `IkdSessionChartLoader`, `IkdMoodLoader`, `IkdMoodAggregator`) | Phase 9 surface — frozen |
+| `helpers/IkdCsvWriter.kt` | CSV format frozen |
+| `adapters/EmojisAdapter.kt` | Two view types remain sufficient. Phase 13 only triggers a rebuild, doesn't change view types |
+| `helpers/Config.kt`, `helpers/Constants.kt` | No new prefs. `Config.lastMoodScore` (Phase 8.5) is still the data source. `Config.moodBarExpanded` (Phase 8.5) still persists collapse state |
+| `helpers/IkdMoodBarController.kt`, `helpers/MoodEmoji.kt` | Mood data path unchanged; curated lists from Phase 12 unchanged |
+| `res/values/strings.xml`, `res/values/dimens.xml` | Existing strings / dimens already cover everything — bar height + button size + chevron + bubble + collapsed-indicator dimens all reused as-is |
+| `res/drawable/mood_bar_background.xml`, `res/drawable/ic_chevron_right_vector.xml`, `res/drawable/mood_bubble_background.xml` | Phase 8.2 / 8.5 drawables reused |
+| `activities/*` and their layouts | Dashboards / Diagnostics / Sessions unaffected |
 
 ### Branch hygiene
 
-Five focused commits, in this order:
-
-1. Schema bump: `Badge` entity + `BadgeDao` + `Migration(3, 4)` + migration test.
-2. Catalog + evaluator: `IkdBadgeCatalog`, `IkdBadgeEvaluator` (incl. companion-only logic), unit tests.
-3. UI: `AchievementsFragment`, `BadgeAdapter`, layouts, strings, colours.
-4. Dashboard wiring: pager adapter + `DashboardActivity` evaluator hop + snackbar handling.
-5. Docs: this plan, [`STATUS.md`](../STATUS.md) row, optional `CLAUDE.md` update.
-
-No push, no PR opened by the implementer.
+- Two focused commits:
+  1. `res/layout/keyboard_view_keyboard.xml` — re-position the mood bar to trailing-edge overlay, shift right-side icons, re-anchor `suggestions_holder`
+  2. `views/MyKeyboardView.kt` — flip `applyMoodBarVisibility` / `applyMoodBarConstraints` to the trailing-edge convention + add the `notifyEmojiAdapterMoodChanged()` mid-drawer rebuild
+- No push, no PR opened by the implementer. User reviews locally first.
 
 ---
 
 ## 3. Locked decisions
 
-| # | Decision | Value |
+| # | Topic | Decision |
 |---|---|---|
-| 1 | Placement | **New 6th dashboard tab "Achievements"**, slotted after Habits. No changes to the existing 5 tabs. (Considered: an "X/Y badges" cell on the Habits KPI strip — rejected for v1 to keep tab content focused. May add later as a small footer link from the Habits tab to the Achievements tab) |
-| 2 | Initial catalog size | **13 badges** — six mood-cataloging, seven keyboard-usage. Listed in §4. Tight enough to ship cleanly, broad enough that any active user unlocks at least one in their first week |
-| 3 | Badge icons | **Emoji codepoints only** for v1. No custom vector drawables. Locked badges render in greyscale via a `ColorFilter` saturation matrix (no Photoshopped variants needed) |
-| 4 | Schema | Add `badges` table via `Migration(3, 4)`. Bump `IkdDatabase.version` 3 → 4 |
-| 5 | Evaluation timing | **Lazy, on dashboard open.** `IkdBadgeEvaluator.evaluate()` runs alongside existing aggregators in `DashboardActivity.loadDashboard()` on `Dispatchers.IO`. No real-time evaluation in the capture path |
-| 6 | Unlock feedback | **In-app `Snackbar`** anchored to the dashboard view when one or more new badges land during this evaluation. No system notifications, no notification permission, no nav-bar banner. Multiple simultaneous unlocks: show a single snackbar with the first badge's title + `"+N more"` (taps the snackbar action → jump to Achievements tab) |
-| 7 | Privacy | Unchanged. Badges are derived from existing `ikd_events`, `sessions`, and `mood_entries`. No new captured data, no new pref keys, no CSV column |
-| 8 | Re-evaluation cost | The evaluator runs once per `loadDashboard()` call. Worst case is ~3-4 small SQL queries (count + min/max + DISTINCT mood count + streak query). Logs wall-clock time to Logcat (tag `IkdBadgeEvaluator`) when `BuildConfig.DEBUG` — same pattern as `IkdAggregator` |
-| 9 | Tab title and icon | Tab label: "Achievements" (`R.string.dashboard_tab_achievements`). Icon: `🏆` rendered as a tab item via the existing `TabLayoutMediator` pattern, or a vector drawable equivalent (`ic_tab_achievements_vector`) for theme tinting consistency. **Implementer's choice** based on what scales cleanest at the existing tab size |
+| 1 | Switch sides? | **Yes — move to the trailing (right) edge.** The emoji drawer's `emoji_palette_top_bar` has the close arrow + label on the LEADING (left) edge; a left-side mood bar would collide. Trailing edge is empty in both the regular toolbar and the emoji drawer's top bar |
+| 2 | Single bar or two bars? | **Single bar instance, lifted to root z-order.** Move `mood_bar` from inside `toolbar_holder` to be a direct child of `keyboard_holder`, declared AFTER `emoji_palette_holder` in the XML so it's drawn on top. Two-bar duplication was rejected (state-sync nightmare; doubles the Phase 8.5 ConstraintSet logic) |
+| 3 | Toolbar-icon collision | **Right-side icons shift left.** `settings_cog` (currently `end_toEndOf="parent"`) becomes `end_toStartOf="@+id/mood_bar"`. `pinned_clipboard_items` and `voice_input_button` already chain off `settings_cog` so they cascade naturally. When `Config.showMoodBar = false`, `settings_cog` re-anchors back to `parent` via the same `applyMoodBarConstraints` ConstraintSet flip pattern Phase 8.5 already uses for `suggestions_holder` |
+| 4 | Expanded-bar collision with right-side icons | **Hide `voice_input_button` and `pinned_clipboard_items` while the bar is expanded.** Same UX precedent as Phase 8.5 hiding `clipboard_clear` + `suggestions_holder` in the old leading-edge layout. Settings cog stays visible (it's the closest neighbour and the bar's stretched-key background ends short of it). Restored when bar collapses |
+| 5 | Bar overlay above emoji drawer's top bar | **Yes, via XML sibling order + elevation.** The mood bar declared as the LAST child of `keyboard_holder` (after `emoji_palette_holder`) lands on top in the natural draw order. `app:elevation="4dp"` adds a Material shadow so the floating capsule reads correctly. `keyboard_holder` gains `android:clipChildren="false"` so the dance peak isn't cropped at the toolbar boundary |
+| 6 | Mood-bar visibility when drawer is open | **Always visible.** No state change on `openEmojiPalette` / `closeEmojiPalette` — the bar lives in a sibling layer and isn't affected. Phase 8.5 `applyMoodBarVisibility` keeps gating on `Config.showMoodBar` |
+| 7 | Mid-drawer mood change → re-curate | **Yes.** After every `IkdMoodBarController` write completes, if the emoji drawer is currently open, run `setupEmojis()` to rebuild the list with the new curated section at the top. Implementation: a `notifyEmojiAdapterMoodChanged()` helper that checks `keyboardViewBinding!!.emojiPaletteHolder.isVisible` and, if true, calls `setupEmojis()` (which already runs on `Dispatchers.IO` per Phase 12) |
+| 8 | Rebuild scroll position | **Scroll to top.** `closeEmojiPalette` already scrolls to position 0 on close (`emojisList.scrollToPosition(0)`). Mid-drawer mood swap also scrolls to 0 so the user sees the new curated section immediately. Otherwise they'd be looking at the same scroll offset of the previous mood's list, which is the worst of both worlds |
+| 9 | Suppress rebuild for redundant taps | **No.** Tapping the already-highlighted slot is a *deselect* (Phase 8.2 toggle semantics) and that path also flips the curated section to "no mood" → empty curated list. So every successful controller call should rebuild |
+| 10 | Privacy 🛡️ tap mid-drawer | **Rebuild applies.** Tapping privacy finalises the session and clears `Config.lastMoodScore` (Phase 8.5 Decision #16). Curated section disappears on the next rebuild. Capture is off, but the drawer keeps working — `EMOJI` events stop being recorded as expected |
+| 11 | First-paint / window-attach state | **Same as today.** Phase 8.5 already calls `applyMoodBarLayout(animate=false)` in `onVisibilityChanged(VISIBLE)` to avoid first-paint flicker. Trailing-edge anchor reuses this verbatim |
+| 12 | Animation envelopes | **Unchanged from Phase 8.5 + 8.4.** 150 ms chevron rotation, 200 ms cross-fade, ~360 ms dance, 380 ms post-tap auto-collapse. The Phase 8.5 hotfix that snaps slot α/scale directly (no view.animate) stays — direct property assignment was the only reliable path |
+| 13 | RTL languages | **No special handling for this phase.** The bar is anchored `end_toEndOf="parent"` which auto-flips under RTL layouts. Slot order stays valence-ordered LTR. Phase 8 already did not localise slot direction — Phase 13 follows the same precedent |
+| 14 | Accessibility | **TalkBack announces the bar before the emoji drawer's content.** The bar lives in a sibling overlay; default accessibility traversal order should land it first because it sits in the trailing edge of the toolbar region. No `importantForAccessibility` overrides — keep the default tree. Verify on-device with TalkBack enabled |
+| 15 | Test coverage | **JVM tests cover the controller hooks only.** The `notifyEmojiAdapterMoodChanged()` trigger is a View-level callback wired to existing controller paths — its correctness is covered by the existing `IkdMoodBarControllerTest` (Phase 8) and a new instrumented or screenshot test would be overkill for what is fundamentally a layer-position change. Manual verification per §10 below |
 
 ---
 
-## 4. Initial badge catalog
+## 4. Layout restructure detail
 
-Six **mood-cataloging** badges + seven **keyboard-usage** badges = 13 starter badges. Each `key` is the stable id stored in `badges.badge_key`.
+### Current (Phase 8.5)
 
-### Mood Cataloging
-
-| Key | Icon | Title | Criteria |
-|---|---|---|---|
-| `mood_first` | 🌱 | First Mood | `COUNT(*) FROM mood_entries >= 1` |
-| `mood_streak_7` | 📅 | 7-Day Diarist | At least one mood entry on each of 7 consecutive calendar days |
-| `mood_streak_30` | 🗓️ | 30-Day Reflector | At least one mood entry on each of 30 consecutive calendar days |
-| `mood_full_spectrum` | 🌈 | Full Spectrum | At least one mood entry exists for each of the 6 Ekman scores (1..6) |
-| `mood_centurion` | 🎯 | Centurion | `COUNT(*) FROM mood_entries >= 100` |
-| `mood_returner` | 🔄 | Returner | At least one mood entry **after** a gap of 7+ days with no mood entries (resumed logging) |
-
-### Keyboard Usage
-
-| Key | Icon | Title | Criteria |
-|---|---|---|---|
-| `kb_first_session` | ⌨️ | Hello, World | `COUNT(*) FROM sessions >= 1` |
-| `kb_wordsmith` | 📝 | Wordsmith | Cumulative `keystrokeCount` (events excluding `AUTOCORRECT`) >= 10,000 |
-| `kb_novelist` | 📚 | Novelist | Cumulative `keystrokeCount` >= 100,000 |
-| `kb_speed_demon` | 🚀 | Speed Demon | At least one session with WPM >= 60 |
-| `kb_precision` | 🎯 | Precision | At least one session with `keystrokeCount >= 100` and weighted error rate < 2% |
-| `kb_streak_7` | 🔥 | Week Streak | At least one session on each of 7 consecutive calendar days |
-| `kb_streak_30` | 🏆 | Month Streak | At least one session on each of 30 consecutive calendar days |
-
-> **Title duplication note.** Both `mood_centurion` and `kb_precision` use the 🎯 emoji. The collision is acceptable: badges are identified by their stable `badge_key` and full title in code; the icon is decorative. Future badges can vary the icon if a unique-icon principle is preferred.
-
-Each badge has an English `title` and `description` string-resource pair, e.g.:
-
-```xml
-<string name="badge_mood_first_title">First Mood</string>
-<string name="badge_mood_first_desc">You logged your first mood. The journey starts here.</string>
-<string name="badge_kb_streak_7_title">Week Streak</string>
-<string name="badge_kb_streak_7_desc">Typed at least once a day for seven days in a row.</string>
+```
+keyboard_holder (ConstraintLayout)
+├── toolbar_holder (ConstraintLayout)
+│   ├── clipboard_clear           ← leading edge (hidden when bar on)
+│   ├── mood_bar                  ← leading edge: chip + slots + chevron
+│   ├── suggestions_holder        ← start_toEndOf=mood_bar
+│   ├── voice_input_button        ← end_toStartOf=pinned_clipboard_items
+│   ├── pinned_clipboard_items    ← end_toStartOf=settings_cog
+│   └── settings_cog              ← trailing edge
+├── keyboard_view                  ← main typing keys
+├── clipboard_manager_holder       ← (overlay)
+└── emoji_palette_holder           ← (overlay, top_toTopOf=toolbar_holder)
+    ├── emoji_palette_top_bar     ← close arrow + "Emojis" label
+    ├── emoji_content_holder      ← emojis_list (RecyclerView)
+    └── emoji_palette_bottom_bar  ← mode change + input + backspace
 ```
 
-Locale translations are encouraged but optional for v1.
+### Phase 13
+
+```
+keyboard_holder (ConstraintLayout, clipChildren=false)
+├── toolbar_holder (ConstraintLayout)
+│   ├── clipboard_clear           ← leading edge (always visible now)
+│   ├── suggestions_holder        ← start_toEndOf=clipboard_clear,
+│   │                                end_toStartOf=voice_input_button
+│   ├── voice_input_button        ← end_toStartOf=pinned_clipboard_items
+│   ├── pinned_clipboard_items    ← end_toStartOf=settings_cog
+│   └── settings_cog              ← end_toStartOf=mood_bar (via ConstraintSet
+│                                     when bar on; end_toEndOf=parent when off)
+├── keyboard_view                  ← main typing keys
+├── clipboard_manager_holder       ← (overlay)
+├── emoji_palette_holder           ← (overlay)
+└── mood_bar (LinearLayout, elevation=4dp)  ← ★ MOVED — direct child of
+    ├── mood_bar_collapsed_indicator           keyboard_holder, anchored
+    ├── mood_bar_expanded_slots                end_toEndOf="parent",
+    │   ├── mood_bar_privacy                   top_toTopOf="parent",
+    │   ├── mood_bar_happiness                 declared LAST so it draws on top
+    │   ├── … (six emotion slots)
+    │   └── mood_bar_anger
+    └── mood_bar_toggle_chevron
+```
+
+**Key XML changes:**
+
+1. `keyboard_holder` gains `android:clipChildren="false"` so the dance peak (1.6×) and chat bubble are not cropped.
+2. `mood_bar` LinearLayout block lifts out of `toolbar_holder` and lands as a direct child of `keyboard_holder`, **after** `emoji_palette_holder` in declaration order.
+3. `mood_bar` constraints: `app:layout_constraintTop_toTopOf="parent"`, `app:layout_constraintEnd_toEndOf="parent"`, `android:layout_marginEnd="@dimen/medium_margin"` (replaces the current `layout_marginStart`). `app:elevation="4dp"`.
+4. `settings_cog` constraint: `app:layout_constraintEnd_toStartOf="@+id/mood_bar"` (default XML state). At runtime, when `Config.showMoodBar = false`, `applyMoodBarConstraints` flips it back to `app:layout_constraintEnd_toEndOf="parent"` via the same `ConstraintSet` pattern Phase 8.5 already uses.
+5. `suggestions_holder.layout_constraintEnd_toStartOf` flips between `voice_input_button` (when bar off) and `voice_input_button` (when bar on — unchanged because the bar no longer eats suggestions-area width when it's on the right edge). Actually: this anchor stays at `voice_input_button` in both states. The bar's expansion overlaps `voice_input_button` and `pinned_clipboard_items` only when **expanded** — those get hidden via `applyMoodBarVisibility` for that period.
+
+### Runtime visibility states
+
+| State | `voice_input_button` | `pinned_clipboard_items` | `settings_cog` | `clipboard_clear` |
+|---|---|---|---|---|
+| `Config.showMoodBar = false` | `applyMoodBarVisibility` defaults | always visible | visible (end=parent) | visible |
+| Bar on, collapsed (chip) | visible | visible | visible | visible |
+| Bar on, expanded | **GONE** (hidden by `applyMoodBarVisibility`) | **GONE** | visible | visible |
+| Emoji drawer open | covered by drawer (not touched by mood-bar code) | covered | covered | covered |
+| Emoji drawer open AND bar expanded | covered + GONE (no-op) | covered + GONE | covered | covered |
+
+The bar itself is **always above** the emoji drawer thanks to its z-order, regardless of the toolbar items' covered state.
 
 ---
 
-## 5. Schema migration
+## 5. Mid-drawer mood-change trigger
 
-`IkdDatabase.version` bumps **3 → 4**. The migration is non-destructive — it only adds a new table. Existing data (sessions, ikd_events, sensor_samples, mood_entries) is preserved.
+Single helper added to `MyKeyboardView`:
 
 ```kotlin
-val MIGRATION_3_4 = object : Migration(3, 4) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
-            """
-            CREATE TABLE IF NOT EXISTS `badges` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                `badge_key` TEXT NOT NULL,
-                `unlocked_at` INTEGER NOT NULL
-            )
-            """.trimIndent()
-        )
-        db.execSQL(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS `index_badges_badge_key`
-            ON `badges` (`badge_key`)
-            """.trimIndent()
-        )
+/**
+ * Phase 13: when a mood-bar tap changes Config.lastMoodScore (or clears it),
+ * and the emoji drawer is currently visible, rebuild the emoji list so the
+ * Phase 12 curated section reflects the new mood. Re-runs setupEmojis()
+ * which already dispatches its work to Dispatchers.IO and posts the new
+ * adapter back to the main thread.
+ *
+ * Cheap: setupEmojis re-parses the full emoji list off the main thread
+ * once per tap; the user's tap-to-bubble-feedback animation runs over
+ * ~360 ms which gives the rebuild plenty of slack.
+ */
+private fun notifyEmojiAdapterMoodChanged() {
+    val binding = keyboardViewBinding ?: return
+    if (binding.emojiPaletteHolder.isVisible) {
+        setupEmojis()
     }
 }
 ```
 
-The migration test in `app/src/androidTest/.../IkdDatabaseMigrationTest.kt` covers v3-data preservation and the unique index.
-
----
-
-## 6. Badge evaluation strategy
-
-`IkdBadgeEvaluator.evaluate()` is one `Dispatchers.IO` hop with at most a handful of small SQL queries:
-
-1. **Snapshot existing-state queries** (executed in parallel where possible):
-   - `BadgeDao.getAllUnlockedKeys()` — current unlocked set.
-   - `MoodDao.getMoodCount()` (additive query) — total mood entries.
-   - `MoodDao.getDistinctMoodScoreCount()` (additive) — number of distinct mood scores logged.
-   - `MoodDao.getMoodCalendarDays()` (additive) — list of distinct ISO calendar days with at least one mood entry, ordered ASC.
-   - `IkdEventDao.getKeystrokeCountTotal()` (additive) — `SUM(CASE WHEN event_category != 'AUTOCORRECT' THEN 1 ELSE 0 END)` lifetime.
-   - `SessionDao.getSessionCalendarDays()` (additive) — list of distinct ISO calendar days with at least one session.
-   - `IkdSessionStatsLoader` per-session WPM / error-rate is *not* re-aggregated globally; instead a one-shot `SessionDao.getMaxSessionWpm()` (or pre-computed via `keystrokeCount * 60_000 / durationMs` filter) and `SessionDao.getMinSessionErrorRate(minKeystrokes = 100)` answer the Speed Demon and Precision criteria with a single query each.
-
-2. **Companion-only `evaluateBadges(criteria, snapshot)`** — pure Kotlin folding step:
-   - For each `BadgeDef` in `IkdBadgeCatalog.ALL`:
-     - If already in `getAllUnlockedKeys()`: skip.
-     - Else: evaluate the criterion against the snapshot. If satisfied → add to `newlyUnlocked` list with `unlockedAt = System.currentTimeMillis()`.
-
-3. **Persist newly-unlocked rows** via `BadgeDao.upsert(newlyUnlocked.map { Badge(badgeKey = it.key, unlockedAt = it.unlockedAt) })`.
-
-4. **Return** `EvaluationResult(allUnlocked, newlyUnlocked)`.
-
-The fragment reads from `allUnlocked` to render its grid. The host activity reads `newlyUnlocked` to decide whether to show the snackbar.
-
-**Streak computation:** the implementer can fold the calendar-day list in Kotlin (`Companion.computeLongestStreak(days)` already exists in `IkdHabitsAggregator` per Phase 9.3). Reuse it directly, or copy the logic into the evaluator's companion to keep the modules independent.
-
-**Performance budget:** `evaluate()` logs its wall-clock duration in debug. Target: < 50 ms for a typical user (a few thousand events / few hundred mood entries / few dozen sessions).
-
----
-
-## 7. UI placement and styling
-
-### 7.1 Tab integration
-
-`DashboardPagerAdapter` gains:
+Call sites — append to each branch of `onMoodSlotClicked` *after* the controller `launch` is dispatched (controller writes Config asynchronously on Dispatchers.IO; the rebuild reads Config inside its own IO dispatch, so the order naturally settles — the rebuild's `prepareEmojiItems` call reads whatever Config holds at *that* moment, not at click time):
 
 ```kotlin
-const val TAB_COUNT = 6
-const val TAB_ACHIEVEMENTS = 5
+in MoodEmoji.SCORE_HAPPINESS..MoodEmoji.SCORE_ANGER -> {
+    // ...existing branch body...
+    moodController.setMoodForActiveSession(score, anchor)
+    notifyEmojiAdapterMoodChanged()       // ★
+}
 ```
 
-`DashboardActivity` adds a new entry to the existing tab title array (e.g. `R.array.dashboard_tab_titles`). The `TabLayoutMediator` setup is unchanged in shape — one extra title and one extra icon ID.
+Same call appended to the privacy and deselect branches. The single helper centralises the "is the drawer open?" check.
 
-### 7.2 `AchievementsFragment` layout
+### Why this is cheap
 
-```
-+------------------------------------------+
-| [section header: "Mood Cataloging"]      |
-| +----------+ +----------+                |
-| |   🌱     | |   📅     |                |
-| | First    | | 7-Day    |                |
-| | Mood     | | Diarist  |                |
-| | Unlocked | | Locked   |                |
-| | 12 May   | | (grey)   |                |
-| +----------+ +----------+                |
-|                                          |
-| +----------+ +----------+                |
-| |   🗓️     | |   🌈     |                |
-| | …        | | …        |                |
-| +----------+ +----------+                |
-| …                                        |
-|                                          |
-| [section header: "Keyboard Usage"]       |
-| …                                        |
-+------------------------------------------+
-```
+- `setupEmojis()` is already `Dispatchers.IO`-dispatched per Phase 12 — no main-thread blocking
+- The full emoji parse is ~2-5 ms on modern devices; curated-section construction is `O(curatedCount)` where curated count is ≤ 23
+- The user's tap → bubble animation runs over ~360 ms (dance), giving the rebuild *much* more time than it needs
+- No new DAO read, no new DB write, no schema work
 
-Two `RecyclerView` sections sharing the same `BadgeAdapter`, separated by a `MyTextView` section header tinted with `getProperPrimaryColor()`. Or one RecyclerView with category headers as additional view types — implementer's choice; both are clean.
+### Race-condition note
 
-### 7.3 Locked vs unlocked
+The controller writes `Config.lastMoodScore` on `Dispatchers.IO`. `notifyEmojiAdapterMoodChanged()` is called immediately after the `launch` line (which only *posts* the work; the write hasn't necessarily completed when the helper fires). The helper's `setupEmojis()` call also runs on IO. Order:
 
-| State | Visual |
+1. **T = 0:** click handler runs. `moodController.setMoodForActiveSession(score, anchor)` *posts* IO work.
+2. **T = 0+ε:** `notifyEmojiAdapterMoodChanged()` fires. If drawer is open, *posts* `setupEmojis()` IO work.
+3. **T = ~1 ms:** IO dispatcher picks up the controller write. Config updated.
+4. **T = ~2 ms:** IO dispatcher picks up the rebuild. Reads the freshly-written Config.
+
+In rare cases (3) and (4) could interleave differently. If `setupEmojis` reads Config *before* the controller writes, the rebuild surfaces the *old* curated section. Mitigations evaluated:
+
+- **A: Suspend `setupEmojis()` until controller completes.** Requires changing controller signature to `suspend` + return Job. Too invasive.
+- **B: Trigger rebuild from inside `IkdMoodBarController` after the Config write.** Couples the controller (helper layer) to the view layer. Layering violation.
+- **C: Trigger rebuild on `SharedPreferences.OnSharedPreferenceChangeListener`.** `SimpleKeyboardIME` already implements this listener (Phase 8.5 registration at line 204). Adding `LAST_MOOD_SCORE` to its filtered-key array routes the rebuild through the existing event channel, *after* the Config write commits.
+
+**Decision: option C.** `SimpleKeyboardIME.onSharedPreferenceChanged` adds a check for `key == LAST_MOOD_SCORE` and, if so, calls `keyboardView?.notifyEmojiAdapterMoodChanged()` — which becomes a public function (still no-ops when the drawer isn't open). This decouples the rebuild from the click handler, guarantees the rebuild runs *after* the write commits, and aligns with the existing keyboard refresh pattern (theme / language / height changes already use this path). Net cost: 3 lines in `SimpleKeyboardIME`, 1-character visibility change in `MyKeyboardView` (`private fun` → `fun`).
+
+**Forbidden-list note:** `SimpleKeyboardIME.kt` is in the Phase 7.1 capture-path freeze. But the edit here is **strictly the existing preference-listener filter** — a one-line addition to an already-existing `arrayOf(...)` of pref keys that trigger a keyboard refresh. No new behaviour, no new threading, no capture-path touch. Same pattern Phase 8.5 used when it added two narrow IME lifecycle wires (Phase 8.5 §2 "narrow IME lifecycle wires for the inactivity timestamp"). Explicit Phase 13 carve-out.
+
+---
+
+## 6. Acceptance criteria
+
+- [ ] `./gradlew assembleCoreDebug` succeeds
+- [ ] `./gradlew detekt` introduces no new issues (baseline = current main)
+- [ ] `./gradlew lint` introduces no new warnings
+- [ ] `./gradlew testCoreDebugUnitTest` passes (existing suite — Phase 13 adds no new tests)
+- [ ] On device, regular keyboard view: mood bar is on the right edge, chip mode by default, expand → tap mood → auto-collapse all work per Phase 8.5
+- [ ] Tap the emoji button (mode change) → emoji drawer opens. **Mood bar remains visible on the right edge.**
+- [ ] In the emoji drawer with no mood set: no curated section. Tap chip → expand → tap 😊 → drawer rebuilds and shows "Mood: 😊" curated section at the top. Bar auto-collapses showing 😊 chip.
+- [ ] Tap a different mood (e.g. 😢) → curated section rebuilds to "Mood: 😢" with the sadness emoji list. Scroll position resets to top.
+- [ ] Tap the highlighted mood (deselect) → curated section disappears. Drawer shows just the standard nine categories.
+- [ ] Tap privacy 🛡️ → bar shows 🛡️ chip, session finalises, curated section disappears.
+- [ ] Close drawer → bar still in right-edge position with the last-selected mood chip. Reopen drawer → curated section reflects the current mood.
+- [ ] On RTL locale (Arabic, Hebrew): bar auto-flips to the leading edge (which is the LTR right edge), still works.
+- [ ] Phase 8.4 dance plays on tap. Phase 8.2 chat bubble surfaces above the slot. No clipping at the toolbar / drawer top-bar boundary (because `keyboard_holder` and parents are `clipChildren=false`).
+- [ ] Rapid taps don't desync the curated section: each tap eventually triggers exactly one rebuild via the `OnSharedPreferenceChangeListener` path.
+
+---
+
+## 7. Risks
+
+| Risk | Mitigation |
 |---|---|
-| **Locked** | Card alpha = 0.45, emoji rendered with a saturation = 0 ColorMatrix (greyscale), description still visible (incentive to read criteria), no unlock date row |
-| **Unlocked** | Card at full alpha, emoji full-colour, subtle 1 dp glow border via `app:strokeColor="@color/badge_unlocked_glow"`, unlock date row visible (`"Unlocked 12 May 2026"`) |
-
-### 7.4 Snackbar on new unlock
-
-Anchored to `dashboardViewPager` (so it floats above the bottom nav). Single unlock:
-
-```
-🌱 First Mood unlocked!                [VIEW]
-```
-
-Multiple simultaneous unlocks:
-
-```
-🌱 First Mood unlocked! +2 more         [VIEW]
-```
-
-Tapping `[VIEW]` runs `binding.dashboardViewPager.currentItem = TAB_ACHIEVEMENTS`. The snackbar uses `Snackbar.LENGTH_LONG` (3.5 s), no further action needed if the user dismisses it.
+| Mood bar overlaps the emoji drawer's top-bar label / search if the label is too wide on a small device | `emoji_palette_label` is left-anchored with `lines="1"` + `ellipsize="end"`. Bar is right-anchored. They can't collide unless the device is *extremely* narrow. Verify on a 320 dp width emulator |
+| Existing right-side toolbar icons (`voice_input_button`, `pinned_clipboard_items`) collide with the bar on small devices | Already hidden when bar is expanded (Phase 8.5 precedent). In collapsed state the chip is ~80 dp, leaving room for both icons on a 320 dp screen |
+| The `OnSharedPreferenceChangeListener` rebuild path could fire multiple times per tap if Config is written in stages | Controller writes are atomic (a single `.apply()` call per setter). Listener fires once per write. The listener-side `setupEmojis()` call is idempotent — running it twice in quick succession is wasteful but harmless |
+| `keyboard_holder` having `clipChildren=false` allows other children to render outside their bounds, potentially leaking elements outside the keyboard's intended region | The only oversized child is the mood bar's dance peak and the chat bubble, both <20 dp of overflow. Same overflow Phase 8.4 already requires via `clipChildren=false` on the toolbar holder; lifting that to `keyboard_holder` is a strictly weaker constraint than what's already in production |
+| RTL locales might place the bar awkwardly | `end_toEndOf="parent"` auto-flips to "start" in RTL → bar lands on the leading edge. That happens to *also* be where the LTR-leading emoji-drawer close button lives. **Open issue:** RTL might re-collide with the close button. Worth a follow-up check in §10 manual verification |
 
 ---
 
-## 8. Files summary
+## 8. Verification (manual)
 
-**Modified (~7):**
-- `databases/IkdDatabase.kt` (schema bump + migration registration)
-- `extensions/ContextExt.kt` (lazy evaluator getter)
-- `activities/DashboardActivity.kt` (evaluator hop + snackbar)
-- `activities/dashboard/DashboardPagerAdapter.kt` (6th tab branch)
-- `res/values/strings.xml` (~30 new strings)
-- `res/values/colors.xml` and `res/values-night/colors.xml` (badge tints)
-- `app/src/androidTest/.../IkdDatabaseMigrationTest.kt` (3→4 migration test)
-
-**Created (~10):**
-- `models/Badge.kt`
-- `interfaces/BadgeDao.kt`
-- `helpers/IkdBadgeCatalog.kt`
-- `helpers/IkdBadgeEvaluator.kt`
-- `activities/dashboard/AchievementsFragment.kt`
-- `adapters/BadgeAdapter.kt`
-- `res/layout/fragment_dashboard_achievements.xml`
-- `res/layout/item_badge_card.xml`
-- `app/src/test/.../IkdBadgeEvaluatorTest.kt`
-- (Additive DAO query interfaces if extracted into POJO files, e.g. `interfaces/SessionWpmRow.kt` for the Speed Demon query result)
-
-**Untouched (deliberately):**
-- All capture-path code, all entities except the new `Badge`
-- `helpers/IkdCsvWriter.kt` (CSV format frozen)
-- `helpers/Config.kt`, `helpers/Constants.kt` (no new prefs)
-- All Phase 9 surface aggregators and chart wrappers
-- The mood bar / keyboard top bar
-- `app/build.gradle.kts`, `gradle.properties`
+1. `./gradlew installCoreDebug`. Open any text field; bring up the keyboard.
+2. **Regular kbd:** bar shows a `>` chip on the right edge. Suggestions / voice / clipboard / settings cog visible on the right with the bar nestled between suggestions and settings. Tap chip → expands; chip becomes `<`, slot row appears.
+3. **Tap 😊:** bubble pops above the slot ("I'm feeling happy"), Phase 8.4 dance plays, bar auto-collapses showing 😊 at full alpha after ~580 ms.
+4. **Open emoji drawer** (keyboard's emoji-mode button). The drawer's standard nine categories appear *below* the (visible) mood bar. The bar's `>` chip is on the right of the drawer's top bar.
+5. **Top section shows "Mood: 😊"** + curated happiness emoji list (because Phase 12 already wired the curated read).
+6. **Tap chip → expanded slots overlay the drawer's top bar's right side** (close + label still visible on the left). Tap 😢 → bubble, dance, bar auto-collapses showing 😢 chip. The drawer **rebuilds**: top section now reads "Mood: 😢" with the sadness emoji list. Scroll position resets to 0.
+7. **Tap the highlighted 😢 (deselect):** chip shows the dim placeholder 🙂. The curated section disappears from the drawer.
+8. **Tap privacy 🛡️:** bar shows 🛡️ chip. The capture session finalises. The curated section stays gone.
+9. **Close drawer (back arrow on left of drawer top bar):** drawer hides; bar remains where it was on the right edge of the regular toolbar.
+10. **`Config.showMoodBar = false`** (Settings → "Show mood bar in keyboard" off): bar is GONE; `settings_cog` re-anchors to the right edge of the toolbar.
+11. **Theme switch** (light/dark, custom colours): bar's stretched-key background re-tints; chip emoji still renders at full color (Phase 8.2 invariant); chevron tinted via `mTextColor` (Phase 8.5 hotfix).
+12. **RTL locale switch** (system language → Arabic / Hebrew): bar should auto-flip to the system's *trailing* edge. If it overlaps with the emoji drawer's close arrow in RTL, log an issue and decide whether to anchor by absolute `right` instead.
+13. **Rapid mood toggling while drawer is open:** mash chip → 😊 → 😢 → 😨 in quick succession. Bubble cancellations should be clean, dance animations should sequence, and the curated section should converge on the final mood (with at most one frame of intermediate-state rebuild visible).
 
 ---
 
-## 9. Verification
+## 9. Files touched (summary)
 
-End-to-end on-device smoke test:
+**Modified (3 files):**
+- `app/src/main/res/layout/keyboard_view_keyboard.xml` — mood-bar reparent + re-anchor, `keyboard_holder` clipChildren=false, settings_cog default anchor, elevation
+- `app/src/main/kotlin/org/fossify/keyboard/views/MyKeyboardView.kt` — `applyMoodBarVisibility` / `applyMoodBarConstraints` flip to trailing-edge convention; `notifyEmojiAdapterMoodChanged()` public helper; right-side icons hidden during expanded state
+- `app/src/main/kotlin/org/fossify/keyboard/services/SimpleKeyboardIME.kt` — one-line addition to `onSharedPreferenceChanged`'s filter array for `LAST_MOOD_SCORE`, calling `keyboardView?.notifyEmojiAdapterMoodChanged()`
 
-1. **Clean build:**
-   ```powershell
-   $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
-   ./gradlew clean assembleCoreDebug
-   ```
-   - No new lint baseline failures.
-   - Detekt count flat or net-positive (~10 new files, mostly small).
+**New (0 files):** none.
 
-2. **Migration test passes:**
-   ```powershell
-   ./gradlew :app:connectedAndroidTest --tests "*IkdDatabaseMigrationTest*"
-   ```
-   - `migrate_3_to_4_addsBadgesTableAndIndex` passes.
-   - Existing v3 migration tests still pass.
-
-3. **JVM unit tests pass:**
-   ```powershell
-   ./gradlew :app:testCoreDebugUnitTest --tests "*IkdBadgeEvaluatorTest*"
-   ```
-
-4. **Install + on-device behaviour:**
-   - Open Insights dashboard. Sixth tab **Achievements** is visible.
-   - Empty-state path: install on a device with no captured data. Achievements tab shows all 13 badges in their **locked** state with description visible. No snackbar.
-   - First-mood path: open keyboard, tap any mood emoji on the bar. Reopen dashboard. Snackbar shows `🌱 First Mood unlocked!`. Tap `[VIEW]` → jumps to Achievements. The 🌱 First Mood card is now in unlocked state.
-   - First-session path: type a few characters with the keyboard (auto-creates a session via Phase 2). Reopen dashboard. Snackbar shows `⌨️ Hello, World unlocked!`.
-   - Multi-unlock path: on a device with rich existing data (10K+ keystrokes, 7+ days of typing, 7+ mood entries spanning 7 days), reopen dashboard. Single snackbar shows the first unlock + `"+N more"`. Achievements tab shows multiple badges unlocked.
-
-5. **Privacy verification:** export CSV from `IkdSettingsActivity` after some badges unlock. Confirm CSV format is byte-identical to before — **no `badges` block, no badge keys anywhere** in the export.
-
-6. **Schema verification:** `IkdDatabase.version` equals 4. The Insights dashboard from earlier phases opens with all existing data intact.
+**Roadmap docs:**
+- `roadmap/Phase13/Phase13_Plan.md` (this file)
+- `roadmap/STATUS.md` (append Phase 13 row on implementation)
+- `CLAUDE.md` (architecture note added on implementation, mirroring Phase 8.5 / 12 sections)
 
 ---
 
-## 10. Out of scope (deferred)
+## 10. Risk level
 
-- **Per-badge unlock-progress display** (e.g. "5/7 days for 7-Day Diarist"). v1 only shows locked vs unlocked; no progress bars. Adding progress requires per-badge predicate-progress functions on `BadgeDef`. Future micro-phase.
-- **Badge sharing** (export, share-intent, image generation). Privacy-sensitive — postponed.
-- **Push/system notifications on unlock.** v1 stays in-app only (no notification permission ask).
-- **Sound or haptic on unlock.** v1 is silent + visual. Future polish.
-- **Per-mood badges** (e.g. "Logged Happy 30 times"). Could double the catalog size — deferred to a future micro-phase if user feedback indicates demand.
-- **Weekly / monthly recap badges** (e.g. "Best Week Ever"). Requires more complex aggregation. Deferred.
-- **Negative or "shadow" badges.** Skipped on principle — gamification here is positive-reinforcement only.
-- **Achievements reset / replay.** Once unlocked, badges stay unlocked. There is no "re-earn" or "reset progress" surface. Future "research-mode reset" feature could clear the table.
-- **`SimpleActivity.getAppIconIDs()` swap on badge unlock** (cosmetic launcher-icon reward for power users). Cute idea, but Android requires re-launching to apply, so the UX is poor. Skipped.
+**Low-medium.** Most edits are XML re-anchoring of an already-shipped widget — the mood-bar widget's internal state machine, animations, theming, and accessibility were already validated in Phase 8.2 / 8.4 / 8.5. The new behaviour (mid-drawer rebuild on mood change) is a tiny additive trigger routed through an existing preference-change listener.
+
+**Reversibility:** every edit is a pure layout / view-position swap. No persistent state, no schema, no DAO. Reverting Phase 13 takes the bar back to the leading-edge layout of Phase 8.5 with zero data implications.
+
+**Known follow-ups deliberately deferred:**
+- RTL collision check (§7 risk) — verify on device, decide whether to force LTR anchor
+- Per-user "mood bar position" setting (left / right / top-of-drawer) — premature; ship the right-side default first
+- Animating the bar's *position* between toolbar and emoji-drawer top bar (i.e., not a static overlay but a continuous slide) — visually overkill for what's gained

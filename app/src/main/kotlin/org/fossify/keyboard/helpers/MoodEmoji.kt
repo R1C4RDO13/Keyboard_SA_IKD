@@ -90,6 +90,63 @@ object MoodEmoji {
     fun isValidScore(score: Int): Boolean = score in SCORE_HAPPINESS..SCORE_ANGER
 
     /**
+     * Phase 12: curated emoji codepoints associated with each Ekman
+     * category, in display order. Used by the keyboard's emoji drawer
+     * to prepend a "Mood: <emoji>" section at the top of the palette
+     * when a standing mood is set (`Config.lastMoodScore != SCORE_NONE`).
+     *
+     * Privacy invariant preserved — these lists are presentation-only
+     * and **never** written to `ikd.db`. The Phase-7 `onEmojiText`
+     * pipeline continues to record taps as `EMOJI` events with no
+     * codepoint stored. See `roadmap/Phase12/Phase12_Plan.md` §4.
+     *
+     * Curation principle: lead with the bar's face emoji, follow with
+     * adjacent face variants, then non-face symbols that carry the
+     * same emotional valence. Returns the empty list for `SCORE_NONE`
+     * or any out-of-range score so the caller can skip the section.
+     */
+    fun curatedEmojisFor(score: Int): List<String> = when (score) {
+        SCORE_HAPPINESS -> CURATED_HAPPINESS
+        SCORE_SURPRISE -> CURATED_SURPRISE
+        SCORE_DISGUST -> CURATED_DISGUST
+        SCORE_SADNESS -> CURATED_SADNESS
+        SCORE_FEAR -> CURATED_FEAR
+        SCORE_ANGER -> CURATED_ANGER
+        else -> emptyList()
+    }
+
+    private val CURATED_HAPPINESS: List<String> = listOf(
+        "😊", "😄", "😁", "😀", "🙂", "🥰", "😍", "🤗", "☺️", "🥳",
+        "😌", "🥲", "❤️", "💖", "💕", "✨", "🌸", "🌞", "🌈", "🎉",
+        "🥂", "💫", "🦋",
+    )
+
+    private val CURATED_SURPRISE: List<String> = listOf(
+        "😲", "😯", "😮", "🤯", "🤩", "😱", "😦", "😧", "✨", "💫",
+        "🌟", "🎇", "🤔", "⁉️", "❗", "❓", "🎁",
+    )
+
+    private val CURATED_DISGUST: List<String> = listOf(
+        "🤢", "🤮", "😷", "🤧", "🥴", "😖", "😬", "😒", "🙄", "🤨",
+        "😑", "💩", "⚠️", "🥺",
+    )
+
+    private val CURATED_SADNESS: List<String> = listOf(
+        "😢", "😭", "😞", "😔", "😟", "🙁", "☹️", "💔", "🥀", "🌧️",
+        "🥹", "😪", "😩", "🫂", "🌫️", "💧", "⛈️", "😿",
+    )
+
+    private val CURATED_FEAR: List<String> = listOf(
+        "😨", "😰", "😱", "😟", "😬", "🥺", "😣", "😖", "😓", "🫨",
+        "⚠️", "🌪️", "🚨", "⚡", "🤞", "🙏", "🫥",
+    )
+
+    private val CURATED_ANGER: List<String> = listOf(
+        "😠", "😡", "🤬", "😤", "💢", "🙄", "😒", "👿", "🔥", "⚡",
+        "💥", "🤯", "💪", "🗯️",
+    )
+
+    /**
      * Phase 8.5: alias of [isValidScore] used by `Config.lastMoodScore`
      * read sites that want to express "is this a real standing rating"
      * rather than "is this a valid DB row score". Behaviourally identical
