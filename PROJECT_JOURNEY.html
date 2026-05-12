@@ -1,0 +1,2413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>moodScript — Project Journey</title>
+<style>
+  :root {
+    --bg: #f7f8fb;
+    --bg-elevated: #ffffff;
+    --ink: #14161c;
+    --ink-soft: #4a4d57;
+    --ink-faint: #8a8d97;
+    --line: #e6e8ee;
+    --accent: #5b8def;
+    --accent-soft: #eef2fc;
+    --green: #1f8a3a;
+    --green-soft: #e6f4ea;
+    --amber: #c8810a;
+    --amber-soft: #fff5e2;
+    --pink: #d63970;
+    --pink-soft: #fce8ef;
+    --gradient: linear-gradient(90deg, #5b8def 0%, #9d7be0 50%, #f59ea3 100%);
+    --shadow-sm: 0 1px 2px rgba(15,18,30,.05), 0 1px 1px rgba(15,18,30,.04);
+    --shadow-md: 0 4px 16px rgba(15,18,30,.06), 0 1px 4px rgba(15,18,30,.04);
+    --shadow-lg: 0 16px 48px rgba(15,18,30,.10), 0 2px 8px rgba(15,18,30,.04);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ Sticky header ============ */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(247,248,251,0.85);
+    backdrop-filter: saturate(140%) blur(12px);
+    -webkit-backdrop-filter: saturate(140%) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  header.site .inner {
+    max-width: 1180px; margin: 0 auto;
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  header.site .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 18px; letter-spacing: -0.02em;
+  }
+  header.site .brand em {
+    font-style: normal;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  header.site .brand-mark {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #5b8def 0%, #9d7be0 100%);
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(91,141,239,.35);
+  }
+  header.site .nav-links {
+    margin-left: auto;
+    display: flex; gap: 22px;
+    font-size: 14px; color: var(--ink-soft);
+  }
+  header.site .nav-links a {
+    color: var(--ink-soft); text-decoration: none;
+    transition: color 120ms ease;
+  }
+  header.site .nav-links a:hover { color: var(--accent); }
+  @media (max-width: 720px) {
+    header.site .nav-links { display: none; }
+  }
+
+  /* ============ Hero ============ */
+  .hero {
+    max-width: 1180px; margin: 0 auto;
+    padding: 96px 24px 64px;
+    text-align: center;
+  }
+  .hero .eyebrow {
+    display: inline-block;
+    font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 600; color: var(--ink-faint);
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    padding: 6px 14px; border-radius: 99px;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: clamp(40px, 7vw, 84px);
+    line-height: 1.02; letter-spacing: -0.04em;
+    margin: 0 0 20px;
+    font-weight: 800;
+  }
+  .hero h1 em {
+    font-style: normal;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero .lede {
+    font-size: 20px; line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 780px; margin: 0 auto;
+  }
+  .hero .stat-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    max-width: 880px;
+    margin: 56px auto 0;
+  }
+  .hero .stat {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 16px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+  .hero .stat:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .hero .stat .num {
+    font-size: 38px; font-weight: 800;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1; margin-bottom: 6px;
+  }
+  .hero .stat .label {
+    font-size: 13px; color: var(--ink-soft);
+    line-height: 1.35;
+  }
+  .hero-feature {
+    margin-top: 56px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+  }
+  .hero-feature img {
+    width: 100%; display: block;
+  }
+
+  /* ============ Section frame ============ */
+  section {
+    max-width: 1180px; margin: 0 auto;
+    padding: 64px 24px;
+  }
+  h2 {
+    font-size: 32px; font-weight: 700;
+    letter-spacing: -0.03em;
+    margin: 0 0 12px;
+  }
+  .section-eyebrow {
+    display: inline-block;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .section-lede {
+    font-size: 17px; color: var(--ink-soft);
+    max-width: 720px; line-height: 1.55;
+    margin: 0 0 40px;
+  }
+
+  /* ============ Project Context cards ============ */
+  .context-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .context-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .context-card .icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+  .context-card h3 {
+    font-size: 18px; font-weight: 700;
+    margin: 0 0 8px; letter-spacing: -0.01em;
+  }
+  .context-card p {
+    margin: 0; color: var(--ink-soft); font-size: 14px;
+    line-height: 1.55;
+  }
+  .context-card code {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  /* ============ Architecture diagram ============ */
+  .arch-diagram {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 36px;
+    box-shadow: var(--shadow-sm);
+  }
+  .arch-layer {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 24px;
+    align-items: center;
+    padding: 22px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .arch-layer:last-child { border-bottom: none; }
+  .arch-layer .layer-tag {
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700; color: var(--ink-faint);
+  }
+  .arch-layer .layer-title {
+    font-size: 18px; font-weight: 700; margin: 4px 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .arch-layer .layer-detail {
+    font-size: 14px; color: var(--ink-soft); line-height: 1.55;
+  }
+  .arch-layer .layer-detail code {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (max-width: 720px) {
+    .arch-layer { grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  /* ============ Architecture Blocks (new layered diagram) ============ */
+  .arch-blocks {
+    display: flex; flex-direction: column;
+    gap: 0;
+  }
+  .arch-row {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .arch-row.tinted-capture { border-left: 4px solid #3b82f6; }
+  .arch-row.tinted-storage { border-left: 4px solid #10b981; }
+  .arch-row.tinted-read    { border-left: 4px solid #8b5cf6; }
+  .arch-row.tinted-ui      { border-left: 4px solid #ec4899; }
+
+  .arch-row-header {
+    padding: 16px 22px 14px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: baseline; gap: 14px;
+    flex-wrap: wrap;
+    background: linear-gradient(180deg, rgba(91,141,239,0.03), transparent);
+  }
+  .arch-row-header .arch-layer-tag {
+    font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--ink-faint);
+  }
+  .arch-row-header h3 {
+    font-size: 18px; font-weight: 700;
+    margin: 0; letter-spacing: -0.01em;
+  }
+  .arch-row-header .arch-layer-pill {
+    margin-left: auto;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    letter-spacing: 0.04em;
+  }
+  .arch-layer-pill.capture { background: #dbeafe; color: #1d4ed8; }
+  .arch-layer-pill.storage { background: #d1fae5; color: #047857; }
+  .arch-layer-pill.read    { background: #ede9fe; color: #6d28d9; }
+  .arch-layer-pill.ui      { background: #fce7f3; color: #be185d; }
+
+  .arch-blocks-grid {
+    padding: 18px;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .arch-blocks-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 900px) {
+    .arch-blocks-grid,
+    .arch-blocks-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 540px) {
+    .arch-blocks-grid,
+    .arch-blocks-grid.three { grid-template-columns: 1fr; }
+  }
+
+  .arch-block {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 14px 12px;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+  .arch-block:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+  .arch-block-icon { font-size: 22px; line-height: 1; margin-bottom: 8px; }
+  .arch-block-title {
+    font-size: 13px; font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .arch-block-file {
+    font-size: 11px;
+    margin-bottom: 8px;
+    line-height: 1.35;
+  }
+  .arch-block-file code {
+    background: transparent;
+    border: 0;
+    color: var(--accent);
+    padding: 0;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    word-break: break-word;
+  }
+  .arch-block-desc {
+    font-size: 11.5px; color: var(--ink-soft);
+    line-height: 1.45;
+  }
+
+  .arch-flow {
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 18px;
+    line-height: 1;
+    padding: 6px 0;
+    user-select: none;
+  }
+
+  /* ============ DB Schema (inline diagram) ============ */
+  .db-schema {
+    margin: 0 18px 18px;
+    padding: 18px;
+    background: #f0fdf4;
+    border: 1px dashed #86efac;
+    border-radius: 10px;
+  }
+  .db-schema-title {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: #047857;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .db-schema-title .ver-badges {
+    margin-left: auto;
+    display: flex; gap: 6px;
+    text-transform: none; letter-spacing: 0;
+    font-weight: 500;
+    font-size: 11px;
+  }
+  .db-schema-title .ver-badge {
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: var(--bg-elevated);
+    border: 1px solid #86efac;
+    color: #047857;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .db-tree {
+    display: flex; flex-direction: column;
+    align-items: center;
+  }
+  .db-children {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    width: 100%;
+    position: relative;
+  }
+  .db-children::before {
+    content: '';
+    position: absolute;
+    top: -10px; left: 16.66%; right: 16.66%;
+    height: 1px;
+    border-top: 2px dashed #86efac;
+  }
+  .db-children::after {
+    content: 'FK · ON DELETE CASCADE';
+    position: absolute;
+    top: -22px; left: 50%;
+    transform: translateX(-50%);
+    background: #f0fdf4;
+    padding: 0 10px;
+    font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: #047857;
+  }
+  @media (max-width: 720px) {
+    .db-children { grid-template-columns: 1fr; }
+    .db-children::before, .db-children::after { display: none; }
+  }
+  .db-table {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    width: 100%;
+    max-width: 380px;
+  }
+  .db-table.parent {
+    border-color: #86efac;
+    box-shadow: 0 0 0 3px #dcfce7;
+  }
+  .tbl-header {
+    padding: 8px 12px;
+    background: #f1f5f9;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 8px;
+    font-family: -apple-system, sans-serif;
+  }
+  .db-table.parent .tbl-header { background: #ecfdf5; border-bottom-color: #86efac; }
+  .tbl-name {
+    font-size: 13px; font-weight: 700;
+    color: var(--ink);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .tbl-meta {
+    margin-left: auto;
+    font-size: 10px; color: var(--ink-faint);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .tbl-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 5px 12px;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+  .tbl-row:last-child { border-bottom: none; }
+  .tbl-row .col-name { color: var(--ink); }
+  .tbl-row .col-type {
+    color: var(--ink-faint);
+    font-size: 10.5px;
+  }
+  .tbl-row .col-tag {
+    font-family: -apple-system, sans-serif;
+    font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .tbl-row .col-tag.pk { background: #dbeafe; color: #1d4ed8; }
+  .tbl-row .col-tag.fk { background: #fed7aa; color: #c2410c; }
+  .tbl-row .col-tag.uq { background: #d1fae5; color: #047857; }
+  .tbl-row .col-tag.added-v3 { background: #fce7f3; color: #be185d; }
+  .tbl-row .col-tag.added-v2 { background: #ede9fe; color: #6d28d9; }
+  .tbl-row.added-row { background: #fef9fb; }
+
+  /* ============ Dashboards ============ */
+  .dash-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 1024px) {
+    .dash-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .dash-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .dash-card.global { border-top: 4px solid #5b8def; }
+  .dash-card.session { border-top: 4px solid #10b981; }
+  .dash-card.diagnostics { border-top: 4px solid #8b5cf6; }
+  .dash-card-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(91,141,239,0.04), transparent);
+  }
+  .dash-card-header .dash-icon {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .dash-card-header h3 {
+    font-size: 18px; font-weight: 700;
+    margin: 0; letter-spacing: -0.01em;
+  }
+  .dash-card-header .dash-sub {
+    font-size: 12.5px; color: var(--ink-soft);
+    margin: 4px 0 0;
+    line-height: 1.45;
+  }
+  .dash-card-body {
+    padding: 18px 20px;
+    flex: 1;
+    display: flex; flex-direction: column;
+    gap: 14px;
+  }
+  .dash-mock {
+    background: #0f172a;
+    color: #cbd5e1;
+    border-radius: 8px;
+    padding: 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px; line-height: 1.45;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .dash-mock .label { color: #93c5fd; }
+  .dash-mock .accent { color: #f472b6; }
+  .dash-mock .muted { color: #64748b; }
+  .dash-meta {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .dash-meta dt {
+    color: var(--ink-faint);
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em;
+    font-weight: 700;
+    align-self: center;
+  }
+  .dash-meta dd {
+    margin: 0; color: var(--ink);
+  }
+  .dash-meta dd code {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 10.5px;
+  }
+  .dash-tabs {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .dash-tab {
+    font-size: 11px; font-weight: 600;
+    padding: 4px 9px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 99px;
+    border: 1px solid rgba(91,141,239,0.2);
+  }
+  .dash-widgets {
+    margin: 0; padding-left: 18px;
+    font-size: 12.5px; color: var(--ink);
+    line-height: 1.55;
+  }
+  .dash-widgets li { margin: 3px 0; }
+  .dash-widgets li strong { color: var(--ink); font-weight: 700; }
+
+  .dash-cta {
+    margin-top: 28px;
+    background: linear-gradient(135deg, rgba(91,141,239,0.10) 0%, rgba(157,123,224,0.10) 50%, rgba(245,158,163,0.10) 100%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    display: flex; align-items: center; gap: 20px;
+    flex-wrap: wrap;
+  }
+  .dash-cta .cta-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: var(--bg-elevated);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+  }
+  .dash-cta .cta-text { flex: 1; min-width: 220px; }
+  .dash-cta .cta-text h4 {
+    margin: 0 0 4px; font-size: 16px; font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .dash-cta .cta-text p {
+    margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.5;
+  }
+  .dash-cta .cta-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 20px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 14px; font-weight: 600;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+  .dash-cta .cta-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  .dash-cta .cta-btn .arrow {
+    transition: transform 150ms ease;
+  }
+  .dash-cta .cta-btn:hover .arrow { transform: translateX(2px); }
+
+  /* ============ Code Provenance ============ */
+  .prov-legend {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    margin-bottom: 28px;
+  }
+  .prov-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 13px; font-weight: 600;
+  }
+  .prov-tag::before {
+    content: ''; display: inline-block;
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .prov-tag.fossify {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+  }
+  .prov-tag.fossify::before { background: #94a3b8; }
+  .prov-tag.moodscript {
+    background: #fdf2f8;
+    color: #be185d;
+    border: 1px solid #f9a8d4;
+  }
+  .prov-tag.moodscript::before { background: #ec4899; }
+
+  .prov-fork-svg {
+    margin: 0 auto 36px;
+    max-width: 620px;
+  }
+  .prov-fork-svg svg { width: 100%; height: auto; display: block; }
+
+  .prov-stack {
+    display: flex; flex-direction: column;
+    gap: 14px;
+  }
+  .prov-layer {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .prov-layer-header {
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: baseline; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .prov-layer-header .prov-layer-tag {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--ink-faint);
+  }
+  .prov-layer-header h3 {
+    font-size: 19px; font-weight: 700;
+    margin: 0; letter-spacing: -0.01em;
+  }
+  .prov-layer-header .layer-counts {
+    margin-left: auto;
+    font-size: 12px; color: var(--ink-faint);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .prov-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  @media (max-width: 720px) {
+    .prov-cols { grid-template-columns: 1fr; }
+  }
+  .prov-col {
+    padding: 20px 24px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .prov-col.fossify {
+    background: #f8fafc;
+    border-right: 1px solid var(--line);
+  }
+  .prov-col.moodscript {
+    background: #fef9fb;
+  }
+  @media (max-width: 720px) {
+    .prov-col.fossify { border-right: none; border-bottom: 1px solid var(--line); }
+  }
+  .prov-col-title {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .prov-col-title .dot {
+    display: inline-block;
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .prov-col.fossify .prov-col-title { color: #475569; }
+  .prov-col.fossify .prov-col-title .dot { background: #94a3b8; }
+  .prov-col.moodscript .prov-col-title { color: #be185d; }
+  .prov-col.moodscript .prov-col-title .dot { background: #ec4899; }
+  .prov-col ul {
+    margin: 0; padding: 0; list-style: none;
+  }
+  .prov-col ul li {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--line);
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  .prov-col ul li:last-child { border-bottom: none; }
+  .prov-col .prov-summary {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    font-size: 12px; color: var(--ink-soft);
+    font-style: italic;
+    line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .prov-col .prov-empty {
+    font-size: 13px; color: var(--ink-faint);
+    font-style: italic;
+    padding: 12px 0;
+    line-height: 1.55;
+  }
+
+  /* ============ Phase Tabs ============ */
+  .tabs-shell {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .tab-strip {
+    display: flex;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(91,141,239,0.04), transparent);
+    scrollbar-width: thin;
+  }
+  .tab-strip::-webkit-scrollbar { height: 6px; }
+  .tab-strip::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  .tab-btn {
+    appearance: none; border: 0;
+    background: transparent; cursor: pointer;
+    padding: 18px 22px;
+    font: inherit; font-size: 14px; font-weight: 600;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .tab-btn .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .tab-btn .status-dot.implemented { background: var(--green); }
+  .tab-btn .status-dot.planned { background: var(--amber); }
+  .tab-btn:hover {
+    color: var(--ink); background: rgba(91,141,239,0.04);
+  }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: rgba(91,141,239,0.06);
+  }
+  .tab-content {
+    display: none;
+    padding: 36px;
+  }
+  .tab-content.active { display: block; }
+  @media (min-width: 900px) {
+    .tab-content.active {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 36px;
+    }
+  }
+  .tab-content h3 {
+    font-size: 24px; font-weight: 700;
+    margin: 0 0 6px; letter-spacing: -0.02em;
+  }
+  .tab-content .objective {
+    font-size: 15px;
+    color: var(--ink-soft);
+    font-style: italic;
+    margin: 0 0 20px;
+    border-left: 3px solid var(--accent);
+    padding-left: 14px;
+  }
+  .tab-content p { margin: 0 0 14px; color: var(--ink); line-height: 1.65; }
+  .tab-content code {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 88%;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .tab-content .meta {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    font-size: 13px; line-height: 1.55;
+    align-self: flex-start;
+  }
+  .tab-content .meta dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 14px;
+    margin: 0;
+  }
+  .tab-content .meta dt {
+    color: var(--ink-faint);
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 700;
+    align-self: center;
+  }
+  .tab-content .meta dd {
+    margin: 0; color: var(--ink); font-weight: 500;
+  }
+  .tab-content .meta .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .tab-content .meta .badge.implemented { background: var(--green-soft); color: var(--green); }
+  .tab-content .meta .badge.planned { background: var(--amber-soft); color: var(--amber); }
+  .tab-content ul {
+    margin: 12px 0 16px; padding-left: 22px;
+    color: var(--ink); line-height: 1.65;
+  }
+  .tab-content ul li { margin: 6px 0; }
+
+  /* ============ Visual Gallery ============ */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+  }
+  .gallery .shot {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 220ms ease, box-shadow 220ms ease;
+  }
+  .gallery .shot:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  .gallery .shot img {
+    width: 100%; display: block;
+    border-radius: var(--radius-sm);
+    margin-bottom: 12px;
+    background: var(--bg);
+  }
+  .gallery .shot .cap {
+    font-size: 13px; color: var(--ink-soft);
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  /* ============ Icon Preview ============ */
+  .icon-preview-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: center;
+    margin-top: 12px;
+  }
+  @media (max-width: 720px) {
+    .icon-preview-wrap { grid-template-columns: 1fr; }
+  }
+  .icon-preview-wrap .preview-large {
+    aspect-ratio: 1 / 1;
+    max-width: 320px; margin: 0 auto;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+  .icon-preview-wrap .preview-large svg {
+    width: 100%; height: 100%; display: block;
+  }
+  .icon-cap {
+    font-size: 12px; color: var(--ink-faint);
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  /* ============ Future tab cards ============ */
+  .future-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .future-card {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--amber);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+  }
+  .future-card h4 {
+    font-size: 15px; font-weight: 700; margin: 0 0 6px;
+  }
+  .future-card .ph {
+    display: inline-block;
+    font-size: 10px; font-weight: 700;
+    background: var(--amber-soft); color: var(--amber);
+    padding: 2px 8px; border-radius: 4px;
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+  }
+  .future-card p { margin: 0; font-size: 13px; color: var(--ink-soft); line-height: 1.55; }
+
+  /* ============ By the Numbers ============ */
+  .numbers {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 40px;
+    box-shadow: var(--shadow-sm);
+  }
+  .numbers .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 32px;
+  }
+  .numbers .item .num {
+    font-size: 48px; font-weight: 800;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1; margin-bottom: 8px;
+  }
+  .numbers .item .lab {
+    font-size: 14px; color: var(--ink-soft); line-height: 1.45;
+  }
+
+  /* ============ Footer ============ */
+  footer.site {
+    margin-top: 64px;
+    padding: 48px 24px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    color: var(--ink-faint); font-size: 14px;
+    background: var(--bg-elevated);
+  }
+  footer.site strong { color: var(--ink); }
+  footer.site a { color: var(--accent); text-decoration: none; }
+  footer.site code {
+    background: var(--bg);
+    color: var(--ink-soft);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 88%;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (max-width: 720px) {
+    .hero { padding: 48px 24px 32px; }
+    .hero .stat-strip { grid-template-columns: repeat(2, 1fr); }
+    section { padding: 40px 20px; }
+    h2 { font-size: 24px; }
+    .arch-diagram { padding: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================ -->
+<!-- STICKY HEADER                                -->
+<!-- ============================================ -->
+<header class="site">
+  <div class="inner">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg width="20" height="20" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <path d="M256,391 C256,391 110,286 110,196 C110,146 153,121 200,121 C230,121 250,139 256,159 C262,139 282,121 312,121 C359,121 402,146 402,196 C402,286 256,391 256,391 Z" stroke="#fff" stroke-width="22" fill="none" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <span><em>moodScript</em></span>
+    </div>
+    <nav class="nav-links">
+      <a href="#context">Context</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#provenance">Provenance</a>
+      <a href="#dashboards">Dashboards</a>
+      <a href="#phases">Phases</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#numbers">Numbers</a>
+      <a href="#future">Future</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============================================ -->
+<!-- HERO                                         -->
+<!-- ============================================ -->
+<div class="hero">
+  <span class="eyebrow">Trabalho prático 2025/2026 · Final Report</span>
+  <h1>A keyboard that reads <em>how you type</em><br>and <em>how you feel</em>.</h1>
+  <p class="lede">
+    moodScript is a research-grade Android keyboard that turns everyday typing into a private,
+    on-device behavioural-analytics pipeline. Capture, storage, analysis, visualisation —
+    all running on the device, no internet permission, no data egress.
+  </p>
+
+  <div class="stat-strip">
+    <div class="stat">
+      <div class="num">9</div>
+      <div class="label">implemented<br>phases</div>
+    </div>
+    <div class="stat">
+      <div class="num">15+</div>
+      <div class="label">phases &amp; sub-phases<br>in the roadmap</div>
+    </div>
+    <div class="stat">
+      <div class="num">3</div>
+      <div class="label">Room schema versions<br>(2 additive migrations)</div>
+    </div>
+    <div class="stat">
+      <div class="num">0</div>
+      <div class="label">network requests<br>(no internet permission)</div>
+    </div>
+  </div>
+
+  <div class="hero-feature">
+    <img src="fastlane/metadata/android/en-US/images/featureGraphic.png" alt="moodScript feature graphic" onerror="this.style.display='none'">
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PROJECT CONTEXT                              -->
+<!-- ============================================ -->
+<section id="context">
+  <div class="section-eyebrow">01 · Project Context</div>
+  <h2>The assignment, the choice, the goal</h2>
+  <p class="section-lede">
+    The work was structured around the practical-work assignment for academic year 2025/2026.
+    Three early decisions shaped everything that followed.
+  </p>
+
+  <div class="context-grid">
+    <div class="context-card">
+      <div class="icon">🎓</div>
+      <h3>Academic context</h3>
+      <p>
+        Practical-work deliverable for <strong>Trabalho prático 2025/2026</strong>. The project ran one full
+        academic semester, with the roadmap acting as the operating system of the work — each phase
+        reviewed locally before the next was started.
+      </p>
+    </div>
+    <div class="context-card">
+      <div class="icon">🔱</div>
+      <h3>Why fork Fossify Keyboard</h3>
+      <p>
+        Building a keyboard <em>and</em> a research pipeline <em>and</em> a dashboard from scratch was not
+        realistic in one semester. Fossify Keyboard provided a modern, privacy-focused, well-architected
+        Kotlin codebase. The project could focus on the research questions instead of the keyboard engine.
+      </p>
+    </div>
+    <div class="context-card">
+      <div class="icon">🔬</div>
+      <h3>Research, not product</h3>
+      <p>
+        The deliverable is a <strong>working prototype</strong>, not a finished consumer app. It demonstrates
+        a complete capture → storage → analysis → visualisation pipeline. Phases 10 / 12 / 13 are deliberately
+        documented as plans rather than implemented features — the academic value lies in the pipeline itself.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- ARCHITECTURE                                 -->
+<!-- ============================================ -->
+<section id="architecture">
+  <div class="section-eyebrow">02 · Architecture</div>
+  <h2>How the code is divided · four layers, one frozen invariant</h2>
+  <p class="section-lede">
+    The codebase is organised into four logical layers. The capture layer was frozen as soon as it
+    stabilised (Phase 2); everything since is read-side or instrumentation. Layer 2 (Storage) is
+    expanded into a full schema diagram below.
+  </p>
+
+  <div class="arch-blocks">
+
+    <!-- Layer 1: Capture -->
+    <div class="arch-row tinted-capture">
+      <div class="arch-row-header">
+        <span class="arch-layer-tag">Layer 1</span>
+        <h3>IME Capture</h3>
+        <span class="arch-layer-pill capture">realtime · main thread off-loaded · frozen since Phase 7.1</span>
+      </div>
+      <div class="arch-blocks-grid">
+        <div class="arch-block">
+          <div class="arch-block-icon">⌨️</div>
+          <div class="arch-block-title">IME Service</div>
+          <div class="arch-block-file"><code>services/SimpleKeyboardIME.kt</code></div>
+          <div class="arch-block-desc"><code style="font-size:10.5px;background:var(--accent-soft);padding:1px 4px;border-radius:3px;">onKey()</code> capture origin · onUpdateSelection autocorrect heuristic</div>
+        </div>
+        <div class="arch-block">
+          <div class="arch-block-icon">📱</div>
+          <div class="arch-block-title">Keyboard View</div>
+          <div class="arch-block-file"><code>views/MyKeyboardView.kt</code></div>
+          <div class="arch-block-desc">Touch listeners · mood-bar wiring · emoji palette routing</div>
+        </div>
+        <div class="arch-block">
+          <div class="arch-block-icon">📡</div>
+          <div class="arch-block-title">Sensor Helper</div>
+          <div class="arch-block-file"><code>helpers/KinematicSensorHelper.kt</code></div>
+          <div class="arch-block-desc">Gyro + accel @ <code style="font-size:10.5px;background:var(--accent-soft);padding:1px 4px;border-radius:3px;">SENSOR_DELAY_GAME</code> · session-bound</div>
+        </div>
+        <div class="arch-block">
+          <div class="arch-block-icon">🔄</div>
+          <div class="arch-block-title">Write-Behind Buffer</div>
+          <div class="arch-block-file"><code>helpers/LiveCaptureSessionStore.kt</code></div>
+          <div class="arch-block-desc">Flush every 500 ms / 100 events · in-memory + disk</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-flow">▼</div>
+
+    <!-- Layer 2: Storage -->
+    <div class="arch-row tinted-storage">
+      <div class="arch-row-header">
+        <span class="arch-layer-tag">Layer 2</span>
+        <h3>Storage</h3>
+        <span class="arch-layer-pill storage"><code style="font-size:10.5px;background:transparent;color:inherit;">ikd.db</code> · Room v3 · 2 additive migrations</span>
+      </div>
+      <div class="arch-blocks-grid three">
+        <div class="arch-block">
+          <div class="arch-block-icon">💾</div>
+          <div class="arch-block-title">Room Database</div>
+          <div class="arch-block-file"><code>databases/IkdDatabase.kt</code></div>
+          <div class="arch-block-desc">WAL mode · v3 · tested by <code style="font-size:10.5px;background:var(--accent-soft);padding:1px 4px;border-radius:3px;">IkdDatabaseMigrationTest</code></div>
+        </div>
+        <div class="arch-block">
+          <div class="arch-block-icon">📋</div>
+          <div class="arch-block-title">4 Entities</div>
+          <div class="arch-block-file"><code>SessionRecord · IkdEvent · SensorSample · MoodEntry</code></div>
+          <div class="arch-block-desc">No raw text · no codepoints · privacy invariants enforced here</div>
+        </div>
+        <div class="arch-block">
+          <div class="arch-block-icon">🔍</div>
+          <div class="arch-block-title">4 DAOs + 15 row POJOs</div>
+          <div class="arch-block-file"><code>SessionDao · IkdEventDao · SensorSampleDao · MoodDao</code></div>
+          <div class="arch-block-desc">Aggregation server-side via <code style="font-size:10.5px;background:var(--accent-soft);padding:1px 4px;border-radius:3px;">GROUP BY</code> + <code style="font-size:10.5px;background:var(--accent-soft);padding:1px 4px;border-radius:3px;">strftime</code></div>
+        </div>
+      </div>
+
+      <!-- ============ DB Schema diagram ============ -->
+      <div class="db-schema">
+        <div class="db-schema-title">
+          <span>Database schema · 4 tables, FK CASCADE</span>
+          <span class="ver-badges">
+            <span class="ver-badge">v1 · core</span>
+            <span class="ver-badge">v2 · +mood</span>
+            <span class="ver-badge">v3 · +weight</span>
+          </span>
+        </div>
+
+        <div class="db-tree">
+
+          <!-- Parent table: sessions -->
+          <div class="db-table parent">
+            <div class="tbl-header">
+              <span class="tbl-name">sessions</span>
+              <span class="tbl-meta">parent · v1</span>
+            </div>
+            <div class="tbl-row"><span class="col-name">session_id</span><span class="col-type">TEXT</span><span class="col-tag pk">PK</span></div>
+            <div class="tbl-row"><span class="col-name">started_at</span><span class="col-type">INTEGER</span><span></span></div>
+            <div class="tbl-row"><span class="col-name">ended_at</span><span class="col-type">INTEGER?</span><span></span></div>
+            <div class="tbl-row"><span class="col-name">event_count</span><span class="col-type">INTEGER</span><span></span></div>
+            <div class="tbl-row"><span class="col-name">sensor_count</span><span class="col-type">INTEGER</span><span></span></div>
+            <div class="tbl-row"><span class="col-name">device_orientation</span><span class="col-type">INTEGER</span><span></span></div>
+            <div class="tbl-row"><span class="col-name">locale</span><span class="col-type">TEXT</span><span></span></div>
+          </div>
+
+          <!-- Children -->
+          <div class="db-children">
+
+            <!-- ikd_events -->
+            <div class="db-table">
+              <div class="tbl-header">
+                <span class="tbl-name">ikd_events</span>
+                <span class="tbl-meta">v1</span>
+              </div>
+              <div class="tbl-row"><span class="col-name">id</span><span class="col-type">INTEGER</span><span class="col-tag pk">PK</span></div>
+              <div class="tbl-row"><span class="col-name">session_id</span><span class="col-type">TEXT</span><span class="col-tag fk">FK</span></div>
+              <div class="tbl-row"><span class="col-name">timestamp</span><span class="col-type">INTEGER</span><span></span></div>
+              <div class="tbl-row"><span class="col-name">event_category</span><span class="col-type">TEXT</span><span></span></div>
+              <div class="tbl-row"><span class="col-name">ikd_ms</span><span class="col-type">INTEGER</span><span></span></div>
+              <div class="tbl-row"><span class="col-name">hold_time_ms</span><span class="col-type">INTEGER</span><span></span></div>
+              <div class="tbl-row"><span class="col-name">flight_time_ms</span><span class="col-type">INTEGER</span><span></span></div>
+              <div class="tbl-row"><span class="col-name">is_correction</span><span class="col-type">BOOLEAN</span><span></span></div>
+              <div class="tbl-row added-row"><span class="col-name">correction_weight</span><span class="col-type">INTEGER</span><span class="col-tag added-v3">v3</span></div>
+            </div>
+
+            <!-- sensor_samples -->
+            <div class="db-table">
+              <div class="tbl-header">
+                <span class="tbl-name">sensor_samples</span>
+                <span class="tbl-meta">v1</span>
+              </div>
+              <div class="tbl-row"><span class="col-name">id</span><span class="col-type">INTEGER</span><span class="col-tag pk">PK</span></div>
+              <div class="tbl-row"><span class="col-name">session_id</span><span class="col-type">TEXT</span><span class="col-tag fk">FK</span></div>
+              <div class="tbl-row"><span class="col-name">timestamp</span><span class="col-type">INTEGER</span><span></span></div>
+              <div class="tbl-row"><span class="col-name">sensor_type</span><span class="col-type">TEXT</span><span></span></div>
+              <div class="tbl-row"><span class="col-name">x</span><span class="col-type">REAL</span><span></span></div>
+              <div class="tbl-row"><span class="col-name">y</span><span class="col-type">REAL</span><span></span></div>
+              <div class="tbl-row"><span class="col-name">z</span><span class="col-type">REAL</span><span></span></div>
+            </div>
+
+            <!-- mood_entries -->
+            <div class="db-table">
+              <div class="tbl-header">
+                <span class="tbl-name">mood_entries</span>
+                <span class="tbl-meta">v2</span>
+              </div>
+              <div class="tbl-row added-row"><span class="col-name">id</span><span class="col-type">INTEGER</span><span class="col-tag pk">PK</span></div>
+              <div class="tbl-row added-row"><span class="col-name">session_id</span><span class="col-type">TEXT?</span><span class="col-tag fk">FK · UQ</span></div>
+              <div class="tbl-row added-row"><span class="col-name">timestamp</span><span class="col-type">INTEGER</span><span></span></div>
+              <div class="tbl-row added-row"><span class="col-name">mood_score</span><span class="col-type">INTEGER</span><span class="col-tag added-v2">1..6</span></div>
+            </div>
+
+          </div>
+        </div>
+
+        <div style="margin-top: 14px; font-size: 12px; color: var(--ink-soft); line-height: 1.55;">
+          <strong>Migrations.</strong>
+          <code style="font-size:11.5px;">Migration(1, 2)</code> adds the <code style="font-size:11.5px;">mood_entries</code> table with a unique index on
+          <code style="font-size:11.5px;">session_id</code> (Phase 8) ·
+          <code style="font-size:11.5px;">Migration(2, 3)</code> adds the <code style="font-size:11.5px;">correction_weight</code> column on
+          <code style="font-size:11.5px;">ikd_events</code> with a backfill of <code style="font-size:11.5px;">1</code> for every existing
+          <code style="font-size:11.5px;">is_correction = 1</code> row (Phase 7.1) · both non-destructive ·
+          both validated by the instrumented <code style="font-size:11.5px;">IkdDatabaseMigrationTest</code>.
+        </div>
+      </div>
+
+    </div>
+
+    <div class="arch-flow">▼</div>
+
+    <!-- Layer 3: Read / Aggregation -->
+    <div class="arch-row tinted-read">
+      <div class="arch-row-header">
+        <span class="arch-layer-tag">Layer 3</span>
+        <h3>Read / Aggregation</h3>
+        <span class="arch-layer-pill read"><code style="font-size:10.5px;background:transparent;color:inherit;">Dispatchers.IO</code> · &lt;100 ms · pure derivation</span>
+      </div>
+      <div class="arch-blocks-grid three">
+        <div class="arch-block">
+          <div class="arch-block-icon">📊</div>
+          <div class="arch-block-title">Global Aggregators (8)</div>
+          <div class="arch-block-file"><code>IkdAggregator · IkdMoodAggregator · IkdHabitsAggregator · IkdActivity… · IkdDistribution… · IkdOrientation… · IkdQuality… · IkdSensor…</code></div>
+          <div class="arch-block-desc">One <code style="font-size:10.5px;background:var(--accent-soft);padding:1px 4px;border-radius:3px;">snapshot(range)</code> per aggregator · pure <code style="font-size:10.5px;background:var(--accent-soft);padding:1px 4px;border-radius:3px;">Companion</code> for unit tests</div>
+        </div>
+        <div class="arch-block">
+          <div class="arch-block-icon">🎯</div>
+          <div class="arch-block-title">Per-Session Loaders (3)</div>
+          <div class="arch-block-file"><code>IkdSessionStatsLoader · IkdSessionChartLoader · IkdMoodLoader</code></div>
+          <div class="arch-block-desc">Single SQL round-trip per loader · SQL-side downsampling (≤ 200 pts/chart)</div>
+        </div>
+        <div class="arch-block">
+          <div class="arch-block-icon">🛠️</div>
+          <div class="arch-block-title">Cross-cutting (4)</div>
+          <div class="arch-block-file"><code>IkdCsvWriter · IkdRetentionWorker · IkdStorageStats · IkdFormatters</code></div>
+          <div class="arch-block-desc">Dual-block CSV export · daily retention worker · DB size + row-count stats</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-flow">▼</div>
+
+    <!-- Layer 4: UI / Presentation -->
+    <div class="arch-row tinted-ui">
+      <div class="arch-row-header">
+        <span class="arch-layer-tag">Layer 4</span>
+        <h3>UI / Presentation</h3>
+        <span class="arch-layer-pill ui">read-side · MPAndroidChart wrappers · ViewPager2 tabs</span>
+      </div>
+      <div class="arch-blocks-grid">
+        <div class="arch-block">
+          <div class="arch-block-icon">📈</div>
+          <div class="arch-block-title">Insights Dashboard</div>
+          <div class="arch-block-file"><code>DashboardActivity + 5 fragments</code></div>
+          <div class="arch-block-desc">Summary · Trends · Daily Activity · Keystroke Dynamics · Habits</div>
+        </div>
+        <div class="arch-block">
+          <div class="arch-block-icon">🗂️</div>
+          <div class="arch-block-title">Session Detail</div>
+          <div class="arch-block-file"><code>EventFeedActivity</code></div>
+          <div class="arch-block-desc">DB-backed session dashboard + live event-log mode</div>
+        </div>
+        <div class="arch-block">
+          <div class="arch-block-icon">🔧</div>
+          <div class="arch-block-title">Diagnostics</div>
+          <div class="arch-block-file"><code>DiagnosticsActivity</code></div>
+          <div class="arch-block-desc">Real-time IKD / dwell / flight + sensor read-outs · Session Insights shortcut</div>
+        </div>
+        <div class="arch-block">
+          <div class="arch-block-icon">📉</div>
+          <div class="arch-block-title">Chart Views (5)</div>
+          <div class="arch-block-file"><code>IkdLineChartView · IkdStackedBarChartView · IkdHeatmapView · IkdHistogramView · IkdBubbleMapView</code></div>
+          <div class="arch-block-desc">Theme-aware MPAndroidChart wrappers + 2 custom Canvas views</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CODE PROVENANCE                              -->
+<!-- ============================================ -->
+<section id="provenance">
+  <div class="section-eyebrow">03 · Code Provenance</div>
+  <h2>Inherited from Fossify · added in moodScript</h2>
+  <p class="section-lede">
+    The codebase boundaries are explicit. Every Kotlin file in
+    <code style="background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:4px;font-size:12px;">org.fossify.keyboard.*</code>
+    is either inherited (the Fossify Keyboard base — the keyboard engine itself) or added (moodScript —
+    the IKD pipeline, mood layer, and insights). This section maps the actual code in the four
+    architecture layers, with the boundary colour-coded.
+  </p>
+
+  <div class="prov-legend">
+    <span class="prov-tag fossify">Fossify (inherited)</span>
+    <span class="prov-tag moodscript">moodScript (added)</span>
+  </div>
+
+  <div class="prov-fork-svg">
+    <svg viewBox="0 0 620 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#5b8def"/>
+          <stop offset="50%" style="stop-color:#9d7be0"/>
+          <stop offset="100%" style="stop-color:#f59ea3"/>
+        </linearGradient>
+      </defs>
+      <!-- Fossify base box -->
+      <rect x="220" y="20" width="180" height="42" rx="9" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+      <text x="310" y="46" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="14" font-weight="600" fill="#475569">Fossify Keyboard</text>
+      <!-- Arrow down dashed -->
+      <line x1="310" y1="62" x2="310" y2="106" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,5"/>
+      <text x="318" y="86" font-family="-apple-system, sans-serif" font-size="11" fill="#94a3b8">forked</text>
+      <!-- moodScript box (gradient) -->
+      <rect x="200" y="106" width="220" height="46" rx="11" fill="url(#brandGrad)"/>
+      <text x="310" y="135" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="17" font-weight="700" fill="#fff">moodScript</text>
+      <!-- Two diverging arrows -->
+      <line x1="245" y1="152" x2="155" y2="190" stroke="#94a3b8" stroke-width="2"/>
+      <line x1="375" y1="152" x2="465" y2="190" stroke="#ec4899" stroke-width="2"/>
+      <!-- Bottom labels (counts) -->
+      <text x="155" y="208" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" fill="#475569">~12 files modified</text>
+      <text x="155" y="222" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#94a3b8">capture hooks added</text>
+      <text x="465" y="208" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" fill="#be185d">~60 files added</text>
+      <text x="465" y="222" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#f9a8d4">IKD + mood + insights</text>
+    </svg>
+  </div>
+
+  <div class="prov-stack">
+
+    <!-- ========= LAYER 1: IME CAPTURE ========= -->
+    <div class="prov-layer">
+      <div class="prov-layer-header">
+        <span class="prov-layer-tag">Layer 1</span>
+        <h3>IME Capture</h3>
+        <span class="layer-counts">3 modified · 5 added</span>
+      </div>
+      <div class="prov-cols">
+        <div class="prov-col fossify">
+          <div class="prov-col-title"><span class="dot"></span>Fossify · inherited &amp; modified</div>
+          <ul>
+            <li>services/SimpleKeyboardIME.kt</li>
+            <li>views/MyKeyboardView.kt</li>
+            <li>interfaces/OnKeyboardActionListener.kt</li>
+          </ul>
+          <div class="prov-summary">
+            Original keyboard logic preserved verbatim. moodScript adds capture hooks at the top of
+            <code>onKey()</code> / <code>onPress()</code> / <code>onEmojiText()</code> and an
+            <code>onUpdateSelection()</code> heuristic for autocorrect detection. The mood bar is also
+            wired into <code>MyKeyboardView</code>'s top toolbar.
+          </div>
+        </div>
+        <div class="prov-col moodscript">
+          <div class="prov-col-title"><span class="dot"></span>moodScript · added</div>
+          <ul>
+            <li>helpers/LiveCaptureSessionStore.kt</li>
+            <li>helpers/KinematicSensorHelper.kt</li>
+            <li>helpers/IkdMoodBarController.kt</li>
+            <li>models/KeyTimingEvent.kt</li>
+            <li>models/SensorReadingEvent.kt</li>
+          </ul>
+          <div class="prov-summary">
+            In-memory write-behind buffer (500 ms / 100-event flush), gyroscope + accelerometer sampling
+            lifecycle-bound to keyboard open/close, mood bar state machine, and the two plain-data event
+            classes consumed by both the live UI and the persistence path.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= LAYER 2: STORAGE ========= -->
+    <div class="prov-layer">
+      <div class="prov-layer-header">
+        <span class="prov-layer-tag">Layer 2</span>
+        <h3>Storage</h3>
+        <span class="layer-counts">4 inherited · 24 added</span>
+      </div>
+      <div class="prov-cols">
+        <div class="prov-col fossify">
+          <div class="prov-col-title"><span class="dot"></span>Fossify · inherited (untouched)</div>
+          <ul>
+            <li>databases/ClipsDatabase.kt</li>
+            <li>interfaces/ClipsDao.kt</li>
+            <li>models/Clip.kt</li>
+            <li>models/ClipsSectionLabel.kt</li>
+          </ul>
+          <div class="prov-summary">
+            The clipboard subsystem is a separate Room database (<code>clips.db</code>) that moodScript
+            never touches. It coexists with <code>ikd.db</code> in the same app process.
+          </div>
+        </div>
+        <div class="prov-col moodscript">
+          <div class="prov-col-title"><span class="dot"></span>moodScript · added</div>
+          <ul>
+            <li>databases/IkdDatabase.kt <span style="color:var(--ink-faint);">— v3, two migrations</span></li>
+            <li>models/IkdEvent.kt</li>
+            <li>models/SensorSample.kt</li>
+            <li>models/SessionRecord.kt</li>
+            <li>models/MoodEntry.kt</li>
+            <li>interfaces/IkdEventDao.kt</li>
+            <li>interfaces/SessionDao.kt</li>
+            <li>interfaces/SensorSampleDao.kt</li>
+            <li>interfaces/MoodDao.kt</li>
+            <li>interfaces/*Row.kt <span style="color:var(--ink-faint);">— 15 query-result POJOs</span></li>
+          </ul>
+          <div class="prov-summary">
+            Single Room database <code>ikd.db</code> at version 3. Two non-destructive migrations
+            (<code>1→2</code> for mood, <code>2→3</code> for autocorrect weight), each validated by the
+            instrumented <code>IkdDatabaseMigrationTest</code>. Privacy invariants enforced at this layer.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= LAYER 3: READ / AGGREGATION ========= -->
+    <div class="prov-layer">
+      <div class="prov-layer-header">
+        <span class="prov-layer-tag">Layer 3</span>
+        <h3>Read / Aggregation</h3>
+        <span class="layer-counts">0 inherited · 15 added</span>
+      </div>
+      <div class="prov-cols">
+        <div class="prov-col fossify">
+          <div class="prov-col-title"><span class="dot"></span>Fossify · inherited</div>
+          <div class="prov-empty">
+            (none — Fossify Keyboard had no analytics layer.<br>
+            This layer was added in its entirety.)
+          </div>
+        </div>
+        <div class="prov-col moodscript">
+          <div class="prov-col-title"><span class="dot"></span>moodScript · added</div>
+          <ul>
+            <li>helpers/IkdAggregator.kt</li>
+            <li>helpers/IkdSessionStatsLoader.kt</li>
+            <li>helpers/IkdSessionChartLoader.kt</li>
+            <li>helpers/IkdMoodAggregator.kt</li>
+            <li>helpers/IkdMoodLoader.kt</li>
+            <li>helpers/IkdHabitsAggregator.kt</li>
+            <li>helpers/IkdActivityAggregator.kt</li>
+            <li>helpers/IkdDistributionAggregator.kt</li>
+            <li>helpers/IkdOrientationAggregator.kt</li>
+            <li>helpers/IkdQualityAggregator.kt</li>
+            <li>helpers/IkdSensorAggregator.kt</li>
+            <li>helpers/IkdRetentionWorker.kt</li>
+            <li>helpers/IkdCsvWriter.kt</li>
+            <li>helpers/IkdStorageStats.kt</li>
+            <li>helpers/IkdFormatters.kt</li>
+          </ul>
+          <div class="prov-summary">
+            Eleven aggregators all sharing one shape:
+            <code>suspend fun snapshot(range)</code> on <code>Dispatchers.IO</code>, pure-Kotlin
+            <code>Companion</code> derivation for unit tests, debug-only wall-clock log. Plus four
+            cross-cutting helpers — CSV writer (dual-block format), retention worker (battery-aware),
+            storage stats (DB size + row counts), and shared formatters.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= LAYER 4: UI / PRESENTATION ========= -->
+    <div class="prov-layer">
+      <div class="prov-layer-header">
+        <span class="prov-layer-tag">Layer 4</span>
+        <h3>UI / Presentation</h3>
+        <span class="layer-counts">9 inherited · 18+ added</span>
+      </div>
+      <div class="prov-cols">
+        <div class="prov-col fossify">
+          <div class="prov-col-title"><span class="dot"></span>Fossify · inherited (untouched)</div>
+          <ul>
+            <li>activities/MainActivity.kt</li>
+            <li>activities/SettingsActivity.kt</li>
+            <li>activities/SimpleActivity.kt</li>
+            <li>activities/SplashActivity.kt</li>
+            <li>activities/ManageClipboardItemsActivity.kt</li>
+            <li>adapters/EmojisAdapter.kt</li>
+            <li>adapters/ClipsActivityAdapter.kt</li>
+            <li>adapters/ClipsKeyboardAdapter.kt</li>
+            <li>adapters/ManageKeyboardLanguagesAdapter.kt</li>
+          </ul>
+          <div class="prov-summary">
+            All keyboard-related activities and adapters from Fossify are preserved verbatim. The settings
+            screen still works as a normal keyboard settings UI; clipboard management is unchanged; the
+            Material-700 launcher palette is preserved.
+          </div>
+        </div>
+        <div class="prov-col moodscript">
+          <div class="prov-col-title"><span class="dot"></span>moodScript · added</div>
+          <ul>
+            <li>activities/DashboardActivity.kt</li>
+            <li>activities/dashboard/* <span style="color:var(--ink-faint);">— 5 fragments + adapter (P9.11)</span></li>
+            <li>activities/EventFeedActivity.kt</li>
+            <li>activities/DiagnosticsActivity.kt</li>
+            <li>activities/IkdSettingsActivity.kt</li>
+            <li>activities/SessionsListActivity.kt</li>
+            <li>activities/AboutActivity.kt <span style="color:var(--ink-faint);">— Phase 10</span></li>
+            <li>adapters/SessionsAdapter.kt</li>
+            <li>views/IkdLineChartView.kt</li>
+            <li>views/IkdStackedBarChartView.kt</li>
+            <li>views/IkdHeatmapView.kt</li>
+            <li>views/IkdHistogramView.kt</li>
+            <li>views/IkdBubbleMapView.kt</li>
+            <li>helpers/InsightsFiltersBottomSheet.kt</li>
+            <li>helpers/MoodEmoji.kt</li>
+          </ul>
+          <div class="prov-summary">
+            One global dashboard with five tabs (Phase 9.11), one per-session dashboard, one diagnostics
+            panel, one settings screen, one sessions list, plus five custom theme-aware chart views.
+            Every chart wrapper isolates the rest of the codebase from MPAndroidChart's API.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- DASHBOARDS                                   -->
+<!-- ============================================ -->
+<section id="dashboards">
+  <div class="section-eyebrow">04 · Dashboards</div>
+  <h2>Three dashboards, one data source</h2>
+  <p class="section-lede">
+    Every visualisation in moodScript reads the same <code style="background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:4px;font-size:13px;">ikd.db</code>
+    on-device. The three dashboards split that data along three axes:
+    <strong>population</strong> (everything across all sessions),
+    <strong>per-session</strong> (single session deep-dive), and
+    <strong>live</strong> (in-memory capture verification). The full per-widget breakdown is in
+    <code style="background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:4px;font-size:13px;">insights_dashboards_overview.html</code>;
+    this section summarises the three at a glance.
+  </p>
+
+  <div class="dash-grid">
+
+    <!-- ============ Global Insights Dashboard ============ -->
+    <div class="dash-card global">
+      <div class="dash-card-header">
+        <div class="dash-icon">📈</div>
+        <h3>Global Insights</h3>
+        <p class="dash-sub">Activity-level trends across every stored session — five swipeable tabs.</p>
+      </div>
+      <div class="dash-card-body">
+        <div class="dash-mock"><span class="muted">┌───────────────────────────────┐</span>
+<span class="muted">│</span> <span class="label">KPI strip · 6 cells</span>           <span class="muted">│</span>
+<span class="muted">│</span>  Sessions · Time · WPM ·       <span class="muted">│</span>
+<span class="muted">│</span>  Error % · Avg sess · Streak   <span class="muted">│</span>
+<span class="muted">├───────────────────────────────┤</span>
+<span class="muted">│</span> <span class="accent">[Trends][Activity][Mood]…</span>      <span class="muted">│</span>
+<span class="muted">│</span> <span class="accent">[Today][Week][Month][All]</span>      <span class="muted">│</span>
+<span class="muted">│</span> <span class="accent">😊 😲 🤢 😢 😨 😠</span>  mood filter   <span class="muted">│</span>
+<span class="muted">├───────────────────────────────┤</span>
+<span class="muted">│</span>                               <span class="muted">│</span>
+<span class="muted">│</span>   <span class="label">ViewPager2 · current tab</span>    <span class="muted">│</span>
+<span class="muted">│</span>                               <span class="muted">│</span>
+<span class="muted">└───────────────────────────────┘</span></div>
+
+        <div class="dash-tabs">
+          <span class="dash-tab">Trends</span>
+          <span class="dash-tab">Activity</span>
+          <span class="dash-tab">Mood</span>
+          <span class="dash-tab">Keystrokes</span>
+          <span class="dash-tab">Habits</span>
+        </div>
+
+        <ul class="dash-widgets">
+          <li><strong>Trends</strong> — 5 line charts (WPM, IKD, error %, gyro, accel)</li>
+          <li><strong>Activity</strong> — calendar heatmap, daily bar, 24-hour bar, circadian heatmap, bubble usage map</li>
+          <li><strong>Mood</strong> — stacked-bar mix, distribution panel</li>
+          <li><strong>Keystrokes</strong> — IKD/dwell/flight log-scale histograms, quality scatter</li>
+          <li><strong>Habits</strong> — 4 trend charts (session duration, frequency, errors, flight)</li>
+        </ul>
+
+        <dl class="dash-meta">
+          <dt>Activity</dt><dd><code>DashboardActivity</code></dd>
+          <dt>Aggregators</dt><dd>8 global + <code>IkdHabitsAggregator</code></dd>
+          <dt>Shipped</dt><dd>Phase 3 → 9.x → 9.11 → 9.12</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- ============ Per-Session Dashboard ============ -->
+    <div class="dash-card session">
+      <div class="dash-card-header">
+        <div class="dash-icon">🗂️</div>
+        <h3>Per-Session</h3>
+        <p class="dash-sub">Single-session deep dive when the user taps a row in the sessions list.</p>
+      </div>
+      <div class="dash-card-body">
+        <div class="dash-mock"><span class="muted">┌───────────────────────────────┐</span>
+<span class="muted">│</span> <span class="label">KPI strip · 4–5 cells</span>          <span class="muted">│</span>
+<span class="muted">│</span>  Events · Time · WPM ·         <span class="muted">│</span>
+<span class="muted">│</span>  Error % · <span class="accent">😊 Mood</span> (optional)   <span class="muted">│</span>
+<span class="muted">├───────────────────────────────┤</span>
+<span class="muted">│</span> Avg IKD · Dwell · Flight       <span class="muted">│</span>
+<span class="muted">│</span> Started · Duration · Locale    <span class="muted">│</span>
+<span class="muted">├───────────────────────────────┤</span>
+<span class="muted">│</span> <span class="label">IKD over time</span>     (line chart) <span class="muted">│</span>
+<span class="muted">├───────────────────────────────┤</span>
+<span class="muted">│</span> <span class="label">Gyro magnitude</span>    (line chart) <span class="muted">│</span>
+<span class="muted">├───────────────────────────────┤</span>
+<span class="muted">│</span> <span class="label">Accel magnitude</span>   (line chart) <span class="muted">│</span>
+<span class="muted">└───────────────────────────────┘</span></div>
+
+        <ul class="dash-widgets">
+          <li><strong>KPI strip</strong> — 4 cells, fifth mood cell appears only when a <code style="font-size:10.5px;background:var(--bg);border:1px solid var(--line);padding:1px 4px;border-radius:3px;font-family:ui-monospace,monospace;">MoodEntry</code> exists</li>
+          <li><strong>Secondary chips</strong> — Avg IKD, Avg Dwell, Avg Flight</li>
+          <li><strong>Metadata one-liner</strong> — started, duration, orientation, locale</li>
+          <li><strong>3 line charts</strong> — IKD / gyro magnitude / accel magnitude over the session timeline</li>
+          <li><strong>SQL-side downsampling</strong> — bucket = <code style="font-size:10.5px;background:var(--bg);border:1px solid var(--line);padding:1px 4px;border-radius:3px;font-family:ui-monospace,monospace;">max(50ms, ⌈durationMs / 200⌉)</code> ⇒ ≤ 200 points/chart</li>
+        </ul>
+
+        <dl class="dash-meta">
+          <dt>Activity</dt><dd><code>EventFeedActivity</code></dd>
+          <dt>Loaders</dt><dd><code>SessionStatsLoader</code> · <code>SessionChartLoader</code> · <code>MoodLoader</code></dd>
+          <dt>Shipped</dt><dd>Phase 5; mood cell in Phase 8</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- ============ Diagnostics Dashboard ============ -->
+    <div class="dash-card diagnostics">
+      <div class="dash-card-header">
+        <div class="dash-icon">🔧</div>
+        <h3>Diagnostics</h3>
+        <p class="dash-sub">Live developer screen reading the in-memory buffer — no Room reads.</p>
+      </div>
+      <div class="dash-card-body">
+        <div class="dash-mock"><span class="muted">┌───────────────────────────────┐</span>
+<span class="muted">│</span> Toolbar · <span class="accent">[CSV][Insights]</span>      <span class="muted">│</span>
+<span class="muted">├───────────────────────────────┤</span>
+<span class="muted">│</span> Typing area (max 6 lines)     <span class="muted">│</span>
+<span class="muted">│</span> <span class="accent">●</span> Active / <span class="muted">●</span> Idle / <span class="label">🛡 Privacy</span> <span class="muted">│</span>
+<span class="muted">├───────────────────────────────┤</span>
+<span class="muted">│</span> <span class="label">Timing metrics</span>                <span class="muted">│</span>
+<span class="muted">│</span>  IKD · Dwell · Flight          <span class="muted">│</span>
+<span class="muted">│</span>  125ms · 42ms · 88ms           <span class="muted">│</span>
+<span class="muted">├───────────────────────────────┤</span>
+<span class="muted">│</span> <span class="label">Count metrics</span>                 <span class="muted">│</span>
+<span class="muted">│</span>  Events · Speed · Error %      <span class="muted">│</span>
+<span class="muted">├───────────────────────────────┤</span>
+<span class="muted">│</span> <span class="label">Sensor card</span> (collapsible)     <span class="muted">│</span>
+<span class="muted">│</span>  ▰▰▰▰▱▱  gyro                 <span class="muted">│</span>
+<span class="muted">│</span>  ▰▰▱▱▱▱  accel                <span class="muted">│</span>
+<span class="muted">└───────────────────────────────┘</span></div>
+
+        <ul class="dash-widgets">
+          <li><strong>Status chip</strong> — active / idle / privacy / no-data, theme-aware tokens</li>
+          <li><strong>Timing &amp; Count cards</strong> — KPI grids (3 cells each)</li>
+          <li><strong>Sensor card</strong> — collapsible, magnitude bars, state persisted via <code style="font-size:10.5px;background:var(--bg);border:1px solid var(--line);padding:1px 4px;border-radius:3px;font-family:ui-monospace,monospace;">Config</code></li>
+          <li><strong>Session Insights</strong> toolbar action — jumps to live event log or most recent session</li>
+        </ul>
+
+        <dl class="dash-meta">
+          <dt>Activity</dt><dd><code>DiagnosticsActivity</code></dd>
+          <dt>Source</dt><dd><code>LiveCaptureSessionStore</code> (no Room)</dd>
+          <dt>Shipped</dt><dd>Phase 1/1.1; reworked in Phase 6</dd>
+        </dl>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ Full overview CTA ============ -->
+  <div class="dash-cta">
+    <div class="cta-icon">📋</div>
+    <div class="cta-text">
+      <h4>Want the per-widget breakdown?</h4>
+      <p>
+        Every chart, KPI, table, and aggregator query is documented in <code style="background:var(--bg-elevated);border:1px solid var(--line);padding:1px 6px;border-radius:4px;font-size:12px;font-family:ui-monospace,monospace;">insights_dashboards_overview.html</code> —
+        widget tables, ASCII layout mocks, aggregator inventory, performance budgets, recent-changes log.
+      </p>
+    </div>
+    <a class="cta-btn" href="insights_dashboards_overview.html">
+      Open full dashboards overview
+      <span class="arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- PHASES TAB SHELL                             -->
+<!-- ============================================ -->
+<section id="phases">
+  <div class="section-eyebrow">05 · Phase Walk-through</div>
+  <h2>How the work evolved</h2>
+  <p class="section-lede">
+    Each phase had explicit frozen surfaces, an explicit reopened-files list, and an explicit verification
+    recipe. The plans evolved during implementation — Phase 5 exists because Phase 4's on-device review
+    surfaced a UX gap. This is the operating-system property of the roadmap.
+  </p>
+
+  <div class="tabs-shell">
+    <div class="tab-strip" role="tablist">
+      <button class="tab-btn active" data-tab="p1" role="tab"><span class="status-dot implemented"></span>Phase 1 / 1.1</button>
+      <button class="tab-btn" data-tab="p2" role="tab"><span class="status-dot implemented"></span>Phase 2</button>
+      <button class="tab-btn" data-tab="p3" role="tab"><span class="status-dot implemented"></span>Phase 3</button>
+      <button class="tab-btn" data-tab="p45" role="tab"><span class="status-dot implemented"></span>Phase 4 / 5</button>
+      <button class="tab-btn" data-tab="p6" role="tab"><span class="status-dot implemented"></span>Phase 6</button>
+      <button class="tab-btn" data-tab="p7" role="tab"><span class="status-dot implemented"></span>Phase 7 / 7.1</button>
+      <button class="tab-btn" data-tab="p8" role="tab"><span class="status-dot implemented"></span>Phase 8 / 8.x</button>
+      <button class="tab-btn" data-tab="p9" role="tab"><span class="status-dot implemented"></span>Phase 9</button>
+      <button class="tab-btn" data-tab="p10" role="tab"><span class="status-dot planned"></span>Phase 10</button>
+      <button class="tab-btn" data-tab="pf" role="tab"><span class="status-dot planned"></span>Future (12 · 13)</button>
+    </div>
+
+    <!-- Phase 1 + 1.1 -->
+    <div class="tab-content active" id="p1" role="tabpanel">
+      <div>
+        <h3>Foundation — sensor calibration &amp; live keyboard alignment</h3>
+        <p class="objective">Build trust in the measurements before risking the live keyboard.</p>
+        <p>
+          A standalone <code>DiagnosticsActivity</code> was created with a real-time view of inter-key
+          delay, key hold time, flight time, and live gyroscope/accelerometer read-outs. The screen
+          surfaced numerics and animated bars side-by-side so any timing math error would be immediately
+          visible.
+        </p>
+        <p>
+          <strong>Phase 1.1</strong> moved the validated capture out of the diagnostic screen into the
+          live keyboard. The capture site is the top of <code>SimpleKeyboardIME.onKey()</code>, off the
+          main thread — the constraint that has held the input-latency budget through every later phase.
+        </p>
+        <p>
+          Metric definitions were also realigned in 1.1. Dwell was reframed to <em>Key Hold Time</em>;
+          flight became the precise UP→DOWN interval; IKD remained the legacy UP→UP interval for
+          historical comparison. Diagnostic, live, database — all three layers now agree on what each
+          number means.
+        </p>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented</span></dd>
+          <dt>Capture site</dt><dd><code>SimpleKeyboardIME.onKey()</code></dd>
+          <dt>Storage</dt>    <dd>None yet — in-memory only</dd>
+          <dt>Schema</dt>     <dd>—</dd>
+          <dt>Key files</dt>
+          <dd>
+            <code>activities/DiagnosticsActivity.kt</code><br>
+            <code>activities/EventFeedActivity.kt</code><br>
+            <code>helpers/LiveCaptureSessionStore.kt</code><br>
+            <code>helpers/KinematicSensorHelper.kt</code>
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="tab-content" id="p2" role="tabpanel">
+      <div>
+        <h3>Persistent local storage &amp; privacy mode</h3>
+        <p class="objective">Persist the captured signals to disk without compromising battery, latency, or privacy.</p>
+        <p>
+          The Room database <code>ikd.db</code> was introduced with three tables: <code>sessions</code>,
+          <code>ikd_events</code>, <code>sensor_samples</code>. A write-behind buffer
+          (<code>LiveCaptureSessionStore</code>) batches events to disk every 500 ms or every 100 events,
+          via a single <code>Executors.newSingleThreadScheduledExecutor()</code>.
+        </p>
+        <p>
+          <strong>Privacy mode is the default</strong> — no rows are written until the user explicitly
+          toggles capture on (later via the keyboard top-bar shield, then via the Phase 8 mood bar).
+          A SAF-based dual-block CSV export rounds out the phase. Sensor sampling is gated on session
+          activity — sensors come up with the keyboard and stop immediately on close.
+        </p>
+        <p>
+          A periodic retention <code>CoroutineWorker</code> runs once per day with the
+          <code>setRequiresBatteryNotLow</code> constraint. Users can choose a retention window; the default
+          is "forever".
+        </p>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented</span></dd>
+          <dt>Schema</dt>     <dd><code>IkdDatabase.version = 1</code></dd>
+          <dt>Tables</dt>     <dd>sessions · ikd_events · sensor_samples</dd>
+          <dt>Privacy</dt>    <dd>ON by default</dd>
+          <dt>Key files</dt>
+          <dd>
+            <code>databases/IkdDatabase.kt</code><br>
+            <code>helpers/LiveCaptureSessionStore.kt</code><br>
+            <code>helpers/IkdRetentionWorker.kt</code><br>
+            <code>helpers/IkdCsvWriter.kt</code><br>
+            <code>activities/IkdSettingsActivity.kt</code>
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="tab-content" id="p3" role="tabpanel">
+      <div>
+        <h3>Insights v1 — first dashboard</h3>
+        <p class="objective">Translate raw on-device data into something a user can read.</p>
+        <p>
+          <code>DashboardActivity</code> shipped with three line charts (typing speed, average IKD, error
+          rate) over Week / Month / All-Time, plus a four-cell KPI strip. Aggregation is done server-side
+          in SQLite — a single <code>GROUP BY</code> per chart per range, returning ≤ 52 rows even
+          for All-Time.
+        </p>
+        <p>
+          MPAndroidChart was added through JitPack as the <strong>only</strong> new external dependency
+          across the entire project. A theme-aware wrapper (<code>IkdLineChartView</code>) gives the
+          charts a consistent visual identity and isolates the rest of the codebase from the chart
+          library's API.
+        </p>
+        <p>
+          The aggregator pattern crystallised in this phase — one <code>snapshot(range)</code>,
+          <code>Dispatchers.IO</code>, pure derivation on the <code>Companion</code> for testing, debug
+          duration log. Every later analytics phase reuses this shape.
+        </p>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented</span></dd>
+          <dt>Charts</dt>     <dd>3 line charts</dd>
+          <dt>KPI strip</dt>  <dd>4 cells</dd>
+          <dt>Performance</dt><dd>Week &lt; 100 ms<br>All-Time &lt; 200 ms</dd>
+          <dt>Key files</dt>
+          <dd>
+            <code>activities/DashboardActivity.kt</code><br>
+            <code>helpers/IkdAggregator.kt</code><br>
+            <code>views/IkdLineChartView.kt</code>
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Phase 4 + 5 -->
+    <div class="tab-content" id="p45" role="tabpanel">
+      <div>
+        <h3>Session detail — metadata header to real dashboard</h3>
+        <p class="objective">Make the per-session detail screen useful at a glance, then turn it into a real dashboard.</p>
+        <p>
+          <strong>Phase 4</strong> added a metadata header card to <code>EventFeedActivity</code> when
+          launched with a session id: started, duration, orientation, locale, counts, and four derived
+          metrics (WPM, error rate, avg IKD, avg dwell, avg flight). Powered by one additive
+          <code>getSessionStats(sessionId)</code> query that folds counts and averages in a single SQL
+          round-trip.
+        </p>
+        <p>
+          The sensor list switched from a wall of X / Y / Z numbers to a single magnitude per sample, with
+          a toolbar toggle to flip back to per-axis view. <strong>Magnitude is computed in Kotlin at read
+          time — never stored, never in the CSV.</strong> The data contract stays frozen.
+        </p>
+        <p>
+          <strong>Phase 5</strong> replaced the raw timing/sensor row dump with a KPI strip + three line
+          charts (IKD over time, gyro magnitude over time, accel magnitude over time). SQL-side
+          downsampling guarantees ≤ 200 points per chart regardless of session length, with bucket width
+          <code>max(50 ms, ceil(durationMs / 200))</code>.
+        </p>
+        <p>
+          The live mode of <code>EventFeedActivity</code> (launched from Diagnostics → "View Log", without
+          a session id) keeps its raw timing and sensor lists — that screen is a real-time debug feed and
+          a different feature.
+        </p>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented</span></dd>
+          <dt>Phase 4</dt>    <dd>Metadata header + magnitude-first sensor view</dd>
+          <dt>Phase 5</dt>    <dd>KPI strip + 3 line charts</dd>
+          <dt>Downsampling</dt><dd>≤ 200 pts/chart (SQL-side)</dd>
+          <dt>Key files</dt>
+          <dd>
+            <code>helpers/IkdSessionStatsLoader.kt</code><br>
+            <code>helpers/IkdSessionChartLoader.kt</code><br>
+            <code>activities/EventFeedActivity.kt</code>
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Phase 6 -->
+    <div class="tab-content" id="p6" role="tabpanel">
+      <div>
+        <h3>Diagnostics polish &amp; live session shortcut</h3>
+        <p class="objective">Elevate the diagnostic screen from "raw debug panel" to "polished developer screen".</p>
+        <p>
+          The status indicator was promoted to a coloured chip (active = green, idle = grey, privacy-on
+          = amber), with each colour resolved through theme-aware <code>res/values{,-night}/colors.xml</code>
+          tokens — no <code>Color.parseColor("#…")</code> literals in Kotlin, no broken contrast on dark
+          themes.
+        </p>
+        <p>
+          Metric cards switched from "label : value" rows to a 3-cell KPI grid mirroring the Phase 5
+          session dashboard. The sensor block became a collapsible <code>MaterialCardView</code> whose
+          state persists across re-entries via <code>Config.diagnosticsSensorCardExpanded</code>. The
+          chevron rotates 150 ms on toggle, snaps without animation on <code>onResume</code> restore.
+        </p>
+        <p>
+          A <strong>Session Insights</strong> toolbar action was added: when a session is active, it
+          opens the live event log; when no session is active, it queries
+          <code>SessionDao.getMostRecentSession()</code> (single <code>SELECT … ORDER BY started_at DESC LIMIT 1</code>)
+          and lands on the most recent session's Phase 5 dashboard.
+        </p>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented (reworked)</span></dd>
+          <dt>Theme tokens</dt><dd>Light + dark mode, all theme-aware</dd>
+          <dt>Persisted UI</dt><dd>Sensor card collapse state</dd>
+          <dt>Key files</dt>
+          <dd>
+            <code>activities/DiagnosticsActivity.kt</code><br>
+            <code>res/layout/activity_diagnostics.xml</code><br>
+            <code>interfaces/SessionDao.kt</code> (additive)
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Phase 7 + 7.1 -->
+    <div class="tab-content" id="p7" role="tabpanel">
+      <div>
+        <h3>Capture closure — emoji + autocorrect + weighted error rate</h3>
+        <p class="objective">Close two capture blind spots — emoji palette taps and external text replacements.</p>
+        <p>
+          This was the first phase since Phase 2 to deliberately reopen the keyboard layer. Every edit
+          is instrumentation-only:
+        </p>
+        <ul>
+          <li>Emoji palette taps now route through a new <code>OnKeyboardActionListener.onEmojiText</code> and are recorded as <code>EMOJI</code> events.</li>
+          <li>External replacements (system spell-check, VN Telex inline transliteration) are detected via an <code>onUpdateSelection</code> heuristic — cursor moved by an unexpected amount, outside a 50 ms grace window of our last IME edit — and recorded as <code>AUTOCORRECT</code> events.</li>
+        </ul>
+        <p>
+          <strong>Phase 7.1</strong> upgraded the error-rate metric. A new <code>correction_weight</code>
+          column on <code>ikd_events</code> (<code>Migration(2, 3)</code>) lets a single autocorrect of a
+          long misspelled word contribute proportional weight to the error rate, instead of the same "1"
+          a single backspace contributes. The user's <code>ocasdasda</code> → <code>october</code> test
+          case correctly reads ~90% error rate after this change (was misleadingly ~9%).
+        </p>
+        <p>
+          The CSV gained a trailing <code>correction_weight</code> column on the timing block —
+          strictly additive, parsers reading the original seven columns ignore the eighth.
+        </p>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented</span></dd>
+          <dt>New event categories</dt><dd>EMOJI · AUTOCORRECT</dd>
+          <dt>Schema</dt>     <dd>Migration 2 → 3 (correction_weight)</dd>
+          <dt>Privacy</dt>    <dd>Category strings only — never the codepoint, never the replaced text</dd>
+          <dt>Key files</dt>
+          <dd>
+            <code>services/SimpleKeyboardIME.kt</code><br>
+            <code>views/MyKeyboardView.kt</code><br>
+            <code>helpers/IkdAggregator.kt</code><br>
+            <code>helpers/IkdSessionStatsLoader.kt</code>
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Phase 8 + 8.x -->
+    <div class="tab-content" id="p8" role="tabpanel">
+      <div>
+        <h3>Mood bar &amp; contextual overlay</h3>
+        <p class="objective">Let the user annotate their emotional state with a single keyboard tap.</p>
+        <p>
+          The keyboard top bar gained a seven-button mood bar — 🛡️ 😊 😲 🤢 😢 😨 😠 — covering the privacy
+          shield (preserved verbatim from Phase 2) plus Ekman's six basic emotions, valence-ordered. Tapping a
+          mood writes a <code>MoodEntry</code> row keyed on the active session via the new
+          <code>Migration(1, 2)</code>.
+        </p>
+        <p>
+          The bar evolved through three sub-phases:
+        </p>
+        <ul>
+          <li><strong>8.1</strong> — sizing, dashboard card theming, toggleable mood bar visibility.</li>
+          <li><strong>8.2</strong> — every slot became a true two-way toggle. The bar was redressed as a
+              stretched-key capsule with a chat-bubble <code>PopupWindow</code> for first-person feedback
+              ("I'm feeling happy", "I want privacy"), replacing the original toasts.</li>
+          <li><strong>8.3</strong> — dropped the "Avg Mood" KPI and the "Mood over Time" line chart, since
+              averaging across categorical labels produced interpretively vague numbers like
+              <em>🤢 3.2</em>. Replaced them with a per-bucket stacked-bar mood-mix chart showing the
+              percentage breakdown of each Ekman category over time.</li>
+        </ul>
+        <p>
+          Privacy invariant preserved: <code>MoodEntry</code> stores only the integer ordinal valence
+          (1..6) and a timestamp. <strong>No emoji codepoint, no text.</strong> The score → emoji mapping
+          lives in <code>helpers/MoodEmoji.kt</code> only.
+        </p>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented (incl. 8.1 / 8.2 / 8.3)</span></dd>
+          <dt>Schema</dt>     <dd>Migration 1 → 2 (mood_entries)</dd>
+          <dt>Bar shape</dt>  <dd>7 slots: 🛡️ 😊 😲 🤢 😢 😨 😠</dd>
+          <dt>Storage</dt>    <dd>Integer valence (1..6) only</dd>
+          <dt>Key files</dt>
+          <dd>
+            <code>views/MyKeyboardView.kt</code><br>
+            <code>helpers/MoodEmoji.kt</code><br>
+            <code>helpers/IkdMoodBarController.kt</code><br>
+            <code>helpers/IkdMoodAggregator.kt</code><br>
+            <code>views/IkdStackedBarChartView.kt</code>
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Phase 9 -->
+    <div class="tab-content" id="p9" role="tabpanel">
+      <div>
+        <h3>Global insights expansion — five tabs, ten sub-phases</h3>
+        <p class="objective">Expand the dashboard from a single page into a full analytics hub.</p>
+        <p>
+          Phase 9 was deliberately split into 10 self-contained sub-plans, each with its own implementer,
+          on a single read-side-only branch. The result is a five-tab dashboard:
+        </p>
+        <ul>
+          <li><strong>Trends</strong> — typing speed, avg IKD, error rate (the original three from Phase 3) plus avg gyro/accel magnitude trend charts (9.2).</li>
+          <li><strong>Daily Activity</strong> — calendar heatmap (week × day-of-week, 9.5), 24-hour bar chart and hour × weekday circadian heatmap (9.6), Usage Map bubble chart (9.9).</li>
+          <li><strong>Mood</strong> — formalised section header (9.1), Phase 8.3 mood-mix stacked-bar chart, Mood Distribution panel.</li>
+          <li><strong>Keystroke Dynamics</strong> — IKD / dwell / flight log-scale histograms (9.7), Activity Quality scatter (9.10).</li>
+          <li><strong>Habits</strong> — avg session duration, sessions per day, avg error rate, avg flight time + four-cell KPI strip with longest-streak (9.3).</li>
+        </ul>
+        <p>
+          A horizontally scrollable single-select <strong>Mood Filter</strong> chip row above the range
+          selector (9.4) re-runs every aggregator scoped to a chosen Ekman category — answering the
+          behavioural question <em>"what does my typing look like when I'm angry vs happy?"</em>.
+        </p>
+        <p>
+          Two new custom views (<code>IkdHeatmapView</code>, <code>IkdBubbleMapView</code>) joined the
+          existing <code>IkdLineChartView</code> / <code>IkdStackedBarChartView</code>. <strong>No schema
+          migration was needed</strong> (<code>IkdDatabase.version</code> stayed at 3), the capture path
+          stayed frozen, no new dependency was added.
+        </p>
+        <p>
+          Phase 9.11 added a <strong>TODAY</strong> range and converted the dashboard into a five-tab
+          navigation via <code>ViewPager2</code> + <code>NavigationRailView</code>, shrinking
+          <code>DashboardActivity</code> from ~1100 LOC to ~340 LOC by extracting per-tab logic into
+          fragment subclasses under <code>activities/dashboard/</code>.
+        </p>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented (10 sub-phases + 9.11)</span></dd>
+          <dt>Tabs</dt>       <dd>5: Summary · Trends · Daily Activity · Keystroke Dynamics · Habits</dd>
+          <dt>New aggregators</dt><dd>6: Sensor · Habits · Activity · Distribution · Orientation · Quality</dd>
+          <dt>New chart views</dt><dd><code>IkdHeatmapView</code><br><code>IkdBubbleMapView</code></dd>
+          <dt>Schema</dt>     <dd>No migration (stays at 3)</dd>
+          <dt>Mood filter</dt><dd>Single-select chip row above range selector</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Phase 10 -->
+    <div class="tab-content" id="p10" role="tabpanel">
+      <div>
+        <h3>Rebrand to moodScript</h3>
+        <p class="objective">Retire the "Fossify Keyboard" identity now that the app has evolved into a behavioural-analytics platform.</p>
+        <p>
+          Cosmetic-only scope. <strong>No <code>applicationId</code> rename, no <code>ikd.db</code>
+          migration, no fastlane / store metadata work, no <code>colorPrimary</code> change, no schema
+          migration.</strong> The smallest change set that gives the app a coherent on-device identity:
+          name, About screen, launcher foreground glyph.
+        </p>
+        <p>
+          The launcher glyph is the original Fossify keyboard silhouette (rounded rectangle outline + 5×2
+          dot keys + spacebar pill, white on background) <em>cradled by three concentric heart outlines</em>
+          fading outward. Both brand pillars — keyboard + wellbeing — in one mark.
+        </p>
+
+        <div class="icon-preview-wrap">
+          <div>
+            <div class="preview-large">
+              <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                <rect width="512" height="512" fill="#5b8def"/>
+                <path d="M 256 459 C 256 459, 37 301, 37 166 C 37 91, 101 53, 172 53 C 217 53, 247 80, 256 110 C 265 80, 295 53, 340 53 C 411 53, 475 91, 475 166 C 475 301, 256 459, 256 459 Z" stroke="#fff" stroke-width="9" fill="none" opacity="0.27" stroke-linejoin="round"/>
+                <path d="M 256 425 C 256 425, 74 294, 74 181 C 74 119, 127 87, 186 87 C 224 87, 249 110, 256 135 C 264 110, 289 87, 326 87 C 385 87, 439 119, 439 181 C 439 294, 256 425, 256 425 Z" stroke="#fff" stroke-width="11" fill="none" opacity="0.45" stroke-linejoin="round"/>
+                <path d="M 256 391 C 256 391, 110 286, 110 196 C 110 146, 153 121, 200 121 C 230 121, 250 139, 256 159 C 262 139, 282 121, 312 121 C 359 121, 402 146, 402 196 C 402 286, 256 391, 256 391 Z" stroke="#fff" stroke-width="13" fill="none" opacity="0.7" stroke-linejoin="round"/>
+                <rect x="146" y="201" width="220" height="110" rx="12" ry="12" fill="none" stroke="#fff" stroke-width="12"/>
+                <circle cx="190" cy="225" r="7" fill="#fff"/><circle cx="223" cy="225" r="7" fill="#fff"/><circle cx="256" cy="225" r="7" fill="#fff"/><circle cx="289" cy="225" r="7" fill="#fff"/><circle cx="322" cy="225" r="7" fill="#fff"/>
+                <circle cx="190" cy="258" r="7" fill="#fff"/><circle cx="223" cy="258" r="7" fill="#fff"/><circle cx="256" cy="258" r="7" fill="#fff"/><circle cx="289" cy="258" r="7" fill="#fff"/><circle cx="322" cy="258" r="7" fill="#fff"/>
+                <rect x="220" y="287" width="72" height="10" rx="5" fill="#fff"/>
+              </svg>
+            </div>
+            <div class="icon-cap">moodScript launcher icon (Option F)</div>
+          </div>
+
+          <div>
+            <p style="font-size: 14px;">
+              The icon's foreground vector renders against any of the existing 19 Material-700 launcher
+              backgrounds; the Settings → Customize Colors → App icon picker keeps working unchanged.
+              Only the foreground (<code>ic_launcher_foreground.xml</code> +
+              <code>ic_launcher_monochrome.xml</code>) is replaced.
+            </p>
+            <p style="font-size: 13px; color: var(--ink-soft);">
+              Plan: <code>roadmap/Phase10/Phase10_Plan.md</code><br>
+              Visual mockup: <code>roadmap/Phase10/Phase10_Identity_Mockup.html</code>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge planned">Planned</span></dd>
+          <dt>Schema</dt>     <dd>No migration</dd>
+          <dt>Out of scope</dt><dd>applicationId<br>fastlane metadata<br>palette change<br>versionName bump</dd>
+          <dt>About screen</dt><dd>Local override extending Commons <code>AboutActivity</code></dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Future -->
+    <div class="tab-content" id="pf" role="tabpanel">
+      <div>
+        <h3>Planned future phases</h3>
+        <p class="objective">Documented as plans, not yet implemented. The academic value is the pipeline; these are extensions.</p>
+        <p>
+          The roadmap continues with planned phases that build on the moodScript identity. Each is fully
+          specified in its own plan file under <code>roadmap/</code> — frozen surfaces, reopened files,
+          verification recipe, the full structural treatment.
+        </p>
+
+        <div class="future-grid">
+          <div class="future-card">
+            <span class="ph">Phase 12</span>
+            <h4>Mood-curated emoji section</h4>
+            <p>
+              When the user opens the emoji drawer with a mood selected, prepend a context-aware section
+              with curated emojis for that mood. Reuses Phase 7's emoji-capture pipeline; privacy posture
+              unchanged.
+            </p>
+          </div>
+          <div class="future-card">
+            <span class="ph">Phase 13</span>
+            <h4>Gamification: badges</h4>
+            <p>
+              13 starter badges rewarding mood cataloging and keyboard usage. New 6th "Achievements" tab
+              on the dashboard. <code>Migration(3, 4)</code> adds a <code>badges</code> table; in-app
+              snackbar on first unlock.
+            </p>
+          </div>
+          <div class="future-card">
+            <span class="ph">Future</span>
+            <h4>Mood quick-note</h4>
+            <p>
+              Long-press a mood emoji to add a 1–2 line note about <em>why</em>. Highest research value
+              — pairs subjective rationale with the existing objective signal. Requires explicit
+              opt-in due to text storage.
+            </p>
+          </div>
+          <div class="future-card">
+            <span class="ph">Future</span>
+            <h4>Mood ↔ activity overlay</h4>
+            <p>
+              Add a toggle to recolour the Phase 9.5 calendar heatmap by dominant mood per day. Pure
+              read-side; reuses existing aggregators. Answers <em>"do my anxious days correlate with
+              low typing days?"</em>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge planned">Planned</span></dd>
+          <dt>Plan files</dt>
+          <dd>
+            <code>roadmap/Phase12/Phase12_Plan.md</code><br>
+            <code>roadmap/Phase13/Phase13_Plan.md</code>
+          </dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- VISUAL GALLERY                               -->
+<!-- ============================================ -->
+<section id="gallery">
+  <div class="section-eyebrow">06 · Visual Gallery</div>
+  <h2>The prototype, on-device</h2>
+  <p class="section-lede">
+    Five screenshots of the running prototype. Each shows a real surface running on a physical device,
+    with real captured data behind it.
+  </p>
+
+  <div class="gallery">
+    <div class="shot">
+      <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_en-US.png" alt="Screenshot 1" onerror="this.style.display='none'; this.parentNode.querySelector('.cap').style.opacity='0.5'">
+      <div class="cap">The keyboard in everyday use, with the mood bar in the top toolbar.</div>
+    </div>
+    <div class="shot">
+      <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_en-US.png" alt="Screenshot 2" onerror="this.style.display='none'; this.parentNode.querySelector('.cap').style.opacity='0.5'">
+      <div class="cap">Settings — privacy mode, retention, sensor toggles, capture stats.</div>
+    </div>
+    <div class="shot">
+      <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_en-US.png" alt="Screenshot 3" onerror="this.style.display='none'; this.parentNode.querySelector('.cap').style.opacity='0.5'">
+      <div class="cap">Insights dashboard — multi-tab navigation, range selector, mood filter.</div>
+    </div>
+    <div class="shot">
+      <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4_en-US.png" alt="Screenshot 4" onerror="this.style.display='none'; this.parentNode.querySelector('.cap').style.opacity='0.5'">
+      <div class="cap">Per-session dashboard — KPI strip and three time-series charts.</div>
+    </div>
+    <div class="shot">
+      <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5_en-US.png" alt="Screenshot 5" onerror="this.style.display='none'; this.parentNode.querySelector('.cap').style.opacity='0.5'">
+      <div class="cap">Diagnostics — live IKD, dwell, flight, and sensor read-outs.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- BY THE NUMBERS                               -->
+<!-- ============================================ -->
+<section id="numbers">
+  <div class="section-eyebrow">07 · By The Numbers</div>
+  <h2>What landed, in figures</h2>
+  <p class="section-lede">
+    The deliverable is a working prototype. These numbers describe the shape of the work that produced it.
+  </p>
+
+  <div class="numbers">
+    <div class="grid">
+      <div class="item">
+        <div class="num">9</div>
+        <div class="lab">phases implemented end-to-end on-device</div>
+      </div>
+      <div class="item">
+        <div class="num">10</div>
+        <div class="lab">Phase 9 sub-phases (read-side only)</div>
+      </div>
+      <div class="item">
+        <div class="num">5</div>
+        <div class="lab">dashboard sections / tabs after Phase 9.11</div>
+      </div>
+      <div class="item">
+        <div class="num">15+</div>
+        <div class="lab">chart cards across the dashboards</div>
+      </div>
+      <div class="item">
+        <div class="num">10</div>
+        <div class="lab">aggregator helpers, all sharing one shape</div>
+      </div>
+      <div class="item">
+        <div class="num">3</div>
+        <div class="lab">planned future phases<br>(10 · 12 · 13)</div>
+      </div>
+      <div class="item">
+        <div class="num">2</div>
+        <div class="lab">non-destructive Room migrations validated by instrumented tests</div>
+      </div>
+      <div class="item">
+        <div class="num">0</div>
+        <div class="lab">network requests, ever</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- FUTURE                                       -->
+<!-- ============================================ -->
+<section id="future">
+  <div class="section-eyebrow">08 · What's next</div>
+  <h2>The pipeline is the deliverable</h2>
+  <p class="section-lede">
+    Phases 10, 12, and 13 are documented as plans rather than implemented features. The academic value
+    of the project is the capture / storage / analysis / visualisation pipeline itself — not any
+    particular surface built on top of it. The plans define what the prototype could become if the
+    project continues.
+  </p>
+
+  <div class="context-grid">
+    <div class="context-card">
+      <div class="icon">🎨</div>
+      <h3>Phase 10 — Rebrand</h3>
+      <p>
+        Retire the "Fossify Keyboard" identity in favour of moodScript. New launcher glyph (keyboard
+        cradled by hearts), new About screen, new app name. Cosmetic only — no schema migration,
+        no <code>applicationId</code> rename.
+      </p>
+    </div>
+    <div class="context-card">
+      <div class="icon">🎭</div>
+      <h3>Phase 12 — Mood emoji drawer</h3>
+      <p>
+        Context-aware curated emoji section at the top of the keyboard's emoji drawer, rendered only
+        when the user has a standing mood selected. Reuses the Phase 7 emoji-capture pipeline; no new
+        privacy surface.
+      </p>
+    </div>
+    <div class="context-card">
+      <div class="icon">🏆</div>
+      <h3>Phase 13 — Gamification</h3>
+      <p>
+        13 starter badges across mood cataloging and keyboard usage, surfaced as a new sixth
+        "Achievements" tab on the dashboard. <code>Migration(3, 4)</code>; in-app snackbar on
+        unlock; no system notification permission.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- FOOTER                                       -->
+<!-- ============================================ -->
+<footer class="site">
+  <p>
+    <strong>moodScript</strong> · Trabalho prático 2025/2026<br>
+    Forked from <a href="https://github.com/FossifyOrg/Keyboard">Fossify Keyboard</a> ·
+    Built with Kotlin · Room · MPAndroidChart · Claude Code agent workflow
+  </p>
+  <p style="margin-top: 14px; opacity: 0.7;">
+    Roadmap source of truth: <code>roadmap/STATUS.md</code> · Schema version: <code>IkdDatabase.version = 3</code>
+  </p>
+</footer>
+
+<script>
+  // Tab switching — vanilla JS, no dependencies
+  (function () {
+    const buttons = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.tab-content');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-tab');
+        buttons.forEach(b => b.classList.remove('active'));
+        panels.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const panel = document.getElementById(target);
+        if (panel) panel.classList.add('active');
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

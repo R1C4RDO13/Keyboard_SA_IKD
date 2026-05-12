@@ -1,6 +1,8 @@
-# MoodScript — Behavioural-Analytics Keyboard
+# moodScript — Behavioural-Analytics Keyboard
 
-**MoodScript** is a research-grade Android keyboard that captures keystroke timing, kinematic sensor data, and self-reported mood signals during everyday typing, then turns them into private on-device insights about anxiety, routine, and wellbeing. Built on the open-source [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard) — all upstream features remain functional.
+**moodScript** is a research-grade Android keyboard prototype that captures keystroke timing, kinematic sensor data, and self-reported mood signals during everyday typing, then turns them into private on-device insights about anxiety, routine, and wellbeing. It is built on the open-source [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard), and all upstream keyboard features remain functional.
+
+For the full project narrative, including the roadmap evolution, the custom agent workflow, the university assignment context, and the naming rationale, see [PROJECT_JOURNEY.md](PROJECT_JOURNEY.md).
 
 ## Project Goal
 
@@ -29,7 +31,7 @@ All data stays on-device. Nothing is transmitted over the network.
 
 ## Roadmap
 
-Development is structured in phases. See [`ROADMAP/FeatureRoadmap.md`](ROADMAP/FeatureRoadmap.md) for the full overview.
+Development is structured in phases. See [`roadmap/FeatureRoadmap.md`](roadmap/FeatureRoadmap.md) for the full overview.
 
 | Phase | Goal | Status |
 |---|---|---|
@@ -40,13 +42,13 @@ Development is structured in phases. See [`ROADMAP/FeatureRoadmap.md`](ROADMAP/F
 
 Detailed implementation plans:
 
-- [`ROADMAP/Phase1/Phase1_Plan.md`](ROADMAP/Phase1/Phase1_Plan.md) — Phase 1 diagnostic screen spec
-- [`ROADMAP/Phase1/Phase1.1_Plan.md`](ROADMAP/Phase1/Phase1.1_Plan.md) — Phase 1.1 live keyboard validation spec
-- [`ROADMAP/ImplementationRoadmap.md`](ROADMAP/ImplementationRoadmap.md) — Cross-phase technical implementation plan
+- [`roadmap/Phase1/Phase1_Plan.md`](roadmap/Phase1/Phase1_Plan.md) — Phase 1 diagnostic screen spec
+- [`roadmap/Phase1/Phase1.1_Plan.md`](roadmap/Phase1/Phase1.1_Plan.md) — Phase 1.1 live keyboard validation spec
+- [`roadmap/ImplementationRoadmap.md`](roadmap/ImplementationRoadmap.md) — Cross-phase technical implementation plan
 
 ## Based On
 
-MoodScript is a fork of [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard), an open-source, privacy-focused Android keyboard. All original Fossify Keyboard features remain functional:
+moodScript is a fork of [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard), an open-source, privacy-focused Android keyboard. All original Fossify Keyboard features remain functional:
 
 - Fully offline operation (no internet permission)
 - Multiple languages and layouts
