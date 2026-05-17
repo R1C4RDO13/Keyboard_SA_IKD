@@ -156,7 +156,7 @@
     <!-- Phase 9.6: Hourly Activity widgets -->
     <string name="dashboard_chart_hourly_title">Hourly keypresses</string>
     <string name="dashboard_chart_hourly_y_label">Keystrokes</string>
-    <string name="dashboard_chart_circadian_title">When you type</string>
+    <string name="dashboard_chart_circadian_title">Circadian heatmap</string>
     <string name="dashboard_circadian_subtitle">Across all your sessions</string>
     <string name="dashboard_hour_label_00">00</string>
     <string name="dashboard_hour_label_06">06</string>

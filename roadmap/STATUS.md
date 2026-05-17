@@ -2,7 +2,7 @@
 
 Quick-access summary of phase completion. For detailed scope of each phase see [`FeatureRoadmap.md`](FeatureRoadmap.md), the per-phase plan files linked below, and `CLAUDE.md` (architecture notes per phase). Narrative report: [`../PROJECT_JOURNEY.md`](../PROJECT_JOURNEY.md) / [`../PROJECT_JOURNEY.html`](../PROJECT_JOURNEY.html).
 
-_Last updated: 2026-05-17 (Phase 14 implemented; Phase 15 next). `main` is ahead of `origin/main` by the Phase 14 commits._
+_Last updated: 2026-05-17 (Phase 15 implemented — Insights IA v2: final 5-tab order, Habits tab dropped). `main` is ahead of `origin/main` by the Phase 14 + Phase 15 commits._
 
 | Phase | Title | Status | Plan |
 |---|---|---|---|
@@ -36,7 +36,7 @@ _Last updated: 2026-05-17 (Phase 14 implemented; Phase 15 next). `main` is ahead
 | 12 | Mood-Curated Emoji Section in the drawer | Implemented | [Phase12_Plan.md](Phase12/Phase12_Plan.md) |
 | 13 | Persistent Right-Anchored Mood Bar (visible inside the emoji drawer) | Implemented | [Phase13_Plan.md](Phase13/Phase13_Plan.md) |
 | 14 | Gamification: Badges (Mood + Keyboard) — interim sixth "Achievements" tab | Implemented | [Phase14_Plan.md](Phase14/Phase14_Plan.md) + [Phase14_BadgeCatalog.md](Phase14/Phase14_BadgeCatalog.md) |
-| 15 | Insights IA v2 — drop Habits, re-order to Summary · Achievements · Activity · Trends · Keys | **Planned** (next; collapses Phase 14's interim 6 tabs to 5) | [Phase15_Plan.md](Phase15/Phase15_Plan.md) |
+| 15 | Insights IA v2 — drop Habits, re-order to Summary · Achievements · Activity · Trends · Keys | Implemented (collapsed Phase 14's interim 6 tabs to 5) | [Phase15_Plan.md](Phase15/Phase15_Plan.md) |
 
 ## Schema state
 
@@ -48,14 +48,15 @@ _Last updated: 2026-05-17 (Phase 14 implemented; Phase 15 next). `main` is ahead
 
 ## Dashboard shape (current)
 
-`DashboardActivity` is a thin host over a top `TabLayout` + `ViewPager2` with **six** tab fragments under `activities/dashboard/` (Phase 14 added Achievements as the **interim** 6th tab — Phase 15 will re-order to 5):
+`DashboardActivity` is a thin host over a top `TabLayout` + `ViewPager2` with **five** tab fragments under `activities/dashboard/`. Phase 15 (Insights IA v2) set the final order, dropped the Habits tab, relocated its two surviving charts, and removed three low-signal widgets. `DashboardPagerAdapter`: `TAB_COUNT = 5`, `TAB_SUMMARY=0 · TAB_ACHIEVEMENTS=1 · TAB_ACTIVITY=2 · TAB_TRENDS=3 · TAB_KEYS=4`:
 
-1. **Summary** — six coloured mood-distribution tiles (double as the screen's colour legend **and** a one-tap Mood Filter shortcut), a "Badges in progress" tile strip (Phase 14, one tile per group's focus badge → Achievements tab), 3×2 KPI grid, Usage Map bubble chart, Mood Mix stacked bar.
-2. **Trends** — 5 line charts (WPM, avg IKD, error %, avg gyro magnitude, avg accel magnitude).
-3. **Daily Activity** — calendar heatmap, daily keypress bar, 24-hour bar, hour×weekday circadian heatmap.
-4. **Keystroke Dynamics** — IKD / dwell / flight log-scale histograms, backspaces-vs-autocorrects quality scatter, orientation breakdown donut.
-5. **Habits** — 4 trend charts (avg session duration, sessions per day, avg error rate, avg flight time) + 4-cell KPI strip incl. longest streak.
-6. **Achievements** (Phase 14, interim 6th tab) — per-group horizontal carousel of the 28 v1 badges (5 groups), always all-time (ignores Range/Mood). Locked cards show a progress bar + grouped `current/target`; the Daily-devotion group renders a 14-day mini-keyboard strip. Newly-unlocked badges fire a Snackbar + a local notification (gated by `Config.badgeNotificationsEnabled` + `POST_NOTIFICATIONS`; no `INTERNET`).
+1. **Summary** — six coloured mood-distribution tiles (double as the screen's colour legend **and** a one-tap Mood Filter shortcut), a "Badges in progress" tile strip (Phase 14, one tile per group's focus badge → Achievements tab), 3×2 KPI grid (KPI tiles now jump to Trends — Habits tab gone), Usage Map bubble chart, Mood Mix stacked bar.
+2. **Achievements** (Phase 14, promoted to index 1 by Phase 15) — per-group horizontal carousel of the 28 v1 badges (5 groups), always all-time (ignores Range/Mood). Locked cards show a progress bar + grouped `current/target`; the Daily-devotion group renders a 14-day mini-keyboard strip. Newly-unlocked badges fire a Snackbar + a local notification (gated by `Config.badgeNotificationsEnabled` + `POST_NOTIFICATIONS`; no `INTERNET`).
+3. **Activity** — daily keypress bar, 24-hour bar, hour×weekday **Circadian heatmap** (card title renamed from "When you type" in Phase 15). The Calendar heatmap was removed (Phase 15 §2).
+4. **Trends** — 5 line charts (WPM, avg IKD, error %, avg gyro magnitude, avg accel magnitude) **+ Avg session duration** (relocated from the dropped Habits tab; the single error-rate trend stays — §6 default, no duplicate).
+5. **Keys** ("Keystroke Dynamics") — IKD / dwell / flight log-scale histograms, orientation breakdown donut **+ Avg flight time** (relocated from the dropped Habits tab). The backspaces-vs-autocorrects quality scatter was removed (Phase 15 §2).
+
+The **Habits** tab was removed entirely in Phase 15: its 4-cell KPI strip (incl. longest-streak) was dropped (re-homing OOS, §6); Sessions-per-period + Activity-quality scatter were removed; Avg session duration → Trends, Avg flight time → Keys. `IkdHabitsAggregator` / `IkdQualityAggregator` and the calendar-heatmap branch of `IkdActivityAggregator` stay intact (frozen read pipeline, harmless dead output).
 
 Global header above the tabs: app bar · 6-cell global KPI strip · toolbar bottom sheet for Range (Today / Week / Month / All Time) + Mood Filter · active-filter chip with bucket-size hint. State persisted via `onSaveInstanceState` (per-screen-instance, not `SharedPreferences`).
 
@@ -67,11 +68,11 @@ Since `303e792f`, "correction" in the metric layer means **BACKSPACE only**:
 errorRatePct = 100 * SUM(correction_weight WHERE category = 'BACKSPACE') / (keystrokeCount - backspaceCount)
 ```
 
-where `keystrokeCount = COUNT(*) - COUNT(AUTOCORRECT)`. AUTOCORRECT rows are still captured (CSV, per-session event log) but no longer feed the error-rate KPI / chart / live cell — the IME-level autocorrect heuristic can't reliably distinguish a true spell-check accept from spell-check noise across OEMs. Sessions with no autocorrects are byte-identical to the pre-fix formula. Known follow-up: the Habits-tab error metric and the Daily-Quality scatter (Phase 9.3 / 9.10) still treat AUTOCORRECT as a correction.
+where `keystrokeCount = COUNT(*) - COUNT(AUTOCORRECT)`. AUTOCORRECT rows are still captured (CSV, per-session event log) but no longer feed the error-rate KPI / chart / live cell — the IME-level autocorrect heuristic can't reliably distinguish a true spell-check accept from spell-check noise across OEMs. Sessions with no autocorrects are byte-identical to the pre-fix formula. (Phase 15 removed the Habits-tab error chart and the Daily-Quality scatter from the UI, so the only remaining AUTOCORRECT-as-correction code path is the now-unsurfaced `IkdHabitsAggregator` / `IkdQualityAggregator` output — harmless, frozen.)
 
 ## Next step
 
-**Phase 15 — Insights IA v2.** Phase 14 shipped (badges: schema bump, catalog + lazy evaluator, per-group Achievements carousel, Summary "Badges in progress" widget, local notification + snackbar). Phase 15 is the coupled follow-up: drop the Habits tab and re-order to the final **Summary · Achievements · Activity · Trends · Keys** (`TAB_COUNT = 5`, `TAB_ACHIEVEMENTS = 1`), collapsing Phase 14's interim 6-tab layout. Plan: [`Phase15_Plan.md`](Phase15/Phase15_Plan.md).
+All roadmap phases (1 → 15) are implemented. Phase 15 (Insights IA v2) shipped the final five-tab dashboard — **Summary · Achievements · Activity · Trends · Keys** (`TAB_COUNT = 5`, `TAB_ACHIEVEMENTS = 1`) — collapsing Phase 14's interim 6-tab layout: the Habits tab was dropped, Avg session duration relocated to Trends, Avg flight time to Keys, and the Calendar heatmap / Sessions-per-period / Activity-quality scatter widgets were removed. No further roadmap phases are queued; future work is release-readiness (`applicationId` rename, store metadata — see Phase 10 note) and the optional dead-aggregator cleanup tracked in Phase15_Plan §6.
 
 Other backlog items (no detailed plan yet): align the Habits/Quality correction metrics with the new error-rate definition; a release-readiness pass (`applicationId` rename + one-time `ikd.db` copy, fastlane/store metadata, screenshots, `versionName` bump) deferred out of the cosmetic Phase 10 rebrand; mood quick-note (long-press a mood emoji to add a 1–2 line note — needs an explicit text-storage opt-in); mood ↔ activity overlay on the Phase 9.5 calendar heatmap.
 
