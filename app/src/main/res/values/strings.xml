@@ -196,12 +196,11 @@
     <string name="dashboard_mood_filter_all">All</string>
     <string name="dashboard_mood_filter_empty_message">No sessions tagged with this mood yet</string>
 
-    <!-- Phase 9.3: Typing Habits section -->
-    <string name="dashboard_section_habits">Habits</string>
-    <string name="dashboard_habits_kpi_sessions">Sessions</string>
-    <string name="dashboard_habits_kpi_typing_time">Typing time</string>
-    <string name="dashboard_habits_kpi_avg_session">Avg session</string>
-    <string name="dashboard_habits_kpi_streak">Longest streak</string>
+    <!-- Phase 9.3: Typing Habits section. Phase 15: the Habits tab was
+         dropped; its section header + 4-cell KPI strip strings
+         (dashboard_section_habits / dashboard_habits_kpi_*) were removed
+         with the tab. The streak + avg-session value strings below are
+         retained — SummaryFragment still references them. -->
     <string name="dashboard_habits_streak_days">%1$d days</string>
     <string name="dashboard_habits_streak_weeks">%1$d weeks</string>
     <string name="dashboard_habits_avg_session_value">%1$.1f s</string>
@@ -365,8 +364,9 @@
     <string name="dashboard_tab_label_keystroke_dynamics">Keys</string>
     <string name="dashboard_tab_label_trends">Trends</string>
     <!-- Phase 9.15: dashboard_tab_label_mood removed; the Mood tab was
-         dropped and its widgets moved into the Summary tab. -->
-    <string name="dashboard_tab_label_habits">Habits</string>
+         dropped and its widgets moved into the Summary tab.
+         Phase 15: dashboard_tab_label_habits removed; the Habits tab was
+         dropped and its surviving charts relocated to Trends / Keys. -->
     <string name="dashboard_value_placeholder">—</string>
     <string name="dashboard_action_view">Insights</string>
     <string name="dashboard_menu_refresh">Refresh</string>

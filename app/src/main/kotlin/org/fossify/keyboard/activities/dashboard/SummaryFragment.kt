@@ -88,12 +88,15 @@ class SummaryFragment : DashboardFragment() {
      */
     private fun wireTileClicks() {
         val view = _binding ?: return
-        val toHabits = View.OnClickListener { goToTab(DashboardPagerAdapter.TAB_HABITS) }
+        // Phase 15: the Habits tab was dropped. The session/time KPI tiles
+        // previously jumped there; Avg session duration relocated to the
+        // Trends tab, so all six KPI tiles now route to Trends (the tab
+        // that owns the underlying session + speed + error charts).
         val toTrends = View.OnClickListener { goToTab(DashboardPagerAdapter.TAB_TRENDS) }
-        view.summaryTileSessions.setOnClickListener(toHabits)
-        view.summaryTileTypingTime.setOnClickListener(toHabits)
-        view.summaryTileAvgSession.setOnClickListener(toHabits)
-        view.summaryTileStreak.setOnClickListener(toHabits)
+        view.summaryTileSessions.setOnClickListener(toTrends)
+        view.summaryTileTypingTime.setOnClickListener(toTrends)
+        view.summaryTileAvgSession.setOnClickListener(toTrends)
+        view.summaryTileStreak.setOnClickListener(toTrends)
         view.summaryTileWpm.setOnClickListener(toTrends)
         view.summaryTileErrorRate.setOnClickListener(toTrends)
 

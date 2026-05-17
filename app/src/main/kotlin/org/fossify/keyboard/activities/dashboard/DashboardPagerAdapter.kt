@@ -15,14 +15,14 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
  * addresses tabs through the stable `TAB_*` constants below — Decision
  * #15 of the Phase 9.14 plan.
  *
- * Phase 14 (interim — Decision #1 / §7.1): the Achievements tab is added
- * as the **6th** tab at the end (`TAB_COUNT = 6`, `TAB_ACHIEVEMENTS = 5`).
- * The Phase-15 IA v2 restructure (final order Summary · Achievements ·
- * Activity · Trends · Keys; `TAB_COUNT = 5`) is a separate follow-up —
- * Phase 14 deliberately does **not** reorder or drop the Habits tab.
+ * Phase 14 added the Achievements tab as an **interim** 6th tab. Phase 15
+ * (Insights IA v2) collapses that to the final five-tab order and drops
+ * the Habits tab entirely — Habits' two surviving charts were relocated
+ * (Avg session duration → Trends, Avg flight time → Keys); the other
+ * three Habits widgets + the Calendar heatmap were removed.
  *
- *  0 Summary · 1 Trends · 2 Daily Activity · 3 Keystroke Dynamics ·
- *  4 Habits · 5 Achievements (interim)
+ * Final order (Phase 15 §1):
+ *  0 Summary · 1 Achievements · 2 Activity · 3 Trends · 4 Keys
  */
 class DashboardPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
 
@@ -30,21 +30,19 @@ class DashboardPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(a
 
     override fun createFragment(position: Int): Fragment = when (position) {
         TAB_SUMMARY -> SummaryFragment()
-        TAB_TRENDS -> TrendsFragment()
-        TAB_DAILY_ACTIVITY -> DailyActivityFragment()
-        TAB_KEYSTROKE_DYNAMICS -> KeystrokeDynamicsFragment()
-        TAB_HABITS -> HabitsFragment()
         TAB_ACHIEVEMENTS -> AchievementsFragment()
+        TAB_ACTIVITY -> DailyActivityFragment()
+        TAB_TRENDS -> TrendsFragment()
+        TAB_KEYS -> KeystrokeDynamicsFragment()
         else -> error("Unknown tab position $position")
     }
 
     companion object {
-        const val TAB_COUNT = 6
+        const val TAB_COUNT = 5
         const val TAB_SUMMARY = 0
-        const val TAB_TRENDS = 1
-        const val TAB_DAILY_ACTIVITY = 2
-        const val TAB_KEYSTROKE_DYNAMICS = 3
-        const val TAB_HABITS = 4
-        const val TAB_ACHIEVEMENTS = 5
+        const val TAB_ACHIEVEMENTS = 1
+        const val TAB_ACTIVITY = 2
+        const val TAB_TRENDS = 3
+        const val TAB_KEYS = 4
     }
 }

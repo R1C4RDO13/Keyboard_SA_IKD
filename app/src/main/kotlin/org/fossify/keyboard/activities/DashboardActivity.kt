@@ -322,21 +322,19 @@ class DashboardActivity : SimpleActivity() {
 
     private fun tabIconResFor(position: Int): Int = when (position) {
         DashboardPagerAdapter.TAB_SUMMARY -> R.drawable.ic_dashboard_summary_vector
-        DashboardPagerAdapter.TAB_TRENDS -> R.drawable.ic_dashboard_trends_vector
-        DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.drawable.ic_dashboard_activity_vector
-        DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS -> R.drawable.ic_dashboard_keystrokes_vector
-        DashboardPagerAdapter.TAB_HABITS -> R.drawable.ic_dashboard_habits_vector
         DashboardPagerAdapter.TAB_ACHIEVEMENTS -> R.drawable.ic_dashboard_achievements_vector
+        DashboardPagerAdapter.TAB_ACTIVITY -> R.drawable.ic_dashboard_activity_vector
+        DashboardPagerAdapter.TAB_TRENDS -> R.drawable.ic_dashboard_trends_vector
+        DashboardPagerAdapter.TAB_KEYS -> R.drawable.ic_dashboard_keystrokes_vector
         else -> R.drawable.ic_dashboard_summary_vector
     }
 
     private fun tabLabelResFor(position: Int): Int = when (position) {
         DashboardPagerAdapter.TAB_SUMMARY -> R.string.dashboard_tab_label_summary
-        DashboardPagerAdapter.TAB_TRENDS -> R.string.dashboard_tab_label_trends
-        DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.string.dashboard_tab_label_daily_activity
-        DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS -> R.string.dashboard_tab_label_keystroke_dynamics
-        DashboardPagerAdapter.TAB_HABITS -> R.string.dashboard_tab_label_habits
         DashboardPagerAdapter.TAB_ACHIEVEMENTS -> R.string.dashboard_tab_label_achievements
+        DashboardPagerAdapter.TAB_ACTIVITY -> R.string.dashboard_tab_label_daily_activity
+        DashboardPagerAdapter.TAB_TRENDS -> R.string.dashboard_tab_label_trends
+        DashboardPagerAdapter.TAB_KEYS -> R.string.dashboard_tab_label_keystroke_dynamics
         else -> R.string.dashboard_tab_label_summary
     }
 
