@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 14 §7.2: Achievements tab. A fixed "all-time" affordance
+    (Decision #13 — this tab ignores the global Range/Mood filters) over
+    a vertical RecyclerView of group rows, each row a per-group horizontal
+    carousel. The empty-state TextView shows when no badges are unlocked
+    yet (cards still render in their locked state inside the carousels —
+    this message is the friendly nudge above them).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragment_achievements_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/achievements_all_time_note"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/normal_margin"
+        android:paddingTop="@dimen/small_margin"
+        android:paddingEnd="@dimen/normal_margin"
+        android:paddingBottom="@dimen/small_margin"
+        android:text="@string/achievements_all_time_note"
+        android:textSize="@dimen/smaller_text_size"
+        android:textStyle="italic" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/achievements_empty_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/normal_margin"
+        android:gravity="center"
+        android:text="@string/achievements_empty_message"
+        android:textSize="@dimen/bigger_text_size"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/achievements_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="@dimen/normal_margin"
+        android:scrollbars="none" />
+
+</LinearLayout>

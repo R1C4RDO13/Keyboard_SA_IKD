@@ -36,4 +36,12 @@
     <color name="orientation_color_face_up">#AB47BC</color>
     <color name="orientation_color_face_down">#26C6DA</color>
     <color name="orientation_color_unknown">#BDBDBD</color>
+
+    <!-- Phase 14: badge card state tints (dark mode counterpart).
+         Darker locked slab + track so a not-yet-earned card recedes on
+         a dark theme; a lighter green glow so the earned-card border
+         reads cleanly. Same colour names as values/colors.xml. -->
+    <color name="badge_locked_surface">#262626</color>
+    <color name="badge_locked_bar">#3A3A3A</color>
+    <color name="badge_unlocked_glow">#7FC88A</color>
 </resources>

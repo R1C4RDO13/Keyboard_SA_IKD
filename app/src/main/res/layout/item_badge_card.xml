@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 14 §7.3: one badge focus card inside a group's horizontal
+    carousel. BadgeCardAdapter flips the progress row vs. the unlock-date
+    row by state, applies the greyscale ColorMatrix to the emoji when
+    locked, and tints the card / glow border at runtime (MaterialCardView
+    default ?attr/colorSurface does not track Fossify's runtime theme —
+    same discipline as the Summary mood tiles).
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/badge_card_root"
+    android:layout_width="220dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/small_margin"
+    android:layout_marginEnd="@dimen/small_margin"
+    app:cardCornerRadius="@dimen/card_corner_radius"
+    app:cardElevation="@dimen/card_elevation"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="@dimen/normal_margin">
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/badge_card_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="40sp"
+            tools:text="🍀" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/badge_card_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/small_margin"
+            android:gravity="center"
+            android:textSize="@dimen/bigger_text_size"
+            android:textStyle="bold"
+            tools:text="Habit Forming" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/badge_card_desc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/tiny_margin"
+            android:gravity="center"
+            android:minLines="2"
+            android:textSize="@dimen/smaller_text_size"
+            tools:text="Log 50 moods." />
+
+        <!-- Locked state: progress bar + grouped current / target caption. -->
+        <LinearLayout
+            android:id="@+id/badge_card_progress_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ProgressBar
+                android:id="@+id/badge_card_progress_bar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                tools:progress="74" />
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/badge_card_progress_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/tiny_margin"
+                android:gravity="center"
+                android:textSize="@dimen/smaller_text_size"
+                android:textStyle="bold"
+                tools:text="37 / 50" />
+
+        </LinearLayout>
+
+        <!-- Unlocked state: glow border + unlock date. -->
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/badge_card_unlock_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:gravity="center"
+            android:textSize="@dimen/smaller_text_size"
+            android:textStyle="bold"
+            android:visibility="gone"
+            tools:text="Unlocked 17 May 2026"
+            tools:visibility="visible" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

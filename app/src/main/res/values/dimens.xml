@@ -84,4 +84,10 @@
          read on a coloured tile background without overpowering the
          emoji + percentage typography. -->
     <dimen name="summary_mood_tile_stroke_active">1.5dp</dimen>
+
+    <!-- Phase 14: Achievements carousel page-dot geometry. The active
+         dot is widened to a pill via the badge_dot selector; size is
+         the inactive circular diameter, gap is the per-side margin. -->
+    <dimen name="badge_dot_size">6dp</dimen>
+    <dimen name="badge_dot_gap">3dp</dimen>
 </resources>

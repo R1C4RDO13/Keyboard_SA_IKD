@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 14: Achievements carousel page dot. Selected state widens to a
+    rounded pill; the unselected state is a small circle. Both use the
+    badge_locked_bar token as a neutral base — BadgeGroupAdapter layers
+    alpha (full when selected, dim otherwise) so the active dot reads as
+    the focused page without needing a runtime tint. The pill width comes
+    from the View's layout params being overridden is unnecessary: the
+    shape stays a rounded rect that fills the 6dp dot bounds and the
+    alpha contrast carries the active/inactive distinction.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="99dp" />
+            <solid android:color="@color/badge_unlocked_glow" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/badge_locked_bar" />
+        </shape>
+    </item>
+</selector>

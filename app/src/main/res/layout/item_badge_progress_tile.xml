@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 14 §7.6: one tile of the Summary-tab "Badges in progress"
+    strip. One tile per v1 group = that group's current in-progress
+    (focus) badge. Greyscale emoji + a thin determinate bar + a terse
+    caption (37/50, 3/7 d, 42%). Tap → Achievements tab. Six are
+    inflated via <include> with distinct ids; the card background is
+    tinted at runtime in SummaryFragment (MaterialCardView default
+    ?attr/colorSurface does not track the Fossify theme).
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:layout_marginEnd="@dimen/small_margin"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="@dimen/card_corner_radius"
+    app:cardElevation="@dimen/card_elevation"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="@dimen/small_margin">
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/badge_tile_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/big_text_size"
+            tools:text="🍀" />
+
+        <ProgressBar
+            android:id="@+id/badge_tile_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/tiny_margin"
+            android:layout_marginBottom="@dimen/tiny_margin"
+            android:max="100"
+            tools:progress="60" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/badge_tile_caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/smaller_text_size"
+            android:textStyle="bold"
+            tools:text="37/50" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

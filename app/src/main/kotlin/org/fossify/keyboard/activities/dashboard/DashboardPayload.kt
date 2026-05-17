@@ -3,6 +3,7 @@ package org.fossify.keyboard.activities.dashboard
 import org.fossify.keyboard.helpers.IkdActivityAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdDistributionAggregator
+import org.fossify.keyboard.helpers.IkdBadgeEvaluator
 import org.fossify.keyboard.helpers.IkdHabitsAggregator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
 import org.fossify.keyboard.helpers.IkdOrientationAggregator
@@ -28,4 +29,12 @@ data class DashboardPayload(
     val distribution: IkdDistributionAggregator.DistributionSnapshot,
     val orientation: IkdOrientationAggregator.OrientationSnapshot,
     val quality: IkdQualityAggregator.QualitySnapshot,
+    /**
+     * Phase 14: badge evaluation result, carried to every fragment on the
+     * same `loadSnapshot()` IO hop (no extra query). `AchievementsFragment`
+     * renders the carousel from it; `SummaryFragment` renders the "Badges
+     * in progress" strip from it; `DashboardActivity` reads
+     * `newlyUnlocked` for the snackbar + notifier dispatch.
+     */
+    val badges: IkdBadgeEvaluator.EvaluationResult,
 )

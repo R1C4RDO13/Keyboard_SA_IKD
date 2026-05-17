@@ -25,6 +25,7 @@ import org.fossify.keyboard.activities.dashboard.SummaryFragment
 import org.fossify.keyboard.databinding.ActivityDashboardBinding
 import org.fossify.keyboard.extensions.ikdActivityAggregator
 import org.fossify.keyboard.extensions.ikdAggregator
+import org.fossify.keyboard.extensions.ikdBadgeEvaluator
 import org.fossify.keyboard.extensions.ikdDistributionAggregator
 import org.fossify.keyboard.extensions.ikdHabitsAggregator
 import org.fossify.keyboard.extensions.ikdMoodAggregator
@@ -429,6 +430,10 @@ class DashboardActivity : SimpleActivity() {
             val distAgg = ikdDistributionAggregator
             val orientationAgg = ikdOrientationAggregator
             val qualityAgg = ikdQualityAggregator
+            // Phase 14: the badge evaluator rides the same IO hop as every
+            // aggregator (Decision #5 — lazy, on dashboard open). It is
+            // always all-time and ignores Range/Mood (Decision #13).
+            val badgeEvaluator = ikdBadgeEvaluator
             val range = currentRange
             val moodFilter = currentMoodFilter
             val payload = withContext(Dispatchers.IO) {
@@ -442,6 +447,7 @@ class DashboardActivity : SimpleActivity() {
                     distribution = distAgg.snapshot(range, moodFilter),
                     orientation = orientationAgg.snapshot(range, moodFilter),
                     quality = qualityAgg.snapshot(range, moodFilter),
+                    badges = badgeEvaluator.evaluate(),
                 )
             }
             renderPayload(payload)

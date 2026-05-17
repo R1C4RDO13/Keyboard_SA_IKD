@@ -35,6 +35,9 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
      *   no-op re-evaluation.
      * @property progressByKey per-badge `(current, target)` for the
      *   locked-card progress bars (every v1 badge has progress).
+     * @property unlockedAtByKey persisted unlock timestamp per badge key
+     *   (the prior set ∪ this run's deltas) — drives the unlocked card's
+     *   "Unlocked <date>" row.
      * @property snapshot the materialised read-model (carries the
      *   `recentDayQualified` strip for the devotion day-strip UI).
      */
@@ -42,6 +45,7 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
         val allUnlocked: Set<String>,
         val newlyUnlocked: List<UnlockedBadge>,
         val progressByKey: Map<String, BadgeProgress>,
+        val unlockedAtByKey: Map<String, Long>,
         val snapshot: BadgeSnapshot,
     )
 
@@ -56,7 +60,9 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
             val sessionDao = db.SessionDao()
             val badgeDao = db.BadgeDao()
 
-            val alreadyUnlocked = badgeDao.getAllUnlockedKeys().toSet()
+            val persisted = badgeDao.getAllUnlocked()
+            val alreadyUnlocked = persisted.map { it.badgeKey }.toSet()
+            val persistedUnlockAt = persisted.associate { it.badgeKey to it.unlockedAt }
             val moodTimestamps = moodDao.getMoodTimestampsOrdered()
             val keystrokeTotal = eventDao.getKeystrokeCountTotal()
             val sessionDays = sessionDao.getSessionCalendarDays()
@@ -69,7 +75,12 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
             )
 
             val nowMs = System.currentTimeMillis()
-            val computed = evaluateBadges(snapshot, alreadyUnlocked, nowMs)
+            val computed = evaluateBadges(
+                snapshot = snapshot,
+                alreadyUnlocked = alreadyUnlocked,
+                nowMs = nowMs,
+                persistedUnlockAt = persistedUnlockAt,
+            )
 
             if (computed.newlyUnlocked.isNotEmpty()) {
                 badgeDao.upsert(
@@ -158,10 +169,12 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
             snapshot: BadgeSnapshot,
             alreadyUnlocked: Set<String>,
             nowMs: Long,
+            persistedUnlockAt: Map<String, Long> = emptyMap(),
         ): EvaluationResult {
             val progressByKey = LinkedHashMap<String, BadgeProgress>()
             val newlyUnlocked = ArrayList<UnlockedBadge>()
             val allUnlocked = HashSet(alreadyUnlocked)
+            val unlockedAtByKey = HashMap(persistedUnlockAt)
 
             for (def in IkdBadgeCatalog.ALL) {
                 def.progress(snapshot)?.let { progressByKey[def.key] = it }
@@ -169,6 +182,7 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
                 if (def.criteria(snapshot)) {
                     newlyUnlocked += UnlockedBadge(def.key, nowMs)
                     allUnlocked += def.key
+                    unlockedAtByKey[def.key] = nowMs
                 }
             }
 
@@ -176,6 +190,7 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
                 allUnlocked = allUnlocked,
                 newlyUnlocked = newlyUnlocked,
                 progressByKey = progressByKey,
+                unlockedAtByKey = unlockedAtByKey,
                 snapshot = snapshot,
             )
         }

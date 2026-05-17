@@ -36,4 +36,14 @@
     <color name="orientation_color_face_up">#7B1FA2</color>
     <color name="orientation_color_face_down">#0097A7</color>
     <color name="orientation_color_unknown">#9E9E9E</color>
+
+    <!-- Phase 14: badge card state tints (light mode).
+         `badge_locked_surface` is a faded slab behind a not-yet-earned
+         card (sits over the user's themed background); `badge_locked_bar`
+         is the empty progress track; `badge_unlocked_glow` is the 1 dp
+         glow border on an earned card. Resolved via ContextCompat so the
+         values-night counterpart applies automatically. -->
+    <color name="badge_locked_surface">#ECECEA</color>
+    <color name="badge_locked_bar">#D8D8D4</color>
+    <color name="badge_unlocked_glow">#3A7D44</color>
 </resources>
