@@ -69,6 +69,15 @@ class SummaryFragment : DashboardFragment() {
     private var _binding: FragmentDashboardSummaryBinding? = null
     private val binding get() = _binding!!
 
+    /**
+     * Task B: mood scores (1..6) with at least one entry in the current
+     * snapshot. A tile not in this set is greyed + non-clickable and must
+     * stay that way through [applyMoodFilterHighlight] (which otherwise
+     * rewrites every tile's alpha on each payload swap). Empty until the
+     * first [renderMoodTiles].
+     */
+    private var selectableMoodScores: Set<Int> = emptySet()
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -452,6 +461,10 @@ class SummaryFragment : DashboardFragment() {
             view.summaryMoodTileAnger to MoodEmoji.SCORE_ANGER,
         )
         val total = moodSnap.total
+        selectableMoodScores = tiles
+            .map { it.second }
+            .filter { (moodSnap.counts[it] ?: 0) > 0 }
+            .toSet()
         for ((cardRoot, score) in tiles) {
             val tile = ItemMoodTileBinding.bind(cardRoot.root)
             val card = tile.root
@@ -459,8 +472,16 @@ class SummaryFragment : DashboardFragment() {
             val pct = if (total <= 0) 0 else (count * PCT_MAX + total / 2) / total
             val emoji = MoodEmoji.emojiFor(score)
             val label = getString(MoodEmoji.labelResFor(score))
+            // Task B: a mood with zero entries cannot be a useful filter —
+            // selecting it would scope every aggregator to zero sessions
+            // and strand the user on the blank empty-state screen (the
+            // tiles that would let them recover live inside the hidden
+            // ViewPager). Such a tile is greyed and made non-clickable so
+            // the empty-filter path is unreachable from the UI.
+            val isSelectable = count > 0
 
             card.setCardBackgroundColor(ContextCompat.getColor(ctx, MoodEmoji.colorResFor(score)))
+            card.alpha = if (isSelectable) 1f else DISABLED_TILE_ALPHA
             tile.summaryMoodTileEmoji.text = emoji
             tile.summaryMoodTilePct.text = ctx.getString(R.string.summary_mood_tile_pct_format, pct)
             tile.summaryMoodTileLabel.text = label
@@ -471,24 +492,32 @@ class SummaryFragment : DashboardFragment() {
                 count,
                 pct,
             )
-            card.setOnClickListener {
-                // Phase 9.18: the toast still surfaces the unfiltered count
-                // (Decision #5 of the 9.18 plan — toast-firing is preserved
-                // and independent of filter activation). Fire it *before*
-                // toggling the filter so the count it shows refers to the
-                // distribution snapshot the user just tapped on.
-                Toast.makeText(
-                    ctx,
-                    ctx.getString(
-                        R.string.summary_mood_tile_toast_format,
-                        emoji,
-                        label,
-                        count,
-                        pct,
-                    ),
-                    Toast.LENGTH_SHORT,
-                ).show()
-                (activity as? DashboardActivity)?.onMoodTileTapped(score)
+            if (isSelectable) {
+                card.isClickable = true
+                card.setOnClickListener {
+                    // Phase 9.18: the toast still surfaces the unfiltered
+                    // count (Decision #5 of the 9.18 plan — toast-firing is
+                    // preserved and independent of filter activation). Fire
+                    // it *before* toggling the filter so the count it shows
+                    // refers to the distribution snapshot the user tapped.
+                    Toast.makeText(
+                        ctx,
+                        ctx.getString(
+                            R.string.summary_mood_tile_toast_format,
+                            emoji,
+                            label,
+                            count,
+                            pct,
+                        ),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    (activity as? DashboardActivity)?.onMoodTileTapped(score)
+                }
+            } else {
+                // Drop any listener a recycled binding may still carry and
+                // swallow taps so a zero-entry mood can never be selected.
+                card.setOnClickListener(null)
+                card.isClickable = false
             }
         }
     }
@@ -529,6 +558,17 @@ class SummaryFragment : DashboardFragment() {
         val hasFilter = activeScore != null
         for ((cardRoot, score) in tiles) {
             val card = ItemMoodTileBinding.bind(cardRoot.root).root
+            // Task B: a zero-entry tile stays greyed + non-active even if a
+            // stale filter (e.g. restored from instance state) names its
+            // score. It can never legitimately be the active filter.
+            val isSelectable = score in selectableMoodScores
+            if (!isSelectable) {
+                card.strokeWidth = 0
+                card.scaleX = 1f
+                card.scaleY = 1f
+                card.alpha = DISABLED_TILE_ALPHA
+                continue
+            }
             val isActive = score == activeScore
             if (isActive) {
                 card.strokeWidth = strokePx
@@ -635,5 +675,9 @@ class SummaryFragment : DashboardFragment() {
         // to the other five tiles while a filter is active. Plan Decision #2.
         private const val ACTIVE_TILE_SCALE = 1.05f
         private const val INACTIVE_TILE_ALPHA = 0.55f
+
+        // Task B: a zero-entry mood tile is greyed at this alpha and made
+        // non-clickable so it can never be selected as a filter.
+        private const val DISABLED_TILE_ALPHA = 0.4f
     }
 }

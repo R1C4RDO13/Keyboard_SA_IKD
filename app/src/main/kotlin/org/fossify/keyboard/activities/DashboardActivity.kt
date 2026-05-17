@@ -355,6 +355,25 @@ class DashboardActivity : SimpleActivity() {
         // alone, with zero typing sessions.
         dispatchBadgeUnlockFeedback(payload)
 
+        // Task B: defensive recovery. A mood filter that resolves to zero
+        // sessions (e.g. a stale filter restored from instance state, or a
+        // mood whose only sessions were deleted) would otherwise strand the
+        // user on the blank empty-state screen — the tiles that let them
+        // recover live inside the now-hidden ViewPager. If the *unfiltered*
+        // DB still has mood data, silently drop the filter and re-aggregate
+        // rather than show a dead-end. The Summary tile gate (Task B, in
+        // SummaryFragment) makes this path unreachable from the UI; this is
+        // the belt-and-suspenders backstop.
+        if (currentMoodFilter != null &&
+            payload.ikd.totalSessions == 0 &&
+            payload.mood.total > 0
+        ) {
+            currentMoodFilter = null
+            summaryFragment()?.applyMoodFilterHighlight(null)
+            loadSnapshot()
+            return
+        }
+
         val isEmpty = payload.ikd.totalSessions == 0
         // Phase 9.18 follow-up: distinct empty-state copy when a mood
         // filter narrowed the range to zero sessions. The empty message
