@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phase 14 — Achievements Tab Layout (per-group carousel)</title>
+<style>
+  :root{
+    --bg:#f6f6f4;--card:#fff;--ink:#1a1a1a;--ink-soft:#555;--ink-faint:#8a8a8a;
+    --primary:#3a7d44;--primary-soft:#e8f1ea;--border:#e3e3e0;
+    --radius:14px;--shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+    --glow:#3a7d44;--locked:#ececea;--bardim:#d8d8d4;
+    --d-bg:#121212;--d-card:#1e1e1e;--d-ink:#ececec;--d-ink-faint:#9a9a9a;
+    --d-primary:#7fc88a;--d-border:#333;--d-locked:#262626;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  main{max-width:1180px;margin:0 auto;padding:32px 24px 80px}
+  header.brand{display:flex;align-items:baseline;gap:14px;padding:20px 0 14px;
+    border-bottom:1px solid var(--border)}
+  header.brand .wordmark{font-size:30px;font-weight:700;letter-spacing:-.02em}
+  header.brand .wordmark em{font-style:normal;
+    background:linear-gradient(90deg,#5b8def,#9d7be0 50%,#f59ea3);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  header.brand .tag{color:var(--ink-faint);font-size:13px;margin-left:auto}
+  .lede{color:var(--ink-soft);max-width:780px;margin:14px 0 26px}
+  .grid{display:grid;grid-template-columns:392px 1fr;gap:34px;align-items:start}
+  @media(max-width:940px){.grid{grid-template-columns:1fr}}
+
+  .phone{width:392px;border:1px solid var(--border);border-radius:30px;
+    background:var(--card);box-shadow:var(--shadow);overflow:hidden}
+  .statusbar{height:24px;background:#0f3d20}
+  .appbar{display:flex;align-items:center;gap:12px;padding:12px 14px;
+    background:var(--primary);color:#fff;font-weight:600}
+  .appbar .menu{margin-left:auto;opacity:.85}
+  .tabs{display:flex;background:var(--primary);color:#fff;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs .t{flex:0 0 auto;padding:9px 13px;font-size:12px;opacity:.65;
+    display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap}
+  .tabs .t.active{opacity:1;border-bottom:3px solid #fff;font-weight:700}
+  .tabs .t .ico{font-size:15px}
+  .alltime{padding:7px 14px;font-size:11.5px;color:var(--ink-faint);background:var(--bg);
+    border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center}
+  .alltime .lock{font-size:12px}
+  .screen{background:var(--bg);max-height:730px;overflow:auto;padding:6px 0 18px}
+
+  .group{padding:14px 0 8px;border-bottom:1px solid var(--border)}
+  .ghead{display:flex;align-items:center;padding:0 16px 4px;font-size:12px;
+    font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.04em}
+  .ghead .cnt{margin-left:auto;color:var(--ink-faint);font-weight:600;
+    text-transform:none;letter-spacing:0}
+  .carousel{display:flex;align-items:center;gap:6px;padding:6px 8px 0}
+  .arrow{flex:0 0 30px;height:30px;border:none;background:transparent;cursor:pointer;
+    font-size:20px;color:var(--primary);opacity:.8;border-radius:50%}
+  .arrow:disabled{opacity:.2;cursor:default}
+  .arrow:hover:not(:disabled){background:var(--primary-soft)}
+  .viewport{flex:1;overflow:hidden}
+  .track{display:flex;transition:transform .28s cubic-bezier(.2,.7,.3,1)}
+  .slide{flex:0 0 100%;padding:4px 6px 0;display:flex;justify-content:center}
+
+  .badge{width:200px;background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:16px 14px 14px;text-align:center}
+  .badge .emoji{font-size:38px;line-height:1;margin:2px 0 9px;display:block}
+  .badge .title{font-size:15px;font-weight:700;margin-bottom:3px}
+  .badge .desc{font-size:11.5px;color:var(--ink-faint);line-height:1.4;min-height:30px}
+  .badge .date{font-size:11px;color:var(--primary);font-weight:600;margin-top:10px}
+  .badge.unlocked{border-color:var(--glow);box-shadow:0 0 0 1px var(--glow) inset}
+  .badge.locked{background:var(--locked)}
+  .badge.locked .emoji{filter:grayscale(1) opacity(.55)}
+  .badge.locked .title,.badge.locked .desc{color:var(--ink-faint)}
+  .badge .prog{margin-top:10px}
+  .bar{height:6px;border-radius:99px;background:var(--bardim);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--primary);border-radius:99px}
+  .pcap{font-size:10.5px;color:var(--ink-faint);margin-top:5px;font-weight:600}
+
+  .dots{display:flex;justify-content:center;gap:6px;margin:10px 0 2px}
+  .dots b{width:6px;height:6px;border-radius:50%;background:var(--bardim);display:block}
+  .dots b.on{background:var(--primary);width:18px;border-radius:99px}
+
+  .strip{margin:10px 16px 4px;padding:9px 10px;background:var(--card);
+    border:1px solid var(--border);border-radius:10px}
+  .strip .lbl{font-size:10px;color:var(--ink-faint);font-weight:700;
+    text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
+  .keys{display:flex;gap:4px}
+  .keys span{flex:1;height:24px;border-radius:5px;background:var(--locked);
+    border:1px solid var(--border);display:flex;align-items:flex-end;
+    justify-content:center;font-size:8px;color:var(--ink-faint);padding-bottom:2px}
+  .keys span.hit{background:var(--primary);border-color:var(--primary);color:#fff}
+  .keys span.today{outline:2px solid var(--primary);outline-offset:1px}
+
+  .snackbar{margin:18px 0 4px;background:#2b2b2b;color:#fff;border-radius:8px;
+    padding:14px 16px;display:flex;align-items:center;gap:10px;font-size:13px;box-shadow:var(--shadow)}
+  .snackbar .act{margin-left:auto;color:#9fd6a9;font-weight:700;font-size:12px;letter-spacing:.06em}
+  .notif{border:1px solid var(--border);border-radius:12px;background:#fff;padding:12px 14px;
+    display:flex;gap:12px;align-items:flex-start;box-shadow:var(--shadow);max-width:360px}
+  .notif .ic{width:26px;height:26px;border-radius:6px;background:var(--primary);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:14px;flex:0 0 auto}
+  .notif .nt{font-weight:700;font-size:13px}
+  .notif .nb{font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .notif .nm{font-size:10.5px;color:var(--ink-faint);margin-top:6px}
+
+  .notes h3{font-size:15px;margin:26px 0 8px}.notes h3:first-child{margin-top:0}
+  .notes p,.notes li{color:var(--ink-soft);font-size:14px}.notes ul{padding-left:18px;margin:6px 0 0}
+  .key{display:inline-block;font:12px/1.4 ui-monospace,Menlo,monospace;background:#ececea;
+    border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+  .darkwrap{background:var(--d-bg);border-radius:18px;padding:16px;margin-top:12px;
+    display:flex;gap:10px;justify-content:center}
+  .darkwrap .badge{background:var(--d-card);border-color:var(--d-border);color:var(--d-ink)}
+  .darkwrap .badge.locked{background:var(--d-locked)}
+  .darkwrap .badge .desc,.darkwrap .badge.locked .title{color:var(--d-ink-faint)}
+  .darkwrap .badge.unlocked{box-shadow:0 0 0 1px var(--d-primary) inset;border-color:var(--d-primary)}
+  .darkwrap .badge .date{color:var(--d-primary)}.darkwrap .bar{background:#3a3a3a}
+  .darkwrap .bar i{background:var(--d-primary)}
+  .cap{font-size:12px;color:var(--ink-faint);text-align:center;margin:8px 0 0}
+  footer{margin-top:46px;padding-top:18px;border-top:1px solid var(--border);
+    color:var(--ink-faint);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+  <header class="brand">
+    <span class="wordmark"><em>MoodScript</em></span>
+    <span class="tag">Phase 14 · Achievements layout — per-group carousel · 2026-05-17</span>
+  </header>
+
+  <p class="lede">
+    The <strong>Achievements</strong> tab is a vertical list of <strong>group rows</strong>.
+    Each row shows <strong>one centred focus card</strong> — the group's current
+    in-progress badge — with <strong>‹ / › buttons and swipe</strong> to page through
+    that group's other badges (page dots show position). The <strong>Daily-devotion</strong>
+    group adds a "mini-keyboard" <strong>14-day strip</strong> (filled = a day with
+    ≥&nbsp;3 intentional mood logs) so the <strong>strict consecutive-streak</strong> rule
+    is legible. The tab is <strong>always all-time</strong> — the global Range/Mood
+    filters don't apply here. v1 = 28 badges across 5 groups. <em>Try the arrows.</em>
+  </p>
+
+  <div class="grid">
+    <div>
+      <div class="phone">
+        <div class="statusbar"></div>
+        <div class="appbar">Insights <span class="menu">⋮</span></div>
+        <div class="tabs">
+          <div class="t"><span class="ico">▦</span>Summary</div>
+          <div class="t"><span class="ico">📈</span>Trends</div>
+          <div class="t"><span class="ico">📅</span>Daily</div>
+          <div class="t"><span class="ico">⌨</span>Keystroke</div>
+          <div class="t"><span class="ico">🔁</span>Habits</div>
+          <div class="t active"><span class="ico">🏆</span>Achievements</div>
+        </div>
+        <div class="alltime"><span class="lock">🔒</span> Always all-time · global Range &amp; Mood filters don't apply here · <b>9 / 28 unlocked</b></div>
+        <div class="screen" id="screen"></div>
+      </div>
+      <p class="cap">Per-group carousel — focus card defaults to the next badge to earn. Arrows / swipe page within a group.</p>
+    </div>
+
+    <div class="notes">
+      <h3>How a group row works</h3>
+      <ul>
+        <li><b>Focus card</b> = first not-yet-unlocked badge in the group (the "what
+          you're working toward"); if all unlocked, the last tier.</li>
+        <li><b>‹ / ›</b> + horizontal swipe move within the group; page dots show
+          index. Arrows disable at the ends. Built as a nested
+          <span class="key">ViewPager2</span> per group row.</li>
+        <li><b>Group header</b>: primary-tinted, with <span class="key">unlocked / total</span>.</li>
+        <li>Vertical list scrolls between groups; each group keeps its own carousel
+          position.</li>
+      </ul>
+
+      <h3>Daily-devotion = strict streak</h3>
+      <p>A badge needs <b>N consecutive days</b> each with ≥&nbsp;3 intentional mood
+        logs. A missed day resets the run (longest run ever is used, so it never
+        re-locks). The <b>14-day strip</b> under that group's card shows hit (filled)
+        vs. miss (dim) days — today is the outlined rightmost cell — so the user sees
+        exactly where a streak broke.</p>
+
+      <h3>Card states</h3>
+      <ul>
+        <li><b>Unlocked</b> — full-colour, glow border
+          (<span class="key">badge_unlocked_glow</span>), unlock date, no bar.</li>
+        <li><b>Locked + progress</b> — greyscale emoji, faded surface,
+          <span class="key">ProgressBar</span> + grouped
+          <span class="key">current / target</span> caption.</li>
+        <li><b>Locked, boolean</b> — no bar. None in v1 (only
+          <span class="key">mood_returner</span>, deferred group 2).</li>
+      </ul>
+
+      <h3>Unlock feedback</h3>
+      <div class="snackbar">🌼 Devoted Day unlocked! <span style="opacity:.7">+1 more</span>
+        <span class="act">VIEW</span></div>
+      <p style="margin:14px 0 6px">…plus a <b>local</b> notification (no network, no
+        <span class="key">INTERNET</span>), gated by the
+        <span class="key">badgeNotificationsEnabled</span> toggle +
+        <span class="key">POST_NOTIFICATIONS</span>:</p>
+      <div class="notif"><div class="ic">🏆</div>
+        <div><div class="nt">2 badges unlocked!</div>
+        <div class="nb">🌼 Devoted Day +1 more — tap to view your Achievements</div>
+        <div class="nm">MoodScript · local · channel "Badge unlocks"</div></div></div>
+
+      <h3>Theme-aware (dark)</h3>
+      <div class="darkwrap">
+        <div class="badge unlocked"><span class="emoji">🔥</span>
+          <div class="title">Week Streak</div><div class="desc">7-day typing streak.</div>
+          <div class="date">Unlocked 5 May 2026</div></div>
+        <div class="badge locked"><span class="emoji">🧗</span>
+          <div class="title">Devoted Week</div><div class="desc">7 consecutive 3+ days.</div>
+          <div class="prog"><div class="bar"><i style="width:43%"></i></div>
+          <div class="pcap">3 / 7 days</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="font-size:20px;font-weight:600;margin:46px 0 6px">Summary tab — “Badges in progress” widget <span style="font-size:11px;font-weight:600;vertical-align:middle;margin-left:10px;padding:3px 9px;border-radius:999px;background:var(--primary-soft);color:var(--primary)">Decision&nbsp;#1</span></h2>
+  <p class="lede" style="margin:8px 0 18px">
+    A compact strip on the existing <strong>Summary</strong> tab, styled like the
+    Phase&nbsp;9.17 mood-distribution tiles: one tile per group = that group's current
+    in-progress badge. Tap any tile (or “see all ›”) → jumps to the Achievements tab.
+    Pure presentation of the same evaluation payload — no extra query.
+  </p>
+  <div style="max-width:520px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);padding:14px 16px">
+    <div style="display:flex;align-items:center;font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px">
+      Badges in progress <span style="margin-left:auto;color:var(--ink-faint);font-weight:600;text-transform:none;letter-spacing:0">see all ›</span></div>
+    <div id="sumtiles" style="display:flex;gap:8px"></div>
+  </div>
+  <p class="cap" style="text-align:left;max-width:520px">Sits among the other Summary widgets (mood-distribution tiles, KPI grid, Usage Map). Hidden when nothing is in progress.</p>
+
+  <footer>
+    Suggested layout — not yet built. Plan: <span class="key">Phase14_Plan.md</span>
+    §7 (incl. §7.6 Summary widget) + Decisions #1/#13/#14. Catalog:
+    <span class="key">Phase14_BadgeCatalog.md</span> (37 catalogued; 28 in v1;
+    groups 2 &amp; 6 deferred). States/percentages illustrative.
+  </footer>
+</main>
+
+<script>
+/* v1 catalog (groups 1,3,4,5,7) with an illustrative 9/28-unlocked user */
+const U = (d)=>({state:'unlocked',date:d});
+const P = (c,t,unit)=>({state:'locked',cur:c,tgt:t,unit:unit||''});
+const groups = [
+  {name:"Mood · Volume", badges:[
+    {e:"🌱",t:"First Mood",d:"You logged your first mood.",s:U("28 Apr 2026")},
+    {e:"🌿",t:"Getting Reflective",d:"Log 10 moods.",s:U("6 May 2026")},
+    {e:"🍀",t:"Habit Forming",d:"Log 50 moods.",s:P(37,50)},
+    {e:"🎯",t:"Centurion",d:"Log 100 moods.",s:P(37,100)},
+    {e:"🌳",t:"Deep Diary",d:"Log 500 moods.",s:P(37,500)},
+    {e:"🏔️",t:"Thousand Feelings",d:"Log 1000 moods.",s:P(37,1000)},
+  ]},
+  {name:"Mood · Daily check-in", badges:[
+    {e:"📝",t:"Daily Check-In",d:"Log a mood once in a day.",s:U("28 Apr 2026")},
+    {e:"✍️",t:"Double Check-In",d:"Log a mood twice in a day.",s:U("2 May 2026")},
+    {e:"📔",t:"Mood Journal",d:"Log a mood 3+ times in a day.",s:P(2,3," (best day)")},
+  ]},
+  {name:"Mood · Daily devotion", strip:true, badges:[
+    {e:"🌼",t:"Devoted Day",d:"A day with 3+ mood logs.",s:U("11 May 2026")},
+    {e:"💪",t:"Engaged",d:"3 consecutive 3+ days.",s:P(3,3," days")},
+    {e:"🧗",t:"Devoted Week",d:"7 consecutive 3+ days.",s:P(3,7," days")},
+    {e:"🏵️",t:"Steadfast",d:"15 consecutive 3+ days.",s:P(3,15," days")},
+    {e:"💎",t:"Mood Maven",d:"30 consecutive 3+ days.",s:P(3,30," days")},
+    {e:"🌠",t:"Mood Sovereign",d:"60 consecutive 3+ days.",s:P(3,60," days")},
+  ]},
+  {name:"Keyboard · Keystroke volume", badges:[
+    {e:"🔤",t:"Warming Up",d:"1,000 keystrokes.",s:U("29 Apr 2026")},
+    {e:"📝",t:"Wordsmith",d:"10,000 keystrokes.",s:U("9 May 2026")},
+    {e:"📚",t:"Novelist",d:"100,000 keystrokes.",s:P(42310,100000)},
+    {e:"🖋️",t:"Prolific",d:"500,000 keystrokes.",s:P(42310,500000)},
+    {e:"⌨️",t:"Millionaire",d:"1,000,000 keystrokes.",s:P(42310,1000000)},
+    {e:"🗿",t:"Monolith",d:"5,000,000 keystrokes.",s:P(42310,5000000)},
+  ]},
+  {name:"Keyboard · Session streak", badges:[
+    {e:"🔥",t:"Spark",d:"3-day typing streak.",s:U("1 May 2026")},
+    {e:"🔥",t:"Week Streak",d:"7-day typing streak.",s:U("5 May 2026")},
+    {e:"🔥",t:"Two-Week Burn",d:"14-day typing streak.",s:P(9,14," days")},
+    {e:"🏆",t:"Month Streak",d:"30-day typing streak.",s:P(9,30," days")},
+    {e:"🏅",t:"Iron Habit",d:"60-day typing streak.",s:P(9,60," days")},
+    {e:"💯",t:"Century Streak",d:"100-day typing streak.",s:P(9,100," days")},
+    {e:"👑",t:"Year-Long",d:"365-day typing streak.",s:P(9,365," days")},
+  ]},
+];
+/* last 14 days hit/miss for the devotion strip (illustrative; streak of 3 at the end) */
+const recent = [1,0,1,1,0,0,1,0,0,1,0,1,1,1]; // oldest→newest
+const DOW = ["S","M","T","W","T","F","S"];
+const grp = n => `<b style="color:var(--ink-faint);font-weight:600">${n}</b>`;
+const fmt = v => v.toLocaleString('en-US');
+
+function cardHTML(b){
+  if(b.s.state==='unlocked')
+    return `<div class="badge unlocked"><span class="emoji">${b.e}</span>
+      <div class="title">${b.t}</div><div class="desc">${b.d}</div>
+      <div class="date">Unlocked ${b.s.date}</div></div>`;
+  const pct=Math.max(2,Math.round(b.s.cur/b.s.tgt*100));
+  return `<div class="badge locked"><span class="emoji">${b.e}</span>
+    <div class="title">${b.t}</div><div class="desc">${b.d}</div>
+    <div class="prog"><div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="pcap">${fmt(b.s.cur)} / ${fmt(b.s.tgt)}${b.s.unit}</div></div></div>`;
+}
+function focusIndex(g){
+  const i=g.badges.findIndex(b=>b.s.state!=='unlocked');
+  return i<0?g.badges.length-1:i;
+}
+function stripHTML(){
+  let c=''; const base=new Date();
+  for(let k=0;k<14;k++){const d=new Date(base);d.setDate(base.getDate()-(13-k));
+    const hit=recent[k]?'hit':''; const today=k===13?'today':'';
+    c+=`<span class="${hit} ${today}">${DOW[d.getDay()]}</span>`;}
+  return `<div class="strip"><div class="lbl">Last 14 days · filled = 3+ logs</div>
+    <div class="keys">${c}</div></div>`;
+}
+function render(){
+  const root=document.getElementById('screen');
+  root.innerHTML = groups.map((g,gi)=>{
+    const unlocked=g.badges.filter(b=>b.s.state==='unlocked').length;
+    const slides=g.badges.map(b=>`<div class="slide">${cardHTML(b)}</div>`).join('');
+    const dots=g.badges.map((_,i)=>`<b data-d="${i}"></b>`).join('');
+    return `<div class="group" data-g="${gi}">
+      <div class="ghead">${g.name}<span class="cnt">${unlocked} / ${g.badges.length}</span></div>
+      <div class="carousel">
+        <button class="arrow prev">‹</button>
+        <div class="viewport"><div class="track">${slides}</div></div>
+        <button class="arrow next">›</button>
+      </div>
+      <div class="dots">${dots}</div>
+      ${g.strip?stripHTML():''}
+    </div>`;
+  }).join('');
+
+  root.querySelectorAll('.group').forEach((el,gi)=>{
+    let idx=focusIndex(groups[gi]); const n=groups[gi].badges.length;
+    const track=el.querySelector('.track');
+    const prev=el.querySelector('.prev'), next=el.querySelector('.next');
+    const dots=[...el.querySelectorAll('.dots b')];
+    function upd(){
+      track.style.transform=`translateX(-${idx*100}%)`;
+      prev.disabled=idx===0; next.disabled=idx===n-1;
+      dots.forEach((d,i)=>d.classList.toggle('on',i===idx));
+    }
+    prev.onclick=()=>{if(idx>0){idx--;upd();}};
+    next.onclick=()=>{if(idx<n-1){idx++;upd();}};
+    dots.forEach(d=>d.onclick=()=>{idx=+d.dataset.d;upd();});
+    /* pointer swipe */
+    let x0=null;
+    const vp=el.querySelector('.viewport');
+    vp.addEventListener('pointerdown',e=>{x0=e.clientX;});
+    vp.addEventListener('pointerup',e=>{if(x0===null)return;
+      const dx=e.clientX-x0;x0=null;
+      if(dx<-40&&idx<n-1)idx++; else if(dx>40&&idx>0)idx--; upd();});
+    upd();
+  });
+}
+render();
+
+/* Summary-tab "Badges in progress" tiles — one per group's focus badge */
+(function(){
+  const host=document.getElementById('sumtiles'); if(!host)return;
+  host.innerHTML=groups.map(g=>{
+    const b=g.badges[focusIndex(g)];
+    let cap,pct;
+    if(b.s.state==='unlocked'){cap='✓ done';pct=100;}
+    else{pct=Math.max(2,Math.round(b.s.cur/b.s.tgt*100));
+      cap=(b.s.unit&&b.s.unit.includes('day'))?`${b.s.cur}/${b.s.tgt} d`
+          :(b.s.tgt>=1000?pct+'%':`${b.s.cur}/${b.s.tgt}`);}
+    return `<div style="flex:1;text-align:center;background:var(--locked);
+      border:1px solid var(--border);border-radius:10px;padding:10px 6px;cursor:pointer">
+      <div style="font-size:24px;filter:grayscale(.6) opacity(.7)">${b.e}</div>
+      <div style="font-size:6px"></div>
+      <div style="height:5px;border-radius:99px;background:var(--bardim);overflow:hidden;margin:7px 2px 5px">
+        <i style="display:block;height:100%;background:var(--primary);width:${pct}%"></i></div>
+      <div style="font-size:10px;color:var(--ink-faint);font-weight:600">${cap}</div></div>`;
+  }).join('');
+})();
+</script>
+</body>
+</html>

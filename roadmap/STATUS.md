@@ -2,7 +2,7 @@
 
 Quick-access summary of phase completion. For detailed scope of each phase see [`FeatureRoadmap.md`](FeatureRoadmap.md), the per-phase plan files linked below, and `CLAUDE.md` (architecture notes per phase). Narrative report: [`../PROJECT_JOURNEY.md`](../PROJECT_JOURNEY.md) / [`../PROJECT_JOURNEY.html`](../PROJECT_JOURNEY.html).
 
-_Last updated: 2026-05-17. `main` is in sync with `origin/main`._
+_Last updated: 2026-05-17 (Phase 14 implemented; Phase 15 next). `main` is ahead of `origin/main` by the Phase 14 commits._
 
 | Phase | Title | Status | Plan |
 |---|---|---|---|
@@ -35,26 +35,27 @@ _Last updated: 2026-05-17. `main` is in sync with `origin/main`._
 | ~~11~~ | ~~Usage Map & Daily Activity Charts~~ | **Deleted** — absorbed into Phase 9.5 / 9.6 / 9.9 / 9.10 | — |
 | 12 | Mood-Curated Emoji Section in the drawer | Implemented | [Phase12_Plan.md](Phase12/Phase12_Plan.md) |
 | 13 | Persistent Right-Anchored Mood Bar (visible inside the emoji drawer) | Implemented | [Phase13_Plan.md](Phase13/Phase13_Plan.md) |
-| 14 | Gamification: Badges (Mood + Keyboard) — sixth "Achievements" tab | **Planned** (only outstanding phase) | [Phase14_Plan.md](Phase14/Phase14_Plan.md) |
+| 14 | Gamification: Badges (Mood + Keyboard) — interim sixth "Achievements" tab | Implemented | [Phase14_Plan.md](Phase14/Phase14_Plan.md) + [Phase14_BadgeCatalog.md](Phase14/Phase14_BadgeCatalog.md) |
+| 15 | Insights IA v2 — drop Habits, re-order to Summary · Achievements · Activity · Trends · Keys | **Planned** (next; collapses Phase 14's interim 6 tabs to 5) | [Phase15_Plan.md](Phase15/Phase15_Plan.md) |
 
 ## Schema state
 
-`IkdDatabase.version = 3` — two migrations registered, both non-destructive, both validated end-to-end by `IkdDatabaseMigrationTest` in `app/src/androidTest`:
+`IkdDatabase.version = 4` — three migrations registered, all non-destructive, all validated end-to-end by `IkdDatabaseMigrationTest` in `app/src/androidTest`:
 
 - `Migration(1, 2)` (Phase 8): adds the `mood_entries` table (one row per session, ordinal valence 1–6, unique index on `session_id`, CASCADE on session delete).
 - `Migration(2, 3)` (Phase 7.1): adds `correction_weight INTEGER NOT NULL DEFAULT 0` to `ikd_events` and backfills weight 1 onto every existing `is_correction = 1` row.
-
-Phase 14, when implemented, would add `Migration(3, 4)` for a `badges` table — not yet present in the code (`models/Badge.kt` / `interfaces/BadgeDao.kt` do not exist).
+- `Migration(3, 4)` (Phase 14): adds the `badges` table (`id`, unique `badge_key`, `unlocked_at`) — purely additive, no existing row touched. Exported schema at `app/schemas/.../IkdDatabase/4.json`.
 
 ## Dashboard shape (current)
 
-`DashboardActivity` is a thin host (~340 LOC) over a top `TabLayout` + `ViewPager2` with five tab fragments under `activities/dashboard/`:
+`DashboardActivity` is a thin host over a top `TabLayout` + `ViewPager2` with **six** tab fragments under `activities/dashboard/` (Phase 14 added Achievements as the **interim** 6th tab — Phase 15 will re-order to 5):
 
-1. **Summary** — six coloured mood-distribution tiles (double as the screen's colour legend **and** a one-tap Mood Filter shortcut), 3×2 KPI grid, Usage Map bubble chart, Mood Mix stacked bar.
+1. **Summary** — six coloured mood-distribution tiles (double as the screen's colour legend **and** a one-tap Mood Filter shortcut), a "Badges in progress" tile strip (Phase 14, one tile per group's focus badge → Achievements tab), 3×2 KPI grid, Usage Map bubble chart, Mood Mix stacked bar.
 2. **Trends** — 5 line charts (WPM, avg IKD, error %, avg gyro magnitude, avg accel magnitude).
 3. **Daily Activity** — calendar heatmap, daily keypress bar, 24-hour bar, hour×weekday circadian heatmap.
 4. **Keystroke Dynamics** — IKD / dwell / flight log-scale histograms, backspaces-vs-autocorrects quality scatter, orientation breakdown donut.
 5. **Habits** — 4 trend charts (avg session duration, sessions per day, avg error rate, avg flight time) + 4-cell KPI strip incl. longest streak.
+6. **Achievements** (Phase 14, interim 6th tab) — per-group horizontal carousel of the 28 v1 badges (5 groups), always all-time (ignores Range/Mood). Locked cards show a progress bar + grouped `current/target`; the Daily-devotion group renders a 14-day mini-keyboard strip. Newly-unlocked badges fire a Snackbar + a local notification (gated by `Config.badgeNotificationsEnabled` + `POST_NOTIFICATIONS`; no `INTERNET`).
 
 Global header above the tabs: app bar · 6-cell global KPI strip · toolbar bottom sheet for Range (Today / Week / Month / All Time) + Mood Filter · active-filter chip with bucket-size hint. State persisted via `onSaveInstanceState` (per-screen-instance, not `SharedPreferences`).
 
@@ -70,7 +71,7 @@ where `keystrokeCount = COUNT(*) - COUNT(AUTOCORRECT)`. AUTOCORRECT rows are sti
 
 ## Next step
 
-**Phase 14 — Gamification: Badges.** The only outstanding phase. Read-side feature + one schema bump (`Migration(3, 4)` for a `badges` table). New `models/Badge.kt`, `interfaces/BadgeDao.kt`, `helpers/IkdBadgeCatalog.kt`, `helpers/IkdBadgeEvaluator.kt`, `activities/dashboard/AchievementsFragment.kt`, `adapters/BadgeAdapter.kt`. ~13 starter badges (6 mood-cataloging, 7 keyboard-usage). Lazy evaluation on dashboard open; in-app snackbar on unlock; no system notifications. Plan: [`Phase14_Plan.md`](Phase14/Phase14_Plan.md).
+**Phase 15 — Insights IA v2.** Phase 14 shipped (badges: schema bump, catalog + lazy evaluator, per-group Achievements carousel, Summary "Badges in progress" widget, local notification + snackbar). Phase 15 is the coupled follow-up: drop the Habits tab and re-order to the final **Summary · Achievements · Activity · Trends · Keys** (`TAB_COUNT = 5`, `TAB_ACHIEVEMENTS = 1`), collapsing Phase 14's interim 6-tab layout. Plan: [`Phase15_Plan.md`](Phase15/Phase15_Plan.md).
 
 Other backlog items (no detailed plan yet): align the Habits/Quality correction metrics with the new error-rate definition; a release-readiness pass (`applicationId` rename + one-time `ikd.db` copy, fastlane/store metadata, screenshots, `versionName` bump) deferred out of the cosmetic Phase 10 rebrand; mood quick-note (long-press a mood emoji to add a 1–2 line note — needs an explicit text-storage opt-in); mood ↔ activity overlay on the Phase 9.5 calendar heatmap.
 
