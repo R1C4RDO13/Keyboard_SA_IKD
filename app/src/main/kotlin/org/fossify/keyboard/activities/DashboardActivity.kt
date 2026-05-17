@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,6 +39,8 @@ import org.fossify.keyboard.extensions.ikdQualityAggregator
 import org.fossify.keyboard.extensions.ikdSensorAggregator
 import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.helpers.IkdAggregator
+import org.fossify.keyboard.helpers.IkdBadgeCatalog
+import org.fossify.keyboard.helpers.IkdBadgeNotifier
 import org.fossify.keyboard.helpers.InsightsFiltersBottomSheet
 import org.fossify.keyboard.helpers.MoodEmoji
 
@@ -151,6 +154,7 @@ class DashboardActivity : SimpleActivity() {
         setupActiveFilterChip()
         setupPagerAndTabs(savedInstanceState)
         maybeRequestNotificationPermission()
+        maybeOpenAchievementsFromIntent(intent)
     }
 
     /**
@@ -322,6 +326,7 @@ class DashboardActivity : SimpleActivity() {
         DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.drawable.ic_dashboard_activity_vector
         DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS -> R.drawable.ic_dashboard_keystrokes_vector
         DashboardPagerAdapter.TAB_HABITS -> R.drawable.ic_dashboard_habits_vector
+        DashboardPagerAdapter.TAB_ACHIEVEMENTS -> R.drawable.ic_dashboard_achievements_vector
         else -> R.drawable.ic_dashboard_summary_vector
     }
 
@@ -331,6 +336,7 @@ class DashboardActivity : SimpleActivity() {
         DashboardPagerAdapter.TAB_DAILY_ACTIVITY -> R.string.dashboard_tab_label_daily_activity
         DashboardPagerAdapter.TAB_KEYSTROKE_DYNAMICS -> R.string.dashboard_tab_label_keystroke_dynamics
         DashboardPagerAdapter.TAB_HABITS -> R.string.dashboard_tab_label_habits
+        DashboardPagerAdapter.TAB_ACHIEVEMENTS -> R.string.dashboard_tab_label_achievements
         else -> R.string.dashboard_tab_label_summary
     }
 
@@ -493,6 +499,16 @@ class DashboardActivity : SimpleActivity() {
 
     private fun renderPayload(payload: DashboardPayload) {
         latestPayload = payload
+
+        // Phase 14 §7.4/§7.5: fire the in-app snackbar + the local
+        // notification for badges that crossed their criterion on *this*
+        // evaluation. `newlyUnlocked` is the evaluator's delta — a refresh
+        // within the same session re-runs evaluate() but the badge is now
+        // persisted, so it won't re-fire (no spam). Done before the
+        // empty-state early return: a badge can unlock from mood entries
+        // alone, with zero typing sessions.
+        dispatchBadgeUnlockFeedback(payload)
+
         val isEmpty = payload.ikd.totalSessions == 0
         // Phase 9.18 follow-up: distinct empty-state copy when a mood
         // filter narrowed the range to zero sessions. The empty message
@@ -533,6 +549,58 @@ class DashboardActivity : SimpleActivity() {
     fun goToTab(position: Int) {
         if (position < 0 || position >= DashboardPagerAdapter.TAB_COUNT) return
         binding.dashboardViewPager.setCurrentItem(position, true)
+    }
+
+    /**
+     * Phase 14 §7.4/§7.5: snackbar (anchored to the ViewPager so it
+     * floats above the bottom nav, action → Achievements tab) + a local
+     * notification in parallel via [IkdBadgeNotifier]. Multiple
+     * simultaneous unlocks collapse to "first title +N more". Already-
+     * unlocked badges never reach here — they're filtered out of
+     * `newlyUnlocked` before persistence.
+     */
+    private fun dispatchBadgeUnlockFeedback(payload: DashboardPayload) {
+        val newly = payload.badges.newlyUnlocked
+        if (newly.isEmpty()) return
+
+        val firstDef = IkdBadgeCatalog.defFor(newly.first().key) ?: return
+        val emoji = firstDef.emoji
+        val title = getString(firstDef.titleRes)
+        val extra = newly.size - 1
+        val message = if (extra == 0) {
+            getString(R.string.badge_snackbar_single, emoji, title)
+        } else {
+            getString(R.string.badge_snackbar_multi, emoji, title, extra)
+        }
+        Snackbar
+            .make(binding.dashboardViewPager, message, Snackbar.LENGTH_LONG)
+            .setAnchorView(binding.dashboardViewPager)
+            .setAction(R.string.badge_snackbar_action) {
+                goToTab(DashboardPagerAdapter.TAB_ACHIEVEMENTS)
+            }
+            .show()
+
+        IkdBadgeNotifier.notify(this, newly)
+    }
+
+    /**
+     * Phase 14: a badge-unlock notification tap carries
+     * [EXTRA_OPEN_TAB] — jump straight to the Achievements tab. Handled
+     * from both `onCreate` (cold start via the PendingIntent) and
+     * `onNewIntent` (the activity was already in the back stack).
+     */
+    private fun maybeOpenAchievementsFromIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_OPEN_TAB, false) == true) {
+            binding.dashboardViewPager.post {
+                goToTab(DashboardPagerAdapter.TAB_ACHIEVEMENTS)
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        maybeOpenAchievementsFromIntent(intent)
     }
 
     /**

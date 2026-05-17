@@ -1,5 +1,6 @@
 package org.fossify.keyboard.helpers
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -36,6 +37,12 @@ object IkdBadgeNotifier {
     const val CHANNEL_ID = "moodscript_badges"
     private const val NOTIFICATION_ID = 47_014
 
+    // [hasPermission] explicitly checks `POST_NOTIFICATIONS` (and returns
+    // true below Android 13, where the permission does not exist) before
+    // any `NotificationManagerCompat.notify(...)` call. Lint's flow
+    // analysis can't trace the guard across the private helper, so the
+    // MissingPermission check is suppressed here with that justification.
+    @SuppressLint("MissingPermission")
     fun notify(context: Context, newlyUnlocked: List<UnlockedBadge>) {
         if (newlyUnlocked.isEmpty()) return
         if (!context.config.badgeNotificationsEnabled) return

@@ -17,11 +17,14 @@ import org.fossify.commons.extensions.updateTextColors
 import org.fossify.keyboard.R
 import org.fossify.keyboard.activities.DashboardActivity
 import org.fossify.keyboard.databinding.FragmentDashboardSummaryBinding
+import org.fossify.keyboard.databinding.ItemBadgeProgressTileBinding
 import org.fossify.keyboard.databinding.ItemMoodTileBinding
 import org.fossify.keyboard.databinding.ItemSummaryKpiTileBinding
 import org.fossify.keyboard.helpers.IkdActivityAggregator
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdHabitsAggregator
+import org.fossify.keyboard.helpers.IkdBadgeCatalog
+import org.fossify.keyboard.helpers.IkdBadgeEvaluator
 import org.fossify.keyboard.helpers.IkdMoodAggregator
 import org.fossify.keyboard.helpers.MoodEmoji
 import org.fossify.keyboard.helpers.WidgetInfo
@@ -93,7 +96,27 @@ class SummaryFragment : DashboardFragment() {
         view.summaryTileStreak.setOnClickListener(toHabits)
         view.summaryTileWpm.setOnClickListener(toTrends)
         view.summaryTileErrorRate.setOnClickListener(toTrends)
+
+        // Phase 14 §7.6: the whole "Badges in progress" widget jumps to
+        // the Achievements tab — "see all ›" header + every tile.
+        val toAchievements = View.OnClickListener {
+            goToTab(DashboardPagerAdapter.TAB_ACHIEVEMENTS)
+        }
+        view.summaryBadgesSeeAll.setOnClickListener(toAchievements)
+        for (tile in badgeTileBindings(view)) {
+            tile.root.setOnClickListener(toAchievements)
+        }
     }
+
+    private fun badgeTileBindings(
+        view: FragmentDashboardSummaryBinding,
+    ): List<ItemBadgeProgressTileBinding> = listOf(
+        ItemBadgeProgressTileBinding.bind(view.summaryBadgeTileMoodVolume.root),
+        ItemBadgeProgressTileBinding.bind(view.summaryBadgeTileMoodCheckin.root),
+        ItemBadgeProgressTileBinding.bind(view.summaryBadgeTileMoodDevotion.root),
+        ItemBadgeProgressTileBinding.bind(view.summaryBadgeTileKbKeys.root),
+        ItemBadgeProgressTileBinding.bind(view.summaryBadgeTileKbStreak.root),
+    )
 
     /**
      * Phase 9.13: bind tap-to-explain dialogs to each card's info icon.
@@ -197,6 +220,7 @@ class SummaryFragment : DashboardFragment() {
         )
 
         renderMoodTiles(payload.mood)
+        renderBadgesWidget(payload.badges)
         renderUsageMap(payload.activity)
         renderMoodWidgets(payload)
 
@@ -519,11 +543,92 @@ class SummaryFragment : DashboardFragment() {
         }
     }
 
+    /**
+     * Phase 14 §7.6: the compact "Badges in progress" strip — one tile
+     * per v1 group showing that group's *current in-progress* badge (the
+     * same focus the Achievements carousel centres on; a fully-unlocked
+     * group shows its top badge as "✓ done"). Pure presentation of the
+     * same [IkdBadgeEvaluator.EvaluationResult] the host already produced
+     * on the single `loadSnapshot` hop — no extra query. Hidden entirely
+     * when there is no captured data (same empty-state discipline as the
+     * other Summary widgets).
+     */
+    private fun renderBadgesWidget(result: IkdBadgeEvaluator.EvaluationResult) {
+        val ctx = context ?: return
+        val view = _binding ?: return
+        val snap = result.snapshot
+        val hasData = snap.moodCount > 0 ||
+            snap.keystrokeTotal > 0L ||
+            snap.sessionStreak > 0
+        if (!hasData) {
+            view.summaryBadgesCard.beGone()
+            return
+        }
+        view.summaryBadgesCard.beVisible()
+        view.summaryBadgesCard.setCardBackgroundColor(ctx.getProperBackgroundColor())
+        view.summaryBadgesTitle.setTextColor(ctx.getProperPrimaryColor())
+        view.summaryBadgesSeeAll.setTextColor(ctx.getProperPrimaryColor())
+
+        val tiles = badgeTileBindings(view)
+        IkdBadgeCatalog.GROUPS.forEachIndexed { index, group ->
+            val tile = tiles[index]
+            val defs = IkdBadgeCatalog.badgesFor(group)
+            val focusDef = defs.firstOrNull { it.key !in result.allUnlocked }
+            val isDone = focusDef == null
+            val def = focusDef ?: defs.last()
+
+            tile.badgeTileEmoji.text = def.emoji
+            tile.badgeTileEmoji.alpha = if (isDone) 1f else LOCKED_TILE_ALPHA
+
+            val progress = result.progressByKey[def.key]
+            val pct: Int
+            val caption: String
+            if (isDone || progress == null) {
+                pct = PCT_MAX
+                caption = ctx.getString(R.string.summary_badge_tile_done)
+            } else {
+                val current = progress.current.coerceAtMost(progress.target)
+                pct = if (progress.target <= 0L) {
+                    0
+                } else {
+                    ((current * PCT_MAX) / progress.target).toInt().coerceIn(0, PCT_MAX)
+                }
+                caption = when (progress.unitKind) {
+                    IkdBadgeCatalog.UnitKind.DAYS -> ctx.getString(
+                        R.string.summary_badge_tile_days_format,
+                        current.toInt(),
+                        progress.target.toInt(),
+                    )
+                    IkdBadgeCatalog.UnitKind.COUNT ->
+                        if (progress.target >= LARGE_TARGET_THRESHOLD) {
+                            ctx.getString(R.string.summary_badge_tile_pct_format, pct)
+                        } else {
+                            val nf = java.text.NumberFormat
+                                .getIntegerInstance(Locale.getDefault())
+                            ctx.getString(
+                                R.string.summary_badge_tile_count_format,
+                                nf.format(current),
+                                nf.format(progress.target),
+                            )
+                        }
+                }
+            }
+            tile.badgeTileProgress.progress = pct
+            tile.badgeTileCaption.text = caption
+            tile.badgeTileCaption.setTextColor(ctx.getProperTextColor())
+            tile.root.setCardBackgroundColor(
+                ContextCompat.getColor(ctx, org.fossify.keyboard.R.color.badge_locked_surface),
+            )
+        }
+    }
+
     companion object {
         private const val MS_PER_MINUTE = 60_000L
         private const val MS_PER_SECOND = 1_000.0
         private const val PCT_MAX = 100
         private const val PCT_MAX_FLOAT = 100f
+        private const val LOCKED_TILE_ALPHA = 0.7f
+        private const val LARGE_TARGET_THRESHOLD = 1_000L
 
         // Phase 9.18: active-tile scale-up factor and the dim alpha applied
         // to the other five tiles while a filter is active. Plan Decision #2.

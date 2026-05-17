@@ -102,13 +102,13 @@ class BadgeGroupAdapter(
             val startPos = pagePositions[key] ?: model.focusIndex
             val clamped = startPos.coerceIn(0, (model.badges.size - 1).coerceAtLeast(0))
             binding.badgeGroupPager.setCurrentItem(clamped, false)
-            updateArrowsAndDots(clamped, model.badges.size, primary)
+            updateArrowsAndDots(clamped, model.badges.size)
 
             pageCallback?.let { binding.badgeGroupPager.unregisterOnPageChangeCallback(it) }
             val cb = object : ViewPager2.OnPageChangeCallback() {
                 override fun onPageSelected(position: Int) {
                     pagePositions[key] = position
-                    updateArrowsAndDots(position, model.badges.size, primary)
+                    updateArrowsAndDots(position, model.badges.size)
                 }
             }
             pageCallback = cb
@@ -161,7 +161,7 @@ class BadgeGroupAdapter(
             }
         }
 
-        private fun updateArrowsAndDots(position: Int, count: Int, primary: Int) {
+        private fun updateArrowsAndDots(position: Int, count: Int) {
             binding.badgeGroupPrev.isEnabled = position > 0
             binding.badgeGroupPrev.alpha = if (position > 0) 1f else DISABLED_ALPHA
             binding.badgeGroupNext.isEnabled = position < count - 1

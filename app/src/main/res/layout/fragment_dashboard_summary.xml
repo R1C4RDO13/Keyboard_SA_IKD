@@ -91,6 +91,87 @@
 
         </LinearLayout>
 
+        <!-- Phase 14 §7.6: "Badges in progress" widget. One tile per v1
+             group = that group's current in-progress (focus) badge. Tap
+             a tile or "see all ›" → Achievements tab. Pure presentation
+             of the same EvaluationResult the carousel uses (no extra
+             query). Hidden when nothing is in progress. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/summary_badges_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/normal_margin"
+            android:visibility="gone"
+            app:cardCornerRadius="@dimen/card_corner_radius"
+            app:cardElevation="@dimen/card_elevation"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/normal_margin">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/small_margin"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/summary_badges_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:letterSpacing="0.04"
+                        android:text="@string/summary_badges_section_title"
+                        android:textAllCaps="true"
+                        android:textStyle="bold" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/summary_badges_see_all"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:text="@string/summary_badges_see_all"
+                        android:textSize="@dimen/smaller_text_size" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/summary_badges_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <include
+                        android:id="@+id/summary_badge_tile_mood_volume"
+                        layout="@layout/item_badge_progress_tile" />
+
+                    <include
+                        android:id="@+id/summary_badge_tile_mood_checkin"
+                        layout="@layout/item_badge_progress_tile" />
+
+                    <include
+                        android:id="@+id/summary_badge_tile_mood_devotion"
+                        layout="@layout/item_badge_progress_tile" />
+
+                    <include
+                        android:id="@+id/summary_badge_tile_kb_keys"
+                        layout="@layout/item_badge_progress_tile" />
+
+                    <include
+                        android:id="@+id/summary_badge_tile_kb_streak"
+                        layout="@layout/item_badge_progress_tile" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Row 1: Sessions · Typing time · WPM -->
         <LinearLayout
             android:id="@+id/summary_kpi_row_1"

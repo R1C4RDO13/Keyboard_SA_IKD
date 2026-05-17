@@ -87,6 +87,7 @@
             android:name=".activities.DashboardActivity"
             android:exported="false"
             android:label="@string/dashboard_title"
+            android:launchMode="singleTop"
             android:parentActivityName=".activities.IkdSettingsActivity" />
 
         <activity
