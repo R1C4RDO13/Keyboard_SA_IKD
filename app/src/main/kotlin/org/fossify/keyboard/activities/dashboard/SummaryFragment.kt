@@ -597,6 +597,7 @@ class SummaryFragment : DashboardFragment() {
             return
         }
         view.summaryBadgesSection.beVisible()
+        view.summaryBadgesTitle.setTextColor(ctx.getProperTextColor())
 
         // Task D: every tile state (in-progress, no-progress, done) uses
         // the runtime Fossify theme — no fixed badge_* tokens. Card to the

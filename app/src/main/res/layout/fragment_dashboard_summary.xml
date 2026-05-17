@@ -49,6 +49,14 @@
             android:orientation="vertical"
             android:visibility="gone">
 
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/summary_badges_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/small_margin"
+                android:text="@string/summary_badges_section_title"
+                android:textStyle="bold" />
+
             <LinearLayout
                 android:id="@+id/summary_badges_row"
                 android:layout_width="match_parent"
