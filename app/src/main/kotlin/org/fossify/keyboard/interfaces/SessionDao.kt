@@ -83,6 +83,20 @@ interface SessionDao {
         moodScore: Int,
     ): List<SessionBucketRow>
 
+    /**
+     * Phase 14: distinct local-time ISO calendar days that have at least
+     * one session, oldest-first. The badge evaluator folds this list with
+     * the shared `computeLongestStreak` to drive the Session-streak badge
+     * group (group 7). Same `date(...,'unixepoch','localtime')` bucketing
+     * the Phase 9 aggregators use, so a streak here lines up with the
+     * Habits streak KPI.
+     */
+    @Query(
+        "SELECT DISTINCT date(started_at / 1000, 'unixepoch', 'localtime') " +
+            "FROM sessions ORDER BY 1"
+    )
+    fun getSessionCalendarDays(): List<String>
+
     /** Returns null when the sessions table is empty. Used to size the All Time range. */
     @Query("SELECT MIN(started_at) FROM sessions")
     fun getEarliestSessionStart(): Long?

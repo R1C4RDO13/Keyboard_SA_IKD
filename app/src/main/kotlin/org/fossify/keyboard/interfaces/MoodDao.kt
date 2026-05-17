@@ -43,6 +43,18 @@ interface MoodDao {
     fun getAllOrderedBySession(): List<MoodEntry>
 
     /**
+     * Phase 14: every intentional mood log's timestamp (epoch millis),
+     * oldest-first. The badge evaluator buckets these by local ISO day in
+     * Kotlin to derive `bestDayLogs` (group 3), `devotionStreak` (group 4),
+     * and the last-14-days `recentDayQualified` strip — one query, single
+     * pass, ≤ a few thousand rows. Every row in `mood_entries` is one
+     * intentional log (the standing rating never writes a row), so the
+     * per-day count is deliberate-logging frequency.
+     */
+    @Query("SELECT timestamp FROM mood_entries ORDER BY timestamp")
+    fun getMoodTimestampsOrdered(): List<Long>
+
+    /**
      * Per-category distribution for a time range. Returns one row per
      * `mood_score` value with at least one entry; scores absent from the
      * result have zero entries in the range.

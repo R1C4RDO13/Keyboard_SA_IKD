@@ -21,6 +21,18 @@ interface IkdEventDao {
     fun count(): Int
 
     /**
+     * Phase 14: lifetime keystroke total — every event except AUTOCORRECT
+     * rows, matching the project-wide `keystrokeCount` definition (Phase 7
+     * WPM denominator). Powers the Keystroke-volume badge group (group 5).
+     * One scalar query over the whole table.
+     */
+    @Query(
+        "SELECT COALESCE(SUM(CASE WHEN event_category != 'AUTOCORRECT' THEN 1 ELSE 0 END), 0) " +
+            "FROM ikd_events"
+    )
+    fun getKeystrokeCountTotal(): Long
+
+    /**
      * Bucketed aggregation. Returns at most ~52 rows for ALL_TIME at default
      * retention. The `avgIkdMs` column is NULL when the bucket has no events
      * with ikd_ms >= 0 (the -1 sentinel marks the first event of a session

@@ -457,6 +457,115 @@
     <string name="session_dashboard_chart_accel">Accel magnitude (m/s²)</string>
     <string name="session_dashboard_chart_no_data">No data</string>
 
+    <!-- ===== Phase 14 — Gamification: Badges ===== -->
+
+    <!-- Achievements tab + chrome -->
+    <string name="dashboard_tab_label_achievements">Achievements</string>
+    <string name="achievements_all_time_note">Always all-time · global Range &amp; Mood filters don\'t apply here</string>
+    <string name="achievements_group_count_format">%1$d / %2$d</string>
+    <string name="achievements_empty_message">No badges unlocked yet — keep typing and logging mood!</string>
+    <string name="achievements_unlocked_date_format">Unlocked %1$s</string>
+    <string name="achievements_progress_count_format">%1$s / %2$s</string>
+    <string name="achievements_progress_days_format">%1$d / %2$d days</string>
+    <string name="achievements_prev_badge">Previous badge</string>
+    <string name="achievements_next_badge">Next badge</string>
+    <string name="achievements_day_strip_label">Last 14 days · filled = 3+ logs</string>
+    <string name="achievements_day_strip_content_description">Mood-logging activity, last 14 days</string>
+
+    <!-- Summary-tab "Badges in progress" widget (§7.6) -->
+    <string name="summary_badges_section_title">Badges in progress</string>
+    <string name="summary_badges_see_all">see all ›</string>
+    <string name="summary_badge_tile_done">✓ done</string>
+    <string name="summary_badge_tile_pct_format">%1$d%%</string>
+    <string name="summary_badge_tile_days_format">%1$d/%2$d d</string>
+    <string name="summary_badge_tile_count_format">%1$s/%2$s</string>
+
+    <!-- Unlock feedback: snackbar + notification -->
+    <string name="badge_snackbar_single">%1$s %2$s unlocked!</string>
+    <string name="badge_snackbar_multi">%1$s %2$s unlocked! +%3$d more</string>
+    <string name="badge_snackbar_action">VIEW</string>
+    <string name="badge_notification_channel_name">Badge unlocks</string>
+    <string name="badge_notification_title_single">%1$s %2$s unlocked!</string>
+    <string name="badge_notification_title_multi">%1$d badges unlocked!</string>
+    <string name="badge_notification_text_multi">%1$s %2$s +%3$d more — tap to view your Achievements</string>
+
+    <!-- Settings toggle -->
+    <string name="ikd_settings_badge_notifications">Notify me when I unlock a badge</string>
+    <string name="ikd_settings_badge_notifications_summary">Posts a local notification (and an in-app message) the first time each badge is earned. No network — nothing leaves the device.</string>
+
+    <!-- Badge group headers -->
+    <string name="badge_group_mood_volume">Mood · Volume</string>
+    <string name="badge_group_mood_checkin">Mood · Daily check-in</string>
+    <string name="badge_group_mood_devotion">Mood · Daily devotion</string>
+    <string name="badge_group_kb_keystrokes">Keyboard · Keystroke volume</string>
+    <string name="badge_group_kb_streak">Keyboard · Session streak</string>
+
+    <!-- Group 1 — Mood Volume -->
+    <string name="badge_mood_vol_1_title">First Mood</string>
+    <string name="badge_mood_vol_1_desc">You logged your first mood. The journey starts here.</string>
+    <string name="badge_mood_vol_10_title">Getting Reflective</string>
+    <string name="badge_mood_vol_10_desc">Logged 10 moods.</string>
+    <string name="badge_mood_vol_50_title">Habit Forming</string>
+    <string name="badge_mood_vol_50_desc">Logged 50 moods.</string>
+    <string name="badge_mood_vol_100_title">Centurion</string>
+    <string name="badge_mood_vol_100_desc">Logged 100 moods.</string>
+    <string name="badge_mood_vol_500_title">Deep Diary</string>
+    <string name="badge_mood_vol_500_desc">Logged 500 moods.</string>
+    <string name="badge_mood_vol_1000_title">Thousand Feelings</string>
+    <string name="badge_mood_vol_1000_desc">Logged 1,000 moods.</string>
+
+    <!-- Group 3 — Mood Daily check-in -->
+    <string name="badge_mood_day_1_title">Daily Check-In</string>
+    <string name="badge_mood_day_1_desc">Logged a mood once in a single day.</string>
+    <string name="badge_mood_day_2_title">Double Check-In</string>
+    <string name="badge_mood_day_2_desc">Logged a mood twice in a single day.</string>
+    <string name="badge_mood_day_3_title">Mood Journal</string>
+    <string name="badge_mood_day_3_desc">Logged a mood three or more times in a single day.</string>
+
+    <!-- Group 4 — Mood Daily devotion (strict consecutive streak) -->
+    <string name="badge_mood_3pd_1_title">Devoted Day</string>
+    <string name="badge_mood_3pd_1_desc">A day with 3+ mood logs.</string>
+    <string name="badge_mood_3pd_3_title">Engaged</string>
+    <string name="badge_mood_3pd_3_desc">3 consecutive days with 3+ mood logs each.</string>
+    <string name="badge_mood_3pd_7_title">Devoted Week</string>
+    <string name="badge_mood_3pd_7_desc">7 consecutive days with 3+ mood logs each.</string>
+    <string name="badge_mood_3pd_15_title">Steadfast</string>
+    <string name="badge_mood_3pd_15_desc">15 consecutive days with 3+ mood logs each.</string>
+    <string name="badge_mood_3pd_30_title">Mood Maven</string>
+    <string name="badge_mood_3pd_30_desc">30 consecutive days with 3+ mood logs each.</string>
+    <string name="badge_mood_3pd_60_title">Mood Sovereign</string>
+    <string name="badge_mood_3pd_60_desc">60 consecutive days with 3+ mood logs each.</string>
+
+    <!-- Group 5 — Keyboard Keystroke volume -->
+    <string name="badge_kb_keys_1k_title">Warming Up</string>
+    <string name="badge_kb_keys_1k_desc">Typed 1,000 keystrokes.</string>
+    <string name="badge_kb_keys_10k_title">Wordsmith</string>
+    <string name="badge_kb_keys_10k_desc">Typed 10,000 keystrokes.</string>
+    <string name="badge_kb_keys_100k_title">Novelist</string>
+    <string name="badge_kb_keys_100k_desc">Typed 100,000 keystrokes.</string>
+    <string name="badge_kb_keys_500k_title">Prolific</string>
+    <string name="badge_kb_keys_500k_desc">Typed 500,000 keystrokes.</string>
+    <string name="badge_kb_keys_1m_title">Millionaire</string>
+    <string name="badge_kb_keys_1m_desc">Typed 1,000,000 keystrokes.</string>
+    <string name="badge_kb_keys_5m_title">Monolith</string>
+    <string name="badge_kb_keys_5m_desc">Typed 5,000,000 keystrokes.</string>
+
+    <!-- Group 7 — Keyboard Session streak -->
+    <string name="badge_kb_streak_3_title">Spark</string>
+    <string name="badge_kb_streak_3_desc">Typed at least once a day for 3 days in a row.</string>
+    <string name="badge_kb_streak_7_title">Week Streak</string>
+    <string name="badge_kb_streak_7_desc">Typed at least once a day for 7 days in a row.</string>
+    <string name="badge_kb_streak_14_title">Two-Week Burn</string>
+    <string name="badge_kb_streak_14_desc">Typed at least once a day for 14 days in a row.</string>
+    <string name="badge_kb_streak_30_title">Month Streak</string>
+    <string name="badge_kb_streak_30_desc">Typed at least once a day for 30 days in a row.</string>
+    <string name="badge_kb_streak_60_title">Iron Habit</string>
+    <string name="badge_kb_streak_60_desc">Typed at least once a day for 60 days in a row.</string>
+    <string name="badge_kb_streak_100_title">Century Streak</string>
+    <string name="badge_kb_streak_100_desc">Typed at least once a day for 100 days in a row.</string>
+    <string name="badge_kb_streak_365_title">Year-Long</string>
+    <string name="badge_kb_streak_365_desc">Typed at least once a day for 365 days in a row.</string>
+
     <!-- About screen (Phase 10 — MoodScript) -->
     <string name="moodscript_about_title">About MoodScript</string>
     <string name="moodscript_about_intro">MoodScript — A research-grade behavioural-analytics keyboard.\n\nMoodScript captures keystroke timing, kinematic sensor data, and self-reported mood signals during everyday typing, then turns them into private on-device insights about anxiety, routine, and wellbeing. All data stays on this device — nothing is transmitted over the network.</string>
