@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phase 14 — Achievements layout options</title>
+<style>
+  :root{
+    --bg:#f4f4f2;--card:#fff;--ink:#1a1a1a;--soft:#555;--faint:#8a8a8a;
+    --primary:#3a7d44;--primary-soft:#e8f1ea;--border:#e2e2e0;
+    --r:14px;--sh:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.06);
+    --locked:#ededeb;--bar:#d8d8d4;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  main{max-width:1240px;margin:0 auto;padding:28px 22px 80px}
+  h1{font-size:24px;margin:0 0 4px}
+  .sub{color:var(--faint);margin:0 0 26px;font-size:14px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:26px}
+  .opt{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+    box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column}
+  .opt > header{padding:16px 18px 12px;border-bottom:1px solid var(--border)}
+  .opt h2{font-size:17px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .opt h2 .tag{font-size:11px;font-weight:700;background:var(--primary);color:#fff;
+    border-radius:999px;padding:2px 9px}
+  .opt .why{font-size:12.5px;color:var(--soft);margin:0}
+  .opt .pc{font-size:12px;color:var(--faint);margin:6px 0 0}
+  .opt .pc b{color:var(--soft)}
+  .stage{background:var(--bg);padding:14px;flex:1;max-height:560px;overflow:auto}
+  .ghead{font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;
+    letter-spacing:.04em;margin:14px 2px 8px}
+  .ghead:first-child{margin-top:2px}
+  .ghead .ct{float:right;color:var(--faint);font-weight:600;text-transform:none;letter-spacing:0}
+
+  /* badge primitives */
+  .bdg{background:var(--card);border:1px solid var(--border);border-radius:12px;position:relative}
+  .bdg.u{box-shadow:0 0 0 1px var(--primary) inset}
+  .bdg.l{background:var(--locked)}
+  .bdg.l .em{filter:grayscale(1) opacity(.5)}
+  .bdg.l .ti,.bdg.l .de{color:var(--faint)}
+  .em{font-size:30px;line-height:1}
+  .ti{font-size:13px;font-weight:700}
+  .de{font-size:11px;color:var(--faint);line-height:1.35}
+  .dt{font-size:10.5px;color:var(--primary);font-weight:600}
+  .pbar{height:5px;border-radius:99px;background:var(--bar);overflow:hidden;margin-top:6px}
+  .pbar i{display:block;height:100%;background:var(--primary)}
+  .pcap{font-size:10px;color:var(--faint);font-weight:600;margin-top:3px}
+
+  /* A: grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .grid .bdg{padding:13px 10px 11px;text-align:center}
+  .grid .em{display:block;margin:0 0 7px}
+  .grid .de{min-height:28px;margin-top:2px}
+
+  /* B: list rows */
+  .rows .bdg{display:flex;align-items:center;gap:12px;padding:11px 13px;margin-bottom:8px}
+  .rows .em{flex:0 0 auto}
+  .rows .mid{flex:1;min-width:0}
+  .rows .pbar{margin-top:5px}
+  .rows .rt{flex:0 0 auto;text-align:right;font-size:10.5px;font-weight:700;color:var(--faint)}
+  .rows .u .rt{color:var(--primary)}
+
+  /* C: free horizontal scroll */
+  .strip{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 12px;scrollbar-width:thin}
+  .strip .bdg{flex:0 0 132px;padding:13px 10px;text-align:center}
+  .strip .em{display:block;margin-bottom:6px}
+  .strip .de{min-height:26px}
+  .hint{font-size:11px;color:var(--faint);font-style:italic;margin:-4px 2px 0}
+
+  /* D: accordion */
+  .acc{border:1px solid var(--border);border-radius:12px;background:var(--card);
+    margin-bottom:10px;overflow:hidden}
+  .acc > .hd{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer}
+  .acc > .hd .nm{font-weight:700;font-size:13px;flex:1}
+  .acc > .hd .mini{height:5px;width:80px;border-radius:99px;background:var(--bar);overflow:hidden}
+  .acc > .hd .mini i{display:block;height:100%;background:var(--primary)}
+  .acc > .hd .cv{font-size:11px;color:var(--faint);font-weight:600;min-width:34px;text-align:right}
+  .acc > .hd .chev{color:var(--faint);transition:transform .2s}
+  .acc.open > .hd .chev{transform:rotate(90deg)}
+  .acc > .body{display:none;padding:0 12px 12px}
+  .acc.open > .body{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .acc .bdg{padding:11px 9px;text-align:center}
+  .acc .em{display:block;margin-bottom:5px}
+
+  /* E: hero + compact */
+  .hero{background:var(--card);border:1px solid var(--primary);border-radius:14px;
+    box-shadow:0 0 0 1px var(--primary) inset;padding:16px;display:flex;gap:14px;
+    align-items:center;margin-bottom:14px}
+  .hero .he{font-size:44px}
+  .hero .ht{font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.05em}
+  .hero .hn{font-size:17px;font-weight:700;margin:2px 0}
+  .hero .hd{font-size:12px;color:var(--soft)}
+  .hero .pbar{margin-top:8px}
+  .mini-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  .mini-grid .bdg{padding:9px 4px;text-align:center}
+  .mini-grid .em{font-size:22px;display:block}
+  .mini-grid .mt{font-size:8.5px;color:var(--faint);margin-top:3px;font-weight:600}
+  .pick{margin-top:10px;font-size:12px;color:var(--soft)}
+  .pick b{color:var(--primary)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Achievements — layout options</h1>
+  <p class="sub">Same 28 v1 badges (Mood Volume · Daily check-in · Daily devotion · Keystroke volume · Session streak), five different presentations. Tell me the letter (you can mix — e.g. "B but grouped like A"). The per-group ‹/› carousel currently shipped is option F at the bottom for reference.</p>
+
+  <div class="opts" id="opts"></div>
+
+  <p class="pick">Reply with your pick, e.g. <b>"A"</b>, or <b>"D, but no progress bars on locked"</b>. I'll rebuild the Achievements tab to match and drop the carousel.</p>
+</main>
+
+<script>
+const U=d=>({s:'u',d});               // unlocked + date
+const P=(c,t,u='')=>({s:'l',c,t,u}); // locked + progress
+const G=[
+ {n:"Mood · Volume",b:[
+  {e:"🌱",t:"First Mood",d:"Log your first mood.",x:U("28 Apr")},
+  {e:"🌿",t:"Getting Reflective",d:"10 moods.",x:U("6 May")},
+  {e:"🍀",t:"Habit Forming",d:"50 moods.",x:P(37,50)},
+  {e:"🎯",t:"Centurion",d:"100 moods.",x:P(37,100)},
+  {e:"🌳",t:"Deep Diary",d:"500 moods.",x:P(37,500)},
+  {e:"🏔️",t:"Thousand Feelings",d:"1000 moods.",x:P(37,1000)}]},
+ {n:"Mood · Daily check-in",b:[
+  {e:"📝",t:"Daily Check-In",d:"Log once in a day.",x:U("28 Apr")},
+  {e:"✍️",t:"Double Check-In",d:"Twice in a day.",x:U("2 May")},
+  {e:"📔",t:"Mood Journal",d:"3+ in a day.",x:P(2,3,' (best)')}]},
+ {n:"Mood · Daily devotion",b:[
+  {e:"🌼",t:"Devoted Day",d:"A 3+ day.",x:U("11 May")},
+  {e:"💪",t:"Engaged",d:"3 consecutive 3+ days.",x:P(3,3,' d')},
+  {e:"🧗",t:"Devoted Week",d:"7 consecutive.",x:P(3,7,' d')},
+  {e:"🏵️",t:"Steadfast",d:"15 consecutive.",x:P(3,15,' d')},
+  {e:"💎",t:"Mood Maven",d:"30 consecutive.",x:P(3,30,' d')},
+  {e:"🌠",t:"Mood Sovereign",d:"60 consecutive.",x:P(3,60,' d')}]},
+ {n:"Keyboard · Keystroke volume",b:[
+  {e:"🔤",t:"Warming Up",d:"1k keystrokes.",x:U("29 Apr")},
+  {e:"📝",t:"Wordsmith",d:"10k keystrokes.",x:U("9 May")},
+  {e:"📚",t:"Novelist",d:"100k keystrokes.",x:P(42310,100000)},
+  {e:"🖋️",t:"Prolific",d:"500k keystrokes.",x:P(42310,500000)},
+  {e:"⌨️",t:"Millionaire",d:"1M keystrokes.",x:P(42310,1000000)},
+  {e:"🗿",t:"Monolith",d:"5M keystrokes.",x:P(42310,5000000)}]},
+ {n:"Keyboard · Session streak",b:[
+  {e:"🔥",t:"Spark",d:"3-day streak.",x:U("1 May")},
+  {e:"🔥",t:"Week Streak",d:"7-day streak.",x:U("5 May")},
+  {e:"🔥",t:"Two-Week Burn",d:"14-day streak.",x:P(9,14,' d')},
+  {e:"🏆",t:"Month Streak",d:"30-day streak.",x:P(9,30,' d')},
+  {e:"🏅",t:"Iron Habit",d:"60-day streak.",x:P(9,60,' d')},
+  {e:"💯",t:"Century Streak",d:"100-day streak.",x:P(9,100,' d')},
+  {e:"👑",t:"Year-Long",d:"365-day streak.",x:P(9,365,' d')}]}
+];
+const fmt=n=>n.toLocaleString('en-US');
+const pct=x=>Math.max(3,Math.round(x.c/x.t*100));
+function prog(x){return `<div class="pbar"><i style="width:${pct(x)}%"></i></div>
+ <div class="pcap">${fmt(x.c)} / ${fmt(x.t)}${x.u}</div>`;}
+function cls(x){return x.s==='u'?'bdg u':'bdg l';}
+
+/* A — sectioned 2-col grid */
+function A(){let h='';for(const g of G){h+=`<div class="ghead">${g.n}
+ <span class="ct">${g.b.filter(b=>b.x.s==='u').length}/${g.b.length}</span></div><div class="grid">`;
+ for(const b of g.b){h+=`<div class="${cls(b.x)}"><span class="em">${b.e}</span>
+  <div class="ti">${b.t}</div><div class="de">${b.d}</div>`+
+  (b.x.s==='u'?`<div class="dt">Unlocked ${b.x.d}</div>`:prog(b.x))+`</div>`;}
+ h+=`</div>`;}return h;}
+
+/* B — full-width list rows */
+function B(){let h='';for(const g of G){h+=`<div class="ghead">${g.n}
+ <span class="ct">${g.b.filter(b=>b.x.s==='u').length}/${g.b.length}</span></div><div class="rows">`;
+ for(const b of g.b){h+=`<div class="${cls(b.x)}"><span class="em">${b.e}</span>
+  <div class="mid"><div class="ti">${b.t}</div><div class="de">${b.d}</div>`+
+  (b.x.s==='u'?'':`<div class="pbar"><i style="width:${pct(b.x)}%"></i></div>`)+`</div>`+
+  `<div class="rt">${b.x.s==='u'?'✓ '+b.x.d:fmt(b.x.c)+'/'+fmt(b.x.t)}</div></div>`;}
+ h+=`</div>`;}return h;}
+
+/* C — free horizontal scroll per group (no arrows, peek) */
+function C(){let h='';for(const g of G){h+=`<div class="ghead">${g.n}
+ <span class="ct">${g.b.filter(b=>b.x.s==='u').length}/${g.b.length}</span></div>
+ <div class="hint">swipe sideways · no buttons</div><div class="strip">`;
+ for(const b of g.b){h+=`<div class="${cls(b.x)}"><span class="em">${b.e}</span>
+  <div class="ti">${b.t}</div><div class="de">${b.d}</div>`+
+  (b.x.s==='u'?`<div class="dt">${b.x.d}</div>`:prog(b.x))+`</div>`;}
+ h+=`</div>`;}return h;}
+
+/* D — accordion groups */
+function D(){let h='';G.forEach((g,i)=>{const u=g.b.filter(b=>b.x.s==='u').length;
+ const op=i===0?' open':'';
+ h+=`<div class="acc${op}"><div class="hd" onclick="this.parentNode.classList.toggle('open')">
+  <span class="nm">${g.n}</span>
+  <span class="mini"><i style="width:${Math.round(u/g.b.length*100)}%"></i></span>
+  <span class="cv">${u}/${g.b.length}</span><span class="chev">▸</span></div><div class="body">`;
+ for(const b of g.b){h+=`<div class="${cls(b.x)}"><span class="em">${b.e}</span>
+  <div class="ti">${b.t}</div><div class="de">${b.d}</div>`+
+  (b.x.s==='u'?`<div class="dt">${b.x.d}</div>`:prog(b.x))+`</div>`;}
+ h+=`</div></div>`;});return h;}
+
+/* E — "next up" hero + compact 4-col grid */
+function E(){
+ const next={...G[0].b[2],g:G[0].n}; // Habit Forming 37/50
+ let h=`<div class="hero"><div class="he">${next.e}</div><div style="flex:1">
+  <div class="ht">Closest to unlock · ${next.g}</div>
+  <div class="hn">${next.t}</div><div class="hd">${next.d}</div>
+  ${prog(next.x)}</div></div>`;
+ for(const g of G){h+=`<div class="ghead">${g.n}
+  <span class="ct">${g.b.filter(b=>b.x.s==='u').length}/${g.b.length}</span></div>
+  <div class="mini-grid">`;
+  for(const b of g.b){h+=`<div class="${cls(b.x)}"><span class="em">${b.e}</span>
+   <div class="mt">${b.x.s==='u'?'✓':fmt(b.x.c)+'/'+fmt(b.x.t)}</div></div>`;}
+  h+=`</div>`;}return h;}
+
+/* F — current shipped carousel (reference only) */
+function F(){const g=G[2];const i=1;
+ return `<div class="ghead">${g.n} <span class="ct">1/6</span></div>
+ <div style="display:flex;align-items:stretch;gap:0">
+  <div style="background:var(--primary);color:#fff;display:flex;align-items:center;
+   justify-content:center;width:34px;border-radius:0 12px 12px 0">‹</div>
+  <div class="bdg l" style="flex:1;text-align:center;padding:18px 10px;margin:0 6px">
+   <span class="em" style="display:block;margin-bottom:7px">${g.b[i].e}</span>
+   <div class="ti">${g.b[i].t}</div><div class="de">${g.b[i].d}</div>${prog(g.b[i].x)}</div>
+  <div style="background:var(--primary);color:#fff;display:flex;align-items:center;
+   justify-content:center;width:34px;border-radius:12px 0 0 12px">›</div></div>
+ <div style="text-align:center;color:var(--faint);font-size:16px;margin-top:8px">· · ● · · ·</div>`;}
+
+const OPTS=[
+ ["A","Sectioned grid","2-column cards under group headers. Everything visible by scrolling — most scannable, zero interaction needed.","<b>+</b> see all at a glance, simple &nbsp; <b>–</b> long scroll (28 cards)",A],
+ ["B","List rows","Full-width rows: emoji · title/desc/progress · state. Compact, dense, classic achievements look.","<b>+</b> very compact, easy to scan vertically &nbsp; <b>–</b> less 'rewarding' visually",B],
+ ["C","Free horizontal scroll","Per-group strip you swipe freely (next badge peeks). Like the carousel but no buttons / no forced one-at-a-time.","<b>+</b> keeps grouping, less scroll &nbsp; <b>–</b> still horizontal swiping",C],
+ ["D","Accordion groups","Collapsible group headers with a mini progress bar; expand a group to see its grid.","<b>+</b> tidy overview, drill-down &nbsp; <b>–</b> a tap to see badges",D],
+ ["E","Hero + compact grid","A big 'closest to unlock' card on top, then tiny 4-col badge grid per group.","<b>+</b> motivating focus + dense overview &nbsp; <b>–</b> tiny tiles show little text",E],
+ ["F","Current carousel (reference)","What's shipped now — one centred card per group, ‹/› edge arrows, page dots.","you said you don't like this one",F],
+];
+document.getElementById('opts').innerHTML=OPTS.map(([k,n,why,pc,fn])=>
+ `<div class="opt"><header><h2><span class="tag">${k}</span>${n}</h2>
+  <p class="why">${why}</p><p class="pc">${pc}</p></header>
+  <div class="stage">${fn()}</div></div>`).join('');
+</script>
+</body>
+</html>
