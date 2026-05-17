@@ -91,6 +91,7 @@
             android:id="@+id/dashboard_daily_keypress_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
             android:visibility="gone"
             app:cardCornerRadius="@dimen/card_corner_radius"
             app:cardElevation="@dimen/card_elevation">
