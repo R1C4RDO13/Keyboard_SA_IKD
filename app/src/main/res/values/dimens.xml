@@ -24,6 +24,7 @@
     <dimen name="card_corner_radius">12dp</dimen>
     <dimen name="card_elevation">2dp</dimen>
     <dimen name="session_dashboard_chart_height">200dp</dimen>
+    <dimen name="badge_card_height">230dp</dimen>
 
     <!-- Phase 8 — keyboard mood bar -->
     <dimen name="mood_bar_height">40dp</dimen>

@@ -60,7 +60,7 @@
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/badge_group_pager"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/badge_card_height"
             android:layout_weight="1" />
 
         <ImageButton
