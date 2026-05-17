@@ -328,11 +328,6 @@ class MyKeyboardView @JvmOverloads constructor(
         private const val MOOD_BAR_DANCE_JITTER_DP = 3f
         private const val MOOD_BAR_DANCE_JITTER_SMALL_DP = 2f
 
-        // Phase 8.2: how long the chat-bubble popup stays on screen after a
-        // tap before auto-dismissing. Long enough to read the first-person
-        // string at a glance; short enough not to obscure typing.
-        private const val MOOD_BUBBLE_AUTO_DISMISS_MS = 1500L
-
         // Phase 8.5 + Phase 13: collapse / expand animation cadence. A
         // single duration is reused for the chevron rotation, the
         // indicator/slots cross-fade, AND the AutoTransition that smooths
@@ -809,7 +804,10 @@ class MyKeyboardView @JvmOverloads constructor(
                     moodScope.launch { moodController.disablePrivacy() }
                 } else {
                     applyMoodBarHighlight(MOOD_SLOT_PRIVACY)
-                    showMoodBubble(anchor, R.string.mood_toast_privacy)
+                    // Owner directive: no on-keyboard popup/notification
+                    // on mood switch. The highlight change + dance are
+                    // the only feedback; the chat bubble is suppressed.
+                    dismissMoodBubble()
                     animateMoodSlotDance(anchor, MOOD_BAR_SCALE_SELECTED)
                     moodScope.launch { moodController.enablePrivacyAndClearMood() }
                 }
@@ -821,7 +819,10 @@ class MyKeyboardView @JvmOverloads constructor(
                     moodScope.launch { moodController.clearMoodForActiveSession() }
                 } else {
                     applyMoodBarHighlight(slot)
-                    showMoodBubble(anchor, moodToastResFor(slot))
+                    // Owner directive: no on-keyboard popup/notification
+                    // on mood switch. The highlight change + dance are
+                    // the only feedback; the chat bubble is suppressed.
+                    dismissMoodBubble()
                     animateMoodSlotDance(anchor, MOOD_BAR_SCALE_SELECTED)
                     moodScope.launch { moodController.setMoodForActiveSession(slot) }
                 }
@@ -849,94 +850,12 @@ class MyKeyboardView @JvmOverloads constructor(
     }
 
     /**
-     * Phase 8.2: map the ordinal mood score (1..6) to its first-person
-     * feedback toast string. Kept private + small so the mapping lives next
-     * to the dispatcher; `MoodEmoji` stays a pure data/labels helper.
-     */
-    private fun moodToastResFor(slot: Int): Int = when (slot) {
-        MoodEmoji.SCORE_HAPPINESS -> R.string.mood_toast_happiness
-        MoodEmoji.SCORE_SURPRISE -> R.string.mood_toast_surprise
-        MoodEmoji.SCORE_DISGUST -> R.string.mood_toast_disgust
-        MoodEmoji.SCORE_SADNESS -> R.string.mood_toast_sadness
-        MoodEmoji.SCORE_FEAR -> R.string.mood_toast_fear
-        MoodEmoji.SCORE_ANGER -> R.string.mood_toast_anger
-        else -> R.string.mood_toast_happiness
-    }
-
-    /**
-     * Phase 8.2: surface a chat-bubble popup above the tapped mood slot.
-     *
-     * - Gated on `Config.showMoodPopup` (the user can disable feedback while
-     *   keeping the underlying state change). Dismisses any in-flight bubble
-     *   before bailing so a leftover bubble does not linger after the toggle.
-     * - Lazily inflates the popup once and reuses the same `PopupWindow` /
-     *   `TextView` for every tap; only the text + theme-tinted layer-list
-     *   background are refreshed per tap.
-     * - Positioned in window coordinates relative to `mPopupParent` (same
-     *   parent the key-preview popup uses), centered horizontally on the
-     *   anchor, clamped to the screen so the bubble never goes off-edge.
-     * - Auto-dismisses after `MOOD_BUBBLE_AUTO_DISMISS_MS`. Consecutive taps
-     *   reset the dismiss timer so the bubble doesn't disappear mid-read.
-     */
-    private fun showMoodBubble(anchor: View, textRes: Int) {
-        if (!context.config.showMoodPopup) {
-            dismissMoodBubble()
-            return
-        }
-        if (mMoodBubblePopup == null) {
-            val view = LayoutInflater.from(context)
-                .inflate(R.layout.popup_mood_bubble, null, false) as TextView
-            mMoodBubbleText = view
-            mMoodBubblePopup = PopupWindow(view, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                isTouchable = false
-                isFocusable = false
-                isOutsideTouchable = true
-                setBackgroundDrawable(null)
-            }
-        }
-        val popup = mMoodBubblePopup ?: return
-        val text = mMoodBubbleText ?: return
-        text.setText(textRes)
-        text.setTextColor(mTextColor)
-        (text.background as? LayerDrawable)?.let { layered ->
-            layered.findDrawableByLayerId(R.id.mood_bubble_background_shape)
-                ?.applyColorFilter(mKeyColor)
-            layered.findDrawableByLayerId(R.id.mood_bubble_background_stroke)
-                ?.applyColorFilter(mStrokeColor)
-        }
-        text.measure(
-            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-        )
-        val popupWidth = text.measuredWidth
-        val popupHeight = text.measuredHeight
-        val anchorLoc = IntArray(2)
-        anchor.getLocationInWindow(anchorLoc)
-        val anchorMargin = resources.getDimensionPixelSize(R.dimen.mood_bubble_anchor_margin)
-        // Centre on the anchor, then clamp to the keyboard width so the
-        // bubble never spills past the edge on a corner tap.
-        var x = anchorLoc[0] + anchor.width / 2 - popupWidth / 2
-        val rightLimit = width - popupWidth - anchorMargin
-        if (rightLimit > anchorMargin) {
-            x = x.coerceIn(anchorMargin, rightLimit)
-        }
-        val y = anchorLoc[1] - popupHeight - anchorMargin
-        if (popup.isShowing) {
-            popup.update(x, y, popupWidth, popupHeight)
-        } else {
-            popup.width = popupWidth
-            popup.height = popupHeight
-            popup.showAtLocation(mPopupParent, Gravity.NO_GRAVITY, x, y)
-        }
-        mMoodBubbleHandler.removeCallbacks(mMoodBubbleDismissRunnable)
-        mMoodBubbleHandler.postDelayed(mMoodBubbleDismissRunnable, MOOD_BUBBLE_AUTO_DISMISS_MS)
-    }
-
-    /**
-     * Phase 8.2: silently tear down any in-flight mood bubble + its pending
-     * auto-dismiss. Used both when the user has disabled the popup via
-     * settings and when a deselect tap should clear the previous bubble
-     * without surfacing a new one.
+     * Owner directive (post-Phase 8.4): the on-keyboard chat-bubble popup
+     * is no longer shown on a mood switch — the highlight change + the
+     * Phase 8.4 dance are the only feedback. The bubble teardown helper
+     * below is kept so any popup left over from an older build (or a
+     * deselect tap) is still cleaned up safely; the `Config.showMoodPopup`
+     * pref is now inert for the keyboard bar.
      */
     private fun dismissMoodBubble() {
         mMoodBubbleHandler.removeCallbacks(mMoodBubbleDismissRunnable)

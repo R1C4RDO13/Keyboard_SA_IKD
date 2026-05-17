@@ -10,7 +10,6 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
-import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.keyboard.R
 import org.fossify.keyboard.helpers.MoodEmoji
@@ -26,7 +25,9 @@ import org.fossify.keyboard.helpers.MoodEmoji
  * minimum 24 dp from centre regardless of the visual radius
  * (accessibility — sub-3 dp bubbles would otherwise be unhittable).
  *
- * No hardcoded colour literals — bubble fill is `getProperPrimaryColor()`,
+ * No hardcoded colour literals — mood-classified bubbles use their
+ * `mood_color_*` token (Phase 9.17), unclassified bubbles use a
+ * theme-aware low-alpha neutral grey derived from `getProperTextColor()`,
  * axis labels use `getProperTextColor()`. Theme switches propagate on
  * the next `setData()` call.
  */
@@ -101,7 +102,17 @@ class IkdBubbleMapView @JvmOverloads constructor(
     private fun applyTheme() {
         labelPaint.color = context.getProperTextColor()
         yLabelPaint.color = context.getProperTextColor()
-        fallbackBubbleColor = ColorUtils.setAlphaComponent(context.getProperPrimaryColor(), BUBBLE_ALPHA)
+        // Unclassified (no dominant mood) bubbles render as a neutral
+        // grey instead of the primary theme tint, so the primary colour
+        // can't be mistaken for a mood. Derived from the theme text
+        // colour at a low alpha: dark text faded on a light theme and
+        // light text faded on a dark theme both read as a soft grey,
+        // so it stays legible on either Fossify theme without a
+        // hardcoded hex literal.
+        fallbackBubbleColor = ColorUtils.setAlphaComponent(
+            context.getProperTextColor(),
+            UNCLASSIFIED_BUBBLE_ALPHA,
+        )
         bubblePaint.color = fallbackBubbleColor
     }
 
@@ -110,7 +121,7 @@ class IkdBubbleMapView @JvmOverloads constructor(
      * cell has a dominant mood, look up the matching `mood_color_*`
      * token via [MoodEmoji.colorResFor] and apply the same per-bubble
      * alpha as the fallback. When the cell has no mood, fall back to
-     * the cached primary-tinted neutral.
+     * the cached theme-aware neutral grey.
      */
     private fun bubbleFillColor(score: Int?): Int = if (score == null) {
         fallbackBubbleColor
@@ -230,8 +241,11 @@ class IkdBubbleMapView @JvmOverloads constructor(
         private const val Y_LABEL_BASELINE_DIVISOR: Float = 3f
         private const val Y_LABEL_PADDING_PX: Float = 4f
         private const val TAP_TARGET_DP: Float = 24f
-        // 0xCC ≈ 80% alpha on the bubble fill.
+        // 0xCC ≈ 80% alpha on the mood-classified bubble fill.
         private const val BUBBLE_ALPHA: Int = 0xCC
+        // 0x3D ≈ 24% alpha — a soft neutral grey for unclassified
+        // (no dominant mood) bubbles on either Fossify theme.
+        private const val UNCLASSIFIED_BUBBLE_ALPHA: Int = 0x3D
         private const val HOURS_PER_DAY: Int = 24
         private const val Y_LABEL_TICKS: Int = 8
         private val HOUR_LABEL_TICKS: IntArray = intArrayOf(0, 6, 12, 18)

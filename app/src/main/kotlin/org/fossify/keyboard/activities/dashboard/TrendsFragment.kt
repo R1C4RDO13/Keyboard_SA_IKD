@@ -1,13 +1,24 @@
 package org.fossify.keyboard.activities.dashboard
 
+import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.ColorRes
+import androidx.core.content.ContextCompat
+import com.github.mikephil.charting.data.PieData
+import com.github.mikephil.charting.data.PieDataSet
+import com.github.mikephil.charting.data.PieEntry
 import org.fossify.commons.extensions.beVisibleIf
+import org.fossify.commons.extensions.getProperBackgroundColor
+import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.FragmentDashboardTrendsBinding
+import org.fossify.keyboard.databinding.ItemOrientationLegendBinding
+import org.fossify.keyboard.helpers.IkdOrientationAggregator
 import org.fossify.keyboard.helpers.WidgetInfo
 import org.fossify.keyboard.helpers.attachWidgetInfo
 
@@ -87,6 +98,17 @@ class TrendsFragment : DashboardFragment() {
                 descriptionRes = R.string.info_habits_session_duration_desc,
                 interpretationRes = R.string.info_habits_session_duration_interpretation,
                 formulaRes = R.string.info_habits_session_duration_formula,
+            ),
+        )
+        // Phase 9.8 orientation donut relocated here from the Keystroke
+        // Dynamics tab (owner directive). Info copy reuses the existing
+        // info_kd_orientation_* keys.
+        binding.dashboardOrientationInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_kd_orientation_title,
+                descriptionRes = R.string.info_kd_orientation_desc,
+                interpretationRes = R.string.info_kd_orientation_interpretation,
+                formulaRes = R.string.info_kd_orientation_formula,
             ),
         )
     }
@@ -179,11 +201,96 @@ class TrendsFragment : DashboardFragment() {
         // empty placeholder fires only when the snapshot has no buckets
         // at all, which already implies the global empty state on the
         // host activity is taking over.
+        // Phase 9.8: Orientation breakdown donut, relocated here from
+        // the Keystroke Dynamics tab (owner directive). Backed by the
+        // same IkdOrientationAggregator output already carried in the
+        // payload — no aggregator/DAO change.
+        val orientation = payload.orientation
+        val orientationHasData = orientation.slices.any { it.sessionCount > 0 }
+        view.dashboardOrientationCard.setCardBackgroundColor(ctx.getProperBackgroundColor())
+        view.dashboardOrientationCard.beVisibleIf(orientationHasData)
+        if (orientationHasData) {
+            bindOrientationDonut(orientation.slices)
+        }
+
         val anyData = snap.buckets.isNotEmpty()
         view.fragmentTrendsEmptyMessage.beVisibleIf(!anyData)
     }
 
+    private fun bindOrientationDonut(slices: List<IkdOrientationAggregator.OrientationSlice>) {
+        val ctx = context ?: return
+        val view = _binding ?: return
+        val chart = view.dashboardOrientationChart
+        val totalSessions = slices.sumOf { it.sessionCount }
+        val totalDurationMs = slices.sumOf { it.totalDurationMs }
+
+        val visible = slices.filter { it.sessionCount > 0 }
+        val entries = visible.map { slice ->
+            PieEntry(slice.sessionCount.toFloat(), labelForOrientation(slice.orientation))
+        }
+        val colors = visible.map { ContextCompat.getColor(ctx, colorResForOrientation(it.orientation)) }
+        val dataSet = PieDataSet(entries, "").apply {
+            this.colors = colors
+            sliceSpace = ORIENTATION_SLICE_SPACE_PX
+            setDrawValues(false)
+        }
+        chart.apply {
+            data = PieData(dataSet)
+            description.isEnabled = false
+            legend.isEnabled = false
+            isDrawHoleEnabled = true
+            holeRadius = ORIENTATION_HOLE_RADIUS
+            transparentCircleRadius = 0f
+            setUsePercentValues(false)
+            setEntryLabelColor(ctx.getProperTextColor())
+            setEntryLabelTextSize(ORIENTATION_LABEL_TEXT_SIZE_SP)
+            setHoleColor(android.graphics.Color.TRANSPARENT)
+            setCenterTextColor(ctx.getProperTextColor())
+            centerText = "${getString(R.string.dashboard_orientation_center_sessions, totalSessions)}\n" +
+                getString(
+                    R.string.dashboard_orientation_center_minutes,
+                    totalDurationMs.toDouble() / MS_PER_MINUTE,
+                )
+            invalidate()
+        }
+
+        val legend = view.dashboardOrientationLegend
+        legend.removeAllViews()
+        val inflater = LayoutInflater.from(ctx)
+        val textColor = ctx.getProperTextColor()
+        for (slice in visible) {
+            val row = ItemOrientationLegendBinding.inflate(inflater, legend, false)
+            row.orientationLegendSwatch.backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(ctx, colorResForOrientation(slice.orientation))
+            )
+            row.orientationLegendLabel.text = labelForOrientation(slice.orientation)
+            row.orientationLegendLabel.setTextColor(textColor)
+            row.orientationLegendCount.text = slice.sessionCount.toString()
+            row.orientationLegendCount.setTextColor(textColor)
+            legend.addView(row.root)
+        }
+    }
+
+    private fun labelForOrientation(orientation: Int): String = when (orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> getString(R.string.orientation_portrait)
+        Configuration.ORIENTATION_LANDSCAPE -> getString(R.string.orientation_landscape)
+        ORIENTATION_NOT_CAPTURED -> getString(R.string.orientation_not_captured)
+        else -> getString(R.string.orientation_unknown)
+    }
+
+    @ColorRes
+    private fun colorResForOrientation(orientation: Int): Int = when (orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> R.color.orientation_color_portrait
+        Configuration.ORIENTATION_LANDSCAPE -> R.color.orientation_color_landscape
+        ORIENTATION_NOT_CAPTURED -> R.color.orientation_color_unknown
+        else -> R.color.orientation_color_unknown
+    }
+
     companion object {
         private const val MS_PER_MINUTE = 60_000L
+        private const val ORIENTATION_NOT_CAPTURED = -1
+        private const val ORIENTATION_HOLE_RADIUS = 60f
+        private const val ORIENTATION_LABEL_TEXT_SIZE_SP = 10f
+        private const val ORIENTATION_SLICE_SPACE_PX = 2f
     }
 }
