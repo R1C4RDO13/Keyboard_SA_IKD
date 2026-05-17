@@ -2,12 +2,13 @@ package org.fossify.keyboard.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.content.res.ColorStateList
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
+import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
-import androidx.core.content.ContextCompat
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ItemBadgeCardBinding
 import org.fossify.keyboard.helpers.IkdBadgeCatalog.BadgeProgress
@@ -82,11 +83,21 @@ class BadgeCardAdapter(
             binding.badgeCardDesc.text = model.description
             binding.badgeCardEmoji.text = model.emoji
 
+            // All colours come from the active Fossify runtime theme (same
+            // discipline as SummaryFragment / EventFeed) — never fixed
+            // colour tokens, which only track light/night and ignore a
+            // user's custom theme. Locked-ness is conveyed by alpha only.
+            val textColor = ctx.getProperTextColor()
+            binding.badgeCardTitle.setTextColor(textColor)
+            binding.badgeCardDesc.setTextColor(textColor)
+
             val card = binding.root as MaterialCardView
             card.setCardBackgroundColor(ctx.getProperBackgroundColor())
 
             if (model.isUnlocked) {
                 binding.badgeCardEmoji.alpha = 1f
+                binding.badgeCardTitle.alpha = 1f
+                binding.badgeCardDesc.alpha = 1f
                 binding.badgeCardProgressRow.visibility = ViewGroup.GONE
                 val at = model.unlockedAt
                 if (at != null && at > 0L) {
@@ -102,16 +113,13 @@ class BadgeCardAdapter(
                 }
                 card.strokeWidth = ctx.resources
                     .getDimensionPixelSize(R.dimen.summary_mood_tile_stroke_active)
-                card.setStrokeColor(
-                    ContextCompat.getColor(ctx, R.color.badge_unlocked_glow),
-                )
+                card.setStrokeColor(ctx.getProperPrimaryColor())
             } else {
                 binding.badgeCardEmoji.alpha = LOCKED_EMOJI_ALPHA
+                binding.badgeCardTitle.alpha = LOCKED_CONTENT_ALPHA
+                binding.badgeCardDesc.alpha = LOCKED_CONTENT_ALPHA
                 binding.badgeCardUnlockDate.visibility = ViewGroup.GONE
                 card.strokeWidth = 0
-                card.setCardBackgroundColor(
-                    ContextCompat.getColor(ctx, R.color.badge_locked_surface),
-                )
                 bindProgress(model.progress)
             }
         }
@@ -130,7 +138,12 @@ class BadgeCardAdapter(
             } else {
                 ((current * PCT_MAX) / progress.target).toInt().coerceIn(0, PCT_MAX)
             }
+            val primary = ctx.getProperPrimaryColor()
             binding.badgeCardProgressBar.progress = pct
+            binding.badgeCardProgressBar.progressTintList =
+                ColorStateList.valueOf(primary)
+            binding.badgeCardProgressBar.progressBackgroundTintList =
+                ColorStateList.valueOf(primary.adjustAlpha(PROGRESS_TRACK_ALPHA))
             val nf = java.text.NumberFormat.getIntegerInstance(Locale.getDefault())
             binding.badgeCardProgressText.text = when (progress.unitKind) {
                 UnitKind.DAYS -> ctx.getString(
@@ -149,6 +162,8 @@ class BadgeCardAdapter(
 
         companion object {
             private const val LOCKED_EMOJI_ALPHA = 0.55f
+            private const val LOCKED_CONTENT_ALPHA = 0.6f
+            private const val PROGRESS_TRACK_ALPHA = 0.25f
             private const val PCT_MAX = 100
         }
     }

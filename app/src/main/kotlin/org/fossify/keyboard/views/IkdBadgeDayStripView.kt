@@ -7,9 +7,9 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
-import androidx.core.content.ContextCompat
+import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.getProperPrimaryColor
-import org.fossify.keyboard.R
+import org.fossify.commons.extensions.getProperTextColor
 
 /**
  * Phase 14 §7.3: the Daily-devotion "mini-keyboard" strip. Renders the
@@ -59,7 +59,7 @@ class IkdBadgeDayStripView @JvmOverloads constructor(
         outlinePaint.strokeWidth = outlineW
 
         val primary = context.getProperPrimaryColor()
-        val dim = ContextCompat.getColor(context, R.color.badge_locked_bar)
+        val dim = context.getProperTextColor().adjustAlpha(DIM_CELL_ALPHA)
         val lastIndex = n - 1
 
         for (i in 0 until n) {
@@ -89,5 +89,6 @@ class IkdBadgeDayStripView @JvmOverloads constructor(
         private const val CELL_GAP_DP = 4f
         private const val CELL_RADIUS_DP = 4f
         private const val OUTLINE_DP = 2f
+        private const val DIM_CELL_ALPHA = 0.22f
     }
 }

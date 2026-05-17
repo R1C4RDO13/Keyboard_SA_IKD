@@ -54,7 +54,6 @@ class AchievementsFragment : DashboardFragment() {
         val ctx = context ?: return
         val view = _binding ?: return
         (activity as? androidx.fragment.app.FragmentActivity)?.updateTextColors(view.root)
-        view.achievementsAllTimeNote.setTextColor(ctx.getProperTextColor())
 
         val result = payload.badges
         val groups = buildGroupModels(result)

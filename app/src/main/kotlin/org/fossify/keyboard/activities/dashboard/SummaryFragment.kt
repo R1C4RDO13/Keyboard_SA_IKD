@@ -100,12 +100,11 @@ class SummaryFragment : DashboardFragment() {
         view.summaryTileWpm.setOnClickListener(toTrends)
         view.summaryTileErrorRate.setOnClickListener(toTrends)
 
-        // Phase 14 §7.6: the whole "Badges in progress" widget jumps to
-        // the Achievements tab — "see all ›" header + every tile.
+        // Phase 14 §7.6: every "Badges in progress" tile jumps to the
+        // Achievements tab.
         val toAchievements = View.OnClickListener {
             goToTab(DashboardPagerAdapter.TAB_ACHIEVEMENTS)
         }
-        view.summaryBadgesSeeAll.setOnClickListener(toAchievements)
         for (tile in badgeTileBindings(view)) {
             tile.root.setOnClickListener(toAchievements)
         }
@@ -570,7 +569,6 @@ class SummaryFragment : DashboardFragment() {
         view.summaryBadgesCard.beVisible()
         view.summaryBadgesCard.setCardBackgroundColor(ctx.getProperBackgroundColor())
         view.summaryBadgesTitle.setTextColor(ctx.getProperPrimaryColor())
-        view.summaryBadgesSeeAll.setTextColor(ctx.getProperPrimaryColor())
 
         val tiles = badgeTileBindings(view)
         IkdBadgeCatalog.GROUPS.forEachIndexed { index, group ->

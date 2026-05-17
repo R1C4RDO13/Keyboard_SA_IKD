@@ -14,18 +14,6 @@
     android:orientation="vertical">
 
     <org.fossify.commons.views.MyTextView
-        android:id="@+id/achievements_all_time_note"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingStart="@dimen/normal_margin"
-        android:paddingTop="@dimen/small_margin"
-        android:paddingEnd="@dimen/normal_margin"
-        android:paddingBottom="@dimen/small_margin"
-        android:text="@string/achievements_all_time_note"
-        android:textSize="@dimen/smaller_text_size"
-        android:textStyle="italic" />
-
-    <org.fossify.commons.views.MyTextView
         android:id="@+id/achievements_empty_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

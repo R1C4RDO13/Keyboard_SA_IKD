@@ -23,6 +23,67 @@
         android:orientation="vertical"
         android:padding="@dimen/normal_margin">
 
+        <!-- Phase 9.6: Circadian (hour×weekday) heatmap card. Moved to
+             the top of the Activity tab (owner directive 2026-05-17).
+             Always all-time per orchestrator Decision #18. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/dashboard_circadian_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:cardCornerRadius="@dimen/card_corner_radius"
+            app:cardElevation="@dimen/card_elevation">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/normal_margin">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_chart_circadian_title"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/dashboard_circadian_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="@dimen/small_margin"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/widget_info_content_description"
+                        android:focusable="true"
+                        android:src="@drawable/ic_info_outline_vector" />
+
+                </LinearLayout>
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/dashboard_circadian_subtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dashboard_circadian_subtitle"
+                    android:textSize="@dimen/smaller_text_size"
+                    android:textStyle="italic" />
+
+                <org.fossify.keyboard.views.IkdHeatmapView
+                    android:id="@+id/dashboard_circadian_heatmap"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/small_margin" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Phase 9.5: Daily keypress bar chart card.
              Phase 15: the Calendar heatmap card that lived above this was
              removed (owner directive, §2). -->
@@ -122,67 +183,6 @@
                     android:id="@+id/dashboard_hourly_chart"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
-                    android:layout_marginTop="@dimen/small_margin" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Phase 9.6: Circadian (hour×weekday) heatmap card. Always
-             all-time per orchestrator Decision #18. -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/dashboard_circadian_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/normal_margin"
-            android:visibility="gone"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/normal_margin">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/dashboard_chart_circadian_title"
-                        android:textStyle="bold" />
-
-                    <ImageView
-                        android:id="@+id/dashboard_circadian_info"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginStart="@dimen/small_margin"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:contentDescription="@string/widget_info_content_description"
-                        android:focusable="true"
-                        android:src="@drawable/ic_info_outline_vector" />
-
-                </LinearLayout>
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/dashboard_circadian_subtitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dashboard_circadian_subtitle"
-                    android:textSize="@dimen/smaller_text_size"
-                    android:textStyle="italic" />
-
-                <org.fossify.keyboard.views.IkdHeatmapView
-                    android:id="@+id/dashboard_circadian_heatmap"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/small_margin" />
 
             </LinearLayout>

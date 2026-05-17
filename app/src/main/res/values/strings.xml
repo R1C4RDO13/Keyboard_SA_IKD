@@ -461,7 +461,6 @@
 
     <!-- Achievements tab + chrome -->
     <string name="dashboard_tab_label_achievements">Achievements</string>
-    <string name="achievements_all_time_note">Always all-time · global Range &amp; Mood filters don\'t apply here</string>
     <string name="achievements_group_count_format">%1$d / %2$d</string>
     <string name="achievements_empty_message">No badges unlocked yet — keep typing and logging mood!</string>
     <string name="achievements_unlocked_date_format">Unlocked %1$s</string>
@@ -474,7 +473,6 @@
 
     <!-- Summary-tab "Badges in progress" widget (§7.6) -->
     <string name="summary_badges_section_title">Badges in progress</string>
-    <string name="summary_badges_see_all">see all ›</string>
     <string name="summary_badge_tile_done">✓ done</string>
     <string name="summary_badge_tile_pct_format">%1$d%%</string>
     <string name="summary_badge_tile_days_format">%1$d/%2$d d</string>

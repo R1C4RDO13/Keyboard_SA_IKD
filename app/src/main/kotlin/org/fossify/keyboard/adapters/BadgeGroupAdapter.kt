@@ -1,13 +1,15 @@
 package org.fossify.keyboard.adapters
 
+import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
+import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.keyboard.R
 import org.fossify.keyboard.databinding.ItemBadgeGroupBinding
 
@@ -94,6 +96,7 @@ class BadgeGroupAdapter(
                 model.unlockedCount,
                 model.badges.size,
             )
+            binding.badgeGroupCount.setTextColor(ctx.getProperTextColor())
 
             cardAdapter.submit(model.badges)
             buildDots(model.badges.size)
@@ -139,7 +142,7 @@ class BadgeGroupAdapter(
             val ctx = binding.root.context
             binding.badgeGroupDayStripCard.visibility = View.VISIBLE
             binding.badgeGroupDayStripCard.setCardBackgroundColor(
-                ContextCompat.getColor(ctx, R.color.badge_locked_surface),
+                ctx.getProperBackgroundColor(),
             )
             binding.badgeGroupDayStrip.setData(strip)
         }
@@ -150,6 +153,7 @@ class BadgeGroupAdapter(
             val ctx = container.context
             val size = ctx.resources.getDimensionPixelSize(R.dimen.badge_dot_size)
             val gap = ctx.resources.getDimensionPixelSize(R.dimen.badge_dot_gap)
+            val tint = ColorStateList.valueOf(ctx.getProperPrimaryColor())
             repeat(count) {
                 val dot = View(ctx)
                 val lp = LinearLayout.LayoutParams(size, size)
@@ -157,6 +161,7 @@ class BadgeGroupAdapter(
                 lp.marginEnd = gap
                 dot.layoutParams = lp
                 dot.setBackgroundResource(R.drawable.badge_dot)
+                dot.backgroundTintList = tint
                 container.addView(dot)
             }
         }
