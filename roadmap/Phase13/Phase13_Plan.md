@@ -1,8 +1,8 @@
 # Phase 13 — Persistent Right-Anchored Mood Bar (visible inside the emoji drawer)
 
-**Status:** Planned
+**Status:** Implemented — landed on `main` (commit `5dd826a5`, `feat(phase13): persistent right-anchored mood bar + insights shortcut`).
 **Depends on:** Phase 8 / 8.1 / 8.2 / 8.5 (the existing collapsible mood bar UI + `IkdMoodBarController` + standing-mood persistence), Phase 12 (mood-curated emoji section — Phase 13 makes the user's mood actually *changeable* while the curated section is on screen)
-**Branch:** Implementation lands directly on `main` (small focused commits per logical change), per recent project hygiene.
+**Branch:** landed directly on `main` (small focused commits per logical change), per recent project hygiene.
 **Scope (one sentence):** Move the keyboard's mood bar from its current leading-edge anchor to the **trailing edge** and lift it into an overlay layer above both the regular keyboard toolbar **and** the emoji drawer, so the user can swap their mood without closing the drawer — which in turn re-curates the Phase 12 mood section immediately.
 
 > **Phase numbering note.** Phase 12 (mood-curated emoji section) landed at `bf305176`. This feature picks up from there as Phase 13.

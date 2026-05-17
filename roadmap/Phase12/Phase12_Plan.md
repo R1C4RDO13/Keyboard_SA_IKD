@@ -1,8 +1,8 @@
 # Phase 12 — Mood-Curated Emoji Section in the Drawer
 
-**Status:** Planned
+**Status:** Implemented — landed on `main` (commit `bf305176`, `feat(phase12): mood-curated emoji section in the drawer`). Phase 13 then made the standing mood changeable *without closing the drawer* (mid-drawer re-curation).
 **Depends on:** Phase 7 (`onEmojiText` capture pipeline), Phase 8 (mood bar + `MoodEmoji` valence taxonomy), Phase 8.5 (`Config.lastMoodScore` standing-mood persistence)
-**Branch:** Implementation lands directly on `main` (small focused commits per logical change), per recent project hygiene.
+**Branch:** landed directly on `main` (small focused commits per logical change), per recent project hygiene.
 **Scope (one sentence):** When the user opens the keyboard's emoji drawer **and a standing mood is currently set** (`Config.lastMoodScore != SCORE_NONE`), prepend a context-aware section at the top of the emoji list containing a curated set of emojis associated with that mood. When no mood is set, the drawer renders unchanged.
 
 > **Phase numbering note.** The original Phase 11 ("Usage Map & Daily Activity Charts") was deleted in Phase 9 (its widgets were absorbed into sub-phases 9.5–9.10). To avoid git-archaeology ambiguity with the strikethrough Phase 11 row in [`STATUS.md`](../STATUS.md), this new mood-emoji feature is numbered **Phase 12**.

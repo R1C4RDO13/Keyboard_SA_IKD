@@ -1,9 +1,9 @@
 # Phase 9 — Global Insights Expansion (Orchestrator)
 
-**Status:** Planned · spec complete · no branch yet
+**Status:** Implemented — sub-phases 9.1 → 9.10 landed directly on `main` (commits `f2d13b33` … `38ae0d63`, no feature branch — user override). Follow-on navigation/presentation polish 9.11 → 9.18 also landed on `main`; see [`STATUS.md`](../STATUS.md) and [`../FeatureRoadmap.md`](../FeatureRoadmap.md) for the per-sub-phase log, and the files in [`sub_plans/`](sub_plans/).
 **Depends on:** Phase 8 + 8.1 + 8.2 + 8.3 (mood entries in `ikd.db`, current dashboard surface)
 **Absorbs:** the deferred Phase 11 ("Usage Map & Daily Activity Charts") — every Phase 11 chart that survived design review is lifted into a Phase 9 sub-phase. Phase 11 is deleted from the roadmap.
-**Branch (proposed):** `feat/phase9-global-insights-expansion` — single branch, **ten** sub-phase commits (Phase-8 sub-phase shape).
+**Branch:** landed directly on `main`, **ten** sub-phase commits for 9.1 → 9.10 (Phase-8 sub-phase shape).
 **Read-side only:** `IkdDatabase.version` stays at 3, no schema migration, no keyboard-layer reopen, no new Gradle dependency, CSV format unchanged.
 
 This file is an **orchestrator**. It contains everything that's shared across sub-phases — implementation order, dependency graph, agent assignments, frozen surfaces, cross-cutting decisions — and links to the per-sub-phase plan files. Each sub-plan in [`sub_plans/`](sub_plans/) is self-contained: an implementer agent loads only its own sub-plan plus this orchestrator (referenced for the cross-cutting tables), keeping context windows small.

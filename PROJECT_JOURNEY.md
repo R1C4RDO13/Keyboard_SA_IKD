@@ -18,10 +18,10 @@ The system is a working **research prototype**, not a commercial product. It dem
 
 ### Headline numbers
 
-- **9 implemented phases** + 6 sub-phases + 3 planned phases (10, 12, 13) — full roadmap detailed in [`roadmap/STATUS.md`](roadmap/STATUS.md).
-- **2 Room database migrations** (v1 → v2 → v3), both additive, both validated by instrumented migration tests.
-- **5 dashboard sections** (Summary · Trends · Daily Activity · Keystroke Dynamics · Habits) with **~15 chart cards** built on top of a single read-side aggregator pattern.
-- **Zero edits** to the keyboard's input-latency-critical path during the read-side phases (Phases 3, 4, 5, 6, 9) — a deliberate freeze that protected the typing experience while the analytics layer grew.
+- **12 implemented phases** (1 → 10, plus 12 and 13) and roughly a dozen implemented sub-phases (8.1 – 8.5, 9.1 – 9.18) — one phase remains planned (Phase 14, gamification). Full roadmap in [`roadmap/STATUS.md`](roadmap/STATUS.md).
+- **2 Room database migrations** (v1 → v2 → v3), both additive, both validated by an instrumented migration test. Phase 14 would add a third (v3 → v4).
+- **5 dashboard tabs** (Summary · Trends · Daily Activity · Keystroke Dynamics · Habits) with **~15 chart cards** built on top of a single read-side aggregator pattern.
+- **The capture hot path stayed off the main thread throughout.** Every database write from `onKey()` is asynchronous, by constraint, in every phase. The handful of post-Phase-7.1 capture-layer reopens were narrow (the two error-rate fixes touched `computeBackspaceWeight`/the BACKSPACE branch; Phase 8.5 / 13 added tiny lifecycle / preference-listener wires) — and the phases that reshaped the keyboard *UI* (8 / 8.2 / 8.4 / 8.5 mood bar, 12 / 13 emoji drawer + mood-bar reposition) only touched view code, never the capture origin.
 - **All data on-device.** No internet permission was ever added.
 
 ---
@@ -126,6 +126,15 @@ The keyboard top bar gained a seven-button mood bar — `🛡️ 😊 😲 🤢 
 - **8.1** added UI polish (sizing, dashboard card theming, toggleable mood bar visibility).
 - **8.2** turned each slot into a true two-way toggle and dressed the bar as a stretched-key capsule with chat-bubble feedback popups (replacing the original toasts).
 - **8.3** dropped the "Avg Mood" KPI and the "Mood over Time" line chart — averaging across categorical labels produces interpretively vague numbers — and replaced them with a per-bucket **stacked-bar mood-mix chart** showing the percentage breakdown of each Ekman category over time. The Mood Distribution panel (counts per category) was kept verbatim.
+- **8.4** added a short pop + wiggle "dance" animation (plus the existing keyboard haptic) when the user *selects* a slot; deselect taps stay silent.
+- **8.5** reshaped the bar into a **collapsible, right-anchored chip** that remembers the user's standing self-rating across sessions (display-only `Config.lastMoodScore` — no auto-write to `mood_entries`) and auto-clears it after one hour of inactivity. The chip expands to the full seven-slot row on tap and auto-collapses after a selection.
+
+### Error-rate refinements (post-Phase 8)
+
+Two on-device review passes corrected the error-rate metric without touching the schema:
+
+- **Exclude BACKSPACE from the denominator** (`fix(error-rate)`, `569f331b`). Typing `hello world` and backspacing all eleven characters read 11/22 = 50 %; switching the denominator to *productive keystrokes* (`eventCount − correctionCount`) makes it read the expected 100 %. The same commit also made a single BACKSPACE that deletes an N-char selection contribute weight N instead of 1.
+- **Drop AUTOCORRECT from the error-rate formula entirely** (`feat(error-rate)`, `303e792f`). The IME-level autocorrect heuristic can't reliably distinguish a true spell-check accept from spell-check noise across OEMs, so AUTOCORRECT rows are still captured (CSV, per-session event log) but no longer feed the error-rate KPI / chart / live cell. The metric layer's definition of "correction" is now **BACKSPACE only**: `errorRatePct = 100 × SUM(BACKSPACE.correction_weight) / (keystrokeCount − backspaceCount)`. The Habits-tab error metric and the Daily-Quality scatter still treat AUTOCORRECT as a correction — flagged as a deliberate follow-up.
 
 ### Phase 9 — Global insights expansion
 
@@ -144,27 +153,40 @@ Phase 9 was deliberately split into 10 self-contained sub-plans, each with its o
 - **9.9** Time-vs-date bubble usage map.
 - **9.10** Backspaces-vs-autocorrections quality scatter.
 
-Then **9.11** introduced a TODAY range and converted the dashboard into a five-tab navigation (Trends · Daily Activity · Mood · Keystroke Dynamics · Habits) via `ViewPager2` + `NavigationRailView`. Subsequent micro-phases (9.14 / 9.15 / 9.16) refined the Summary tab and the bucket-label scope hint.
+Then a run of micro-phases reshaped the dashboard's *navigation and presentation* on top of those charts:
 
-Two new custom views (`IkdHeatmapView`, `IkdBubbleMapView`) joined the existing `IkdLineChartView` / `IkdStackedBarChartView`. No schema migration was needed (`IkdDatabase.version` stayed at 3); the capture path stayed frozen; no new dependency was added.
+- **9.11** added a TODAY range (hourly buckets) and converted the dashboard into a multi-tab `ViewPager2` layout, extracting per-tab rendering into `Fragment` subclasses under `activities/dashboard/` and shrinking `DashboardActivity` from ~1100 LOC to ~340 LOC.
+- **9.12** themed the tab strip, moved the tabs to the top of the screen, and de-duplicated the global KPI strip.
+- **9.13** added tap-to-explain info icons (`WidgetInfoDialog`) to every Insights widget.
+- **9.14** added a **Summary** tab as the new landing page (KPI grid + tile click-through), switched the tab toggle to a `TabLayout` with icons, and collapsed the range + mood filters into a toolbar bottom sheet with an active-filter chip below the tabs.
+- **9.15** reworked the Summary tab into a flat 3×2 KPI grid, moved the Usage Map and the Mood Mix + Mood Distribution widgets onto it, and **deleted the dedicated Mood tab** — the dashboard is now five tabs: **Summary · Trends · Daily Activity · Keystroke Dynamics · Habits**.
+- **9.16** added a bucket-size hint under the active filter chip, a Sessions-history shortcut in the overflow menu, and a streak fix (only counts calendar-consecutive days).
+- **9.17** refreshed the six mood-colour tokens to match the conventional emotional associations (gold = happy, orange = surprise, green = disgust, blue = sad, purple = fear, red = anger), moved the Mood Distribution panel to the top of the Summary tab as six coloured percentage tiles that double as the screen's colour legend, and tinted each Usage Map bubble by the dominant mood of the sessions in its cell.
+- **9.18** wired each Distribution tile to act as a one-tap shortcut for the global Mood Filter — tap a tile to scope every chart and KPI on every tab to that mood; tap the active tile (or the active-filter chip ✕) to revert to All.
 
-### Phase 10 — Rebrand to moodScript (planned)
+Two new custom views (`IkdHeatmapView`, `IkdBubbleMapView`, plus the `IkdHistogramView` used by 9.7) joined the existing `IkdLineChartView` / `IkdStackedBarChartView`. No schema migration was needed (`IkdDatabase.version` stayed at 3); the capture path stayed frozen; no new dependency was added.
+
+### Phase 10 — Rebrand to moodScript (implemented)
 
 **Objective:** retire the "Fossify Keyboard" identity now that the app has evolved into a behavioural-analytics research platform.
 
-Cosmetic-only scope: new app name (**moodScript**), new launcher glyph (the original Fossify keyboard glyph cradled by three concentric heart outlines — both brand pillars in one mark), new About screen via a local override of Commons `AboutActivity`. Deliberately *not* in scope: `applicationId` rename, fastlane/store metadata, `colorPrimary` palette change. The visual mockup is at [`roadmap/Phase10/Phase10_Identity_Mockup.html`](roadmap/Phase10/Phase10_Identity_Mockup.html); the full plan is at [`roadmap/Phase10/Phase10_Plan.md`](roadmap/Phase10/Phase10_Plan.md).
+Cosmetic-only scope: new app name (**MoodScript**), new launcher glyph (the original Fossify keyboard glyph cradled by three concentric heart outlines — both brand pillars in one mark), new About screen via a local override of Commons `AboutActivity`. Deliberately *not* in scope (and still deferred to a future release-readiness pass): `applicationId` rename, fastlane/store metadata, `colorPrimary` palette change, `versionName` bump. The visual mockup is at [`roadmap/Phase10/Phase10_Identity_Mockup.html`](roadmap/Phase10/Phase10_Identity_Mockup.html); the full plan is at [`roadmap/Phase10/Phase10_Plan.md`](roadmap/Phase10/Phase10_Plan.md).
 
-### Phase 12 — Mood-curated emoji section (planned)
+### Phase 12 — Mood-curated emoji section (implemented)
 
-**Objective:** when the user opens the keyboard's emoji drawer with a standing mood selected, prepend a context-aware section with curated emojis for that mood.
+**Objective:** when the user opens the keyboard's emoji drawer with a standing mood selected (`Config.lastMoodScore != SCORE_NONE`), prepend a context-aware section at the top of the emoji list with ~15–25 curated emojis for that mood; when no mood is set, the drawer renders unchanged.
 
-Pure presentation work; reuses Phase 7's emoji-capture pipeline so privacy posture is unchanged. Plan at [`roadmap/Phase12/Phase12_Plan.md`](roadmap/Phase12/Phase12_Plan.md).
+Pure presentation work; reuses Phase 7's `onEmojiText` capture pipeline so the privacy posture is unchanged — the DB still stores only `eventCategory = "EMOJI"`, never the codepoint. The per-mood curated lists live in `helpers/MoodEmoji.kt` only. Plan at [`roadmap/Phase12/Phase12_Plan.md`](roadmap/Phase12/Phase12_Plan.md).
 
-### Phase 13 — Gamification: badges (planned)
+### Phase 13 — Persistent right-anchored mood bar (implemented)
 
-**Objective:** reward consistent mood cataloging and keyboard usage with a starter set of 13 badges, surfaced in a new "Achievements" tab on the dashboard.
+**Objective:** make the keyboard's mood bar a first-class persistent element. The bar moved from the leading edge to the **trailing edge** and is lifted into an overlay layer above both the regular keyboard toolbar and the emoji drawer, so the user can swap their mood without closing the drawer — which immediately re-curates the Phase 12 mood section (via the existing `OnSharedPreferenceChangeListener` path in `SimpleKeyboardIME`). No new capture-path code, no schema change. Plan at [`roadmap/Phase13/Phase13_Plan.md`](roadmap/Phase13/Phase13_Plan.md).
 
-Adds a new `badges` table via `Migration(3, 4)`. Lazy evaluation on dashboard open, in-app snackbar on first unlock, no system notifications. Plan at [`roadmap/Phase13/Phase13_Plan.md`](roadmap/Phase13/Phase13_Plan.md).
+### Phase 14 — Gamification: badges (planned — the one remaining phase)
+
+**Objective:** reward consistent mood cataloging and keyboard usage with a starter set of ~13 badges, surfaced in a new sixth "Achievements" tab on the dashboard.
+
+Would add a new `badges` table via `Migration(3, 4)` (the third migration). Lazy evaluation on dashboard open, in-app snackbar on first unlock, no system notifications, no privacy-posture change (badges are derived from existing tables). The plan was originally drafted as "Phase 13" but that slot was claimed by the right-anchored-mood-bar feature, so the gamification work is renumbered to 14. Plan at [`roadmap/Phase14/Phase14_Plan.md`](roadmap/Phase14/Phase14_Plan.md).
 
 ---
 
@@ -176,7 +198,7 @@ The project ended up with a clean three-layer separation that is worth highlight
 
 All capture happens inside `SimpleKeyboardIME.onKey()` and `MyKeyboardView`'s touch listeners. Events are pushed to `LiveCaptureSessionStore` (an in-memory, thread-safe singleton) which exposes them to the diagnostic UI in real time *and* batches them to disk via a write-behind flusher. Sensor sampling lives in `KinematicSensorHelper` and is lifecycle-bound to the keyboard's open/close events.
 
-The capture layer was frozen as soon as it stabilised. Phases 3, 4, 5, 6, 9 are all read-side only — they query the database and render charts, but they never edit the IME, never edit the buffer, never edit the sensor helper. This separation is what allowed the analytics layer to grow without risking input latency.
+The capture *hot path* (`SimpleKeyboardIME.onKey()` and the write-behind buffer) was frozen as soon as it stabilised; Phase 7.1 closed it for good. The analytics phases (3, 4, 5, 6, 9 and its sub-phases) are read-side only — they query the database and render charts, never editing the IME, the buffer, or the sensor helper. The phases that *did* reopen the keyboard layer (8 / 8.2 / 8.4 / 8.5 for the mood bar, 12 / 13 for the emoji drawer + mood-bar reposition) only touched `MyKeyboardView`, the keyboard layout XML, and the mood-bar helpers — never the capture origin. This separation is what allowed the analytics and mood layers to grow without risking input latency.
 
 ### Layer 2 — Storage (Phase 2, 7.1, 8)
 
@@ -184,22 +206,22 @@ A single Room database, `ikd.db`, currently at version 3. Three core tables — 
 
 Privacy-first invariants are enforced at this layer. Event categories are stored as strings (`ALPHA`, `DIGIT`, `SPACE`, `BACKSPACE`, `ENTER`, `OTHER`, `EMOJI`, `AUTOCORRECT`) — never the actual characters typed. Mood entries store an integer ordinal valence (1..6) and a timestamp — never the emoji codepoint, never any text.
 
-### Layer 3 — Read pipeline (Phases 3, 4, 5, 9)
+### Layer 3 — Read pipeline (Phases 3, 4, 5, 9 + sub-phases)
 
-A family of aggregators (`IkdAggregator`, `IkdSessionStatsLoader`, `IkdSessionChartLoader`, `IkdMoodAggregator`, `IkdHabitsAggregator`, `IkdActivityAggregator`, `IkdDistributionAggregator`, `IkdOrientationAggregator`, `IkdQualityAggregator`, `IkdSensorAggregator`) all follow the same shape:
+A family of aggregators and loaders (`IkdAggregator`, `IkdSessionStatsLoader`, `IkdSessionChartLoader`, `IkdMoodLoader`, `IkdMoodAggregator`, `IkdHabitsAggregator`, `IkdActivityAggregator`, `IkdDistributionAggregator`, `IkdOrientationAggregator`, `IkdQualityAggregator`, `IkdSensorAggregator`) all follow the same shape:
 
-- One `suspend fun snapshot(range, …)` on `Dispatchers.IO`.
+- One `suspend fun snapshot(range, …)` (or `load(sessionId)`) on `Dispatchers.IO`.
 - Pure-Kotlin derivation logic on the `Companion` for unit testing.
 - A wall-clock duration log to Logcat in debug builds.
-- One or two SQL queries, returning ≤ 200 rows for the worst-case range.
+- One or two SQL queries, returning ≤ ~200 rows for the worst-case range.
 
-The dashboard activity orchestrates them all on a single `Dispatchers.IO` hop per `loadDashboard()` call, which is itself triggered by `onResume` and the `Refresh` overflow action.
+The dashboard activity orchestrates them all on a single `Dispatchers.IO` hop per `loadSnapshot()` call (triggered by `onResume`, the range/mood filter, and the `Refresh` action) and dispatches the resulting payload to whichever tab fragment is visible.
 
 ### Privacy guarantees, restated
 
 - No internet permission is declared in `AndroidManifest.xml`.
 - The CSV export is the only data egress path, and it requires explicit Storage Access Framework selection by the user.
-- The CSV format is dual-block (`ikd_events` + `sensor_samples` + `mood_entries`); no raw text, no emoji codepoints, no badge keys.
+- The CSV format is dual-block (`ikd_events` + `sensor_samples` + `mood_entries`); no raw text, no emoji codepoints, no badge keys (a `badges` table doesn't exist yet — Phase 14).
 
 ---
 
@@ -225,7 +247,7 @@ moodScript is a working prototype of a research-grade behavioural-analytics keyb
 - **Visualisation** can be built on a single charting library (MPAndroidChart) extended with a small family of theme-aware wrappers and two custom `View` subclasses for shapes that don't exist out of the box (heatmap, bubble map).
 - **Subjective context** (mood) can be mixed in without compromising the objective signal: the mood bar is a single optional tap, the captured score is an integer, and the dashboard treats it as a filter dimension rather than a prediction target.
 
-The prototype is intentionally not a finished consumer product. The decisions about brand identity (Phase 10), gamification (Phase 13), and discoverability (Phase 12) are documented as plans rather than implemented features, because the academic value of the project is the pipeline itself — not any particular user-facing surface built on top of it.
+The prototype is intentionally not a finished consumer product. Most of the originally-planned surfaces beyond the core pipeline have since shipped (brand identity — Phase 10; emoji-drawer mood curation — Phase 12; the persistent right-anchored mood bar — Phase 13); the one remaining planned phase is gamification badges (Phase 14). Even so, the academic value of the project is the pipeline itself — capture → storage → analysis → visualisation — not any particular user-facing surface built on top of it.
 
 ---
 
@@ -237,7 +259,7 @@ The prototype is intentionally not a finished consumer product. The decisions ab
 
 Together, the name suggests a system that reads the relationship between *how* a person types and *how* they feel. The lowercase/compact visual style of `moodScript` was chosen to feel technical and prototype-ready rather than commercial — appropriate for a university deliverable.
 
-The name also resolves a discoverability problem. The repository was bootstrapped from "Fossify Keyboard"; that name no longer described the work. Phase 10 will replace it on-device.
+The name also resolves a discoverability problem. The repository was bootstrapped from "Fossify Keyboard"; that name no longer described the work. Phase 10 replaced it on-device — the app now installs as **MoodScript** with its own launcher icon and About screen (the `applicationId` and the Kotlin package stay `org.fossify.keyboard`; a full package rename + store re-listing is deferred to a future release-readiness pass).
 
 ---
 
@@ -247,11 +269,11 @@ A natural narrative arc for a presentation:
 
 1. **Open with the assignment context.** The work was structured around a one-semester academic deliverable.
 2. **Explain why a keyboard, and why a fork.** The keyboard was the *capture surface*, and Fossify was a stable, modern, privacy-respecting base.
-3. **Walk through the roadmap evolution.** From a four-step initial plan to the current 15-phase + 6-sub-phase tree, including the mid-flight refinements (e.g., Phase 4 → Phase 5).
-4. **Highlight the architecture.** Three layers, frozen capture path, additive migrations, Dispatchers.IO read pipeline.
+3. **Walk through the roadmap evolution.** From a four-step initial plan to a tree of a dozen-plus phases and sub-phases, including the mid-flight refinements (e.g., Phase 4 → Phase 5, the two error-rate corrections, the Mood-tab → Summary-tab consolidation in 9.15).
+4. **Highlight the architecture.** Four layers, frozen capture hot path, additive migrations, `Dispatchers.IO` read pipeline.
 5. **Demo the dashboards.** Five tabs, ~15 chart cards, all driven from on-device data.
-6. **End with the mood layer.** Show the keyboard mood bar, then show the same dashboard with the Mood Filter applied.
-7. **Acknowledge the prototype scope.** The branding, gamification, and emoji-curation phases are planned, not implemented — and that is a feature of the academic deliverable, not a gap.
+6. **End with the mood layer.** Show the keyboard's collapsible right-anchored mood bar, the mood-curated emoji drawer, then the same Insights dashboard scoped by the Mood Filter (tap a Distribution tile).
+7. **Acknowledge the prototype scope.** Branding (10), emoji curation (12), and the right-anchored mood bar (13) all shipped; gamification (14) is the single planned-but-not-implemented phase — and that is a feature of the academic deliverable, not a gap.
 
 The HTML companion document ([`PROJECT_JOURNEY.html`](PROJECT_JOURNEY.html)) presents the same material as a tabbed visual summary suitable for projection or screen-share during the presentation.
 
@@ -270,10 +292,11 @@ The HTML companion document ([`PROJECT_JOURNEY.html`](PROJECT_JOURNEY.html)) pre
 | Dashboard activity | `app/src/main/kotlin/org/fossify/keyboard/activities/DashboardActivity.kt` |
 | Dashboard fragments (Phase 9.11+) | `app/src/main/kotlin/org/fossify/keyboard/activities/dashboard/*.kt` |
 | Chart wrappers | `app/src/main/kotlin/org/fossify/keyboard/views/Ikd*View.kt` |
-| Mood bar wiring | `app/src/main/kotlin/org/fossify/keyboard/views/MyKeyboardView.kt` + `helpers/IkdMoodBarController.kt` |
-| Roadmap | [`roadmap/`](roadmap/) — orchestrators, sub-plans, status |
+| Mood bar wiring + emoji curation | `views/MyKeyboardView.kt` + `helpers/IkdMoodBarController.kt` + `helpers/MoodEmoji.kt` |
+| Brand override (Phase 10) | `activities/AboutActivity.kt` + `res/drawable/ic_launcher_foreground.xml` |
+| Roadmap | [`roadmap/`](roadmap/) — `STATUS.md` (quick status), `FeatureRoadmap.md` (full overview), per-phase plans, `Phase9/sub_plans/` |
 | Build instructions | [`BUILDING.md`](BUILDING.md) |
 
 ---
 
-*Last updated alongside the Phase 13 plan; current schema version `IkdDatabase.version = 3`.*
+*Last updated 2026-05-17, after Phase 13 (persistent right-anchored mood bar) and Phase 9.18 (Distribution tiles double as the Mood Filter) landed on `main`. Current schema version `IkdDatabase.version = 3`. The one outstanding planned phase is Phase 14 (gamification badges).*

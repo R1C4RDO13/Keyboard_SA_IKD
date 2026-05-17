@@ -4,7 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> **Note.** The entries below are the upstream [Fossify Keyboard](https://github.com/FossifyOrg/Keyboard)
+> changelog, inherited at the fork point. The **MoodScript** research work (the IKD capture pipeline,
+> on-device storage, the Insights dashboards, the mood bar, and the rebrand) is tracked **by phase** in
+> [`roadmap/STATUS.md`](roadmap/STATUS.md) / [`roadmap/FeatureRoadmap.md`](roadmap/FeatureRoadmap.md) and
+> narrated in [`PROJECT_JOURNEY.md`](PROJECT_JOURNEY.md) — not in this file. `versionName` is still at the
+> Fossify `1.9.1` / `versionCode 14`; a `versionName` bump is deferred to a future release-readiness pass.
+
 ## [Unreleased]
+- MoodScript fork: phases 1 → 10, 12, 13 implemented on-device (see `roadmap/STATUS.md`). On-device rebrand to **MoodScript** (Phase 10). No `versionName` bump yet.
 
 ## [1.9.1] - 2026-02-02
 ### Changed

@@ -1,8 +1,8 @@
 # Phase 10 — Rebrand to MoodScript
 
-**Status:** Planned
+**Status:** Implemented — landed on `main` (commit `2adaa70d`, `feat(phase10): rebrand to MoodScript`). On-device name + launcher glyph + About screen all shipped; everything in §7 ("out of scope") remains deferred.
 **Depends on:** Phase 9 (all major user-facing features complete; the brand can now honestly reflect a feature-complete product)
-**Branch:** Implementation lands directly on `main` (small focused commits per logical change), per recent project hygiene.
+**Branch:** landed directly on `main` (small focused commits per logical change), per recent project hygiene.
 **Scope (one sentence):** Replace the on-device "Fossify Keyboard" identity with **MoodScript** — new app name, new launcher glyph, refreshed About screen — without renaming `applicationId`, without migrating `ikd.db`, and without touching fastlane/store metadata.
 
 ---

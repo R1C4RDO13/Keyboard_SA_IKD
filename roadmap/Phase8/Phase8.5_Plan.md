@@ -1,9 +1,9 @@
 # Phase 8.5 — Collapsible Mood Bar with Persistent Standing Rating + Inactivity Reset
 
-**Status:** Planned (no branch yet)
-**Depends on:** Phase 8 (mood bar exists, `mood_entries` table), Phase 8.1 (`Config.showMoodBar` toggle), Phase 8.2 (capsule background + chat-bubble + toggle semantics + `IkdMoodBarController.{disablePrivacy,clearMoodForActiveSession}`), Phase 8.4 (planned but **not blocking** — the dance animation runs on the same select-path this plan keeps; if 8.4 lands first the two compose cleanly, if 8.5 lands first 8.4 wires its single-line call site against the same `onMoodSlotClicked` branches)
-**Branch (proposed):** `feat/phase8.5-collapsible-mood-bar`
-**Scope (one sentence):** Reshape the seven-button mood bar from a centered always-expanded toolbar widget into a **left-anchored, collapsible chip** that remembers the user's last selected mood across sessions and auto-expires that standing rating after one hour of inactivity.
+**Status:** Implemented — landed on `main` (commit `8e322b33`, `feat(phase8.5): collapsible mood bar with persistent standing rating`). Phase 8.4's dance landed first; the two composed cleanly as planned. (Phase 13 later moved the bar from the leading edge to the trailing edge — see [`../Phase13/Phase13_Plan.md`](../Phase13/Phase13_Plan.md).)
+**Depends on:** Phase 8 (mood bar exists, `mood_entries` table), Phase 8.1 (`Config.showMoodBar` toggle), Phase 8.2 (capsule background + chat-bubble + toggle semantics + `IkdMoodBarController.{disablePrivacy,clearMoodForActiveSession}`), Phase 8.4 (dance animation on the select-path)
+**Branch:** landed directly on `main`
+**Scope (one sentence):** Reshape the seven-button mood bar from a centered always-expanded toolbar widget into a collapsible chip (originally left-anchored; moved to the trailing edge in Phase 13) that remembers the user's last selected mood across sessions and auto-expires that standing rating after one hour of inactivity.
 
 > **Naming note.** Phase 8.4 (Mood-Bar Dance) is concurrent — it is a single-file animation polish that does not touch the bar's layout, persistence, or lifecycle. This plan therefore takes the next sub-phase number (8.5) rather than queueing behind 8.4. The two are compose-safe in either landing order (Decision #11).
 

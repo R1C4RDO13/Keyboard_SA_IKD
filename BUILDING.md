@@ -242,12 +242,13 @@ export PATH="$ANDROID_HOME/platform-tools:$PATH"
 
 | Path | Contents |
 |---|---|
-| `app/src/main/kotlin/org/fossify/keyboard/activities/` | App screens and settings |
-| `app/src/main/kotlin/org/fossify/keyboard/services/` | Input method service |
-| `app/src/main/kotlin/org/fossify/keyboard/helpers/` | Keyboard logic, constants, helpers |
-| `app/src/main/kotlin/org/fossify/keyboard/views/` | Custom keyboard rendering |
-| `app/src/main/kotlin/org/fossify/keyboard/databases/` | Room database code |
+| `app/src/main/kotlin/org/fossify/keyboard/activities/` | App screens & settings; `activities/dashboard/` holds the Insights tab fragments |
+| `app/src/main/kotlin/org/fossify/keyboard/services/` | Input method service (`SimpleKeyboardIME.kt` — capture origin) |
+| `app/src/main/kotlin/org/fossify/keyboard/helpers/` | Keyboard logic, constants, `Ikd*Aggregator`/`Ikd*Loader`, `MoodEmoji`, CSV writer, retention worker |
+| `app/src/main/kotlin/org/fossify/keyboard/views/` | Custom keyboard rendering (`MyKeyboardView`) + `Ikd*View` chart wrappers |
+| `app/src/main/kotlin/org/fossify/keyboard/databases/` | Room database code (`IkdDatabase.kt` — `ikd.db`, v3; `ClipsDatabase.kt` — `clips.db`) |
 | `app/src/main/res/` | Layouts, strings, drawables, themes |
-| `app/schemas/` | Room schema exports |
-| `ROADMAP/` | Feature roadmap and implementation plans |
+| `app/schemas/` | Room schema exports (`org.fossify.keyboard.databases.IkdDatabase/`) |
+| `roadmap/` | Feature roadmap, per-phase plans, `STATUS.md`, Phase 9 sub-plans |
+| `PROJECT_JOURNEY.md` / `.html` | Narrative report (also `CLAUDE.md` for per-phase architecture notes) |
 | `fastlane/` | Release automation and store metadata |

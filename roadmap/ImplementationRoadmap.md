@@ -1,5 +1,20 @@
 # Behavioral Analytics — Implementation Plan
 
+> ## ⚠️ ARCHIVED — superseded
+>
+> **This document is kept for historical reference only and is no longer maintained.** It captures the *original* cross-phase implementation sketch from before Phase 4 was written. It is wildly out of date: it lists Phases 4 and 5 as "Planned" (both shipped long ago), describes `MoodEntry` with a never-used `date` / `energy_score` schema, and stops at Phase 5.
+>
+> For the **current** state of the project use:
+> - [`STATUS.md`](STATUS.md) — quick per-phase status table + frozen-surface list
+> - [`FeatureRoadmap.md`](FeatureRoadmap.md) — full roadmap overview (Phases 1 → 14)
+> - `../CLAUDE.md` — authoritative architecture notes per phase
+> - [`PhaseN/PhaseN_Plan.md`](.) — per-phase plan files
+> - [`../PROJECT_JOURNEY.md`](../PROJECT_JOURNEY.md) — the narrative report
+>
+> Everything below this banner is the original (stale) text.
+
+---
+
 This document explains how the keyboard project is structured and provides a step-by-step implementation plan aligned with the phases defined in `ROADMAP/FeatureRoadmap.md`.
 
 ---

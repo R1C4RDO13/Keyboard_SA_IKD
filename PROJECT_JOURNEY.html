@@ -1057,11 +1057,11 @@
 
   <div class="stat-strip">
     <div class="stat">
-      <div class="num">9</div>
-      <div class="label">implemented<br>phases</div>
+      <div class="num">12</div>
+      <div class="label">implemented phases<br>(1 → 10, 12, 13)</div>
     </div>
     <div class="stat">
-      <div class="num">15+</div>
+      <div class="num">25+</div>
       <div class="label">phases &amp; sub-phases<br>in the roadmap</div>
     </div>
     <div class="stat">
@@ -1114,8 +1114,9 @@
       <h3>Research, not product</h3>
       <p>
         The deliverable is a <strong>working prototype</strong>, not a finished consumer app. It demonstrates
-        a complete capture → storage → analysis → visualisation pipeline. Phases 10 / 12 / 13 are deliberately
-        documented as plans rather than implemented features — the academic value lies in the pipeline itself.
+        a complete capture → storage → analysis → visualisation pipeline. Phases 10 (rebrand), 12 (mood-curated
+        emoji drawer) and 13 (persistent mood bar) have since shipped; only Phase 14 (gamification badges)
+        remains documented as a plan — the academic value lies in the pipeline itself.
       </p>
     </div>
   </div>
@@ -1626,13 +1627,13 @@
       </div>
       <div class="dash-card-body">
         <div class="dash-mock"><span class="muted">┌───────────────────────────────┐</span>
-<span class="muted">│</span> <span class="label">KPI strip · 6 cells</span>           <span class="muted">│</span>
+<span class="muted">│</span> <span class="accent">[Summary][Trends][Activity]…</span>   <span class="muted">│</span>
+<span class="muted">│</span> <span class="label">global KPI strip · 6 cells</span>    <span class="muted">│</span>
 <span class="muted">│</span>  Sessions · Time · WPM ·       <span class="muted">│</span>
 <span class="muted">│</span>  Error % · Avg sess · Streak   <span class="muted">│</span>
 <span class="muted">├───────────────────────────────┤</span>
-<span class="muted">│</span> <span class="accent">[Trends][Activity][Mood]…</span>      <span class="muted">│</span>
-<span class="muted">│</span> <span class="accent">[Today][Week][Month][All]</span>      <span class="muted">│</span>
-<span class="muted">│</span> <span class="accent">😊 😲 🤢 😢 😨 😠</span>  mood filter   <span class="muted">│</span>
+<span class="muted">│</span> <span class="accent">⚙ Today/Week/Month/All · 😊…</span>  <span class="muted">│</span>
+<span class="muted">│</span> <span class="label">active-filter chip · bucket hint</span><span class="muted">│</span>
 <span class="muted">├───────────────────────────────┤</span>
 <span class="muted">│</span>                               <span class="muted">│</span>
 <span class="muted">│</span>   <span class="label">ViewPager2 · current tab</span>    <span class="muted">│</span>
@@ -1640,25 +1641,25 @@
 <span class="muted">└───────────────────────────────┘</span></div>
 
         <div class="dash-tabs">
+          <span class="dash-tab">Summary</span>
           <span class="dash-tab">Trends</span>
           <span class="dash-tab">Activity</span>
-          <span class="dash-tab">Mood</span>
           <span class="dash-tab">Keystrokes</span>
           <span class="dash-tab">Habits</span>
         </div>
 
         <ul class="dash-widgets">
+          <li><strong>Summary</strong> — 6 mood-distribution tiles (double as colour legend + Mood Filter shortcut), 3×2 KPI grid, Usage Map bubble chart, Mood Mix stacked bar</li>
           <li><strong>Trends</strong> — 5 line charts (WPM, IKD, error %, gyro, accel)</li>
-          <li><strong>Activity</strong> — calendar heatmap, daily bar, 24-hour bar, circadian heatmap, bubble usage map</li>
-          <li><strong>Mood</strong> — stacked-bar mix, distribution panel</li>
-          <li><strong>Keystrokes</strong> — IKD/dwell/flight log-scale histograms, quality scatter</li>
-          <li><strong>Habits</strong> — 4 trend charts (session duration, frequency, errors, flight)</li>
+          <li><strong>Daily Activity</strong> — calendar heatmap, daily keypress bar, 24-hour bar, hour×weekday circadian heatmap</li>
+          <li><strong>Keystroke Dynamics</strong> — IKD/dwell/flight log-scale histograms, backspaces-vs-autocorrects quality scatter</li>
+          <li><strong>Habits</strong> — 4 trend charts (session duration, frequency, errors, flight) + 4-cell KPI strip</li>
         </ul>
 
         <dl class="dash-meta">
-          <dt>Activity</dt><dd><code>DashboardActivity</code></dd>
-          <dt>Aggregators</dt><dd>8 global + <code>IkdHabitsAggregator</code></dd>
-          <dt>Shipped</dt><dd>Phase 3 → 9.x → 9.11 → 9.12</dd>
+          <dt>Activity</dt><dd><code>DashboardActivity</code> + 5 tab fragments</dd>
+          <dt>Aggregators</dt><dd>8 global (<code>IkdAggregator</code> · <code>IkdHabits…</code> · <code>IkdActivity…</code> · …)</dd>
+          <dt>Shipped</dt><dd>Phase 3 → 9.x → 9.11 → 9.18</dd>
         </dl>
       </div>
     </div>
@@ -1783,9 +1784,10 @@
       <button class="tab-btn" data-tab="p6" role="tab"><span class="status-dot implemented"></span>Phase 6</button>
       <button class="tab-btn" data-tab="p7" role="tab"><span class="status-dot implemented"></span>Phase 7 / 7.1</button>
       <button class="tab-btn" data-tab="p8" role="tab"><span class="status-dot implemented"></span>Phase 8 / 8.x</button>
-      <button class="tab-btn" data-tab="p9" role="tab"><span class="status-dot implemented"></span>Phase 9</button>
-      <button class="tab-btn" data-tab="p10" role="tab"><span class="status-dot planned"></span>Phase 10</button>
-      <button class="tab-btn" data-tab="pf" role="tab"><span class="status-dot planned"></span>Future (12 · 13)</button>
+      <button class="tab-btn" data-tab="p9" role="tab"><span class="status-dot implemented"></span>Phase 9 / 9.x</button>
+      <button class="tab-btn" data-tab="p10" role="tab"><span class="status-dot implemented"></span>Phase 10</button>
+      <button class="tab-btn" data-tab="p1213" role="tab"><span class="status-dot implemented"></span>Phase 12 / 13</button>
+      <button class="tab-btn" data-tab="p14" role="tab"><span class="status-dot planned"></span>Phase 14</button>
     </div>
 
     <!-- Phase 1 + 1.1 -->
@@ -2046,10 +2048,10 @@
           <code>Migration(1, 2)</code>.
         </p>
         <p>
-          The bar evolved through three sub-phases:
+          The bar evolved through five sub-phases:
         </p>
         <ul>
-          <li><strong>8.1</strong> — sizing, dashboard card theming, toggleable mood bar visibility.</li>
+          <li><strong>8.1</strong> — sizing, dashboard card theming, toggleable mood bar visibility (<code>Config.showMoodBar</code>).</li>
           <li><strong>8.2</strong> — every slot became a true two-way toggle. The bar was redressed as a
               stretched-key capsule with a chat-bubble <code>PopupWindow</code> for first-person feedback
               ("I'm feeling happy", "I want privacy"), replacing the original toasts.</li>
@@ -2057,7 +2059,22 @@
               averaging across categorical labels produced interpretively vague numbers like
               <em>🤢 3.2</em>. Replaced them with a per-bucket stacked-bar mood-mix chart showing the
               percentage breakdown of each Ekman category over time.</li>
+          <li><strong>8.4</strong> — a short pop + wiggle "dance" animation (plus the existing keyboard
+              haptic) plays when the user <em>selects</em> a slot; deselect taps stay silent.</li>
+          <li><strong>8.5</strong> — the bar became a <strong>collapsible, right-anchored chip</strong>
+              that remembers the user's standing self-rating across sessions via a display-only
+              <code>Config.lastMoodScore</code> (no auto-write to <code>mood_entries</code>) and
+              auto-clears it after one hour of inactivity. The chip expands to the full seven-slot row on
+              tap and auto-collapses after a selection.</li>
         </ul>
+        <p>
+          The error-rate metric was also corrected post-Phase 8: first by excluding BACKSPACE from the
+          denominator (<code>569f331b</code>), then by dropping AUTOCORRECT from the formula entirely
+          (<code>303e792f</code>) — the IME-level autocorrect heuristic can't reliably distinguish a true
+          spell-check accept from spell-check noise across OEMs, so AUTOCORRECT rows are still captured
+          (CSV, event log) but no longer feed the error-rate KPI / chart / live cell. "Correction" now
+          means <strong>BACKSPACE only</strong>.
+        </p>
         <p>
           Privacy invariant preserved: <code>MoodEntry</code> stores only the integer ordinal valence
           (1..6) and a timestamp. <strong>No emoji codepoint, no text.</strong> The score → emoji mapping
@@ -2066,10 +2083,10 @@
       </div>
       <div class="meta">
         <dl>
-          <dt>Status</dt>     <dd><span class="badge implemented">Implemented (incl. 8.1 / 8.2 / 8.3)</span></dd>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented (incl. 8.1 → 8.5)</span></dd>
           <dt>Schema</dt>     <dd>Migration 1 → 2 (mood_entries)</dd>
-          <dt>Bar shape</dt>  <dd>7 slots: 🛡️ 😊 😲 🤢 😢 😨 😠</dd>
-          <dt>Storage</dt>    <dd>Integer valence (1..6) only</dd>
+          <dt>Bar shape</dt>  <dd>7 slots: 🛡️ 😊 😲 🤢 😢 😨 😠 · collapsible right-edge chip (8.5)</dd>
+          <dt>Storage</dt>    <dd>Integer valence (1..6) only · standing rating is a display-only <code>Config</code> int</dd>
           <dt>Key files</dt>
           <dd>
             <code>views/MyKeyboardView.kt</code><br>
@@ -2082,48 +2099,48 @@
       </div>
     </div>
 
-    <!-- Phase 9 -->
+    <!-- Phase 9 + 9.x -->
     <div class="tab-content" id="p9" role="tabpanel">
       <div>
-        <h3>Global insights expansion — five tabs, ten sub-phases</h3>
-        <p class="objective">Expand the dashboard from a single page into a full analytics hub.</p>
+        <h3>Global insights expansion — from one page to a five-tab analytics hub</h3>
+        <p class="objective">Expand the dashboard from a single page of three charts into a full multi-section analytics hub (BiAffect-inspired).</p>
         <p>
-          Phase 9 was deliberately split into 10 self-contained sub-plans, each with its own implementer,
-          on a single read-side-only branch. The result is a five-tab dashboard:
+          Phase 9 was deliberately split into 10 self-contained sub-plans (9.1 – 9.10), each with its own
+          implementer, on a single read-side-only branch. Six new aggregators (Sensor · Habits · Activity ·
+          Distribution · Orientation · Quality) parallel <code>IkdAggregator</code>; two new custom views
+          (<code>IkdHeatmapView</code>, <code>IkdBubbleMapView</code>) plus a histogram view joined the
+          existing <code>IkdLineChartView</code> / <code>IkdStackedBarChartView</code>. New chart cards:
+          aggregate gyro/accel magnitude trends (9.2); a Habits section with four trend charts + KPI strip
+          incl. longest streak (9.3); a single-select <strong>Mood Filter</strong> that re-scopes every
+          aggregator to one Ekman category (9.4); a GitHub-style calendar heatmap + daily keypress bar
+          (9.5); a 24-hour bar + hour×weekday circadian heatmap (9.6); IKD/dwell/flight log-scale
+          histograms (9.7); an orientation breakdown donut (9.8); a time-vs-date Usage Map bubble chart
+          (9.9); a backspaces-vs-autocorrects quality scatter (9.10). <strong>No schema migration</strong>
+          (<code>IkdDatabase.version</code> stayed at 3), the capture path stayed frozen, no new
+          dependency was added.
+        </p>
+        <p>
+          A run of micro-phases then reshaped the dashboard's navigation and presentation:
         </p>
         <ul>
-          <li><strong>Trends</strong> — typing speed, avg IKD, error rate (the original three from Phase 3) plus avg gyro/accel magnitude trend charts (9.2).</li>
-          <li><strong>Daily Activity</strong> — calendar heatmap (week × day-of-week, 9.5), 24-hour bar chart and hour × weekday circadian heatmap (9.6), Usage Map bubble chart (9.9).</li>
-          <li><strong>Mood</strong> — formalised section header (9.1), Phase 8.3 mood-mix stacked-bar chart, Mood Distribution panel.</li>
-          <li><strong>Keystroke Dynamics</strong> — IKD / dwell / flight log-scale histograms (9.7), Activity Quality scatter (9.10).</li>
-          <li><strong>Habits</strong> — avg session duration, sessions per day, avg error rate, avg flight time + four-cell KPI strip with longest-streak (9.3).</li>
+          <li><strong>9.11</strong> — added a <strong>TODAY</strong> range (hourly buckets) and converted the dashboard into a multi-tab <code>ViewPager2</code> layout, extracting per-tab rendering into <code>Fragment</code> subclasses under <code>activities/dashboard/</code> (<code>DashboardActivity</code> ~1100 → ~340 LOC).</li>
+          <li><strong>9.12</strong> — themed the tab strip, moved the tabs to the top of the screen, de-duplicated the global KPI strip.</li>
+          <li><strong>9.13</strong> — tap-to-explain info icons (<code>WidgetInfoDialog</code>) on every Insights widget.</li>
+          <li><strong>9.14</strong> — added a <strong>Summary</strong> landing tab, switched the tab toggle to a <code>TabLayout</code> with icons, and collapsed the range + mood filters into a toolbar bottom sheet with an active-filter chip below the tabs.</li>
+          <li><strong>9.15</strong> — reworked Summary into a flat 3×2 KPI grid, moved the Usage Map + Mood Mix + Mood Distribution widgets onto it, and <strong>deleted the dedicated Mood tab</strong> — the dashboard is now five tabs: <strong>Summary · Trends · Daily Activity · Keystroke Dynamics · Habits</strong>.</li>
+          <li><strong>9.16</strong> — bucket-size hint under the active-filter chip, Sessions-history overflow shortcut, streak fix (calendar-consecutive days only).</li>
+          <li><strong>9.17</strong> — refreshed the six mood-colour tokens to conventional emotional associations (gold = happy, orange = surprise, green = disgust, blue = sad, purple = fear, red = anger), moved the Mood Distribution panel to the top of Summary as six coloured percentage tiles that double as the screen's colour legend, and tinted each Usage Map bubble by the dominant mood of its sessions.</li>
+          <li><strong>9.18</strong> — wired each Distribution tile to act as a one-tap shortcut for the global Mood Filter (tap a tile to scope every chart on every tab to that mood; tap the active tile or the chip ✕ to revert to All).</li>
         </ul>
-        <p>
-          A horizontally scrollable single-select <strong>Mood Filter</strong> chip row above the range
-          selector (9.4) re-runs every aggregator scoped to a chosen Ekman category — answering the
-          behavioural question <em>"what does my typing look like when I'm angry vs happy?"</em>.
-        </p>
-        <p>
-          Two new custom views (<code>IkdHeatmapView</code>, <code>IkdBubbleMapView</code>) joined the
-          existing <code>IkdLineChartView</code> / <code>IkdStackedBarChartView</code>. <strong>No schema
-          migration was needed</strong> (<code>IkdDatabase.version</code> stayed at 3), the capture path
-          stayed frozen, no new dependency was added.
-        </p>
-        <p>
-          Phase 9.11 added a <strong>TODAY</strong> range and converted the dashboard into a five-tab
-          navigation via <code>ViewPager2</code> + <code>NavigationRailView</code>, shrinking
-          <code>DashboardActivity</code> from ~1100 LOC to ~340 LOC by extracting per-tab logic into
-          fragment subclasses under <code>activities/dashboard/</code>.
-        </p>
       </div>
       <div class="meta">
         <dl>
-          <dt>Status</dt>     <dd><span class="badge implemented">Implemented (10 sub-phases + 9.11)</span></dd>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented (9.1 → 9.18)</span></dd>
           <dt>Tabs</dt>       <dd>5: Summary · Trends · Daily Activity · Keystroke Dynamics · Habits</dd>
           <dt>New aggregators</dt><dd>6: Sensor · Habits · Activity · Distribution · Orientation · Quality</dd>
-          <dt>New chart views</dt><dd><code>IkdHeatmapView</code><br><code>IkdBubbleMapView</code></dd>
+          <dt>New chart views</dt><dd><code>IkdHeatmapView</code><br><code>IkdBubbleMapView</code><br><code>IkdHistogramView</code></dd>
           <dt>Schema</dt>     <dd>No migration (stays at 3)</dd>
-          <dt>Mood filter</dt><dd>Single-select chip row above range selector</dd>
+          <dt>Mood filter</dt><dd>Toolbar bottom sheet · Summary Distribution tiles double as shortcut</dd>
         </dl>
       </div>
     </div>
@@ -2178,7 +2195,7 @@
       </div>
       <div class="meta">
         <dl>
-          <dt>Status</dt>     <dd><span class="badge planned">Planned</span></dd>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented</span></dd>
           <dt>Schema</dt>     <dd>No migration</dd>
           <dt>Out of scope</dt><dd>applicationId<br>fastlane metadata<br>palette change<br>versionName bump</dd>
           <dt>About screen</dt><dd>Local override extending Commons <code>AboutActivity</code></dd>
@@ -2186,38 +2203,64 @@
       </div>
     </div>
 
-    <!-- Future -->
-    <div class="tab-content" id="pf" role="tabpanel">
+    <!-- Phase 12 + 13 -->
+    <div class="tab-content" id="p1213" role="tabpanel">
       <div>
-        <h3>Planned future phases</h3>
-        <p class="objective">Documented as plans, not yet implemented. The academic value is the pipeline; these are extensions.</p>
+        <h3>Mood at the input layer — curated emoji drawer + persistent mood bar</h3>
+        <p class="objective">Make the user's standing mood actually <em>change</em> what the keyboard offers, not just what the dashboard records.</p>
         <p>
-          The roadmap continues with planned phases that build on the moodScript identity. Each is fully
-          specified in its own plan file under <code>roadmap/</code> — frozen surfaces, reopened files,
-          verification recipe, the full structural treatment.
+          <strong>Phase 12 — mood-curated emoji section.</strong> When the user opens the keyboard's emoji
+          drawer <em>and</em> a standing mood is set (<code>Config.lastMoodScore != SCORE_NONE</code>), a
+          context-aware section is prepended at the top of the emoji list with ~15–25 curated emojis for
+          that mood (e.g. <code>Mood: 😊</code> → 😄 😁 🥰 ✨ 🌈 🎉 …). When no mood is set the drawer
+          renders unchanged. Reuses Phase 7's <code>onEmojiText</code> capture pipeline, so the DB still
+          stores only <code>eventCategory = "EMOJI"</code> — never the codepoint. The per-mood curated
+          lists live in <code>helpers/MoodEmoji.kt</code> only.
         </p>
+        <p>
+          <strong>Phase 13 — persistent right-anchored mood bar.</strong> The mood bar moved from the
+          leading edge to the <strong>trailing edge</strong> and is lifted into an overlay layer above
+          both the regular keyboard toolbar <em>and</em> the emoji drawer, so the user can swap their mood
+          without closing the drawer — which immediately re-curates the Phase 12 section (via the existing
+          <code>OnSharedPreferenceChangeListener</code> path in <code>SimpleKeyboardIME</code>). The bar
+          keeps every Phase 8.2 / 8.4 / 8.5 behaviour — collapsible chip, dance animation, chat-bubble
+          feedback, standing rating — it's purely a re-position + re-layer. No new capture-path code, no
+          schema change, no DAO touch.
+        </p>
+      </div>
+      <div class="meta">
+        <dl>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented (12 + 13)</span></dd>
+          <dt>Schema</dt>     <dd>No migration (stays at 3)</dd>
+          <dt>Privacy</dt>    <dd>Curated lists are presentation-only · never written to <code>ikd.db</code></dd>
+          <dt>Plan files</dt>
+          <dd>
+            <code>roadmap/Phase12/Phase12_Plan.md</code><br>
+            <code>roadmap/Phase13/Phase13_Plan.md</code>
+          </dd>
+        </dl>
+      </div>
+    </div>
 
+    <!-- Phase 14 (planned) + Future ideas -->
+    <div class="tab-content" id="p14" role="tabpanel">
+      <div>
+        <h3>Phase 14 — gamification: badges (planned)</h3>
+        <p class="objective">The one remaining planned phase. Reward consistent mood cataloging and keyboard usage with a starter set of ~13 badges, surfaced as a new sixth "Achievements" tab.</p>
+        <p>
+          Would add a new <code>badges</code> table via <code>Migration(3, 4)</code> (the third migration)
+          — six mood-cataloging badges + seven keyboard-usage badges, evaluated lazily on dashboard open,
+          with an in-app snackbar on first unlock and no system notifications. Badges are derived from
+          existing tables only, so the privacy posture is unchanged and the CSV gains no <code>badges</code>
+          block. (The plan was originally drafted as "Phase 13"; that slot was claimed by the
+          right-anchored-mood-bar feature, so the gamification work is renumbered to 14.)
+        </p>
+        <p>
+          Other ideas in the backlog, not yet planned in detail:
+        </p>
         <div class="future-grid">
           <div class="future-card">
-            <span class="ph">Phase 12</span>
-            <h4>Mood-curated emoji section</h4>
-            <p>
-              When the user opens the emoji drawer with a mood selected, prepend a context-aware section
-              with curated emojis for that mood. Reuses Phase 7's emoji-capture pipeline; privacy posture
-              unchanged.
-            </p>
-          </div>
-          <div class="future-card">
-            <span class="ph">Phase 13</span>
-            <h4>Gamification: badges</h4>
-            <p>
-              13 starter badges rewarding mood cataloging and keyboard usage. New 6th "Achievements" tab
-              on the dashboard. <code>Migration(3, 4)</code> adds a <code>badges</code> table; in-app
-              snackbar on first unlock.
-            </p>
-          </div>
-          <div class="future-card">
-            <span class="ph">Future</span>
+            <span class="ph">Idea</span>
             <h4>Mood quick-note</h4>
             <p>
               Long-press a mood emoji to add a 1–2 line note about <em>why</em>. Highest research value
@@ -2226,12 +2269,30 @@
             </p>
           </div>
           <div class="future-card">
-            <span class="ph">Future</span>
+            <span class="ph">Idea</span>
             <h4>Mood ↔ activity overlay</h4>
             <p>
-              Add a toggle to recolour the Phase 9.5 calendar heatmap by dominant mood per day. Pure
+              A toggle to recolour the Phase 9.5 calendar heatmap by dominant mood per day. Pure
               read-side; reuses existing aggregators. Answers <em>"do my anxious days correlate with
               low typing days?"</em>
+            </p>
+          </div>
+          <div class="future-card">
+            <span class="ph">Idea</span>
+            <h4>Habits / Quality metrics align with error-rate</h4>
+            <p>
+              The Habits-tab error metric and the Daily-Quality scatter still treat AUTOCORRECT as a
+              correction; the global error-rate KPI no longer does. A small follow-up could bring them
+              in line.
+            </p>
+          </div>
+          <div class="future-card">
+            <span class="ph">Idea</span>
+            <h4>Release-readiness pass</h4>
+            <p>
+              <code>applicationId</code> rename (with one-time <code>ikd.db</code> copy on first launch),
+              fastlane / store-listing rewrite, screenshots, <code>versionName</code> bump — deferred out
+              of the cosmetic Phase 10 rebrand.
             </p>
           </div>
         </div>
@@ -2239,11 +2300,8 @@
       <div class="meta">
         <dl>
           <dt>Status</dt>     <dd><span class="badge planned">Planned</span></dd>
-          <dt>Plan files</dt>
-          <dd>
-            <code>roadmap/Phase12/Phase12_Plan.md</code><br>
-            <code>roadmap/Phase13/Phase13_Plan.md</code>
-          </dd>
+          <dt>Schema</dt>     <dd>Would add Migration 3 → 4 (<code>badges</code>)</dd>
+          <dt>Plan file</dt>  <dd><code>roadmap/Phase14/Phase14_Plan.md</code></dd>
         </dl>
       </div>
     </div>
@@ -2298,32 +2356,32 @@
   <div class="numbers">
     <div class="grid">
       <div class="item">
-        <div class="num">9</div>
-        <div class="lab">phases implemented end-to-end on-device</div>
+        <div class="num">12</div>
+        <div class="lab">phases implemented end-to-end on-device (1 → 10, 12, 13)</div>
       </div>
       <div class="item">
-        <div class="num">10</div>
-        <div class="lab">Phase 9 sub-phases (read-side only)</div>
+        <div class="num">18</div>
+        <div class="lab">Phase 9 sub-phases (read-side + navigation/presentation polish)</div>
       </div>
       <div class="item">
         <div class="num">5</div>
-        <div class="lab">dashboard sections / tabs after Phase 9.11</div>
+        <div class="lab">dashboard tabs after Phase 9.15 (Mood tab merged into Summary)</div>
       </div>
       <div class="item">
         <div class="num">15+</div>
         <div class="lab">chart cards across the dashboards</div>
       </div>
       <div class="item">
-        <div class="num">10</div>
-        <div class="lab">aggregator helpers, all sharing one shape</div>
+        <div class="num">11</div>
+        <div class="lab">aggregators &amp; per-session loaders, all sharing one shape</div>
       </div>
       <div class="item">
-        <div class="num">3</div>
-        <div class="lab">planned future phases<br>(10 · 12 · 13)</div>
+        <div class="num">1</div>
+        <div class="lab">remaining planned phase<br>(14 — gamification badges)</div>
       </div>
       <div class="item">
         <div class="num">2</div>
-        <div class="lab">non-destructive Room migrations validated by instrumented tests</div>
+        <div class="lab">non-destructive Room migrations validated by an instrumented test</div>
       </div>
       <div class="item">
         <div class="num">0</div>
@@ -2340,38 +2398,41 @@
   <div class="section-eyebrow">08 · What's next</div>
   <h2>The pipeline is the deliverable</h2>
   <p class="section-lede">
-    Phases 10, 12, and 13 are documented as plans rather than implemented features. The academic value
-    of the project is the capture / storage / analysis / visualisation pipeline itself — not any
-    particular surface built on top of it. The plans define what the prototype could become if the
-    project continues.
+    Phases 10 (rebrand), 12 (mood-curated emoji drawer) and 13 (persistent mood bar) have all shipped.
+    Phase 14 (gamification badges) is the one phase still documented as a plan. The academic value of the
+    project is the capture / storage / analysis / visualisation pipeline itself — not any particular
+    surface built on top of it.
   </p>
 
   <div class="context-grid">
     <div class="context-card">
       <div class="icon">🎨</div>
-      <h3>Phase 10 — Rebrand</h3>
+      <h3>Phase 10 — Rebrand <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--green-soft);color:var(--green);vertical-align:middle;">Shipped</span></h3>
       <p>
-        Retire the "Fossify Keyboard" identity in favour of moodScript. New launcher glyph (keyboard
-        cradled by hearts), new About screen, new app name. Cosmetic only — no schema migration,
-        no <code>applicationId</code> rename.
+        The "Fossify Keyboard" identity was retired in favour of <strong>MoodScript</strong>: new launcher
+        glyph (keyboard cradled by three hearts), new About screen, new app name. Cosmetic only — no
+        schema migration, no <code>applicationId</code> rename (that, plus store metadata, is deferred to
+        a release-readiness pass).
       </p>
     </div>
     <div class="context-card">
       <div class="icon">🎭</div>
-      <h3>Phase 12 — Mood emoji drawer</h3>
+      <h3>Phase 12 / 13 — Mood at the input layer <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--green-soft);color:var(--green);vertical-align:middle;">Shipped</span></h3>
       <p>
-        Context-aware curated emoji section at the top of the keyboard's emoji drawer, rendered only
-        when the user has a standing mood selected. Reuses the Phase 7 emoji-capture pipeline; no new
-        privacy surface.
+        Phase 12 adds a context-aware curated emoji section at the top of the emoji drawer when a standing
+        mood is set. Phase 13 moves the mood bar to the trailing edge and overlays it above both the
+        keyboard toolbar and the emoji drawer, so changing mood mid-drawer re-curates the section
+        immediately. Reuses the Phase 7 emoji-capture pipeline; no new privacy surface.
       </p>
     </div>
     <div class="context-card">
       <div class="icon">🏆</div>
-      <h3>Phase 13 — Gamification</h3>
+      <h3>Phase 14 — Gamification <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--amber-soft);color:var(--amber);vertical-align:middle;">Planned</span></h3>
       <p>
-        13 starter badges across mood cataloging and keyboard usage, surfaced as a new sixth
-        "Achievements" tab on the dashboard. <code>Migration(3, 4)</code>; in-app snackbar on
-        unlock; no system notification permission.
+        ~13 starter badges across mood cataloging and keyboard usage, surfaced as a new sixth
+        "Achievements" tab on the dashboard. <code>Migration(3, 4)</code> adds a <code>badges</code> table;
+        in-app snackbar on unlock; no system notification permission; badges derived from existing tables
+        so the privacy posture is unchanged.
       </p>
     </div>
   </div>

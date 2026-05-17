@@ -1,77 +1,90 @@
 # Project Status
 
-Quick-access summary of phase completion. For detailed scope of each phase see [`FeatureRoadmap.md`](FeatureRoadmap.md) and the per-phase plan files linked below.
+Quick-access summary of phase completion. For detailed scope of each phase see [`FeatureRoadmap.md`](FeatureRoadmap.md), the per-phase plan files linked below, and `CLAUDE.md` (architecture notes per phase). Narrative report: [`../PROJECT_JOURNEY.md`](../PROJECT_JOURNEY.md) / [`../PROJECT_JOURNEY.html`](../PROJECT_JOURNEY.html).
 
-| Phase | Title | Status | Plan | Branch |
-|---|---|---|---|---|
-| 1 | Sensor Calibration & Debug Environment | Implemented | [Phase1_Plan.md](Phase1/Phase1_Plan.md) | merged |
-| 1.1 | Live Keyboard Capture & Metric Realignment | Implemented | [Phase1.1_Plan.md](Phase1/Phase1.1_Plan.md) | merged |
-| 2 | Background Collection & Local Storage | Implemented | [Phase2_Plan.md](Phase2/Phase2_Plan.md) | merged |
-| 3 | User Insights & Dashboard | Implemented | [Phase3_Plan.md](Phase3/Phase3_Plan.md) | merged |
-| 4 | Session Detail Refresh | Implemented | [Phase4_Plan.md](Phase4/Phase4_Plan.md) | merged |
-| 5 | Session Dashboard | Implemented | [Phase5_Plan.md](Phase5/Phase5_Plan.md) | merged |
-| 6 | Diagnostics Screen Improvements | Implemented (reworked) | [Phase6_Plan.md](Phase6/Phase6_Plan.md) | merged |
-| 7 | Emoji & Autocorrect Capture | Implemented | [Phase7_Plan.md](Phase7/Phase7_Plan.md) | merged |
-| 7.1 | AUTOCORRECT Replacement Weight | Implemented | [Phase7.1_Plan.md](Phase7.1/Phase7.1_Plan.md) | landed on `main` |
-| 8 | Mood Bar & Contextual Overlay | Implemented (incl. 8.1 UI polish) | [Phase8_Plan.md](Phase8/Phase8_Plan.md) | merged |
-| 8.2 | Mood Bar UX Polish (toggles, capsule background, chat-bubble) | Implemented | — (in-flight; plan rolled into Phase 8 §13) | landed on `main` |
-| 8.3 | Mood Distribution over Time (Stacked Bar) | Implemented | [Phase8.3_Plan.md](Phase8/Phase8.3_Plan.md) | landed on `main` |
-| 8.4 | Mood-Bar Dance + Haptic on Slot Select | **Planned** | [Phase8.4_Plan.md](Phase8/Phase8.4_Plan.md) | not started |
-| 8.5 | Collapsible Mood Bar with Persistent Standing Rating + Inactivity Reset | **Planned** | [Phase8.5_Plan.md](Phase8/Phase8.5_Plan.md) | not started |
-| 9 | Global Insights Expansion | Implemented (10 sub-phases; absorbs Phase 11) | [Phase9_Plan.md](Phase9/Phase9_Plan.md) | landed on `main` |
-| 9.11 | Insights — TODAY range + vertical tabs | Implemented | [9.11 sub-plan](Phase9/sub_plans/9.11_today_filter_and_tabs.md) | landed on `main` |
-| 10 | Rebranding & New Identity (MoodScript) | **Planned (next)** | [Phase10_Plan.md](Phase10/Phase10_Plan.md) | not started |
-| ~~11~~ | ~~Usage Map & Daily Activity Charts~~ | ~~Planned~~ — **deleted; absorbed into Phase 9.5–9.10** | — | — |
-| 12 | Mood-Curated Emoji Section | **Planned** | [Phase12_Plan.md](Phase12/Phase12_Plan.md) | not started |
-| 13 | Persistent Right-Anchored Mood Bar (visible inside emoji drawer) | Implemented | [Phase13_Plan.md](Phase13/Phase13_Plan.md) | landed on `main` |
-| 14 | Gamification: Badges (Mood + Keyboard) | **Planned** | [Phase14_Plan.md](Phase14/Phase14_Plan.md) | not started |
+_Last updated: 2026-05-17. `main` is in sync with `origin/main`._
+
+| Phase | Title | Status | Plan |
+|---|---|---|---|
+| 1 | Sensor Calibration & Debug Environment | Implemented | [Phase1_Plan.md](Phase1/Phase1_Plan.md) |
+| 1.1 | Live Keyboard Capture & Metric Realignment | Implemented | [Phase1.1_Plan.md](Phase1/Phase1.1_Plan.md) |
+| 2 | Background Collection & Local Storage | Implemented | [Phase2_Plan.md](Phase2/Phase2_Plan.md) |
+| 3 | User Insights & Dashboard | Implemented | [Phase3_Plan.md](Phase3/Phase3_Plan.md) |
+| 4 | Session Detail Refresh | Implemented | [Phase4_Plan.md](Phase4/Phase4_Plan.md) |
+| 5 | Session Dashboard | Implemented | [Phase5_Plan.md](Phase5/Phase5_Plan.md) |
+| 6 | Diagnostics Screen Improvements | Implemented (reworked) | [Phase6_Plan.md](Phase6/Phase6_Plan.md) |
+| 7 | Emoji & Autocorrect Capture | Implemented | [Phase7_Plan.md](Phase7/Phase7_Plan.md) |
+| 7.1 | AUTOCORRECT Replacement Weight | Implemented | [Phase7.1_Plan.md](Phase7.1/Phase7.1_Plan.md) |
+| — | Error-rate fix: exclude BACKSPACE from denominator + weight by deletion count | Implemented (`569f331b`) | [ErrorRateFix_TestPlan.md](ErrorRateFix_TestPlan.md) |
+| — | Error-rate fix: drop AUTOCORRECT from the formula entirely | Implemented (`303e792f`) | [ErrorRateFix_DropAutocorrect_Plan.md](ErrorRateFix_DropAutocorrect_Plan.md) |
+| 8 | Mood Bar & Contextual Overlay | Implemented (incl. 8.1 UI polish) | [Phase8_Plan.md](Phase8/Phase8_Plan.md) |
+| 8.2 | Mood Bar UX Polish (toggles, capsule background, chat-bubble) | Implemented | [Phase8_Plan.md §13](Phase8/Phase8_Plan.md#13-mood-bar-ux-polish-phase-82) |
+| 8.3 | Mood Distribution over Time (Stacked Bar) | Implemented | [Phase8.3_Plan.md](Phase8/Phase8.3_Plan.md) |
+| 8.4 | Mood-Bar Dance + Haptic on Slot Select | Implemented | [Phase8.4_Plan.md](Phase8/Phase8.4_Plan.md) |
+| 8.5 | Collapsible Mood Bar with Persistent Standing Rating + Inactivity Reset | Implemented | [Phase8.5_Plan.md](Phase8/Phase8.5_Plan.md) |
+| 9 | Global Insights Expansion (sub-phases 9.1 – 9.10; absorbs the deleted Phase 11) | Implemented | [Phase9_Plan.md](Phase9/Phase9_Plan.md) + [sub_plans/](Phase9/sub_plans/) |
+| 9.11 | Insights — TODAY range + multi-tab `ViewPager2` | Implemented | [9.11 sub-plan](Phase9/sub_plans/9.11_today_filter_and_tabs.md) |
+| 9.12 | Insights — themed tabs, top tab toggle, KPI dedup | Implemented | [9.12 sub-plan](Phase9/sub_plans/9.12_theming_top_tabs_kpi_dedup.md) |
+| 9.13 | Insights — tap-to-explain widget info icons | Implemented | [9.13 sub-plan](Phase9/sub_plans/9.13_widget_info_icons.md) |
+| 9.14 | Insights — Summary tab, TabLayout w/ icons, filter bottom sheet | Implemented | [9.14 sub-plan](Phase9/sub_plans/9.14_summary_tab_icons_filters.md) |
+| 9.15 | Insights — Summary tab rework (3×2 KPI, Usage Map, Mood), drop Mood tab | Implemented | [9.15 sub-plan](Phase9/sub_plans/9.15_summary_rework_drop_mood.md) |
+| 9.16 | Insights — bucket-size hint, Sessions-history shortcut, streak fix | Implemented | (folded into Phase 9 plan) |
+| 9.17 | Insights — mood-colour refresh, distribution-first Summary, mood-tinted Usage Map | Implemented | [9.17 sub-plan](Phase9/sub_plans/9.17_mood_colors_distribution_first.md) |
+| 9.18 | Insights — Distribution tiles double as the Mood Filter | Implemented | [9.18 sub-plan](Phase9/sub_plans/9.18_distribution_tiles_as_mood_filter.md) |
+| 10 | Rebrand & New Identity (MoodScript — name, launcher glyph, About screen) | Implemented | [Phase10_Plan.md](Phase10/Phase10_Plan.md) |
+| ~~11~~ | ~~Usage Map & Daily Activity Charts~~ | **Deleted** — absorbed into Phase 9.5 / 9.6 / 9.9 / 9.10 | — |
+| 12 | Mood-Curated Emoji Section in the drawer | Implemented | [Phase12_Plan.md](Phase12/Phase12_Plan.md) |
+| 13 | Persistent Right-Anchored Mood Bar (visible inside the emoji drawer) | Implemented | [Phase13_Plan.md](Phase13/Phase13_Plan.md) |
+| 14 | Gamification: Badges (Mood + Keyboard) — sixth "Achievements" tab | **Planned** (only outstanding phase) | [Phase14_Plan.md](Phase14/Phase14_Plan.md) |
 
 ## Schema state
 
-`IkdDatabase.version = 3` — two migrations registered:
+`IkdDatabase.version = 3` — two migrations registered, both non-destructive, both validated end-to-end by `IkdDatabaseMigrationTest` in `app/src/androidTest`:
 
-- `Migration(1, 2)` (Phase 8): adds `mood_entries` table (one row per session, ordinal valence score 1–6, CASCADE on session delete).
-- `Migration(2, 3)` (Phase 7.1): adds `correction_weight INTEGER NOT NULL DEFAULT 0` column to `ikd_events` and backfills weight 1 onto every existing `is_correction = 1` row so historical error rates remain continuous.
+- `Migration(1, 2)` (Phase 8): adds the `mood_entries` table (one row per session, ordinal valence 1–6, unique index on `session_id`, CASCADE on session delete).
+- `Migration(2, 3)` (Phase 7.1): adds `correction_weight INTEGER NOT NULL DEFAULT 0` to `ikd_events` and backfills weight 1 onto every existing `is_correction = 1` row.
 
-Both migrations are non-destructive and validated end-to-end by `IkdDatabaseMigrationTest` in `app/src/androidTest`.
+Phase 14, when implemented, would add `Migration(3, 4)` for a `badges` table — not yet present in the code (`models/Badge.kt` / `interfaces/BadgeDao.kt` do not exist).
 
-## Currently on `main` (local, not pushed)
+## Dashboard shape (current)
 
-`origin/main` is several commits behind. Recent groups landed locally (newest at top):
+`DashboardActivity` is a thin host (~340 LOC) over a top `TabLayout` + `ViewPager2` with five tab fragments under `activities/dashboard/`:
 
-- **Phase 9.11 — Insights TODAY range + vertical tabs** (commits `eb8454f2`, `f00b5713`, `be4d98ba`). Adds `Range.TODAY(1, "%Y-%m-%d %H")` as the first option on the Insights range toggle (Today → Week → Month → All Time); X-axis labels render as `HH:00` for hourly buckets. Charts that go degenerate under TODAY (calendar heatmap, daily-keypresses bar, Usage Map) hide cleanly; the Habits longest-streak KPI gains a `StreakUnit.HOURS` mode that prints "Today" / "—". The five Phase 9 dashboard sections become five swipeable tabs via `NavigationRailView` (left rail) + horizontal `ViewPager2`: Trends → Daily Activity → Mood → Keystroke Dynamics → Habits. The global KPI strip, range toggle, and Mood Filter chip row stay above the rail+pager so they apply across every tab. `DashboardActivity` shrunk from ~1100 LOC to ~340 LOC; rendering moved into five `Fragment` subclasses under `activities/dashboard/`. Detekt unchanged at 52 weighted issues (zero drift). New JVM test for the hourly-bucket streak path.
+1. **Summary** — six coloured mood-distribution tiles (double as the screen's colour legend **and** a one-tap Mood Filter shortcut), 3×2 KPI grid, Usage Map bubble chart, Mood Mix stacked bar.
+2. **Trends** — 5 line charts (WPM, avg IKD, error %, avg gyro magnitude, avg accel magnitude).
+3. **Daily Activity** — calendar heatmap, daily keypress bar, 24-hour bar, hour×weekday circadian heatmap.
+4. **Keystroke Dynamics** — IKD / dwell / flight log-scale histograms, backspaces-vs-autocorrects quality scatter, orientation breakdown donut.
+5. **Habits** — 4 trend charts (avg session duration, sessions per day, avg error rate, avg flight time) + 4-cell KPI strip incl. longest streak.
 
-- **Phase 9 — Global Insights Expansion** (10 sub-phase commits `f2d13b33` … `38ae0d63`, all landed on `main`, no feature branch — user override). `DashboardActivity` grew from a single page of three line charts + four-cell KPI strip into a five-section dashboard: **Trends → Daily Activity → Mood → Keystroke Dynamics → Habits**. New surfaces: aggregate gyro/accel magnitude trend charts (9.2); Habits section with four trend charts + 4-cell KPI strip including longest-streak (9.3); single-select Mood Filter chip row that re-runs every aggregator scoped to one Ekman category (9.4); calendar heatmap + daily keypress bar (9.5); 24-hour bar + hour×weekday circadian heatmap (9.6); IKD/Dwell/Flight log-scale histograms (9.7); orientation breakdown donut (9.8); Usage Map bubble chart (9.9); backspaces-vs-autocorrections quality scatter (9.10). Two new custom views (`IkdHeatmapView`, `IkdBubbleMapView`) join the existing `IkdLineChartView` / `IkdStackedBarChartView`. Six new aggregators (`Ikd{Sensor,Habits,Activity,Distribution,Orientation,Quality}Aggregator`) parallel `IkdAggregator`. DAOs gained `*ForMood` two-query variants for the mood filter (orchestrator Decision #14). 32 new JVM tests; lint clean; detekt +4 issues (LargeClass + TooManyFunctions on `DashboardActivity` / DAOs and ComplexCondition on heatmap/bubble views — scope-acceptable). No schema change (`IkdDatabase.version` stays at 3). Capture path frozen. **Phase 11 deleted** — every chart was absorbed into 9.5 / 9.6 / 9.9 / 9.10.
+Global header above the tabs: app bar · 6-cell global KPI strip · toolbar bottom sheet for Range (Today / Week / Month / All Time) + Mood Filter · active-filter chip with bucket-size hint. State persisted via `onSaveInstanceState` (per-screen-instance, not `SharedPreferences`).
 
-- **Error-rate denominator fix** (commit `569f331b`, landed on `main` between Phase 8.3 and Phase 9). Two bugs in the Phase 7.1 weighted error-rate metric: (1) the denominator only excluded `AUTOCORRECT` rows, so typing `hello world` (11 chars) and backspacing all 11 chars read 11/22 = **50 %** instead of the user-expected 100 %. Fixed by switching the denominator to *productive keystrokes* — `eventCount - correctionCount` — which excludes both `AUTOCORRECT` and `BACKSPACE`. (2) `BACKSPACE` rows always carried `correction_weight = 1`, even when the keypress deleted an N-char selection in one shot — the IME had the deletion count but threw it away. New `SimpleKeyboardIME.computeBackspaceWeight()` helper reads the selection length (or `getCountToDelete()` for grapheme-aware multi-char deletes) before recording the timing event. DAO additive: `correctionCount` projection on `EventBucketRow`. Test fixtures updated: `ocasdasda<space>`+autocorrect stays at 90 %; legacy backfill drifts 18.18 % → 20 %; the user-reported `hello world<BS×11>` case now reads 100 %. Manual test plan saved at [`roadmap/ErrorRateFix_TestPlan.md`](ErrorRateFix_TestPlan.md).
+## Error-rate metric (current definition)
 
-- **Phase 8.3** (landed on `main`, no feature branch — user override) — drops the Avg Mood KPI cell + Mood-over-Time line chart from the global dashboard; replaces them with a per-bucket stacked-bar mood-mix chart that shows the percentage breakdown of each Ekman category over time. Mood Distribution panel preserved verbatim. Read-side only, no schema change.
-- **Phase 7.1** (landed on `main`, no feature branch — user override) — `correction_weight` column on `ikd_events` (`Migration(2, 3)`); weighted error-rate formula `100 * SUM(correction_weight) / keystrokeCount`; CSV gains an eighth column. Folded in a Phase 7 follow-up fix for the autocorrect false-positive when the IME commits onto a user-selected range.
-- **Phase 8.2** (commits `44f18f06`, `14be3079`, landed on `main` ahead of 8.3) — mood bar promoted to a centered "stretched-key" capsule with theme-aware `mKeyColor`/`mStrokeColor` background; chat-bubble `PopupWindow` replaces toasts with first-person feedback ("I'm feeling happy", "I want privacy"); every slot is now a true toggle (tap-highlighted-slot deselects); selected glyph rendered at `scaleX/scaleY 1.25` (rendering only — tap area unchanged); dimmed alpha tightened 0.6 → 0.45; clipboard chip / inline suggestions / clear / voice buttons hidden while the bar is on; `Config.showMoodPopup` (default `true`) plus settings row to silence the bubble without disabling the state change. New `IkdMoodBarController.disablePrivacy` / `clearMoodForActiveSession` controller methods mirror the existing `enablePrivacyAndClearMood` path. No schema change.
-- **Phase 8.1 UI polish** (`fix/phase8-ui-polish`, merged) — mood bar sizing/centering, dashboard card theming, `Config.showMoodBar` toggle, dedupe of the duplicate session-dashboard mood chip. Reverses Phase 8 Decision #9; full change log in [`Phase8_Plan.md` Section 12](Phase8/Phase8_Plan.md#12-post-merge-ui-polish-phase-81).
-- **Phase 8** (`feat/phase8-mood-bar`, merged) — schema bump 1→2, seven-button Ekman-6 emotion bar, mood KPI on session dashboard, Mood-over-Time chart + Mood Distribution panel + Avg Mood KPI on global dashboard, third CSV block.
-- Phase 7 (merged), Phase 6 rework (merged), and the diagnostics KPI metric polish are all upstream of the above.
+Since `303e792f`, "correction" in the metric layer means **BACKSPACE only**:
+
+```
+errorRatePct = 100 * SUM(correction_weight WHERE category = 'BACKSPACE') / (keystrokeCount - backspaceCount)
+```
+
+where `keystrokeCount = COUNT(*) - COUNT(AUTOCORRECT)`. AUTOCORRECT rows are still captured (CSV, per-session event log) but no longer feed the error-rate KPI / chart / live cell — the IME-level autocorrect heuristic can't reliably distinguish a true spell-check accept from spell-check noise across OEMs. Sessions with no autocorrects are byte-identical to the pre-fix formula. Known follow-up: the Habits-tab error metric and the Daily-Quality scatter (Phase 9.3 / 9.10) still treat AUTOCORRECT as a correction.
 
 ## Next step
 
-**Phase 8.5 — Collapsible Mood Bar with Persistent Standing Rating + Inactivity Reset.** A medium UX rework: the seven-button mood bar moves to the leading edge of the toolbar, defaults to a collapsed one-slot chip showing the user's standing self-rating, and expands on tap. The standing rating is remembered across sessions via a display-only `Config.lastMoodScore` (`mood_entries` semantic is unchanged — a row is written only when the user explicitly taps in this session) and auto-clears after one hour of inactivity. Reopens `views/MyKeyboardView.kt`, the keyboard layout XML, `Constants.kt` / `Config.kt` / `MoodEmoji.kt`, `IkdMoodBarController.kt`, and adds two narrow `SimpleKeyboardIME` lifecycle wires. No schema migration, no DAO changes, no aggregator changes, no capture-path semantic change. Plan file: [`Phase8.5_Plan.md`](Phase8/Phase8.5_Plan.md).
+**Phase 14 — Gamification: Badges.** The only outstanding phase. Read-side feature + one schema bump (`Migration(3, 4)` for a `badges` table). New `models/Badge.kt`, `interfaces/BadgeDao.kt`, `helpers/IkdBadgeCatalog.kt`, `helpers/IkdBadgeEvaluator.kt`, `activities/dashboard/AchievementsFragment.kt`, `adapters/BadgeAdapter.kt`. ~13 starter badges (6 mood-cataloging, 7 keyboard-usage). Lazy evaluation on dashboard open; in-app snackbar on unlock; no system notifications. Plan: [`Phase14_Plan.md`](Phase14/Phase14_Plan.md).
 
-**Phase 8.4 — Mood-Bar Dance + Haptic on Slot Select** remains planned and is compose-safe with 8.5 in either landing order (8.5 Decision #11). It's the smaller of the two; either can land first.
-
-After 8.4 + 8.5 land, the next planned phase is **Phase 10 — Rebranding & New Identity**: retire the "Fossify Keyboard" name and visual identity to honestly reflect a behavioural-analytics research platform. Scope: new app name + `applicationId` (with one-time `ikd.db` copy on package rename), new launcher icon, primary colour token migration, store-listing rewrite. No detailed plan file yet — drafted from `FeatureRoadmap.md` § Phase 10 when ready to start.
-
-The user-reported error-rate fix (`569f331b`) remains worth surfacing for on-device review — see [`roadmap/ErrorRateFix_TestPlan.md`](ErrorRateFix_TestPlan.md) for the manual test sequence.
+Other backlog items (no detailed plan yet): align the Habits/Quality correction metrics with the new error-rate definition; a release-readiness pass (`applicationId` rename + one-time `ikd.db` copy, fastlane/store metadata, screenshots, `versionName` bump) deferred out of the cosmetic Phase 10 rebrand; mood quick-note (long-press a mood emoji to add a 1–2 line note — needs an explicit text-storage opt-in); mood ↔ activity overlay on the Phase 9.5 calendar heatmap.
 
 ## Frozen surfaces (do not edit without an explicit unfreeze in a phase plan)
 
-- Capture path: `SimpleKeyboardIME.kt` *(Phase 7.1 reopened for the autocorrect heuristic; the error-rate fix `569f331b` reopened it once more for `computeBackspaceWeight`)*, `LiveCaptureSessionStore.kt`, `KinematicSensorHelper.kt`, `IkdRetentionWorker.kt`
-- Schema entities: `IkdEvent`, `SensorSample`, `SessionRecord`, `MoodEntry`
-- Read pipeline: `IkdAggregator` *(Phase 9.4 added `moodFilter` parameter)*, `IkdSessionStatsLoader`, `IkdSessionChartLoader`, `IkdMoodLoader`, `IkdMoodAggregator`. New Phase 9 aggregators (`IkdSensorAggregator`, `IkdHabitsAggregator`, `IkdActivityAggregator`, `IkdDistributionAggregator`, `IkdOrientationAggregator`, `IkdQualityAggregator`) join the frozen list now that 9 has shipped.
-- CSV: `IkdCsvWriter.kt` (Phase 8 added the third dual-block segment; Phase 7.1 added `correction_weight`; the format is again frozen)
-- Charts: `views/IkdLineChartView.kt` (single-series only). Phase 9 adds `views/IkdStackedBarChartView.kt`, `views/IkdHeatmapView.kt`, `views/IkdBubbleMapView.kt` to the frozen list.
-- Phase 6 surface: `DiagnosticsActivity.kt`, `activity_diagnostics.xml` *(error-rate fix updated `updateComputedMetrics` denominator)*
-- Phase 5 surface: `EventFeedActivity.kt`, `activity_event_feed.xml` *(Phase 8.1 made the dedupe edit; otherwise frozen)*
-- Phase 3 surface: `DashboardActivity.kt`, `activity_dashboard.xml` *(Phase 8 / 8.1 / 8.3 / 9 reopened cumulatively; now frozen post-Phase 9)*
-- Phase 8 surface: `views/MyKeyboardView.kt` (mood bar wiring), `helpers/MoodEmoji.kt`, `helpers/IkdMoodBarController.kt`, `models/MoodEntry.kt`, `interfaces/MoodDao.kt`
+- **Capture path:** `SimpleKeyboardIME.kt` *(reopened narrowly by Phase 7.1 for the autocorrect heuristic, by `569f331b` for `computeBackspaceWeight`, by `303e792f` for the BACKSPACE-only metric, and by Phase 8.5 / 13 for tiny lifecycle / preference-listener wires)*, `LiveCaptureSessionStore.kt`, `KinematicSensorHelper.kt`, `IkdRetentionWorker.kt`
+- **Schema entities:** `IkdEvent`, `SensorSample`, `SessionRecord`, `MoodEntry`
+- **Read pipeline:** `IkdAggregator` *(Phase 9.4 added a `moodFilter` param; `303e792f` swapped the correction projections)*, `IkdSessionStatsLoader`, `IkdSessionChartLoader`, `IkdMoodLoader`, `IkdMoodAggregator`, plus the Phase 9 aggregators `IkdSensorAggregator`, `IkdHabitsAggregator`, `IkdActivityAggregator` *(Phase 9.17 added the dominant-mood post-pass)*, `IkdDistributionAggregator`, `IkdOrientationAggregator`, `IkdQualityAggregator`
+- **CSV:** `IkdCsvWriter.kt` — dual-block format (`ikd_events` + `sensor_samples` + `mood_entries`), `correction_weight` column on the timing block; format is frozen
+- **Charts:** `views/IkdLineChartView.kt`, `views/IkdStackedBarChartView.kt`, `views/IkdHeatmapView.kt` *(9.17 reads `dominantMood`)*, `views/IkdBubbleMapView.kt` *(9.17 mood tinting)*, `views/IkdHistogramView.kt`
+- **Phase 6 surface:** `DiagnosticsActivity.kt`, `activity_diagnostics.xml` *(error-rate fixes updated `updateComputedMetrics`)*
+- **Phase 5 surface:** `EventFeedActivity.kt`, `activity_event_feed.xml` *(Phase 8.1 dedupe edit; otherwise frozen)*
+- **Phase 3/9 surface:** `DashboardActivity.kt` + `activity_dashboard.xml` + `activities/dashboard/*` *(reopened cumulatively through Phase 9.18; the dashboard fragments are the live edit surface, the activity host is otherwise frozen)*
+- **Phase 8 mood surface:** `views/MyKeyboardView.kt` (mood-bar wiring) *(reopened by 8.2 / 8.4 / 8.5 / 12 / 13)*, `helpers/MoodEmoji.kt` *(8.5 `SCORE_NONE`, 9.17 `colorResFor`, 12 `curatedEmojisFor`)*, `helpers/IkdMoodBarController.kt` *(8.2 / 8.5 additive methods)*, `models/MoodEntry.kt`, `interfaces/MoodDao.kt` *(8.3 / 9.4 / 9.17 additive queries)*
+- **Brand surface (Phase 10):** `activities/AboutActivity.kt`, `res/drawable/ic_launcher_foreground.xml` / `ic_launcher_monochrome.xml`, `app_name` / `app_launcher_name` strings
 
 For the full per-phase forbidden lists see each plan's "Branch & Layering Discipline" section.

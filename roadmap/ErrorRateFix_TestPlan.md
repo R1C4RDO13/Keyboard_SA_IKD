@@ -1,12 +1,19 @@
 # Error-Rate Fix — Manual Test Plan
 
-**Commit under test:** `569f331b fix(error-rate): exclude BACKSPACE from denominator and weight by deletion count`
+**Commits under test:** `569f331b` (exclude BACKSPACE from the denominator + weight backspaces by deletion count) **and** `303e792f` (drop AUTOCORRECT from the formula entirely).
 **Branch:** `main`
 
-The fix changes two things:
-1. **Denominator** now excludes both AUTOCORRECT *and* BACKSPACE events (was: only AUTOCORRECT). Formula:
-   `errorRatePct = 100 * SUM(correction_weight) / (eventCount - correctionCount)`
-2. **BACKSPACE weight** now equals the actual deletion count (selection length or grapheme count). Was always 1.
+The current (post-`303e792f`) error-rate definition — "correction" means **BACKSPACE only**:
+
+```
+errorRatePct = 100 * SUM(correction_weight WHERE category = 'BACKSPACE') / (eventCount - backspaceCount - autocorrectCount)
+            ≡ 100 * backspaceWeight / (keystrokeCount - backspaceCount)
+```
+
+Two things to remember while running these tests:
+1. **Denominator** = *productive keystrokes* — every event minus BACKSPACE rows minus AUTOCORRECT rows.
+2. **BACKSPACE weight** equals the actual deletion count (selection length or grapheme count), not always 1.
+3. **AUTOCORRECT rows are captured but do not feed the metric** — they show up in the CSV and the per-session event log, but contribute neither numerator nor denominator. (Known follow-up: the Habits-tab error metric and the Daily-Quality scatter still count AUTOCORRECT.)
 
 ---
 
@@ -80,17 +87,17 @@ If the BACKSPACE row in the DB shows `correction_weight = 1` instead of 11, the 
 
 **Test:** Confirm the device's system spell-check service is **ON** (Settings → Languages & input → Spell check → on). In the text field, type **`ocasdasda`** (9 lowercase chars), then a **space**. Wait for the system to replace the misspelled word with `october`.
 
-**Expected DB rows:**
-- 9 ALPHA + 1 SPACE + 1 AUTOCORRECT = **11 events**
-- AUTOCORRECT row: `is_correction = 1`, `correction_weight ≈ 9` (the replaced-span length; may vary by ±1 depending on what the spell-checker selected — exact span depends on the OEM service)
+**Expected DB rows (capture still works):**
+- 9 ALPHA + 1 SPACE + 1 AUTOCORRECT = **11 events** (if the OEM spell-checker fires; some don't classify `ocasdasda` as misspelled — see note below)
+- The AUTOCORRECT row still records `is_correction = 1` and a `correction_weight` ≈ the replaced-span length
 
-**Expected error rate:**
-- `correctionCount = 1`, `correctionWeight ≈ 9`, `productive = 11 - 1 = 10`
-- **Error rate ≈ 90.0 %**
+**Expected error rate (post-`303e792f`):**
+- `backspaceCount = 0`, `backspaceWeight = 0`, `autocorrectCount = 1`, `productive = 11 - 0 - 1 = 10`
+- **Error rate = 0.0 %** — there are no backspaces; the autocorrect is informational only
 
-**Pass criteria:** Reading is between **80 % and 100 %**. This case is unchanged from the previous fix — confirm we didn't regress it.
+**Pass criteria:** Reading is **`0.0 %`** (or the `—` placeholder if rendering nulls) **AND** the per-session event log lists the AUTOCORRECT row (proving capture still records it). This is the one behaviour change vs. the earlier fix — the metric layer no longer counts autocorrects, because the IME-level heuristic that detects them can't reliably distinguish a true spell-check accept from spell-check noise across OEMs.
 
-If no AUTOCORRECT row appears, the system spell-check service didn't fire — try another text field (Messages app is usually reliable) or another misspelling like `definately`.
+If no AUTOCORRECT row appears, the system spell-check service didn't fire — that's fine for the metric (still 0 %); try another misspelling like `definately` only if you want to verify the capture path still records the row.
 
 ---
 
@@ -172,13 +179,13 @@ If the cell stays at ~50 % at the end, the live formula in `DiagnosticsActivity.
    ```sql
    SELECT
      COUNT(*) AS events,
-     SUM(CASE WHEN is_correction THEN 1 ELSE 0 END) AS corrections,
-     SUM(correction_weight) AS weight,
-     SUM(CASE WHEN event_category != 'AUTOCORRECT' THEN 1 ELSE 0 END) AS keystrokes
+     SUM(CASE WHEN event_category = 'BACKSPACE'  THEN 1 ELSE 0 END) AS backspaces,
+     SUM(CASE WHEN event_category = 'AUTOCORRECT' THEN 1 ELSE 0 END) AS autocorrects,
+     SUM(CASE WHEN event_category = 'BACKSPACE'  THEN correction_weight ELSE 0 END) AS backspace_weight
    FROM ikd_events
    WHERE session_id = '<id-from-the-failing-session>';
    ```
-2. Compute by hand: `100 * weight / (events - corrections)`. If that doesn't match the UI reading, the read-side aggregator is wrong (`IkdAggregator` or `IkdSessionStatsLoader`).
+2. Compute by hand: `100 * backspace_weight / (events - backspaces - autocorrects)`. If that doesn't match the UI reading, the read-side aggregator is wrong (`IkdAggregator` or `IkdSessionStatsLoader`).
 3. Check individual BACKSPACE rows: `SELECT timestamp, correction_weight FROM ikd_events WHERE event_category = 'BACKSPACE' AND session_id = '<id>'`. Each row's `correction_weight` should equal the number of chars that BS deleted (1 for single-char, N for selection-delete).
 
 ---

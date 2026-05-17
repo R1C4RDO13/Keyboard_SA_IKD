@@ -1,8 +1,8 @@
 # Phase 8.4 — Mood-Bar Dance + Haptic on Slot Select
 
-**Status:** Planned (no branch yet)
+**Status:** Implemented — landed on `main` (commit `7e8895ab`, `feat(phase8.4): mood-bar emoji dances on select with subtle haptic`).
 **Depends on:** Phase 8 (mood bar exists), Phase 8.1 polish (`clipChildren="false"` on `mood_bar`), Phase 8.2 (selected-glyph scaling at `1.25×`, `vibrateIfNeeded()` already wired into every slot click handler)
-**Branch (proposed):** `feat/phase8.4-mood-dance` — single commit, single file
+**Branch:** landed directly on `main` (single commit, single file)
 **Scope (one sentence):** When the user **selects** a slot on the mood bar (privacy or one of the six emotions), the tapped emoji plays a short pop + wiggle animation while the existing keyboard haptic fires; deselect taps remain silent (preserves Phase 8.2 Decision that "the highlight change is the feedback").
 
 > **Naming note.** Phase 8.1 = post-merge UI polish in `Phase8_Plan.md` §12. Phase 8.2 = mood-bar UX polish (toggles + capsule + chat-bubble) in `Phase8_Plan.md` §13. Phase 8.3 = stacked-bar mood-mix dashboard chart in `Phase8.3_Plan.md`. Phase 8.4 sits as a standalone plan beside 8.3 because it is a contained UI feature with its own verification surface.

@@ -1,6 +1,6 @@
 # Plan — Drop AUTOCORRECT from the error-rate formula
 
-> **Status:** todo / not started. Filed 2026-05-10 as a follow-up to `ErrorRateFix_TestPlan.md` after on-device verification showed Tests 3 and 4 still failing post-Phase 9.
+> **Status: Implemented** — commit `303e792f` (`feat(error-rate): implement plan to drop AUTOCORRECT from the error-rate formula and update related metrics`), landed on `main`. Originally filed 2026-05-10 as a follow-up to `ErrorRateFix_TestPlan.md` after on-device verification showed Tests 3 and 4 still failing post-Phase 9. The rest of this file is the implementation plan as written; it matches what shipped.
 
 ## Context
 

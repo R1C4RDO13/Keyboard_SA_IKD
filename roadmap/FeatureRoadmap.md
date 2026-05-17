@@ -2,6 +2,8 @@
 
 This roadmap outlines the strategic phases for integrating passive behavioral tracking and sensor analytics into the custom keyboard project. The focus is on securely capturing device interactions and transforming them into meaningful, actionable insights for the user.
 
+> **Status at a glance (2026-05-17):** Phases 1 → 10, 12, 13 are **implemented and on `main`**, along with every sub-phase (8.1 – 8.5, 9.1 – 9.18) and two post-Phase-8 error-rate corrections. The dashboard is a five-tab `ViewPager2` (Summary · Trends · Daily Activity · Keystroke Dynamics · Habits). The app is rebranded to **MoodScript** on-device. `IkdDatabase.version = 3`. The single remaining planned phase is **Phase 14 — gamification badges**. Quick status table: [`STATUS.md`](STATUS.md); narrative report: [`../PROJECT_JOURNEY.md`](../PROJECT_JOURNEY.md).
+
 ## Visual Roadmap Overview
 
 ```mermaid
@@ -19,7 +21,10 @@ flowchart TD
     P7[Phase 7: Emoji & Autocorrect Capture]:::phase
     P8[Phase 8: Mood Bar & Contextual Overlay]:::phase
     P9[Phase 9: Global Insights Expansion]:::phase
-    P10[Phase 10: Rebranding & New Identity]:::phase
+    P10[Phase 10: Rebrand to MoodScript]:::phase
+    P12[Phase 12: Mood-Curated Emoji Section]:::phase
+    P13[Phase 13: Persistent Right-Anchored Mood Bar]:::phase
+    P14[Phase 14: Gamification — Badges  ·  PLANNED]:::phase
 
     P1 --> P1_1
     P1_1 --> P2
@@ -31,6 +36,9 @@ flowchart TD
     P7 --> P8
     P8 --> P9
     P9 --> P10
+    P10 --> P12
+    P12 --> P13
+    P13 --> P14
 
     subgraph Phase 1 Features
         F1[Real-Time Data Interface]:::feature
@@ -103,9 +111,25 @@ flowchart TD
     end
 
     subgraph Phase 10 Features
-        F26[New App Name & Identity]:::feature
-        F27[Visual Design System]:::feature
-        F28[Store Listing & Metadata Refresh]:::feature
+        F26[New App Name: MoodScript]:::feature
+        F27[New Launcher Glyph: keyboard + 3 hearts]:::feature
+        F28[Local AboutActivity override]:::feature
+    end
+
+    subgraph Phase 12 Features
+        F29[Mood-Curated Emoji Section in the drawer]:::feature
+    end
+
+    subgraph Phase 13 Features
+        F30[Mood bar moved to trailing edge]:::feature
+        F31[Bar overlays keyboard toolbar AND emoji drawer]:::feature
+        F32[Mid-drawer mood change re-curates the section]:::feature
+    end
+
+    subgraph Phase 14 Features  PLANNED
+        F33[~13 Badges: mood cataloging + keyboard usage]:::feature
+        F34[New 6th Achievements tab]:::feature
+        F35[Migration 3 to 4: badges table]:::feature
     end
 
     P5 -.-> F12 & F13 & F14
@@ -114,6 +138,9 @@ flowchart TD
     P8 -.-> F20 & F21 & F22 & F22a
     P9 -.-> F23 & F24 & F25 & F25b & F25c & F25d & F25e & F25f & F25g & F25h
     P10 -.-> F26 & F27 & F28
+    P12 -.-> F29
+    P13 -.-> F30 & F31 & F32
+    P14 -.-> F33 & F34 & F35
 ```
 
 ---
@@ -323,6 +350,23 @@ Detailed scope: [`Phase7.1/Phase7.1_Plan.md`](Phase7.1/Phase7.1_Plan.md)
 
 ---
 
+## Error-Rate Follow-up: Drop AUTOCORRECT from the formula entirely
+**Status: Implemented** (commit `303e792f`, post-Phase-8.3)
+
+Detailed scope: [`roadmap/ErrorRateFix_DropAutocorrect_Plan.md`](ErrorRateFix_DropAutocorrect_Plan.md)
+
+On-device testing showed the autocorrect detector still mis-fires across OEMs — the user's `ocasdasda → october` case sometimes produces no AUTOCORRECT row at all (0 % reading), and spell-check underlining of in-progress text can fire a phantom AUTOCORRECT row (inflating the reading). Per the user directive ("let's just remove autocorrect from the error rate formula"), the metric layer's definition of "correction" is now **BACKSPACE only**:
+
+```
+errorRatePct = 100 * SUM(correction_weight WHERE category = 'BACKSPACE') / (keystrokeCount - backspaceCount)
+```
+
+where `keystrokeCount = COUNT(*) - COUNT(AUTOCORRECT)`. AUTOCORRECT rows are still captured (CSV, per-session event log) but no longer contribute to either numerator or denominator. Sessions without autocorrects are byte-identical to the Phase-7.1 formula; Test 3 of `ErrorRateFix_TestPlan.md` is the only behaviour change (it now reads `0.0 %`). DAO projections renamed `correctionCount`/`correctionWeight` → `backspaceCount`/`backspaceWeight`; `IkdAggregator`, `IkdSessionStatsLoader`, and `DiagnosticsActivity.updateComputedMetrics` updated; new JVM fixtures added. **Known follow-up:** the Habits-tab error metric (Phase 9.3) and the Daily-Quality scatter (Phase 9.10) still treat AUTOCORRECT as a correction — separate optional cleanup.
+
+> **No schema bump.** The `correction_weight` column stays; readers just project a different slice out of it.
+
+---
+
 ## Phase 8: Mood Bar & Contextual Overlay
 **Status: Implemented (incl. 8.1 UI polish — see [`Phase8/Phase8_Plan.md`](Phase8/Phase8_Plan.md#12-post-merge-ui-polish-phase-81))**
 
@@ -398,7 +442,7 @@ Detailed scope: [`Phase8/Phase8.3_Plan.md`](Phase8/Phase8.3_Plan.md)
 ---
 
 ## Phase 8.4: Mood-Bar Dance + Haptic on Slot Select
-**Status: Planned**
+**Status: Implemented** (commit `7e8895ab`)
 
 Detailed scope: [`Phase8/Phase8.4_Plan.md`](Phase8/Phase8.4_Plan.md). Pointer summary in [`Phase8_Plan.md` § 14](Phase8/Phase8_Plan.md#14-mood-bar-dance--haptic-on-slot-select-phase-84).
 
@@ -416,7 +460,7 @@ Detailed scope: [`Phase8/Phase8.4_Plan.md`](Phase8/Phase8.4_Plan.md). Pointer su
 ---
 
 ## Phase 8.5: Collapsible Mood Bar with Persistent Standing Rating + Inactivity Reset
-**Status: Planned**
+**Status: Implemented** (commit `8e322b33`)
 
 Detailed scope: [`Phase8/Phase8.5_Plan.md`](Phase8/Phase8.5_Plan.md). Pointer summary in [`Phase8_Plan.md` § 15](Phase8/Phase8_Plan.md#15-collapsible-mood-bar-with-persistent-standing-rating--inactivity-reset-phase-85).
 
@@ -508,53 +552,68 @@ Detailed scope:
 
 ---
 
-## Phase 10: Rebranding & New Identity
-**Status: Planned**
+## Phase 9.11 → 9.18: Insights navigation & presentation polish
+**Status: Implemented** — all on `main`. Sub-plans under [`Phase9/sub_plans/`](Phase9/sub_plans/).
 
-**Depends on:** Phase 9 (all major features complete before public-facing identity is locked in)
+After Phase 9's ten content sub-phases landed, a run of micro-phases reshaped the dashboard's *navigation and presentation* on top of those charts. The dashboard ended up as a five-tab `ViewPager2` with a top `TabLayout`:
 
-**Objective:** Retire the "Fossify Keyboard" name and visual identity. The app has evolved from a simple open-source keyboard fork into a behavioural analytics research platform. Phase 9 aligns everything the user sees — name, icon, colour palette, store listing, in-app strings — with that mission. This phase is deliberately scheduled last so the new identity can honestly reflect a feature-complete product.
+*   **9.11 — TODAY range + multi-tab `ViewPager2`** (`eb8454f2`, `f00b5713`). `IkdAggregator.Range` gains `TODAY(days = 1, bucketFormat = "%Y-%m-%d %H")`; `formatBucketLabel` renders hourly buckets as `"HH:00"`. Charts that go degenerate under TODAY (calendar heatmap, daily-keypress bar, Usage Map) hide cleanly; the Habits longest-streak KPI gains a `StreakUnit.HOURS` mode. The five Phase 9 sections move into `Fragment` subclasses under `activities/dashboard/`; `DashboardActivity` shrinks ~1100 → ~340 LOC, dispatching the snapshot payload to the visible fragment.
+*   **9.12 — themed tabs, top tab toggle, KPI dedup** (`cc0f64aa`). The vertical `NavigationRailView` is replaced with a top tab toggle; the tab strip is themed; the duplicate global KPI strip is removed.
+*   **9.13 — widget info icons** (`7c8da71e`). Every Insights widget gains a tap-to-explain ⓘ icon (`WidgetInfoDialog` / `WidgetInfo` / `strings_widget_info.xml`).
+*   **9.14 — Summary tab, TabLayout w/ icons, filter bottom sheet** (`503ba841`, `36062ab4`, `dd6cf9c9`). A new **Summary** tab is inserted at index 0 as the landing page (KPI grid + tile click-through); the tab toggle becomes a `TabLayout` with icons in `MODE_FIXED`; the Range + Mood filters collapse into a toolbar bottom sheet with an active-filter chip below the tabs.
+*   **9.15 — Summary rework + drop the Mood tab** (`6b70ad96`). Summary becomes a flat 3×2 KPI grid; the Usage Map and the Mood Mix + Mood Distribution widgets move onto it; the dedicated **Mood tab is deleted** (`MoodFragment` removed). Tab count 6 → 5: **Summary · Trends · Daily Activity · Keystroke Dynamics · Habits**.
+*   **9.16 — bucket-size hint + Sessions shortcut + streak fix** (`31348365`, `549282ef`, `3efa6e96`). A bucket-size hint renders below the active-filter chip; a Sessions-history shortcut is added to the overflow menu; the longest-streak metric is fixed to only count calendar-consecutive days.
+*   **9.17 — mood-colour refresh, distribution-first Summary, mood-tinted Usage Map** (`4f233a1c`). The six `mood_color_*` tokens are reset to conventional emotional associations (gold = happy, orange = surprise, green = disgust, blue = sad, purple = fear, red = anger; light + dark variants). The Mood Distribution panel moves to the top of the Summary tab as six coloured percentage tiles that double as the screen's colour legend. Each Usage Map bubble is tinted by the dominant mood of the sessions in its `(day, hour)` cell (via a new `MoodEmoji.colorResFor` + a small `MoodDao.getAllSessionMoods` post-pass in `IkdActivityAggregator`).
+*   **9.18 — Distribution tiles double as the Mood Filter** (`2462c519`, `fa354a23`, `d8035a3f`, `439f2431`). Tapping a Distribution tile sets the global Mood Filter to that score (every aggregator re-runs via the Phase 9.4 `*ForMood` paths); tapping the active tile (or the active-filter chip ✕) reverts to All. The tiles keep showing the *unfiltered* range distribution so they remain a usable filter-picker and legend; an empty-result filter offers an escape hatch.
 
-*   **New App Name & Identity:**
-    *   Define a new name that signals the app's core purpose: keystroke dynamics, self-insight, passive behavioural measurement. Candidate directions: something that evokes rhythm, patterns, or self-awareness (e.g., *KeyPulse*, *TypoSelf*, *RhythmKeys*, *IKDense*, *Keyma*). Final name decided by project owner.
-    *   Update `app_name` and `app_launcher_name` strings in all `res/values*/strings.xml` files and all `fastlane/metadata` locale directories.
-    *   Update `applicationId` in `app/build.gradle.kts` if the package name changes. A companion migration guide must cover existing users' data (the `ikd.db` path is tied to the package name — a package rename requires a one-time database copy on first launch of the renamed build).
-    *   Update `CODEOWNERS`, `README.md`, `BUILDING.md`, `CHANGELOG.md`, and all roadmap documents to use the new name.
-
-*   **Visual Design System:**
-    *   Commission or design a new launcher icon that replaces the current Fossify coloured circles family. The new icon should be unique and reflect the analytics/research mission (e.g., a waveform, a keystroke pulse, or an abstract brain/finger motif).
-    *   Define a primary colour token (`colorPrimary`) that moves away from the Fossify green/teal defaults. Apply it consistently across the keyboard toolbar, app bar, FAB, and chart accent colour (`IkdLineChartView` line colour).
-    *   Review and update the `AboutActivity` content (app description, developer info, licence attribution) to credit both the Fossify upstream and the IKD additions.
-    *   All 19 existing launcher icon variants (`ic_launcher_red` … `ic_launcher_grey_black`) can be retained as user-selectable accent icons or culled to a smaller curated set — decision for project owner.
-
-*   **Store Listing & Metadata Refresh:**
-    *   Rewrite `fastlane/metadata/android/en-US/full_description.txt` and `short_description.txt` to lead with the research/analytics mission rather than the generic keyboard pitch.
-    *   Update screenshots in `fastlane/metadata/android/en-US/images/` to feature the Insights dashboard, Session Dashboard, and Mood Bar — the differentiating screens.
-    *   Update the `title.txt` in every supported locale, or reduce the locale set to those actively maintained.
-    *   Bump `versionName` in `app/build.gradle.kts` to a `1.0.0` (or `2.0.0` if treating the Fossify fork as v1) release marker to signal the public debut of the rebranded product.
+> **No schema migration** across 9.11 – 9.18, no keyboard-layer reopen, no new Gradle dependency. `IkdDatabase.version` stays at 3.
 
 ---
 
-## Phase 9.11: Insights — TODAY Range + Vertical Tabs
-**Status: Implemented** — three commits on `main`: `eb8454f2` (TODAY range), `f00b5713` (vertical tabs), `be4d98ba` (sub-plan doc).
+## Phase 10: Rebrand to MoodScript
+**Status: Implemented** (commit `2adaa70d`)
 
-Detailed scope: [`Phase9/sub_plans/9.11_today_filter_and_tabs.md`](Phase9/sub_plans/9.11_today_filter_and_tabs.md)
+Detailed scope: [`Phase10/Phase10_Plan.md`](Phase10/Phase10_Plan.md) · visual mockup: [`Phase10/Phase10_Identity_Mockup.html`](Phase10/Phase10_Identity_Mockup.html)
 
-**Objective:** Two follow-up changes to the Insights screen surfaced after Phase 9 landed: (1) add a "Today" entry to the date filter so users can scope every chart and KPI to today's hourly buckets without having to wait for a Week's worth of data; (2) split the five Phase 9 sections (Trends → Daily Activity → Mood → Keystroke Dynamics → Habits) into swipeable tabs so the dashboard stops being a single ~1100-line scrolling page.
+**Objective:** Retire the on-device "Fossify Keyboard" identity now that the app has grown into a keystroke-dynamics + mood + insights research platform. **Cosmetic only.**
 
-*   **TODAY range:**
-    *   `IkdAggregator.Range` gains `TODAY(days = 1, bucketFormat = "%Y-%m-%d %H")`. The existing `computeRangeWindow` math covers it for free (`fromMs = startOfLocalDayMillis(now)` because `days - 1 = 0`).
-    *   New "Today" button as the first option in `dashboard_range_toggle_group`. Default selection stays `WEEK`.
-    *   `formatBucketLabel` renders `"YYYY-MM-DD HH"` strings as `"HH:00"` (24-hour).
-    *   Charts that go degenerate under TODAY (single cell / single bar) hide cleanly: Phase 9.5 calendar heatmap and daily-keypress bar disappear; Phase 9.9 Usage Map disappears. The 24-hour bar (9.6) and circadian heatmap (9.6) stay — already hourly. The Habits longest-streak KPI (9.3) gains a `StreakUnit.HOURS` mode that prints "Today" / "—".
+*   **New app name** — installs as **MoodScript** (`app_launcher_name` becomes `translatable="false"`; locale overrides removed; `redirection_note` brand token swapped inline per locale).
+*   **New launcher glyph** — the original Fossify keyboard silhouette (rounded-rect outline + 5×2 dot keys + spacebar pill, white) *cradled by three concentric heart outlines* fading outward (Option F). Only `ic_launcher_foreground.xml` + `ic_launcher_monochrome.xml` change — all 19 Material-700 colour variants and the Settings → Customize Colors → App icon picker keep working unchanged.
+*   **New About screen** — local `org.fossify.keyboard.activities.AboutActivity` extending Commons `AboutActivity`, with MoodScript-led intro copy + a small Fossify upstream credit; `AndroidManifest.xml` repointed.
+*   **Out of scope (deferred to a future release-readiness pass):** `applicationId` rename (still `org.fossify.keyboard` — a rename triggers a one-time `ikd.db` copy + Play Store re-listing), fastlane / store metadata, `colorPrimary` palette change, `versionName` bump, Kotlin-package / repo-directory renames. `LICENSE` untouched.
 
-*   **Vertical tabs:**
-    *   New `NavigationRailView` on the left edge + horizontal `ViewPager2` for swipe-left/right navigation. Tab order top-to-bottom = page order left-to-right: Trends → Daily Activity → Mood → Keystroke Dynamics → Habits.
-    *   Each section moves into its own `Fragment` (`TrendsFragment`, `DailyActivityFragment`, `MoodFragment`, `KeystrokeDynamicsFragment`, `HabitsFragment` under `activities/dashboard/`). `DashboardActivity` becomes a thin host (~340 LOC, down from ~1100) that owns data loading + global state and dispatches snapshots to the visible fragment.
-    *   Global header above the rail+pager: app bar · 4-cell global KPI strip · Range toggle · Mood Filter chip row (Phase 9.4 — same "GONE until first mood entry" rule). Active tab index persisted in `onSaveInstanceState`.
-    *   Side-effect win: detekt's `LargeClass` warning on `DashboardActivity` is gone; total weighted issues unchanged at 52 vs. baseline.
+> **No schema migration.** `IkdDatabase.version` stays at 3.
 
-> **No schema migration**, no keyboard-layer reopen, no new Gradle dependency (`NavigationRailView` is on the classpath transitively via Material Components 1.13.0).
+---
+
+## Phase 12: Mood-Curated Emoji Section in the Drawer
+**Status: Implemented** (commit `bf305176`)
+
+Detailed scope: [`Phase12/Phase12_Plan.md`](Phase12/Phase12_Plan.md)
+
+**Objective:** When the user opens the keyboard's emoji drawer **and a standing mood is set** (`Config.lastMoodScore != SCORE_NONE`), prepend a context-aware section at the top of the emoji list with ~15–25 curated emojis for that mood. When no mood is set, the drawer renders unchanged.
+
+*   `MoodEmoji.curatedEmojisFor(score)` returns the curated codepoints per Ekman category (lead with the face emoji that the mood bar shows, then adjacent face variants, then non-face symbols carrying the same valence). Inline Kotlin constants — never written to disk.
+*   `MyKeyboardView`'s emoji-palette assembly prepends an `Item.Category("mood_curated")` + `Item.Emoji` entries; `EmojiHelper.getCategoryTitleRes` resolves a new `Mood: <emoji>` header string.
+*   Every curated-section tap flows through the Phase 7 `onEmojiText` pipeline → an `EMOJI` event with **no codepoint stored**. No new capture event type, no new column, no schema bump (`IkdDatabase.version` stays at 3).
+
+> **Phase numbering note.** The deleted Phase 11 slot is *not* reused; this feature is numbered Phase 12.
+
+---
+
+## Phase 13: Persistent Right-Anchored Mood Bar (visible inside the emoji drawer)
+**Status: Implemented** (commit `5dd826a5`)
+
+Detailed scope: [`Phase13/Phase13_Plan.md`](Phase13/Phase13_Plan.md)
+
+**Objective:** Make the keyboard's mood bar a first-class persistent UI element so the user can change their mood *without closing the emoji drawer* — which immediately re-curates the Phase 12 section.
+
+*   The `mood_bar` LinearLayout moves out of `toolbar_holder` and becomes a direct child of `keyboard_holder`, declared **after** `emoji_palette_holder` so it draws on top, anchored to the **trailing edge** with `app:elevation="4dp"`. `keyboard_holder` gains `clipChildren="false"` so the Phase 8.4 dance peak and the Phase 8.2 chat bubble aren't cropped.
+*   Right-side toolbar icons (`voice_input_button`, `pinned_clipboard_items`, `settings_cog`) shift left to make room; `settings_cog` re-anchors back to the parent edge when `Config.showMoodBar == false` via the existing `ConstraintSet` flip pattern. `voice_input_button` + `pinned_clipboard_items` are hidden while the bar is expanded.
+*   Every Phase 8.2 / 8.4 / 8.5 behaviour is preserved verbatim — collapsible chip, dance animation, chat-bubble feedback, standing rating. It's purely a re-position + re-layer.
+*   A mid-drawer mood change re-curates the Phase 12 section: `SimpleKeyboardIME.onSharedPreferenceChanged` watches `LAST_MOOD_SCORE` and calls a new public `MyKeyboardView.notifyEmojiAdapterMoodChanged()` (no-op when the drawer isn't open), which re-runs `setupEmojis()` on `Dispatchers.IO`. This routes the rebuild through the existing keyboard-refresh listener channel, guaranteeing it runs *after* the Config write commits.
+
+> **No schema migration**, no new capture-path behaviour, no DAO touch, no new aggregator. `IkdDatabase.version` stays at 3.
 
 ---
 
@@ -566,4 +625,23 @@ Detailed scope: [`Phase9/sub_plans/9.11_today_filter_and_tabs.md`](Phase9/sub_pl
 - The backspaces-vs-autocorrections scatter → **Phase 9.10**.
 - The hour × weekday heatmap → **Phase 9.6** (`IkdHeatmapView`).
 
-See Phase 9 above and the Phase 9 orchestrator's Decision #16 for the rationale.
+See Phase 9 above and the Phase 9 orchestrator's Decision #16 for the rationale. The Phase 12 / 13 / 14 numbering picks up after 11 so git archaeology stays unambiguous.
+
+---
+
+## Phase 14: Gamification — Badges (Mood + Keyboard)
+**Status: Planned** — the single remaining unimplemented phase
+
+Detailed scope: [`Phase14/Phase14_Plan.md`](Phase14/Phase14_Plan.md)
+
+**Depends on:** Phase 8 (mood entries), Phase 9.15 (current five-tab layout)
+
+**Objective:** Add a starter set of ~13 badges that reward consistent mood cataloging and keyboard usage, surfaced as a new sixth **"Achievements"** tab in the Insights dashboard, with a brief in-app snackbar when a new badge unlocks.
+
+*   **New `badges` table via `Migration(3, 4)`** — `id`, `badge_key` (unique index), `unlocked_at`. `IkdDatabase.version` bumps 3 → 4. New `models/Badge.kt`, `interfaces/BadgeDao.kt`. Migration test extended.
+*   **New `helpers/IkdBadgeCatalog.kt`** (static list of 13 `BadgeDef`s — 6 mood-cataloging, 7 keyboard-usage) + `helpers/IkdBadgeEvaluator.kt` (`suspend fun evaluate()` on `Dispatchers.IO`; pure `Companion.evaluateBadges` for unit tests; reads existing tables only).
+*   **New `activities/dashboard/AchievementsFragment.kt`** + `adapters/BadgeAdapter.kt` + `item_badge_card.xml` — a 2-column grid of badge cards (locked = greyscale + 0.45 alpha; unlocked = full colour + unlock date). `DashboardPagerAdapter` gains a 6th tab branch.
+*   **In-app `Snackbar`** anchored to the dashboard when one or more new badges unlock during a `loadDashboard` evaluation. No system notifications, no notification permission.
+*   **Privacy unchanged.** Badges are derived from existing `ikd_events` / `sessions` / `mood_entries`. No new captured data, no new pref keys, no CSV column (no `badges` block in the export).
+
+> **Phase numbering note.** This was originally drafted as "Phase 13"; that slot was claimed by the Persistent Right-Anchored Mood Bar feature (above) before this work started, so the gamification plan is renumbered to **Phase 14**. Technical content unchanged from the original draft.
