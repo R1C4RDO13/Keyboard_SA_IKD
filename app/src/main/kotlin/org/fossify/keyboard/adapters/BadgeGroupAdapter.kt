@@ -127,12 +127,15 @@ class BadgeGroupAdapter(
                     binding.badgeGroupPager.setCurrentItem(cur + 1, true)
                 }
             }
-            binding.badgeGroupPrev.setColorFilter(primary)
-            binding.badgeGroupNext.setColorFilter(primary)
-            // Raised arrow surface tracks the theme background; the
-            // layout's android:elevation casts the shadow that lifts it
-            // off the badge card so the arrows are clearly visible.
-            val arrowBg = ColorStateList.valueOf(ctx.getProperBackgroundColor())
+            // Arrows are primary-filled bars flush to the screen edge
+            // (square outer corner, rounded inner) with a contrasting
+            // chevron, so they read clearly against the badge card behind
+            // them (the card uses getProperBackgroundColor — a same-tone
+            // arrow was invisible). android:elevation adds the shadow.
+            val onArrow = ctx.getProperBackgroundColor()
+            binding.badgeGroupPrev.setColorFilter(onArrow)
+            binding.badgeGroupNext.setColorFilter(onArrow)
+            val arrowBg = ColorStateList.valueOf(primary)
             binding.badgeGroupPrev.backgroundTintList = arrowBg
             binding.badgeGroupNext.backgroundTintList = arrowBg
 
