@@ -603,11 +603,10 @@ class SummaryFragment : DashboardFragment() {
             snap.keystrokeTotal > 0L ||
             snap.sessionStreak > 0
         if (!hasData) {
-            view.summaryBadgesCard.beGone()
+            view.summaryBadgesSection.beGone()
             return
         }
-        view.summaryBadgesCard.beVisible()
-        view.summaryBadgesCard.setCardBackgroundColor(ctx.getProperBackgroundColor())
+        view.summaryBadgesSection.beVisible()
 
         // Task D: every tile state (in-progress, no-progress, done) uses
         // the runtime Fossify theme — no fixed badge_* tokens. Card to the

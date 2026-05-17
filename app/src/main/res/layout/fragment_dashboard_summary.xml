@@ -29,62 +29,59 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:orientation="vertical"
         android:padding="@dimen/normal_margin">
 
-        <!-- Phase 14 §7.6 (owner directive 2026-05-17: FIRST on Summary):
-             "Badges in progress" widget. One tile per v1 group = that
-             group's current in-progress (focus) badge. Tap a tile →
-             Achievements tab. Pure presentation of the same
-             EvaluationResult the carousel uses (no extra query). Hidden
-             when nothing is in progress. -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/summary_badges_card"
+        <!-- Phase 14 §7.6 (owner directive: FIRST on Summary, no outer
+             card — uniform with the Mood Distribution tiles section
+             below). One tile per v1 group = that group's current
+             in-progress (focus) badge. Tap a tile → Achievements tab.
+             Hidden when nothing is in progress. -->
+        <LinearLayout
+            android:id="@+id/summary_badges_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/normal_margin"
-            android:visibility="gone"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeWidth="0dp">
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <LinearLayout
+                android:id="@+id/summary_badges_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/normal_margin">
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                android:paddingTop="@dimen/small_margin"
+                android:paddingBottom="@dimen/small_margin">
 
-                <LinearLayout
-                    android:id="@+id/summary_badges_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                <include
+                    android:id="@+id/summary_badge_tile_mood_volume"
+                    layout="@layout/item_badge_progress_tile" />
 
-                    <include
-                        android:id="@+id/summary_badge_tile_mood_volume"
-                        layout="@layout/item_badge_progress_tile" />
+                <include
+                    android:id="@+id/summary_badge_tile_mood_checkin"
+                    layout="@layout/item_badge_progress_tile" />
 
-                    <include
-                        android:id="@+id/summary_badge_tile_mood_checkin"
-                        layout="@layout/item_badge_progress_tile" />
+                <include
+                    android:id="@+id/summary_badge_tile_mood_devotion"
+                    layout="@layout/item_badge_progress_tile" />
 
-                    <include
-                        android:id="@+id/summary_badge_tile_mood_devotion"
-                        layout="@layout/item_badge_progress_tile" />
+                <include
+                    android:id="@+id/summary_badge_tile_kb_keys"
+                    layout="@layout/item_badge_progress_tile" />
 
-                    <include
-                        android:id="@+id/summary_badge_tile_kb_keys"
-                        layout="@layout/item_badge_progress_tile" />
-
-                    <include
-                        android:id="@+id/summary_badge_tile_kb_streak"
-                        layout="@layout/item_badge_progress_tile" />
-
-                </LinearLayout>
+                <include
+                    android:id="@+id/summary_badge_tile_kb_streak"
+                    layout="@layout/item_badge_progress_tile" />
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
 
         <!-- Phase 9.17: Mood Distribution tiles row. Doubles as the
              global colour legend for every mood widget below. Whole row
@@ -94,6 +91,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/normal_margin"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:orientation="vertical"
             android:visibility="gone">
 
@@ -113,7 +112,11 @@
                 android:id="@+id/summary_mood_tiles_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:orientation="horizontal"
+                android:paddingTop="@dimen/small_margin"
+                android:paddingBottom="@dimen/small_margin"
                 android:weightSum="6">
 
                 <include
