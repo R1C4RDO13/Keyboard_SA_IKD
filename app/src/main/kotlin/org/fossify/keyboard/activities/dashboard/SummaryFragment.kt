@@ -608,8 +608,14 @@ class SummaryFragment : DashboardFragment() {
         }
         view.summaryBadgesCard.beVisible()
         view.summaryBadgesCard.setCardBackgroundColor(ctx.getProperBackgroundColor())
-        view.summaryBadgesTitle.setTextColor(ctx.getProperPrimaryColor())
 
+        // Task D: every tile state (in-progress, no-progress, done) uses
+        // the runtime Fossify theme — no fixed badge_* tokens. Card to the
+        // background tone, caption to the text tone, progress bar to the
+        // primary tone.
+        val cardBg = ctx.getProperBackgroundColor()
+        val textColor = ctx.getProperTextColor()
+        val primary = ctx.getProperPrimaryColor()
         val tiles = badgeTileBindings(view)
         IkdBadgeCatalog.GROUPS.forEachIndexed { index, group ->
             val tile = tiles[index]
@@ -655,11 +661,12 @@ class SummaryFragment : DashboardFragment() {
                 }
             }
             tile.badgeTileProgress.progress = pct
+            tile.badgeTileProgress.progressTintList =
+                android.content.res.ColorStateList.valueOf(primary)
+            tile.badgeTileEmoji.setTextColor(textColor)
             tile.badgeTileCaption.text = caption
-            tile.badgeTileCaption.setTextColor(ctx.getProperTextColor())
-            tile.root.setCardBackgroundColor(
-                ContextCompat.getColor(ctx, org.fossify.keyboard.R.color.badge_locked_surface),
-            )
+            tile.badgeTileCaption.setTextColor(textColor)
+            tile.root.setCardBackgroundColor(cardBg)
         }
     }
 

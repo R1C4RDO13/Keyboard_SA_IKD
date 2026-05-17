@@ -445,8 +445,9 @@
     <string name="achievements_day_strip_label">Last 14 days · filled = 3+ logs</string>
     <string name="achievements_day_strip_content_description">Mood-logging activity, last 14 days</string>
 
-    <!-- Summary-tab "Badges in progress" widget (§7.6) -->
-    <string name="summary_badges_section_title">Badges in progress</string>
+    <!-- Summary-tab badges-in-progress widget (§7.6). The section title
+         was removed post-Phase-14 by owner request; the tile strip stands
+         on its own. -->
     <string name="summary_badge_tile_done">✓ done</string>
     <string name="summary_badge_tile_pct_format">%1$d%%</string>
     <string name="summary_badge_tile_days_format">%1$d/%2$d d</string>
