@@ -319,22 +319,10 @@
 
     <!-- Insights dashboard -->
     <string name="dashboard_title">Insights</string>
-    <string name="dashboard_range_today">Today</string>
-    <string name="dashboard_range_week">Week</string>
-    <string name="dashboard_range_month">Month</string>
-    <string name="dashboard_range_all">All Time</string>
-    <!-- Phase 9.16: scope + bucket-size hint shown below the active filter
-         chip, consistent across every Insights tab. Format pieces the
-         range scope and the bucket unit into a single line, e.g.
-         "Past 7 days · grouped by day". -->
-    <string name="dashboard_bucket_label_format">%1$s · grouped by %2$s</string>
-    <string name="dashboard_bucket_unit_hourly">hour</string>
-    <string name="dashboard_bucket_unit_daily">day</string>
-    <string name="dashboard_bucket_unit_weekly">week</string>
-    <string name="dashboard_bucket_scope_today">Today</string>
-    <string name="dashboard_bucket_scope_week">Past 7 days</string>
-    <string name="dashboard_bucket_scope_month">Past 30 days</string>
-    <string name="dashboard_bucket_scope_all">All time</string>
+    <!-- Post-Phase-14: the Range selector + Filters bottom sheet were
+         removed; range is permanently All Time. The dashboard_range_*,
+         dashboard_bucket_* and insights_filters_* strings were dropped
+         with them. -->
     <!-- Phase 9.11: hourly bucket labels for the TODAY range. -->
     <string name="dashboard_hour_bucket_label">%1$02d:00</string>
     <!-- Phase 9.11: streak KPI under TODAY: just "Today" or the placeholder. -->
@@ -374,20 +362,6 @@
     <string name="dashboard_kpi_typing_time_value">%1$s min</string>
     <string name="dashboard_kpi_wpm_value">%1$.1f</string>
     <string name="dashboard_kpi_error_rate_value">%1$.1f%%</string>
-
-    <!-- Phase 9.14.3: Filters bottom sheet copy and active-filter chip.
-         The chip text combines range + mood; the format strings below
-         render the two-filter case (Range · Mood) and the single-mood
-         case (emoji + label) in one line. -->
-    <string name="insights_filters_action_title">Filters</string>
-    <string name="insights_filters_title">Filters</string>
-    <string name="insights_filters_range_header">Range</string>
-    <string name="insights_filters_mood_header">Mood</string>
-    <string name="insights_filters_reset">Reset</string>
-    <string name="insights_filters_apply">Apply</string>
-    <string name="insights_filters_mood_chip_format" formatted="false">%1$s %2$s</string>
-    <string name="insights_filters_chip_mood_only" formatted="false">%1$s %2$s</string>
-    <string name="insights_filters_chip_range_and_mood" formatted="false">%1$s · %2$s %3$s</string>
 
     <!-- Phase 9.14.1: Summary tab labels and delta placeholder. The
          delta itself ("—") is rendered by the tile until 9.14.4 wires

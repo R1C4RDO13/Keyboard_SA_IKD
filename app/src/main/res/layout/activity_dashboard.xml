@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Phase 9.14 layout (top-to-bottom):
-      - app bar / toolbar (Filters action lives here, opens
-        InsightsFiltersBottomSheet)
+    Insights layout (top-to-bottom):
+      - app bar / toolbar
       - Material 3 TabLayout — five icon+label tabs, MODE_FIXED + tabMinWidth=0
         so all five fit at 360dp without horizontal scroll (Phase 9.15
         dropped the Mood tab; its widgets moved into the Summary tab)
-      - active-filter chip — visible only when range != Week or moodFilter != null
       - ViewPager2 (horizontal, swipeable)
 
-    Phase 9.14.1 lifted the global KPI strip into the new Summary tab.
-    Phase 9.14.2 swapped the Phase 9.12 toggle group for the TabLayout.
-    Phase 9.14.3 collapsed the standalone range toggle and mood-filter
-    chip strip into the bottom sheet behind the toolbar Filters icon —
-    only an active-filter chip remains visible in the chrome when the
-    user has changed range or mood from defaults.
+    Post-Phase-14 cleanup: the Range filter (Day/Week/Month/All-time),
+    the toolbar Filters action + InsightsFiltersBottomSheet, and the
+    active-filter / bucket-size chrome below the tabs were removed by
+    owner request. The dashboard range is now permanently ALL_TIME for
+    every aggregator. The Phase 9.18 Mood Distribution-tile filter on
+    the Summary tab is a separate mechanism and remains intact.
 
     Per-tab content lives in five fragment_dashboard_*.xml files.
 -->
@@ -84,34 +82,6 @@
                 app:tabMode="fixed"
                 app:tabSelectedTextColor="?attr/colorPrimary"
                 app:tabTextColor="?android:attr/textColorSecondary" />
-
-            <!-- Phase 9.14.3: active filter chip (range + mood). Visible
-                 only when the user has changed either filter away from the
-                 defaults (range = Week, mood = null). Tap chip body →
-                 reopen the bottom sheet at the current selection; tap the
-                 close icon on the right → reset both filters. -->
-            <com.google.android.material.chip.Chip
-                android:id="@+id/dashboard_active_filter_chip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/small_margin"
-                android:visibility="gone"
-                app:closeIcon="@drawable/ic_close_vector"
-                app:closeIconVisible="true" />
-
-            <!-- Phase 9.16: bucket-size hint. The X-axis bucket of the
-                 trend charts depends on the active range — daily for
-                 Week/Month, weekly for All Time, hourly for Today. This
-                 small italic line surfaces that mapping consistently
-                 above every tab so the user is not surprised when the
-                 labels change. -->
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/dashboard_bucket_label"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/small_margin"
-                android:textSize="@dimen/smaller_text_size"
-                android:textStyle="italic" />
 
         </LinearLayout>
 

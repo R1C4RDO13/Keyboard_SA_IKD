@@ -41,12 +41,10 @@ import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.IkdBadgeCatalog
 import org.fossify.keyboard.helpers.IkdBadgeNotifier
-import org.fossify.keyboard.helpers.InsightsFiltersBottomSheet
-import org.fossify.keyboard.helpers.MoodEmoji
 
 /**
  * Phase 9.11/9.12/9.14: the Insights screen is a thin host. The activity owns
- *  - the global header chrome (TabLayout + active-filter chip),
+ *  - the global header chrome (TabLayout),
  *  - the data hop (one `Dispatchers.IO` round-trip per `loadSnapshot`),
  *  - the empty-state view,
  *
@@ -58,18 +56,22 @@ import org.fossify.keyboard.helpers.MoodEmoji
  * lifted out of the activity chrome). Phase 9.14.2 swapped the Phase
  * 9.12 `MaterialButtonToggleGroup` for a Material 3 `TabLayout` wired
  * via [TabLayoutMediator], with one vector icon + short label per tab.
- * Phase 9.14.3 collapsed the standalone range toggle and mood-filter
- * chip strip into [InsightsFiltersBottomSheet] — the toolbar Filters
- * action launches it; the active-filter chip surfaces non-default state
- * and reopens the sheet when tapped.
  *
- * Range, mood filter and active tab persist via `onSaveInstanceState`
+ * Post-Phase-14 cleanup: the Range filter and the Filters bottom sheet
+ * were removed by owner request. The dashboard range is permanently
+ * [IkdAggregator.Range.ALL_TIME] for every aggregator. The Phase 9.18
+ * Mood Distribution-tile filter on the Summary tab is a separate
+ * mechanism ([currentMoodFilter] / [onMoodTileTapped]) and is retained.
+ *
+ * Mood filter and active tab persist via `onSaveInstanceState`
  * (no new pref keys — Phase 9 Decision #2 / Phase 9.14 Decision #10).
  */
 class DashboardActivity : SimpleActivity() {
 
     private val binding by viewBinding(ActivityDashboardBinding::inflate)
-    private var currentRange: IkdAggregator.Range = IkdAggregator.Range.WEEK
+
+    /** Post-Phase-14: the range selector was removed; range is fixed. */
+    private val fixedRange: IkdAggregator.Range = IkdAggregator.Range.ALL_TIME
 
     /**
      * Phase 9.4: per-screen-instance state — null means "All".
@@ -133,10 +135,6 @@ class DashboardActivity : SimpleActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        currentRange = savedInstanceState?.getString(STATE_RANGE)
-            ?.let { runCatching { IkdAggregator.Range.valueOf(it) }.getOrNull() }
-            ?: IkdAggregator.Range.WEEK
-
         // Phase 9.4: restore mood filter from instance state. -1 sentinel = null (All).
         if (savedInstanceState != null && savedInstanceState.containsKey(STATE_MOOD_FILTER)) {
             val stored = savedInstanceState.getInt(STATE_MOOD_FILTER, MOOD_FILTER_ALL_SENTINEL)
@@ -148,10 +146,8 @@ class DashboardActivity : SimpleActivity() {
         }
 
         supportFragmentManager.registerFragmentLifecycleCallbacks(fragmentLifecycleCallbacks, false)
-        registerFiltersResultListener()
 
         setupListeners()
-        setupActiveFilterChip()
         setupPagerAndTabs(savedInstanceState)
         maybeRequestNotificationPermission()
         maybeOpenAchievementsFromIntent(intent)
@@ -175,48 +171,6 @@ class DashboardActivity : SimpleActivity() {
         notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
     }
 
-    /**
-     * Phase 9.14.3: listen for the bottom sheet's
-     * [InsightsFiltersBottomSheet.REQUEST_KEY] result. Wired in
-     * `onCreate` so it survives configuration changes — the FragmentManager
-     * keeps the listener alive while the activity is recreated.
-     */
-    private fun registerFiltersResultListener() {
-        supportFragmentManager.setFragmentResultListener(
-            InsightsFiltersBottomSheet.REQUEST_KEY,
-            this,
-        ) { _, bundle ->
-            val newRange = bundle.getString(InsightsFiltersBottomSheet.KEY_RANGE)
-                ?.let { runCatching { IkdAggregator.Range.valueOf(it) }.getOrNull() }
-                ?: currentRange
-            val storedMood = bundle.getInt(
-                InsightsFiltersBottomSheet.KEY_MOOD_FILTER,
-                InsightsFiltersBottomSheet.MOOD_FILTER_NONE,
-            )
-            val newMood = if (storedMood == InsightsFiltersBottomSheet.MOOD_FILTER_NONE) {
-                null
-            } else {
-                storedMood
-            }
-            val rangeChanged = newRange != currentRange
-            val moodChanged = newMood != currentMoodFilter
-            currentRange = newRange
-            currentMoodFilter = newMood
-            renderActiveFilterChip()
-            renderBucketLabel()
-            if (rangeChanged || moodChanged) {
-                loadSnapshot()
-            }
-            // Phase 9.18: keep the Summary-tab tile highlight in sync with
-            // changes made through the bottom sheet (the secondary entry
-            // point). Without this, picking a mood via the sheet would
-            // leave the tiles flat until the IO hop returned.
-            if (moodChanged) {
-                summaryFragment()?.applyMoodFilterHighlight(newMood)
-            }
-        }
-    }
-
     override fun onResume() {
         super.onResume()
         setupTopAppBar(binding.dashboardAppbar, NavigationIcon.Arrow)
@@ -225,8 +179,6 @@ class DashboardActivity : SimpleActivity() {
         }
         binding.dashboardEmptyMessage.setTextColor(getProperTextColor())
         applyChromeColors()
-        renderActiveFilterChip()
-        renderBucketLabel()
         loadSnapshot()
     }
 
@@ -237,7 +189,6 @@ class DashboardActivity : SimpleActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(STATE_RANGE, currentRange.name)
         outState.putInt(STATE_MOOD_FILTER, currentMoodFilter ?: MOOD_FILTER_ALL_SENTINEL)
         outState.putInt(STATE_TAB_INDEX, binding.dashboardViewPager.currentItem)
     }
@@ -307,17 +258,6 @@ class DashboardActivity : SimpleActivity() {
             iconTintStates,
             intArrayOf(primary, textColor),
         )
-
-        // Active-filter chip: outlined silhouette in the user's primary
-        // tone — body matches the activity background, the stroke and
-        // text/close-icon use the primary token. Same discipline as the
-        // Phase 9.4 mood chip-row colours.
-        val chip = binding.dashboardActiveFilterChip
-        chip.chipBackgroundColor = ColorStateList.valueOf(background)
-        chip.chipStrokeColor = ColorStateList.valueOf(primary)
-        chip.chipStrokeWidth = resources.getDimension(R.dimen.chip_stroke_width)
-        chip.setTextColor(primary)
-        chip.closeIconTint = ColorStateList.valueOf(primary)
     }
 
     private fun tabIconResFor(position: Int): Int = when (position) {
@@ -341,10 +281,6 @@ class DashboardActivity : SimpleActivity() {
     private fun setupListeners() {
         binding.dashboardToolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                R.id.dashboard_filters -> {
-                    openFiltersSheet()
-                    true
-                }
                 R.id.dashboard_refresh -> {
                     loadSnapshot()
                     true
@@ -373,94 +309,6 @@ class DashboardActivity : SimpleActivity() {
         }
     }
 
-    /**
-     * Phase 9.14.3: tap chip body → reopen the sheet at current
-     * selection; tap × → reset both filters to defaults (Week + All)
-     * and re-aggregate. The chip itself only renders when a non-default
-     * filter is active (`renderActiveFilterChip`).
-     */
-    private fun setupActiveFilterChip() {
-        binding.dashboardActiveFilterChip.setOnClickListener { openFiltersSheet() }
-        binding.dashboardActiveFilterChip.setOnCloseIconClickListener {
-            val rangeChanged = currentRange != IkdAggregator.Range.WEEK
-            val moodChanged = currentMoodFilter != null
-            currentRange = IkdAggregator.Range.WEEK
-            currentMoodFilter = null
-            renderActiveFilterChip()
-            renderBucketLabel()
-            if (rangeChanged || moodChanged) {
-                loadSnapshot()
-            }
-            // Phase 9.18: clear the Summary-tab tile highlight in sync —
-            // the chip ✕ is one of three reset paths and SummaryFragment
-            // would otherwise keep its dim/active state until the IO hop
-            // returns and `renderPayload` re-runs.
-            if (moodChanged) {
-                summaryFragment()?.applyMoodFilterHighlight(null)
-            }
-        }
-    }
-
-    private fun openFiltersSheet() {
-        if (supportFragmentManager.findFragmentByTag(InsightsFiltersBottomSheet.TAG) != null) return
-        InsightsFiltersBottomSheet
-            .newInstance(currentRange, currentMoodFilter)
-            .show(supportFragmentManager, InsightsFiltersBottomSheet.TAG)
-    }
-
-    /**
-     * Chip text rules (post-9.18 follow-up: chip is now range-only).
-     *  - range == Week → chip hidden, regardless of mood filter.
-     *  - range != Week → chip shows the range label only.
-     *
-     * The mood filter is surfaced exclusively via the Distribution-tile
-     * highlight on the Summary tab — no mood chip in the global header.
-     * Per-user feedback after Phase 9.18: the mood chip felt like a
-     * redundant "tiny widget at the top" once the tile highlight existed.
-     */
-    private fun renderActiveFilterChip() {
-        val chip = binding.dashboardActiveFilterChip
-        val hasRange = currentRange != IkdAggregator.Range.WEEK
-        if (!hasRange) {
-            chip.beVisibleIf(false)
-            return
-        }
-        chip.text = when (currentRange) {
-            IkdAggregator.Range.TODAY -> getString(R.string.dashboard_range_today)
-            IkdAggregator.Range.MONTH -> getString(R.string.dashboard_range_month)
-            IkdAggregator.Range.ALL_TIME -> getString(R.string.dashboard_range_all)
-            IkdAggregator.Range.WEEK -> "" // unreachable — guarded above
-        }
-        chip.beVisibleIf(true)
-    }
-
-    /**
-     * Phase 9.16: render the scope + bucket-size hint below the active-
-     * filter chip. Combines two pieces — the range scope ("Past 7 days")
-     * and the bucket unit ("grouped by day") — into one italic line so
-     * the user sees both *what* time window the charts cover and *how*
-     * the X axis is bucketed. Always visible; not gated on filter state.
-     */
-    private fun renderBucketLabel() {
-        val scopeRes = when (currentRange) {
-            IkdAggregator.Range.TODAY -> R.string.dashboard_bucket_scope_today
-            IkdAggregator.Range.WEEK -> R.string.dashboard_bucket_scope_week
-            IkdAggregator.Range.MONTH -> R.string.dashboard_bucket_scope_month
-            IkdAggregator.Range.ALL_TIME -> R.string.dashboard_bucket_scope_all
-        }
-        val unitRes = when (currentRange) {
-            IkdAggregator.Range.TODAY -> R.string.dashboard_bucket_unit_hourly
-            IkdAggregator.Range.WEEK,
-            IkdAggregator.Range.MONTH -> R.string.dashboard_bucket_unit_daily
-            IkdAggregator.Range.ALL_TIME -> R.string.dashboard_bucket_unit_weekly
-        }
-        binding.dashboardBucketLabel.text = getString(
-            R.string.dashboard_bucket_label_format,
-            getString(scopeRes),
-            getString(unitRes),
-        )
-    }
-
     private fun loadSnapshot() {
         lifecycleScope.launch {
             val agg = ikdAggregator
@@ -475,7 +323,7 @@ class DashboardActivity : SimpleActivity() {
             // aggregator (Decision #5 — lazy, on dashboard open). It is
             // always all-time and ignores Range/Mood (Decision #13).
             val badgeEvaluator = ikdBadgeEvaluator
-            val range = currentRange
+            val range = fixedRange
             val moodFilter = currentMoodFilter
             val payload = withContext(Dispatchers.IO) {
                 DashboardPayload(
@@ -609,17 +457,19 @@ class DashboardActivity : SimpleActivity() {
      *  - Tap the *active* tile → revert to All (`currentMoodFilter = null`).
      *  - Tap any other tile → switch to that score in one tap.
      *
-     * After the state flip, re-render the active-filter chip + scope
-     * label, re-run the IO-bound aggregation hop, and notify the
-     * SummaryFragment immediately so the tile highlight snaps without
-     * waiting for `loadSnapshot` to come back.
+     * After the state flip, re-run the IO-bound aggregation hop and
+     * notify the SummaryFragment immediately so the tile highlight snaps
+     * without waiting for `loadSnapshot` to come back.
+     *
+     * Task B: a score with zero entries must never reach here — the
+     * Summary tile is disabled + non-clickable for empty moods. This
+     * stays defensive anyway: filtering to a zero-entry mood now yields
+     * a graceful empty state rather than a blank "freak out".
      */
     fun onMoodTileTapped(score: Int) {
         val newFilter = if (currentMoodFilter == score) null else score
         if (newFilter == currentMoodFilter) return
         currentMoodFilter = newFilter
-        renderActiveFilterChip()
-        renderBucketLabel()
         loadSnapshot()
         summaryFragment()?.applyMoodFilterHighlight(newFilter)
     }
@@ -634,7 +484,6 @@ class DashboardActivity : SimpleActivity() {
         supportFragmentManager.fragments.filterIsInstance<SummaryFragment>().firstOrNull()
 
     companion object {
-        private const val STATE_RANGE = "dashboard_range"
         private const val STATE_MOOD_FILTER = "dashboard_mood_filter"
         private const val STATE_TAB_INDEX = "dashboard_tab_index"
         private const val MOOD_FILTER_ALL_SENTINEL = -1

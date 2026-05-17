@@ -2,13 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- Phase 9.14.3: Filters action launches `InsightsFiltersBottomSheet`. -->
-    <item
-        android:id="@+id/dashboard_filters"
-        android:icon="@drawable/ic_filter_vector"
-        android:title="@string/insights_filters_action_title"
-        app:showAsAction="ifRoom" />
-
     <item
         android:id="@+id/dashboard_refresh"
         android:title="@string/dashboard_menu_refresh"
