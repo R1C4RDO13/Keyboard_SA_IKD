@@ -19,6 +19,10 @@ import android.text.InputType.TYPE_CLASS_TEXT
 import android.text.InputType.TYPE_MASK_CLASS
 import android.text.InputType.TYPE_MASK_VARIATION
 import android.text.InputType.TYPE_NULL
+import android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+import android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+import android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+import android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
 import android.text.TextUtils
 import android.util.Size
 import android.view.KeyEvent
@@ -243,9 +247,18 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
             }
         }
 
+        // Task C: never capture on a password field. This is per-field
+        // (mirrors the existing `Config.privacyModeEnabled` gate — the
+        // session simply isn't started) and is NOT persisted: the next
+        // non-password field restores normal behaviour because
+        // `isPasswordField` is recomputed from the new field's
+        // `editorInfo` on every `onStartInputView`.
+        val passwordField = isPasswordField(editorInfo)
+        val captureAllowed = !config.privacyModeEnabled && !passwordField
+
         // New session on each fresh keyboard open; restarting=true means same input reconnected.
         // Privacy mode (default ON) gates all data collection — no session, no sensors.
-        if (!restarting && !config.privacyModeEnabled) {
+        if (!restarting && captureAllowed) {
             val orientation = if (config.captureOrientation) resources.configuration.orientation else -1
             val locale = if (config.captureLocale) resources.configuration.locales[0].toLanguageTag() else ""
             LiveCaptureSessionStore.startSession(orientation, locale)
@@ -264,8 +277,35 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         lastKnownSelEnd = -1
         pendingOurSelectionReplacement = false
 
-        if (!config.privacyModeEnabled) {
+        if (captureAllowed) {
             sensorHelper?.start()
+        }
+    }
+
+    /**
+     * Task C: true when the focused field is a password input — any of the
+     * three text password variations (hidden / visible / web) or the
+     * numeric password variation. A variation value is only meaningful
+     * within its [TYPE_MASK_CLASS], so the class is checked alongside the
+     * masked [TYPE_MASK_VARIATION] bits (the same numeric variation value
+     * can mean something unrelated under a different class).
+     *
+     * When this returns true the IME starts no capture session, no
+     * sensors and writes no IKD / sensor / mood rows for that field —
+     * exactly as if `Config.privacyModeEnabled` were on, but scoped to
+     * this field only and never persisted (recomputed every
+     * `onStartInputView`).
+     */
+    private fun isPasswordField(editorInfo: EditorInfo?): Boolean {
+        val inputType = editorInfo?.inputType ?: return false
+        val typeClass = inputType and TYPE_MASK_CLASS
+        val variation = inputType and TYPE_MASK_VARIATION
+        return when (typeClass) {
+            TYPE_CLASS_TEXT -> variation == TYPE_TEXT_VARIATION_PASSWORD ||
+                variation == TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
+                variation == TYPE_TEXT_VARIATION_WEB_PASSWORD
+            TYPE_CLASS_NUMBER -> variation == TYPE_NUMBER_VARIATION_PASSWORD
+            else -> false
         }
     }
 
