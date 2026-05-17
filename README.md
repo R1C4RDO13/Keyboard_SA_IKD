@@ -31,7 +31,7 @@ All data stays on-device. Nothing is transmitted over the network.
 
 ## Roadmap
 
-Development is structured in phases. **Phases 1 → 10, 12 and 13 are implemented and on `main`** (plus every sub-phase: 8.1 – 8.5, 9.1 – 9.18, and two error-rate corrections). The single remaining planned phase is **Phase 14 — gamification badges**. `IkdDatabase.version = 3`.
+Development is structured in phases. **Phases 1 → 10 and 12 → 15 are all implemented and on `main`** (plus every sub-phase: 8.1 – 8.5, 9.1 – 9.18, two error-rate corrections, and ~20 post-implementation UX reworks). **Every roadmap phase is shipped — none remain planned.** `IkdDatabase.version = 4`. Capture also auto-skips on password fields (per-field, not persisted).
 
 | Phase | Goal | Status |
 |---|---|---|
@@ -42,11 +42,12 @@ Development is structured in phases. **Phases 1 → 10, 12 and 13 are implemente
 | **6 — Diagnostics polish + live-session shortcut** | Status chip, KPI grids, collapsible sensor card, Session Insights action | Implemented |
 | **7 / 7.1 — Emoji & autocorrect capture; weighted error rate** | `EMOJI` + `AUTOCORRECT` events; `correction_weight` column (Migration 2→3) | Implemented |
 | **8 (+ 8.1–8.5) — Mood bar & contextual overlay** | Seven-slot Ekman mood bar; `mood_entries` table (Migration 1→2); mood widgets; capsule UI; dance; collapsible right-anchored chip | Implemented |
-| **9 (+ 9.1–9.18) — Global insights expansion** | Five-tab `ViewPager2` dashboard (Summary · Trends · Daily Activity · Keystroke Dynamics · Habits); calendar/circadian heatmaps; histograms; Usage Map; quality scatter; mood filter | Implemented |
+| **9 (+ 9.1–9.18) — Global insights expansion** | Multi-tab `ViewPager2` dashboard; calendar/circadian heatmaps; histograms; Usage Map; quality scatter; mood filter | Implemented |
 | **10 — Rebrand to MoodScript** | New app name, launcher glyph, About screen (cosmetic only) | Implemented |
 | **12 — Mood-curated emoji section** | Curated emoji section in the drawer when a standing mood is set | Implemented |
 | **13 — Persistent right-anchored mood bar** | Mood bar overlays both the keyboard toolbar and the emoji drawer | Implemented |
-| **14 — Gamification: badges** | ~13 badges; new "Achievements" tab; `badges` table (Migration 3→4) | **Planned** |
+| **14 — Gamification: badges** | 28 v1 badges (37 catalogued) across 5 groups; "Achievements" tab as a flat grouped list; local unlock notification; `badges` table (Migration 3→4) | Implemented |
+| **15 — Insights IA v2** | Final 5-tab order (Summary · Achievements · Activity · Trends · Keys); Habits tab dropped & charts relocated; circadian heatmap renamed/moved | Implemented |
 
 Where to look:
 

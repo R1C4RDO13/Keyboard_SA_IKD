@@ -2,7 +2,7 @@
 
 This roadmap outlines the strategic phases for integrating passive behavioral tracking and sensor analytics into the custom keyboard project. The focus is on securely capturing device interactions and transforming them into meaningful, actionable insights for the user.
 
-> **Status at a glance (2026-05-17):** Phases 1 → 10, 12, 13 are **implemented and on `main`**, along with every sub-phase (8.1 – 8.5, 9.1 – 9.18) and two post-Phase-8 error-rate corrections. The dashboard is a five-tab `ViewPager2` (Summary · Trends · Daily Activity · Keystroke Dynamics · Habits). The app is rebranded to **MoodScript** on-device. `IkdDatabase.version = 3`. The single remaining planned phase is **Phase 14 — gamification badges**. Quick status table: [`STATUS.md`](STATUS.md); narrative report: [`../PROJECT_JOURNEY.md`](../PROJECT_JOURNEY.md).
+> **Status at a glance (2026-05-17):** Phases 1 → 15 are **all implemented and on `main`** — there is no outstanding phase. This includes every sub-phase (8.1 – 8.5, 9.1 – 9.18), two post-Phase-8 error-rate corrections, Phase 14 (gamification badges — 28 v1 badges; Achievements tab shipped as a flat grouped list), Phase 15 (Insights IA v2), and ~20 post-implementation UX reworks. The dashboard is a five-tab `ViewPager2` — **Summary · Achievements · Activity · Trends · Keys**. The app is rebranded to **MoodScript** on-device. `IkdDatabase.version = 4`. Capture also auto-skips on password fields (`f09a6a87`). Quick status table: [`STATUS.md`](STATUS.md); narrative report: [`../PROJECT_JOURNEY.md`](../PROJECT_JOURNEY.md).
 
 ## Visual Roadmap Overview
 
@@ -24,7 +24,8 @@ flowchart TD
     P10[Phase 10: Rebrand to MoodScript]:::phase
     P12[Phase 12: Mood-Curated Emoji Section]:::phase
     P13[Phase 13: Persistent Right-Anchored Mood Bar]:::phase
-    P14[Phase 14: Gamification — Badges  ·  PLANNED]:::phase
+    P14[Phase 14: Gamification — Badges]:::phase
+    P15[Phase 15: Insights IA v2 — drop Habits, re-order tabs]:::phase
 
     P1 --> P1_1
     P1_1 --> P2
@@ -39,6 +40,7 @@ flowchart TD
     P10 --> P12
     P12 --> P13
     P13 --> P14
+    P14 --> P15
 
     subgraph Phase 1 Features
         F1[Real-Time Data Interface]:::feature
@@ -126,10 +128,17 @@ flowchart TD
         F32[Mid-drawer mood change re-curates the section]:::feature
     end
 
-    subgraph Phase 14 Features  PLANNED
-        F33[~13 Badges: mood cataloging + keyboard usage]:::feature
-        F34[New 6th Achievements tab]:::feature
+    subgraph Phase 14 Features
+        F33[28 v1 Badges: mood cataloging + keyboard usage]:::feature
+        F34[Achievements tab — flat grouped list Option B]:::feature
         F35[Migration 3 to 4: badges table]:::feature
+        F36[Local unlock notification + Snackbar]:::feature
+    end
+
+    subgraph Phase 15 Features
+        F37[Final 5-tab order: Summary Achievements Activity Trends Keys]:::feature
+        F38[Habits tab dropped, charts relocated]:::feature
+        F39[Circadian heatmap renamed + moved to top of Activity]:::feature
     end
 
     P5 -.-> F12 & F13 & F14
@@ -630,18 +639,36 @@ See Phase 9 above and the Phase 9 orchestrator's Decision #16 for the rationale.
 ---
 
 ## Phase 14: Gamification — Badges (Mood + Keyboard)
-**Status: Planned** — the single remaining unimplemented phase
+**Status: Implemented** — landed on `main` (`a8612751` … `4985b684`)
 
-Detailed scope: [`Phase14/Phase14_Plan.md`](Phase14/Phase14_Plan.md)
+Detailed scope: [`Phase14/Phase14_Plan.md`](Phase14/Phase14_Plan.md) + [`Phase14/Phase14_BadgeCatalog.md`](Phase14/Phase14_BadgeCatalog.md)
 
-**Depends on:** Phase 8 (mood entries), Phase 9.15 (current five-tab layout)
+**Depends on:** Phase 8 (mood entries), Phase 9.15 (the then-current five-tab layout), Phase 15 (final tab order)
 
-**Objective:** Add a starter set of ~13 badges that reward consistent mood cataloging and keyboard usage, surfaced as a new sixth **"Achievements"** tab in the Insights dashboard, with a brief in-app snackbar when a new badge unlocks.
+**Objective:** Reward consistent mood cataloging and keyboard usage with a badge spectrum, surfaced as an **"Achievements"** tab in the Insights dashboard, with both an in-app snackbar and a local notification when a new badge unlocks.
 
 *   **New `badges` table via `Migration(3, 4)`** — `id`, `badge_key` (unique index), `unlocked_at`. `IkdDatabase.version` bumps 3 → 4. New `models/Badge.kt`, `interfaces/BadgeDao.kt`. Migration test extended.
-*   **New `helpers/IkdBadgeCatalog.kt`** (static list of 13 `BadgeDef`s — 6 mood-cataloging, 7 keyboard-usage) + `helpers/IkdBadgeEvaluator.kt` (`suspend fun evaluate()` on `Dispatchers.IO`; pure `Companion.evaluateBadges` for unit tests; reads existing tables only).
-*   **New `activities/dashboard/AchievementsFragment.kt`** + `adapters/BadgeAdapter.kt` + `item_badge_card.xml` — a 2-column grid of badge cards (locked = greyscale + 0.45 alpha; unlocked = full colour + unlock date). `DashboardPagerAdapter` gains a 6th tab branch.
-*   **In-app `Snackbar`** anchored to the dashboard when one or more new badges unlock during a `loadDashboard` evaluation. No system notifications, no notification permission.
-*   **Privacy unchanged.** Badges are derived from existing `ikd_events` / `sessions` / `mood_entries`. No new captured data, no new pref keys, no CSV column (no `badges` block in the export).
+*   **Catalog: 37 catalogued, 28 built in v1** ([`Phase14_BadgeCatalog.md`](Phase14/Phase14_BadgeCatalog.md)) across 5 groups — Mood Volume (6), Mood Daily check-in (3), Mood Daily devotion (6, strict consecutive ≥3-logs-per-day streak), KB Keystroke volume (6), KB Session streak (7). Groups 2 (Mood Diversity) and 6 (KB Sessions) are **deferred** — catalogued but not built in v1. `helpers/IkdBadgeCatalog.kt` (`BadgeDef`s) + `helpers/IkdBadgeEvaluator.kt` (`suspend fun evaluate()` on `Dispatchers.IO`; pure `Companion` for unit tests; reads existing tables only) + `helpers/IkdBadgeNotifier.kt`.
+*   **Per-badge progress** — locked rows render a progress bar + `current / target`.
+*   **Achievements tab UI — shipped as Option B (flat grouped list), not the planned carousel.** First built as a per-group horizontal carousel (`ViewPager2` + `‹›` arrows + dots), then rebuilt after owner review as a single vertical list of group section headers + full-width badge rows (`adapters/BadgeListAdapter.kt`, `item_badge_list_header.xml`, `item_badge_list_row.xml`). The carousel files (`BadgeGroupAdapter` / `BadgeCardAdapter` / `item_badge_group.xml` / `item_badge_card.xml` / `badge_arrow_*` / `badge_dot`) were deleted. The Daily-devotion 14-day `IkdBadgeDayStripView` strip is preserved, folded into that group's section header. Badges are fully themed via the runtime Fossify theme.
+*   **In-app `Snackbar` + local system notification** on unlock — notification gated by `Config.badgeNotificationsEnabled` (settings toggle, default ON) + the new `POST_NOTIFICATIONS` runtime permission (Android 13+). **No `INTERNET` permission** — the notification is a local post; nothing leaves the device.
+*   **Summary-tab "Badges in progress" widget** — one tile per group's focus badge, deep-linking to the Achievements tab; tiles themed uniform with the mood-distribution tiles (outer card dropped), under an "Achievements" section label.
+*   **Privacy unchanged.** Badges are derived from existing `ikd_events` / `sessions` / `mood_entries`. No new captured data, no CSV column (no `badges` block in the export).
 
 > **Phase numbering note.** This was originally drafted as "Phase 13"; that slot was claimed by the Persistent Right-Anchored Mood Bar feature (above) before this work started, so the gamification plan is renumbered to **Phase 14**. Technical content unchanged from the original draft.
+
+---
+
+## Phase 15: Insights Information-Architecture v2 (drop Habits, re-order tabs)
+**Status: Implemented** — landed on `main` (`22af78a5`, `e1e49233`, `97db35a8` + UX-rework follow-ups)
+
+Detailed scope: [`Phase15/Phase15_Plan.md`](Phase15/Phase15_Plan.md)
+
+**Depends on:** Phase 9 (the 5-tab dashboard), Phase 14 (adds the Achievements tab the new order interleaves)
+
+**Objective:** Restructure the global Insights dashboard — drop the **Habits** tab, relocate its surviving charts, remove three low-signal widgets, rename one, and set the final tab order. Read-side only — no schema change, no capture-path reopen, no new aggregator.
+
+*   **Final tab order: Summary · Achievements · Activity · Trends · Keys** — `DashboardPagerAdapter`: `TAB_COUNT = 5`, `TAB_SUMMARY=0 · TAB_ACHIEVEMENTS=1 · TAB_ACTIVITY=2 · TAB_TRENDS=3 · TAB_KEYS=4`. Collapses Phase 14's interim 6-tab layout; the **Habits tab is deleted**.
+*   **Widget disposition:** Avg session duration → Trends; Avg flight time → Keys; Orientation breakdown → Trends. Removed: Calendar heatmap, Sessions-per-period, Activity-quality scatter. Renamed: the circadian heatmap ("When you type" → "Circadian heatmap"), moved to the **top** of the Activity tab.
+*   **Deviations recorded:** (1) `SummaryFragment` was reopened — its KPI tiles re-route to Trends since Habits is gone. (2) The error-rate-duplication open point (§6) was resolved with the plan's **default**: only "Avg session duration" moved to Trends; Habits' "Avg error rate" was dropped — the single existing Trends error-rate trend is kept (no duplicate). (3) Range/Mood filtering was **NOT** removed: a broader removal that hard-fixed the dashboard to ALL_TIME and deleted the Filters bottom sheet was reverted; only the small active-filter chip pill below the tabs was removed.
+*   **Dead aggregator output.** `IkdQualityAggregator`, the calendar-heatmap branch of `IkdActivityAggregator`, and Sessions-per-period of `IkdHabitsAggregator` stop being surfaced; the aggregators are left intact (read-side, frozen, harmless). Pruning them is a separate optional cleanup.

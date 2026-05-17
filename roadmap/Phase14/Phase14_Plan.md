@@ -1,6 +1,6 @@
 # Phase 14 — Gamification: Badges (Mood + Keyboard)
 
-**Status:** Planned — scope revised 2026-05-17 (per-badge progress + system notifications brought in-scope; catalog expanded to the full spectrum)
+**Status:** **Implemented** (landed on `main`, `a8612751` … `4985b684`; scope revised 2026-05-17 — per-badge progress + system notifications brought in-scope; catalog expanded to the full spectrum). v1 shipped **28 badges across 5 groups** (37 catalogued; groups 2 & 6 deferred). The Achievements tab shipped as **Option B — a flat grouped list, not the per-group carousel of §7** (see the superseding note in §7 below). Follow-up reworks landed on `main`: per-field password-capture privacy skip (`f09a6a87`), the Summary "Badges in progress" widget themed uniform with the mood tiles + "Achievements" section label, full Fossify-theme integration of all badge surfaces, and the removal of the active-filter chip pill (`1c0f71d2`).
 **Depends on:** Phase 8 (mood entries in `ikd.db`), Phase 9 (Insights dashboard tab structure). **Coupled with [Phase 15](../Phase15/Phase15_Plan.md)** — the Insights IA v2 restructure (drop Habits, re-order tabs). The final tab order is **Summary · Achievements · Activity · Trends · Keys** (`TAB_ACHIEVEMENTS = 1`, `TAB_COUNT = 5`); land Phase 14 + 15 together, or 14 first (interim 6 tabs) then 15 collapses to 5.
 **Branch:** Implementation lands directly on `main` (small focused commits per logical change), per recent project hygiene.
 **Scope (one sentence):** Add the badge spectrum — **28 badges across 5 groups in v1** (37 catalogued; groups 2 & 6 deferred — see [`Phase14_BadgeCatalog.md`](Phase14_BadgeCatalog.md)) that rewards mood cataloging and keyboard usage **only** (no behaviour-shaping badges), surfaced as the **"Achievements"** tab in the Insights dashboard (index 1 in the Phase 15 final order — see Depends-on), where each locked badge shows **per-badge progress** toward its target, with both an in-app snackbar **and** a local system notification when a new badge unlocks.
@@ -198,11 +198,30 @@ The fragment reads `allUnlocked` + `progressByKey` to render its grid (progress 
 
 ## 7. UI placement and styling
 
-> **Visual mockup:** the suggested Achievements-tab layout — per-group carousel,
-> centred current-in-progress card, `‹`/`›` + swipe paging, the Daily-devotion day
-> strip, card states, snackbar + notification, dark variant — is rendered in
+> **⚠️ SUPERSEDED — shipped as Option B (flat grouped list), not the carousel.**
+> The Achievements tab in §7 (and Decision #14) describes a **per-group horizontal
+> carousel** with `‹`/`›` arrows, swipe paging, and page dots. That layout *was*
+> built first, then **rebuilt after owner review** as **Option B: a single flat
+> vertical list** of group section headers + full-width badge rows. The shipped
+> implementation is `adapters/BadgeListAdapter.kt` + `item_badge_list_header.xml` +
+> `item_badge_list_row.xml`; the carousel files (`BadgeGroupAdapter`,
+> `BadgeCardAdapter`, `item_badge_group.xml`, `item_badge_card.xml`,
+> `badge_arrow_*`, `badge_dot`) were **deleted**. The Daily-devotion 14-day
+> `IkdBadgeDayStripView` strip is **preserved**, folded into the devotion group's
+> section header. The historical carousel design text in §7 / Decision #14 is
+> **retained below as the original design record** — it is no longer the shipped
+> behaviour. The alternatives that were weighed are catalogued in
+> **[`Phase14_Achievements_Layout_Options.html`](Phase14_Achievements_Layout_Options.html)**.
+> Every other §7 spec (card states, progress bar, snackbar + local notification,
+> Summary "Badges in progress" widget, all-time scope) shipped as written.
+
+> **Visual mockup (historical, carousel design):** the originally-suggested
+> Achievements-tab layout — per-group carousel, centred current-in-progress card,
+> `‹`/`›` + swipe paging, the Daily-devotion day strip, card states, snackbar +
+> notification, dark variant — is rendered in
 > **[`Phase14_Achievements_Layout.html`](Phase14_Achievements_Layout.html)** (open in
-> a browser). The subsections below are the spec; the HTML is the picture.
+> a browser). The subsections below are the original spec; **the shipped UI is the
+> flat Option B list described in the superseding note above.**
 
 ### 7.1 Tab integration
 

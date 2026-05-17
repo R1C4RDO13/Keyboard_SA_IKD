@@ -1,6 +1,11 @@
 # Phase 15 — Insights Information-Architecture v2 (drop Habits, re-order tabs, consolidate widgets)
 
-**Status:** Planned (created 2026-05-17, owner directive)
+**Status:** **Implemented** (landed on `main`, `22af78a5` / `e1e49233` / `97db35a8` + UX-rework follow-ups; created 2026-05-17, owner directive)
+
+> **Implementation deviations (recorded 2026-05-17):**
+> 1. **`SummaryFragment` was reopened** (not in the planned reopened-files set): with the Habits tab gone, its KPI tiles were re-routed to deep-link to **Trends** instead of Habits.
+> 2. **Error-rate-duplication open point (§6) resolved with the plan's DEFAULT** — only "Avg session duration" moved to Trends; Habits' "Avg error rate" was **dropped**; the single existing Trends error-rate trend is kept (no second error-rate chart).
+> 3. **The Range filter was NOT removed.** A broader change (`0e46cf89`) that removed the Filters bottom sheet and hard-fixed the dashboard to `ALL_TIME` was **reverted** (`cbe1784a`). Net state: Day/Week/Month/All-time + Mood filtering still work via the toolbar **Filters** button → `InsightsFiltersBottomSheet`; **only the small active-filter chip pill below the tabs was removed** (`1c0f71d2`); the bucket-size hint stays.
 **Depends on:** Phase 9 (current 5-tab dashboard), Phase 14 (adds the **Achievements** tab — the new order interleaves it). **Land Phase 15 together with, or immediately after, Phase 14** — the two share the `DashboardPagerAdapter` tab constants.
 **Branch:** lands directly on `main`, small focused commits, per recent project hygiene.
 **Scope (one sentence):** Restructure the global Insights dashboard — drop the **Habits** tab, relocate its surviving charts, remove three widgets, rename one, and set the final tab order to **Summary · Achievements · Activity · Trends · Keys**.

@@ -1057,16 +1057,16 @@
 
   <div class="stat-strip">
     <div class="stat">
-      <div class="num">12</div>
-      <div class="label">implemented phases<br>(1 → 10, 12, 13)</div>
+      <div class="num">14</div>
+      <div class="label">implemented phases<br>(1 → 10, 12 → 15)</div>
     </div>
     <div class="stat">
       <div class="num">25+</div>
-      <div class="label">phases &amp; sub-phases<br>in the roadmap</div>
+      <div class="label">phases &amp; sub-phases<br>in the roadmap (all done)</div>
     </div>
     <div class="stat">
-      <div class="num">3</div>
-      <div class="label">Room schema versions<br>(2 additive migrations)</div>
+      <div class="num">4</div>
+      <div class="label">Room schema versions<br>(3 additive migrations)</div>
     </div>
     <div class="stat">
       <div class="num">0</div>
@@ -1114,9 +1114,10 @@
       <h3>Research, not product</h3>
       <p>
         The deliverable is a <strong>working prototype</strong>, not a finished consumer app. It demonstrates
-        a complete capture → storage → analysis → visualisation pipeline. Phases 10 (rebrand), 12 (mood-curated
-        emoji drawer) and 13 (persistent mood bar) have since shipped; only Phase 14 (gamification badges)
-        remains documented as a plan — the academic value lies in the pipeline itself.
+        a complete capture → storage → analysis → visualisation pipeline. Every roadmap phase (1 → 15) has
+        shipped, including 10 (rebrand), 12 (mood-curated emoji drawer), 13 (persistent mood bar),
+        14 (gamification badges) and 15 (Insights IA v2) — no phase remains planned; the academic value lies
+        in the pipeline itself.
       </p>
     </div>
   </div>
@@ -1178,14 +1179,14 @@
       <div class="arch-row-header">
         <span class="arch-layer-tag">Layer 2</span>
         <h3>Storage</h3>
-        <span class="arch-layer-pill storage"><code style="font-size:10.5px;background:transparent;color:inherit;">ikd.db</code> · Room v3 · 2 additive migrations</span>
+        <span class="arch-layer-pill storage"><code style="font-size:10.5px;background:transparent;color:inherit;">ikd.db</code> · Room v4 · 3 additive migrations</span>
       </div>
       <div class="arch-blocks-grid three">
         <div class="arch-block">
           <div class="arch-block-icon">💾</div>
           <div class="arch-block-title">Room Database</div>
           <div class="arch-block-file"><code>databases/IkdDatabase.kt</code></div>
-          <div class="arch-block-desc">WAL mode · v3 · tested by <code style="font-size:10.5px;background:var(--accent-soft);padding:1px 4px;border-radius:3px;">IkdDatabaseMigrationTest</code></div>
+          <div class="arch-block-desc">WAL mode · v4 · tested by <code style="font-size:10.5px;background:var(--accent-soft);padding:1px 4px;border-radius:3px;">IkdDatabaseMigrationTest</code></div>
         </div>
         <div class="arch-block">
           <div class="arch-block-icon">📋</div>
@@ -1337,7 +1338,7 @@
           <div class="arch-block-icon">📈</div>
           <div class="arch-block-title">Insights Dashboard</div>
           <div class="arch-block-file"><code>DashboardActivity + 5 fragments</code></div>
-          <div class="arch-block-desc">Summary · Trends · Daily Activity · Keystroke Dynamics · Habits</div>
+          <div class="arch-block-desc">Summary · Achievements · Activity · Trends · Keys</div>
         </div>
         <div class="arch-block">
           <div class="arch-block-icon">🗂️</div>
@@ -1477,7 +1478,7 @@
         <div class="prov-col moodscript">
           <div class="prov-col-title"><span class="dot"></span>moodScript · added</div>
           <ul>
-            <li>databases/IkdDatabase.kt <span style="color:var(--ink-faint);">— v3, two migrations</span></li>
+            <li>databases/IkdDatabase.kt <span style="color:var(--ink-faint);">— v4, three migrations</span></li>
             <li>models/IkdEvent.kt</li>
             <li>models/SensorSample.kt</li>
             <li>models/SessionRecord.kt</li>
@@ -1489,9 +1490,10 @@
             <li>interfaces/*Row.kt <span style="color:var(--ink-faint);">— 15 query-result POJOs</span></li>
           </ul>
           <div class="prov-summary">
-            Single Room database <code>ikd.db</code> at version 3. Two non-destructive migrations
-            (<code>1→2</code> for mood, <code>2→3</code> for autocorrect weight), each validated by the
-            instrumented <code>IkdDatabaseMigrationTest</code>. Privacy invariants enforced at this layer.
+            Single Room database <code>ikd.db</code> at version 4. Three non-destructive migrations
+            (<code>1→2</code> for mood, <code>2→3</code> for autocorrect weight, <code>3→4</code> for the
+            badges table), each validated by the instrumented <code>IkdDatabaseMigrationTest</code>.
+            Privacy invariants enforced at this layer.
           </div>
         </div>
       </div>
@@ -1787,7 +1789,7 @@
       <button class="tab-btn" data-tab="p9" role="tab"><span class="status-dot implemented"></span>Phase 9 / 9.x</button>
       <button class="tab-btn" data-tab="p10" role="tab"><span class="status-dot implemented"></span>Phase 10</button>
       <button class="tab-btn" data-tab="p1213" role="tab"><span class="status-dot implemented"></span>Phase 12 / 13</button>
-      <button class="tab-btn" data-tab="p14" role="tab"><span class="status-dot planned"></span>Phase 14</button>
+      <button class="tab-btn" data-tab="p14" role="tab"><span class="status-dot implemented"></span>Phase 14 / 15</button>
     </div>
 
     <!-- Phase 1 + 1.1 -->
@@ -2242,21 +2244,44 @@
       </div>
     </div>
 
-    <!-- Phase 14 (planned) + Future ideas -->
+    <!-- Phase 14 / 15 (implemented) + Future ideas -->
     <div class="tab-content" id="p14" role="tabpanel">
       <div>
-        <h3>Phase 14 — gamification: badges (planned)</h3>
-        <p class="objective">The one remaining planned phase. Reward consistent mood cataloging and keyboard usage with a starter set of ~13 badges, surfaced as a new sixth "Achievements" tab.</p>
+        <h3>Phase 14 — gamification: badges (implemented)</h3>
+        <p class="objective">The final roadmap phase. Reward consistent mood cataloging and keyboard usage with a badge spectrum, surfaced as the "Achievements" tab (index 1 in the Phase 15 final order).</p>
         <p>
-          Would add a new <code>badges</code> table via <code>Migration(3, 4)</code> (the third migration)
-          — six mood-cataloging badges + seven keyboard-usage badges, evaluated lazily on dashboard open,
-          with an in-app snackbar on first unlock and no system notifications. Badges are derived from
-          existing tables only, so the privacy posture is unchanged and the CSV gains no <code>badges</code>
-          block. (The plan was originally drafted as "Phase 13"; that slot was claimed by the
+          Added a new <code>badges</code> table via <code>Migration(3, 4)</code> (the third migration;
+          <code>IkdDatabase.version</code> 3 → 4). The catalog has <strong>37 badges catalogued, 28 built
+          in v1</strong> across 5 groups — Mood Volume, Mood Daily check-in, Mood Daily devotion (a strict
+          consecutive ≥3-logs-per-day streak), Keyboard Keystroke volume, Keyboard Session streak; groups
+          2 (Mood Diversity) and 6 (KB Sessions) are deferred. Lazy evaluation on dashboard open
+          (<code>Dispatchers.IO</code>, pure-<code>Companion</code> derivation), per-badge progress, an
+          in-app snackbar <em>plus</em> a local unlock notification (settings toggle, default ON, plus the
+          new <code>POST_NOTIFICATIONS</code> permission — still no <code>INTERNET</code>). Badges are
+          derived from existing tables only, so the privacy posture is unchanged and the CSV gains no
+          <code>badges</code> block. The Achievements tab was first built as a per-group horizontal
+          carousel, then <strong>rebuilt after owner review as a flat grouped list</strong>
+          (<code>BadgeListAdapter</code>); the Daily-devotion 14-day streak strip was preserved into that
+          group's header. (The plan was originally drafted as "Phase 13"; that slot was claimed by the
           right-anchored-mood-bar feature, so the gamification work is renumbered to 14.)
         </p>
+        <h3>Phase 15 — Insights IA v2 (implemented)</h3>
         <p>
-          Other ideas in the backlog, not yet planned in detail:
+          Read-side restructure that collapsed Phase 14's interim 6-tab layout. The <strong>Habits tab
+          was dropped</strong> — Avg session duration relocated to Trends, Avg flight time to Keys,
+          Orientation breakdown to Trends; Calendar heatmap, Sessions-per-period and Activity-quality
+          scatter removed; the circadian heatmap renamed ("When you type" → "Circadian heatmap") and moved
+          to the top of the Activity tab. Final tab order: <strong>Summary · Achievements · Activity ·
+          Trends · Keys</strong> (<code>TAB_COUNT = 5</code>). Two deviations: <code>SummaryFragment</code>
+          was reopened so its KPI tiles re-route to Trends, and the error-rate-duplication open point was
+          resolved with the plan's default (single Trends error-rate kept). A subsequent over-removal that
+          hard-fixed the dashboard to All-Time and deleted the Filters bottom sheet was reverted —
+          Range/Mood filtering is fully retained; only the active-filter chip pill below the tabs was
+          removed. A late privacy hardening also auto-skips capture on password fields (per-field,
+          not persisted).
+        </p>
+        <p>
+          Backlog ideas, not yet planned in detail:
         </p>
         <div class="future-grid">
           <div class="future-card">
@@ -2281,9 +2306,9 @@
             <span class="ph">Idea</span>
             <h4>Habits / Quality metrics align with error-rate</h4>
             <p>
-              The Habits-tab error metric and the Daily-Quality scatter still treat AUTOCORRECT as a
-              correction; the global error-rate KPI no longer does. A small follow-up could bring them
-              in line.
+              <code>IkdHabitsAggregator</code> / <code>IkdQualityAggregator</code> still treat AUTOCORRECT
+              as a correction; the global error-rate KPI no longer does. Harmless now that Phase 15
+              unsurfaced both from the UI, but a tracked follow-up could prune the dead code.
             </p>
           </div>
           <div class="future-card">
@@ -2299,9 +2324,9 @@
       </div>
       <div class="meta">
         <dl>
-          <dt>Status</dt>     <dd><span class="badge planned">Planned</span></dd>
-          <dt>Schema</dt>     <dd>Would add Migration 3 → 4 (<code>badges</code>)</dd>
-          <dt>Plan file</dt>  <dd><code>roadmap/Phase14/Phase14_Plan.md</code></dd>
+          <dt>Status</dt>     <dd><span class="badge implemented">Implemented</span></dd>
+          <dt>Schema</dt>     <dd>Migration 3 → 4 (<code>badges</code>); <code>IkdDatabase.version = 4</code></dd>
+          <dt>Plan files</dt> <dd><code>roadmap/Phase14/Phase14_Plan.md</code>, <code>roadmap/Phase15/Phase15_Plan.md</code></dd>
         </dl>
       </div>
     </div>
@@ -2356,8 +2381,8 @@
   <div class="numbers">
     <div class="grid">
       <div class="item">
-        <div class="num">12</div>
-        <div class="lab">phases implemented end-to-end on-device (1 → 10, 12, 13)</div>
+        <div class="num">14</div>
+        <div class="lab">phases implemented end-to-end on-device (1 → 10, 12 → 15)</div>
       </div>
       <div class="item">
         <div class="num">18</div>
@@ -2365,22 +2390,22 @@
       </div>
       <div class="item">
         <div class="num">5</div>
-        <div class="lab">dashboard tabs after Phase 9.15 (Mood tab merged into Summary)</div>
+        <div class="lab">dashboard tabs (Summary · Achievements · Activity · Trends · Keys)</div>
       </div>
       <div class="item">
-        <div class="num">15+</div>
-        <div class="lab">chart cards across the dashboards</div>
+        <div class="num">28</div>
+        <div class="lab">v1 gamification badges (37 catalogued; groups 2 &amp; 6 deferred)</div>
       </div>
       <div class="item">
         <div class="num">11</div>
         <div class="lab">aggregators &amp; per-session loaders, all sharing one shape</div>
       </div>
       <div class="item">
-        <div class="num">1</div>
-        <div class="lab">remaining planned phase<br>(14 — gamification badges)</div>
+        <div class="num">0</div>
+        <div class="lab">remaining planned phases<br>(every roadmap phase 1 → 15 shipped)</div>
       </div>
       <div class="item">
-        <div class="num">2</div>
+        <div class="num">3</div>
         <div class="lab">non-destructive Room migrations validated by an instrumented test</div>
       </div>
       <div class="item">
@@ -2398,8 +2423,9 @@
   <div class="section-eyebrow">08 · What's next</div>
   <h2>The pipeline is the deliverable</h2>
   <p class="section-lede">
-    Phases 10 (rebrand), 12 (mood-curated emoji drawer) and 13 (persistent mood bar) have all shipped.
-    Phase 14 (gamification badges) is the one phase still documented as a plan. The academic value of the
+    Every roadmap phase has shipped — 10 (rebrand), 12 (mood-curated emoji drawer), 13 (persistent mood
+    bar), 14 (gamification badges) and 15 (Insights IA v2) are all on <code>main</code>; no phase remains
+    planned. The remaining work is release-readiness, not feature scope. The academic value of the
     project is the capture / storage / analysis / visualisation pipeline itself — not any particular
     surface built on top of it.
   </p>
@@ -2427,12 +2453,28 @@
     </div>
     <div class="context-card">
       <div class="icon">🏆</div>
-      <h3>Phase 14 — Gamification <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--amber-soft);color:var(--amber);vertical-align:middle;">Planned</span></h3>
+      <h3>Phase 14 — Gamification <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--green-soft);color:var(--green);vertical-align:middle;">Shipped</span></h3>
       <p>
-        ~13 starter badges across mood cataloging and keyboard usage, surfaced as a new sixth
-        "Achievements" tab on the dashboard. <code>Migration(3, 4)</code> adds a <code>badges</code> table;
-        in-app snackbar on unlock; no system notification permission; badges derived from existing tables
-        so the privacy posture is unchanged.
+        28 v1 badges (37 catalogued; groups 2 &amp; 6 deferred) across 5 groups — mood volume / daily
+        check-in / daily devotion + keyboard keystrokes / session streak — surfaced as the "Achievements"
+        tab. <code>Migration(3, 4)</code> adds a <code>badges</code> table. Per-badge progress; in-app
+        snackbar <em>plus</em> a local unlock notification (gated by a settings toggle + the new
+        <code>POST_NOTIFICATIONS</code> permission — still no <code>INTERNET</code>). The Achievements UI
+        was rebuilt after owner review from a per-group carousel to a flat grouped list. Badges are
+        derived from existing tables, so the privacy posture is unchanged.
+      </p>
+    </div>
+    <div class="context-card">
+      <div class="icon">🗂️</div>
+      <h3>Phase 15 — Insights IA v2 <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--green-soft);color:var(--green);vertical-align:middle;">Shipped</span></h3>
+      <p>
+        Read-side restructure: the <strong>Habits tab is dropped</strong> (Avg session duration → Trends,
+        Avg flight time → Keys, Orientation → Trends; Calendar heatmap / Sessions-per-period /
+        Activity-quality scatter removed; circadian heatmap renamed and moved to the top of Activity).
+        Final tab order: <strong>Summary · Achievements · Activity · Trends · Keys</strong>
+        (<code>TAB_COUNT = 5</code>). Range/Mood filtering is fully retained via the toolbar Filters
+        bottom sheet; only the active-filter chip pill was removed. A late privacy hardening also
+        auto-skips capture on password fields (per-field, not persisted).
       </p>
     </div>
   </div>
@@ -2448,7 +2490,7 @@
     Built with Kotlin · Room · MPAndroidChart · Claude Code agent workflow
   </p>
   <p style="margin-top: 14px; opacity: 0.7;">
-    Roadmap source of truth: <code>roadmap/STATUS.md</code> · Schema version: <code>IkdDatabase.version = 3</code>
+    Roadmap source of truth: <code>roadmap/STATUS.md</code> · Schema version: <code>IkdDatabase.version = 4</code> · All phases 1 → 15 implemented
   </p>
 </footer>
 

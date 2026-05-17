@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > Fossify `1.9.1` / `versionCode 14`; a `versionName` bump is deferred to a future release-readiness pass.
 
 ## [Unreleased]
-- MoodScript fork: phases 1 → 10, 12, 13 implemented on-device (see `roadmap/STATUS.md`). On-device rebrand to **MoodScript** (Phase 10). No `versionName` bump yet.
+- MoodScript fork: phases 1 → 10, 12 → 15 all implemented on-device — every roadmap phase is shipped (see `roadmap/STATUS.md`). Includes Phase 14 (gamification badges, schema v4) and Phase 15 (Insights IA v2). On-device rebrand to **MoodScript** (Phase 10). No `versionName` bump yet.
 
 ## [1.9.1] - 2026-02-02
 ### Changed
