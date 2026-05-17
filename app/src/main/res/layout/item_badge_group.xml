@@ -11,6 +11,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical"
     android:paddingTop="@dimen/normal_margin"
     android:paddingBottom="@dimen/small_margin">
@@ -42,11 +44,19 @@
 
     </LinearLayout>
 
+    <!-- Task E: clipChildren/clipToPadding=false + vertical padding give
+         the per-card MaterialCardView elevation shadow room to render
+         fully top and bottom. Without this the nested ViewPager2 clipped
+         the shadow flush against the card bounds. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/badge_card_height"
         android:layout_marginTop="@dimen/small_margin"
-        android:orientation="horizontal">
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:orientation="horizontal"
+        android:paddingTop="@dimen/small_margin"
+        android:paddingBottom="@dimen/small_margin">
 
         <ImageButton
             android:id="@+id/badge_group_prev"
@@ -61,7 +71,9 @@
             android:id="@+id/badge_group_pager"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:clipChildren="false"
+            android:clipToPadding="false" />
 
         <ImageButton
             android:id="@+id/badge_group_next"

@@ -24,7 +24,10 @@
     <dimen name="card_corner_radius">12dp</dimen>
     <dimen name="card_elevation">2dp</dimen>
     <dimen name="session_dashboard_chart_height">200dp</dimen>
-    <dimen name="badge_card_height">230dp</dimen>
+    <!-- Task E: bumped 230dp -> 252dp so the per-card content still fits
+         after the carousel row gained vertical padding for the (no longer
+         clipped) MaterialCardView elevation shadow. -->
+    <dimen name="badge_card_height">252dp</dimen>
 
     <!-- Phase 8 — keyboard mood bar -->
     <dimen name="mood_bar_height">40dp</dimen>
