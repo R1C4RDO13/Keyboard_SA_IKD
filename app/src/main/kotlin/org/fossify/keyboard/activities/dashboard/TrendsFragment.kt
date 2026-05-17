@@ -128,6 +128,18 @@ class TrendsFragment : DashboardFragment() {
         // theme on construction.
         activity?.updateTextColors(view.root)
 
+        // Phase 15 polish: every chart now sits in its own
+        // MaterialCardView (matching the other tabs). Tint every card
+        // with the runtime Fossify background so they don't inherit
+        // Material's default ?attr/colorSurface.
+        val cardBg = ctx.getProperBackgroundColor()
+        view.dashboardChartSpeedCard.setCardBackgroundColor(cardBg)
+        view.dashboardChartIkdCard.setCardBackgroundColor(cardBg)
+        view.dashboardChartErrorCard.setCardBackgroundColor(cardBg)
+        view.dashboardChartGyroCard.setCardBackgroundColor(cardBg)
+        view.dashboardChartAccelCard.setCardBackgroundColor(cardBg)
+        view.dashboardChartHabitsSessionDurationCard.setCardBackgroundColor(cardBg)
+
         val snap = payload.ikd
         val sensor = payload.sensor
 
@@ -152,8 +164,7 @@ class TrendsFragment : DashboardFragment() {
         val hasGyro = gyroValues.any { it != null }
         val hasAccel = accelValues.any { it != null }
 
-        view.dashboardChartGyroTitleRow.beVisibleIf(hasGyro)
-        view.dashboardChartGyro.beVisibleIf(hasGyro)
+        view.dashboardChartGyroCard.beVisibleIf(hasGyro)
         if (hasGyro) {
             view.dashboardChartGyro.setData(
                 sensorLabels,
@@ -162,8 +173,7 @@ class TrendsFragment : DashboardFragment() {
             )
         }
 
-        view.dashboardChartAccelTitleRow.beVisibleIf(hasAccel)
-        view.dashboardChartAccel.beVisibleIf(hasAccel)
+        view.dashboardChartAccelCard.beVisibleIf(hasAccel)
         if (hasAccel) {
             view.dashboardChartAccel.setData(
                 sensorLabels,
@@ -185,8 +195,7 @@ class TrendsFragment : DashboardFragment() {
             it.avgSessionDurationMs?.toFloat()?.div(MS_PER_MINUTE)
         }
         val hasDuration = durationMinutes.any { it != null }
-        view.dashboardChartHabitsSessionDurationTitleRow.beVisibleIf(hasDuration)
-        view.dashboardChartHabitsSessionDuration.beVisibleIf(hasDuration)
+        view.dashboardChartHabitsSessionDurationCard.beVisibleIf(hasDuration)
         if (hasDuration) {
             view.dashboardChartHabitsSessionDuration.setData(
                 habitsLabels,
