@@ -11,6 +11,13 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!-- Phase 14: local badge-unlock notification (Android 13+ runtime
+         permission). NO android.permission.INTERNET — the notification
+         is a local NotificationManagerCompat post, nothing leaves the
+         device. The "no internet permission" privacy guarantee is
+         unchanged. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name="org.fossify.keyboard.App"
         android:allowBackup="true"

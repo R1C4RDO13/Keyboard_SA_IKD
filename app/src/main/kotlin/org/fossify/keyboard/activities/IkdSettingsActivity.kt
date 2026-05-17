@@ -124,6 +124,8 @@ class IkdSettingsActivity : SimpleActivity() {
         binding.ikdShowMoodBarSwitch.isChecked = config.showMoodBar
         // Phase 8.2: chat-bubble feedback popup (default true).
         binding.ikdShowMoodPopupSwitch.isChecked = config.showMoodPopup
+        // Phase 14: local badge-unlock notification gate (default true).
+        binding.ikdBadgeNotificationsSwitch.isChecked = config.badgeNotificationsEnabled
         binding.ikdCollectGyroCheckbox.isChecked = config.collectGyro
         binding.ikdCollectAccelCheckbox.isChecked = config.collectAccel
 
@@ -189,6 +191,19 @@ class IkdSettingsActivity : SimpleActivity() {
             ikdShowMoodPopupHolder.setOnClickListener { ikdShowMoodPopupSwitch.toggle() }
             ikdShowMoodPopupSwitch.setOnCheckedChangeListener { _, checked ->
                 config.showMoodPopup = checked
+            }
+
+            // Phase 14: badge-unlock notification gate. IkdBadgeNotifier
+            // reads Config.badgeNotificationsEnabled at post time, so the
+            // toggle takes effect on the next dashboard evaluation. The
+            // POST_NOTIFICATIONS runtime grant is requested lazily by
+            // DashboardActivity (or the system the next time a notification
+            // would fire) — flipping this on here does not itself prompt.
+            ikdBadgeNotificationsHolder.setOnClickListener {
+                ikdBadgeNotificationsSwitch.toggle()
+            }
+            ikdBadgeNotificationsSwitch.setOnCheckedChangeListener { _, checked ->
+                config.badgeNotificationsEnabled = checked
             }
 
             ikdCollectGyroHolder.setOnClickListener { ikdCollectGyroCheckbox.toggle() }

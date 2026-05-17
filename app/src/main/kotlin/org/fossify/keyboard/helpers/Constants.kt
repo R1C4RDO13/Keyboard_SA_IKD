@@ -75,6 +75,14 @@ const val MOOD_BAR_EXPANDED = "ikd_mood_bar_expanded"
 // interaction before the standing rating auto-clears. One hour.
 const val MOOD_INACTIVITY_TIMEOUT_MS = 60L * 60L * 1000L
 
+// Phase 14: gate for the local "you unlocked a badge" notification.
+// Default true. This is the only pref the Phase-8 Config/Constants
+// freeze is reopened for (Decision #11) — capture-path keys stay frozen.
+// When false, IkdBadgeNotifier no-ops; the in-app snackbar still fires
+// (graceful degradation). Local NotificationManagerCompat post only —
+// no network, no INTERNET permission.
+const val BADGE_NOTIFICATIONS_ENABLED = "ikd_badge_notifications_enabled"
+
 // IKD event category strings (Phase 1.1 + Phase 7). Persisted as the
 // `event_category` column on `ikd_events`. Centralized here so the IME
 // capture site, the aggregator queries, and the unit tests share the same

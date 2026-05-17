@@ -284,4 +284,9 @@ object IkdBadgeCatalog {
     )
 
     fun badgesFor(group: BadgeGroup): List<BadgeDef> = ALL.filter { it.group == group }
+
+    private val byKey: Map<String, BadgeDef> = ALL.associateBy { it.key }
+
+    /** Catalog lookup by stable badge key, or null if unknown. */
+    fun defFor(key: String): BadgeDef? = byKey[key]
 }

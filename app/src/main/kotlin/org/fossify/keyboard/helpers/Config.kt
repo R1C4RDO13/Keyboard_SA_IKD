@@ -75,6 +75,13 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(MOOD_BAR_EXPANDED, false)
         set(value) = prefs.edit().putBoolean(MOOD_BAR_EXPANDED, value).apply()
 
+    // Phase 14: gate for the local badge-unlock notification (default
+    // true). Scoped, additive unfreeze of the Phase-8 Config freeze
+    // (Decision #11). The snackbar is independent of this flag.
+    var badgeNotificationsEnabled: Boolean
+        get() = prefs.getBoolean(BADGE_NOTIFICATIONS_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(BADGE_NOTIFICATIONS_ENABLED, value).apply()
+
     var soundOnKeypress: Int
         get() = prefs.getInt(SOUND_ON_KEYPRESS, SOUND_SYSTEM)
         set(soundOnKeypress) = prefs.edit().putInt(SOUND_ON_KEYPRESS, soundOnKeypress).apply()

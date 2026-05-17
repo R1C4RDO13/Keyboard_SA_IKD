@@ -164,6 +164,35 @@
                 android:text="@string/ikd_settings_show_mood_popup_summary"
                 android:textSize="@dimen/smaller_text_size" />
 
+            <!-- Phase 14: local badge-unlock notification gate. Backed by
+                 Config.badgeNotificationsEnabled (default true). When
+                 unchecked, IkdBadgeNotifier no-ops; the in-app snackbar
+                 still fires. No network — local notification only. -->
+            <RelativeLayout
+                android:id="@+id/ikd_badge_notifications_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/ikd_badge_notifications_switch"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_settings_badge_notifications" />
+
+            </RelativeLayout>
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/ikd_badge_notifications_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/normal_margin"
+                android:layout_marginTop="@dimen/tiny_margin"
+                android:text="@string/ikd_settings_badge_notifications_summary"
+                android:textSize="@dimen/smaller_text_size" />
+
             <!-- Sensor collection section -->
             <TextView
                 android:id="@+id/ikd_section_sensors_label"

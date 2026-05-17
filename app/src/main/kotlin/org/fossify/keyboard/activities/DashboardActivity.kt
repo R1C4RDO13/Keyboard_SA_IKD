@@ -1,8 +1,12 @@
 package org.fossify.keyboard.activities
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.os.Build
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
@@ -32,6 +36,7 @@ import org.fossify.keyboard.extensions.ikdMoodAggregator
 import org.fossify.keyboard.extensions.ikdOrientationAggregator
 import org.fossify.keyboard.extensions.ikdQualityAggregator
 import org.fossify.keyboard.extensions.ikdSensorAggregator
+import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.helpers.IkdAggregator
 import org.fossify.keyboard.helpers.InsightsFiltersBottomSheet
 import org.fossify.keyboard.helpers.MoodEmoji
@@ -87,6 +92,19 @@ class DashboardActivity : SimpleActivity() {
     private lateinit var pagerAdapter: DashboardPagerAdapter
 
     /**
+     * Phase 14: lazy `POST_NOTIFICATIONS` request. Registered
+     * unconditionally (the contract must be registered before
+     * `onCreate` returns); launched once per activity create when badge
+     * notifications are enabled and the grant is still missing on
+     * Android 13+. Denial is silent and non-blocking — the snackbar
+     * still fires (graceful degradation, Decision #11).
+     */
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* silent */ }
+
+    private var notificationPermissionAsked = false
+
+    /**
      * Phase 9.12: re-theme freshly attached fragment views. Material
      * cards inside fragments inherit `?attr/colorSurface` by default,
      * which on a dark Fossify theme renders as a near-white slab
@@ -132,6 +150,25 @@ class DashboardActivity : SimpleActivity() {
         setupListeners()
         setupActiveFilterChip()
         setupPagerAndTabs(savedInstanceState)
+        maybeRequestNotificationPermission()
+    }
+
+    /**
+     * Phase 14: ask for `POST_NOTIFICATIONS` once, lazily, the first time
+     * the dashboard opens with badge notifications enabled and the grant
+     * missing. Skipped entirely below Android 13 (no runtime permission)
+     * or when the user turned the toggle off.
+     */
+    private fun maybeRequestNotificationPermission() {
+        if (notificationPermissionAsked) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (!config.badgeNotificationsEnabled) return
+        val granted = ContextCompat.checkSelfPermission(
+            this, android.Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (granted) return
+        notificationPermissionAsked = true
+        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
     }
 
     /**
@@ -535,5 +572,12 @@ class DashboardActivity : SimpleActivity() {
         private const val STATE_MOOD_FILTER = "dashboard_mood_filter"
         private const val STATE_TAB_INDEX = "dashboard_tab_index"
         private const val MOOD_FILTER_ALL_SENTINEL = -1
+
+        /**
+         * Phase 14: set by [org.fossify.keyboard.helpers.IkdBadgeNotifier]'s
+         * `PendingIntent` so tapping a badge-unlock notification jumps
+         * straight to the Achievements tab.
+         */
+        const val EXTRA_OPEN_TAB = "dashboard_open_achievements"
     }
 }
