@@ -189,22 +189,31 @@ class HabitsFragment : DashboardFragment() {
 
         val primary = ctx.getProperPrimaryColor()
         val maxIndex = quality.points.size - 1
-        val entries = quality.points.map { point ->
-            Entry(
-                point.backspaceCount.toFloat(),
-                point.autocorrectionCount.toFloat(),
-                point,
-            )
-        }
-        val colors = quality.points.map { point ->
-            val alphaInt = computePointAlpha(point.dayIndex, maxIndex)
-            ColorUtils.setAlphaComponent(primary, alphaInt)
-        }
+        // MPAndroidChart requires dataset entries sorted ascending by X, or its
+        // internal XBounds binary search inverts (min > max) and
+        // generateTransformedValuesScatter throws NegativeArraySizeException on
+        // the next draw. quality.points is day-ordered, so X (backspaceCount) is
+        // unsorted — sort entry+color pairs together so the recency-fade alpha
+        // (keyed on dayIndex) stays aligned with its point.
+        val entryColorPairs = quality.points
+            .map { point ->
+                val entry = Entry(
+                    point.backspaceCount.toFloat(),
+                    point.autocorrectionCount.toFloat(),
+                    point,
+                )
+                val alphaInt = computePointAlpha(point.dayIndex, maxIndex)
+                entry to ColorUtils.setAlphaComponent(primary, alphaInt)
+            }
+            .sortedBy { it.first.x }
+        val entries = entryColorPairs.map { it.first }
+        val colors = entryColorPairs.map { it.second }
         val dataSet = ScatterDataSet(entries, "").apply {
             this.colors = colors
             setScatterShape(ScatterChart.ScatterShape.CIRCLE)
             scatterShapeSize = QUALITY_BASE_SCATTER_SIZE
             setDrawValues(false)
+            setDrawIcons(false)
             isHighlightEnabled = false
         }
         chart.data = ScatterData(dataSet)
