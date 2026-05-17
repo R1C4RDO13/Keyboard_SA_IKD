@@ -495,22 +495,12 @@ class SummaryFragment : DashboardFragment() {
             if (isSelectable) {
                 card.isClickable = true
                 card.setOnClickListener {
-                    // Phase 9.18: the toast still surfaces the unfiltered
-                    // count (Decision #5 of the 9.18 plan — toast-firing is
-                    // preserved and independent of filter activation). Fire
-                    // it *before* toggling the filter so the count it shows
-                    // refers to the distribution snapshot the user tapped.
-                    Toast.makeText(
-                        ctx,
-                        ctx.getString(
-                            R.string.summary_mood_tile_toast_format,
-                            emoji,
-                            label,
-                            count,
-                            pct,
-                        ),
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                    // Owner directive: no notification/toast when changing
+                    // mood inside Insights. Tapping a tile just toggles the
+                    // mood filter; the tile's selected highlight is the
+                    // feedback (the count/pct still live in the tile itself
+                    // and its contentDescription for a11y). Reverses Phase
+                    // 9.18 Decision #5's tap-toast.
                     (activity as? DashboardActivity)?.onMoodTileTapped(score)
                 }
             } else {
