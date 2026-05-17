@@ -24,11 +24,6 @@
     <dimen name="card_corner_radius">12dp</dimen>
     <dimen name="card_elevation">2dp</dimen>
     <dimen name="session_dashboard_chart_height">200dp</dimen>
-    <!-- Task E: bumped 230dp -> 252dp so the per-card content still fits
-         after the carousel row gained vertical padding for the (no longer
-         clipped) MaterialCardView elevation shadow. -->
-    <dimen name="badge_card_height">252dp</dimen>
-    <dimen name="badge_arrow_elevation">3dp</dimen>
 
     <!-- Phase 8 — keyboard mood bar -->
     <dimen name="mood_bar_height">40dp</dimen>
@@ -89,10 +84,4 @@
          read on a coloured tile background without overpowering the
          emoji + percentage typography. -->
     <dimen name="summary_mood_tile_stroke_active">1.5dp</dimen>
-
-    <!-- Phase 14: Achievements carousel page-dot geometry. The active
-         dot is widened to a pill via the badge_dot selector; size is
-         the inactive circular diameter, gap is the per-side margin. -->
-    <dimen name="badge_dot_size">6dp</dimen>
-    <dimen name="badge_dot_gap">3dp</dimen>
 </resources>

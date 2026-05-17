@@ -467,8 +467,6 @@
     <string name="achievements_unlocked_date_format">Unlocked %1$s</string>
     <string name="achievements_progress_count_format">%1$s / %2$s</string>
     <string name="achievements_progress_days_format">%1$d / %2$d days</string>
-    <string name="achievements_prev_badge">Previous badge</string>
-    <string name="achievements_next_badge">Next badge</string>
     <string name="achievements_day_strip_label">Last 14 days · filled = 3+ logs</string>
     <string name="achievements_day_strip_content_description">Mood-logging activity, last 14 days</string>
 

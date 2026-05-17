@@ -9,19 +9,19 @@ import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.updateTextColors
-import org.fossify.keyboard.adapters.BadgeCardAdapter
-import org.fossify.keyboard.adapters.BadgeGroupAdapter
-import org.fossify.keyboard.adapters.BadgeGroupUiModel
+import org.fossify.keyboard.adapters.BadgeListAdapter
+import org.fossify.keyboard.adapters.BadgeListItem
 import org.fossify.keyboard.adapters.BadgeUiModel
 import org.fossify.keyboard.databinding.FragmentDashboardAchievementsBinding
 import org.fossify.keyboard.helpers.IkdBadgeCatalog
 import org.fossify.keyboard.helpers.IkdBadgeEvaluator
 
 /**
- * Phase 14 §7.2: the Achievements tab — a vertical list of per-group
- * carousels. Extends [DashboardFragment] so it picks up the existing
- * payload-host plumbing (the host activity runs the badge evaluator on
- * the same IO hop and dispatches the [DashboardPayload] here).
+ * Phase 14 (Option B): the Achievements tab — a single vertical list of
+ * group section headers and full-width badge rows, in catalog order.
+ * Extends [DashboardFragment] so it picks up the existing payload-host
+ * plumbing (the host activity runs the badge evaluator on the same IO hop
+ * and dispatches the [DashboardPayload] here).
  *
  * Always all-time (Decision #13): the global Range / Mood filters do
  * not scope this tab — the evaluator already reads unfiltered tables and
@@ -32,7 +32,7 @@ class AchievementsFragment : DashboardFragment() {
     private var _binding: FragmentDashboardAchievementsBinding? = null
     private val binding get() = _binding!!
 
-    private val groupAdapter = BadgeGroupAdapter(emptyList())
+    private val listAdapter = BadgeListAdapter(emptyList())
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,7 +41,7 @@ class AchievementsFragment : DashboardFragment() {
     ): View {
         _binding = FragmentDashboardAchievementsBinding.inflate(inflater, container, false)
         binding.achievementsRecycler.layoutManager = LinearLayoutManager(requireContext())
-        binding.achievementsRecycler.adapter = groupAdapter
+        binding.achievementsRecycler.adapter = listAdapter
         return binding.root
     }
 
@@ -56,7 +56,6 @@ class AchievementsFragment : DashboardFragment() {
         (activity as? androidx.fragment.app.FragmentActivity)?.updateTextColors(view.root)
 
         val result = payload.badges
-        val groups = buildGroupModels(result)
 
         val anyUnlocked = result.allUnlocked.isNotEmpty()
         view.achievementsEmptyMessage.beVisibleIf(!anyUnlocked)
@@ -66,23 +65,25 @@ class AchievementsFragment : DashboardFragment() {
             view.achievementsEmptyMessage.beGone()
         }
 
-        groupAdapter.submit(groups)
+        listAdapter.submit(buildItems(result))
     }
 
     /**
-     * Fold the static catalog + the evaluation result into one UI model
-     * per v1 group. Focus index = the first not-yet-unlocked badge in
-     * catalog order, or the last badge when the whole group is unlocked
-     * (the "what you're working toward" card).
+     * Flatten the static catalog + the evaluation result into one ordered
+     * list: for each v1 group (in [IkdBadgeCatalog.GROUPS] order) a
+     * [BadgeListItem.Header] followed by its badges as
+     * [BadgeListItem.Row]s. The Daily-devotion header carries the
+     * last-14-days strip so it renders directly under that header.
      */
-    private fun buildGroupModels(
+    private fun buildItems(
         result: IkdBadgeEvaluator.EvaluationResult,
-    ): List<BadgeGroupUiModel> {
+    ): List<BadgeListItem> {
         val ctx = requireContext()
         val unlockedKeys = result.allUnlocked
         val unlockedAt = result.unlockedAtByKey
+        val items = ArrayList<BadgeListItem>()
 
-        return IkdBadgeCatalog.GROUPS.map { group ->
+        for (group in IkdBadgeCatalog.GROUPS) {
             val defs = IkdBadgeCatalog.badgesFor(group)
             val badges = defs.map { def ->
                 val unlocked = def.key in unlockedKeys
@@ -96,19 +97,18 @@ class AchievementsFragment : DashboardFragment() {
                     progress = result.progressByKey[def.key],
                 )
             }
-            val focusIndex = badges.indexOfFirst { !it.isUnlocked }
-                .let { if (it < 0) badges.size - 1 else it }
-            BadgeGroupUiModel(
+            items += BadgeListItem.Header(
                 titleRes = group.titleRes,
-                badges = badges,
                 unlockedCount = badges.count { it.isUnlocked },
-                focusIndex = focusIndex,
-                recentDayQualified = if (group.hasDayStrip) {
+                total = badges.size,
+                dayStrip = if (group.hasDayStrip) {
                     result.snapshot.recentDayQualified
                 } else {
                     null
                 },
             )
+            badges.forEach { items += BadgeListItem.Row(it) }
         }
+        return items
     }
 }
