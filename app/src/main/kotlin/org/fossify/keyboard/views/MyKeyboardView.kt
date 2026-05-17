@@ -711,9 +711,11 @@ class MyKeyboardView @JvmOverloads constructor(
      */
     private fun setupMoodBar(binding: KeyboardViewKeyboardBinding) {
         binding.apply {
-            moodBarPrivacy.setOnLongClickListener {
-                context.toast(R.string.privacy_toggle_content_description); true
-            }
+            // Owner directive: no toast/popup on mood-bar interaction.
+            // Accessibility is preserved via contentDescription instead of
+            // a long-press toast.
+            moodBarPrivacy.contentDescription =
+                context.getString(R.string.privacy_toggle_content_description)
             moodBarPrivacy.setOnClickListener { view ->
                 vibrateIfNeeded()
                 onMoodSlotClicked(MOOD_SLOT_PRIVACY, view)
@@ -732,7 +734,7 @@ class MyKeyboardView @JvmOverloads constructor(
             )
             emotionSlots.forEach { (view, score) ->
                 val labelRes = MoodEmoji.labelResFor(score)
-                view.setOnLongClickListener { context.toast(labelRes); true }
+                view.contentDescription = context.getString(labelRes)
                 view.setOnClickListener { tappedView ->
                     vibrateIfNeeded()
                     onMoodSlotClicked(score, tappedView)
@@ -746,16 +748,14 @@ class MyKeyboardView @JvmOverloads constructor(
             // explicit toggle path. Both vibrate (consistent with the rest
             // of the keyboard top-bar buttons) and route through the same
             // helper so the state machine has a single source of truth.
-            moodBarCollapsedIndicator.setOnLongClickListener {
-                context.toast(R.string.mood_bar_toggle_content_description); true
-            }
+            moodBarCollapsedIndicator.contentDescription =
+                context.getString(R.string.mood_bar_toggle_content_description)
             moodBarCollapsedIndicator.setOnClickListener {
                 vibrateIfNeeded()
                 toggleMoodBarExpanded()
             }
-            moodBarToggleChevron.setOnLongClickListener {
-                context.toast(R.string.mood_bar_toggle_content_description); true
-            }
+            moodBarToggleChevron.contentDescription =
+                context.getString(R.string.mood_bar_toggle_content_description)
             moodBarToggleChevron.setOnClickListener {
                 vibrateIfNeeded()
                 toggleMoodBarExpanded()
