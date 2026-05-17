@@ -151,7 +151,6 @@ class DashboardActivity : SimpleActivity() {
         registerFiltersResultListener()
 
         setupListeners()
-        setupActiveFilterChip()
         setupPagerAndTabs(savedInstanceState)
         maybeRequestNotificationPermission()
         maybeOpenAchievementsFromIntent(intent)
@@ -202,7 +201,6 @@ class DashboardActivity : SimpleActivity() {
             val moodChanged = newMood != currentMoodFilter
             currentRange = newRange
             currentMoodFilter = newMood
-            renderActiveFilterChip()
             renderBucketLabel()
             if (rangeChanged || moodChanged) {
                 loadSnapshot()
@@ -225,7 +223,6 @@ class DashboardActivity : SimpleActivity() {
         }
         binding.dashboardEmptyMessage.setTextColor(getProperTextColor())
         applyChromeColors()
-        renderActiveFilterChip()
         renderBucketLabel()
         loadSnapshot()
     }
@@ -308,16 +305,6 @@ class DashboardActivity : SimpleActivity() {
             intArrayOf(primary, textColor),
         )
 
-        // Active-filter chip: outlined silhouette in the user's primary
-        // tone — body matches the activity background, the stroke and
-        // text/close-icon use the primary token. Same discipline as the
-        // Phase 9.4 mood chip-row colours.
-        val chip = binding.dashboardActiveFilterChip
-        chip.chipBackgroundColor = ColorStateList.valueOf(background)
-        chip.chipStrokeColor = ColorStateList.valueOf(primary)
-        chip.chipStrokeWidth = resources.getDimension(R.dimen.chip_stroke_width)
-        chip.setTextColor(primary)
-        chip.closeIconTint = ColorStateList.valueOf(primary)
     }
 
     private fun tabIconResFor(position: Int): Int = when (position) {
@@ -373,65 +360,11 @@ class DashboardActivity : SimpleActivity() {
         }
     }
 
-    /**
-     * Phase 9.14.3: tap chip body → reopen the sheet at current
-     * selection; tap × → reset both filters to defaults (Week + All)
-     * and re-aggregate. The chip itself only renders when a non-default
-     * filter is active (`renderActiveFilterChip`).
-     */
-    private fun setupActiveFilterChip() {
-        binding.dashboardActiveFilterChip.setOnClickListener { openFiltersSheet() }
-        binding.dashboardActiveFilterChip.setOnCloseIconClickListener {
-            val rangeChanged = currentRange != IkdAggregator.Range.WEEK
-            val moodChanged = currentMoodFilter != null
-            currentRange = IkdAggregator.Range.WEEK
-            currentMoodFilter = null
-            renderActiveFilterChip()
-            renderBucketLabel()
-            if (rangeChanged || moodChanged) {
-                loadSnapshot()
-            }
-            // Phase 9.18: clear the Summary-tab tile highlight in sync —
-            // the chip ✕ is one of three reset paths and SummaryFragment
-            // would otherwise keep its dim/active state until the IO hop
-            // returns and `renderPayload` re-runs.
-            if (moodChanged) {
-                summaryFragment()?.applyMoodFilterHighlight(null)
-            }
-        }
-    }
-
     private fun openFiltersSheet() {
         if (supportFragmentManager.findFragmentByTag(InsightsFiltersBottomSheet.TAG) != null) return
         InsightsFiltersBottomSheet
             .newInstance(currentRange, currentMoodFilter)
             .show(supportFragmentManager, InsightsFiltersBottomSheet.TAG)
-    }
-
-    /**
-     * Chip text rules (post-9.18 follow-up: chip is now range-only).
-     *  - range == Week → chip hidden, regardless of mood filter.
-     *  - range != Week → chip shows the range label only.
-     *
-     * The mood filter is surfaced exclusively via the Distribution-tile
-     * highlight on the Summary tab — no mood chip in the global header.
-     * Per-user feedback after Phase 9.18: the mood chip felt like a
-     * redundant "tiny widget at the top" once the tile highlight existed.
-     */
-    private fun renderActiveFilterChip() {
-        val chip = binding.dashboardActiveFilterChip
-        val hasRange = currentRange != IkdAggregator.Range.WEEK
-        if (!hasRange) {
-            chip.beVisibleIf(false)
-            return
-        }
-        chip.text = when (currentRange) {
-            IkdAggregator.Range.TODAY -> getString(R.string.dashboard_range_today)
-            IkdAggregator.Range.MONTH -> getString(R.string.dashboard_range_month)
-            IkdAggregator.Range.ALL_TIME -> getString(R.string.dashboard_range_all)
-            IkdAggregator.Range.WEEK -> "" // unreachable — guarded above
-        }
-        chip.beVisibleIf(true)
     }
 
     /**
@@ -637,7 +570,6 @@ class DashboardActivity : SimpleActivity() {
         val newFilter = if (currentMoodFilter == score) null else score
         if (newFilter == currentMoodFilter) return
         currentMoodFilter = newFilter
-        renderActiveFilterChip()
         renderBucketLabel()
         loadSnapshot()
         summaryFragment()?.applyMoodFilterHighlight(newFilter)

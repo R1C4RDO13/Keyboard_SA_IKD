@@ -85,19 +85,10 @@
                 app:tabSelectedTextColor="?attr/colorPrimary"
                 app:tabTextColor="?android:attr/textColorSecondary" />
 
-            <!-- Phase 9.14.3: active filter chip (range + mood). Visible
-                 only when the user has changed either filter away from the
-                 defaults (range = Week, mood = null). Tap chip body →
-                 reopen the bottom sheet at the current selection; tap the
-                 close icon on the right → reset both filters. -->
-            <com.google.android.material.chip.Chip
-                android:id="@+id/dashboard_active_filter_chip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/small_margin"
-                android:visibility="gone"
-                app:closeIcon="@drawable/ic_close_vector"
-                app:closeIconVisible="true" />
+            <!-- Owner directive: the active-filter pill below the tabs was
+                 removed. Range/Mood are changed via the toolbar Filters
+                 button (InsightsFiltersBottomSheet); the bucket-size hint
+                 below stays. -->
 
             <!-- Phase 9.16: bucket-size hint. The X-axis bucket of the
                  trend charts depends on the active range — daily for
