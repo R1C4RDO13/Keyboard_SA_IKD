@@ -6,18 +6,26 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import org.fossify.keyboard.interfaces.BadgeDao
 import org.fossify.keyboard.interfaces.IkdEventDao
 import org.fossify.keyboard.interfaces.MoodDao
 import org.fossify.keyboard.interfaces.SensorSampleDao
 import org.fossify.keyboard.interfaces.SessionDao
+import org.fossify.keyboard.models.Badge
 import org.fossify.keyboard.models.IkdEvent
 import org.fossify.keyboard.models.MoodEntry
 import org.fossify.keyboard.models.SensorSample
 import org.fossify.keyboard.models.SessionRecord
 
 @Database(
-    entities = [SessionRecord::class, IkdEvent::class, SensorSample::class, MoodEntry::class],
-    version = 3
+    entities = [
+        SessionRecord::class,
+        IkdEvent::class,
+        SensorSample::class,
+        MoodEntry::class,
+        Badge::class,
+    ],
+    version = 4
 )
 abstract class IkdDatabase : RoomDatabase() {
 
@@ -28,6 +36,8 @@ abstract class IkdDatabase : RoomDatabase() {
     abstract fun SensorSampleDao(): SensorSampleDao
 
     abstract fun MoodDao(): MoodDao
+
+    abstract fun BadgeDao(): BadgeDao
 
     companion object {
         private var db: IkdDatabase? = null
@@ -109,12 +119,47 @@ abstract class IkdDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Phase 14: schema bump 3 → 4.
+         *
+         * Strictly additive — no existing column or row is rewritten. It
+         * only creates the new `badges` table plus its unique index on
+         * `badge_key`. Badges are derived state recomputed lazily on every
+         * dashboard open by `IkdBadgeEvaluator`; the table is purely a
+         * persistence cache for "already unlocked" so the same badge never
+         * re-notifies. Existing data (sessions, ikd_events, sensor_samples,
+         * mood_entries) is preserved verbatim.
+         *
+         * The CREATE statements match the Room-generated v4 schema bytewise
+         * so `runMigrationsAndValidate` passes — same discipline as
+         * MIGRATION_1_2 (`index_mood_entries_session_id`).
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `badges` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+                        `badge_key` TEXT NOT NULL,
+                        `unlocked_at` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS `index_badges_badge_key`
+                        ON `badges`(`badge_key`)
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getInstance(context: Context): IkdDatabase {
             if (db == null) {
                 synchronized(IkdDatabase::class) {
                     if (db == null) {
                         db = Room.databaseBuilder(context, IkdDatabase::class.java, "ikd.db")
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                             .build()
                         db!!.openHelper.setWriteAheadLoggingEnabled(true)
                     }

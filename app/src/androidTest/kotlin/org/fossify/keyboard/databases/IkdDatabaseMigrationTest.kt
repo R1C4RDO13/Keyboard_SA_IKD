@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.fossify.keyboard.databases.IkdDatabase.Companion.MIGRATION_1_2
 import org.fossify.keyboard.databases.IkdDatabase.Companion.MIGRATION_2_3
+import org.fossify.keyboard.databases.IkdDatabase.Companion.MIGRATION_3_4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -22,6 +23,8 @@ import org.junit.runner.RunWith
  *  - v2 → v3 (Phase 7.1): adds `correction_weight INTEGER NOT NULL DEFAULT 0`
  *    column to `ikd_events` and backfills weight 1 onto every legacy
  *    `is_correction = 1` row so historical error rates are continuous.
+ *  - v3 → v4 (Phase 14): adds the `badges` table + a unique index on
+ *    `badge_key`. Purely additive — no existing row touched.
  *
  * Runs on a connected device or emulator via
  * `./gradlew connectedCoreDebugAndroidTest`.
@@ -248,6 +251,96 @@ class IkdDatabaseMigrationTest {
         ).use {
             assertTrue(it.moveToFirst())
             assertEquals(9, it.getInt(0))
+        }
+    }
+
+    /**
+     * Phase 14: v3 → v4 migration adds the `badges` table and a unique
+     * index on `badge_key`. The migration is non-destructive — existing
+     * v3 data (sessions, ikd_events, sensor_samples, mood_entries) is
+     * preserved, the new table starts empty, and the unique index rejects
+     * a duplicate `badge_key` while `INSERT OR REPLACE` (the production
+     * write path via `BadgeDao.upsert`) succeeds idempotently.
+     */
+    @Test
+    fun migrate_3_to_4_addsBadgesTableAndIndex() {
+        // Seed at v3 (includes mood_entries from v1→v2 and the
+        // correction_weight column from v2→v3).
+        helper.createDatabase(TEST_DB, 3).apply {
+            execSQL(
+                "INSERT INTO sessions (session_id, started_at, ended_at, " +
+                    "event_count, sensor_count, device_orientation, locale) " +
+                    "VALUES ('s1', 1000, 2000, 1, 1, 0, 'en-US')"
+            )
+            execSQL(
+                "INSERT INTO ikd_events (session_id, timestamp, event_category, " +
+                    "ikd_ms, hold_time_ms, flight_time_ms, is_correction, " +
+                    "correction_weight) " +
+                    "VALUES ('s1', 1500, 'ALPHA', 100, 80, 20, 0, 0)"
+            )
+            execSQL(
+                "INSERT INTO sensor_samples (session_id, timestamp, sensor_type, " +
+                    "x, y, z) VALUES ('s1', 1500, 'GYRO', 0.1, 0.2, 0.3)"
+            )
+            execSQL(
+                "INSERT INTO mood_entries (session_id, timestamp, mood_score) " +
+                    "VALUES ('s1', 1600, 1)"
+            )
+            close()
+        }
+
+        val migrated = helper.runMigrationsAndValidate(
+            name = TEST_DB,
+            version = 4,
+            validateDroppedTables = true,
+            MIGRATION_3_4,
+        )
+
+        // All v3 tables preserved.
+        migrated.query("SELECT count(*) FROM sessions").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
+        migrated.query("SELECT count(*) FROM ikd_events").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
+        migrated.query("SELECT count(*) FROM sensor_samples").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
+        migrated.query("SELECT count(*) FROM mood_entries").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
+
+        // New table exists and is empty.
+        migrated.query("SELECT count(*) FROM badges").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(0, it.getInt(0))
+        }
+
+        // The unique index on badge_key rejects a duplicate key under the
+        // default INSERT OR ABORT, and accepts INSERT OR REPLACE (the
+        // production BadgeDao.upsert write path) idempotently.
+        migrated.execSQL(
+            "INSERT INTO badges (badge_key, unlocked_at) VALUES ('mood_vol_1', 1000)"
+        )
+        try {
+            migrated.execSQL(
+                "INSERT INTO badges (badge_key, unlocked_at) VALUES ('mood_vol_1', 2000)"
+            )
+            fail("Expected unique-constraint violation for duplicate badge_key")
+        } catch (expected: android.database.sqlite.SQLiteConstraintException) {
+            // Pass: the unique index rejected the duplicate.
+        }
+        migrated.execSQL(
+            "INSERT OR REPLACE INTO badges (badge_key, unlocked_at) VALUES ('mood_vol_1', 3000)"
+        )
+        migrated.query("SELECT unlocked_at FROM badges WHERE badge_key = 'mood_vol_1'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(3000L, it.getLong(0))
+            assertEquals(1, it.count)
         }
     }
 
