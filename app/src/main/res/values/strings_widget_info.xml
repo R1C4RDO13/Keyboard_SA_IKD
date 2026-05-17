@@ -70,11 +70,8 @@
 
 
     <!-- Daily Activity fragment ==================================== -->
-
-    <string name="info_daily_calendar_heatmap_title">Calendar heatmap</string>
-    <string name="info_daily_calendar_heatmap_desc">One cell per day in the selected range, coloured by total keystrokes for that day. AUTOCORRECT events are excluded — only kept-text keystrokes count. Hidden under the Today range because a single cell tells you nothing.</string>
-    <string name="info_daily_calendar_heatmap_interpretation">Darker cells = busier days. Empty cells mean no captured activity on that day (or capture was off).</string>
-    <string name="info_daily_calendar_heatmap_formula">cell_value = COUNT(*) WHERE event_category != \'AUTOCORRECT\'</string>
+    <!-- Phase 15: info_daily_calendar_heatmap_* removed with the
+         Calendar heatmap card (owner directive, §2). -->
 
     <string name="info_daily_keypress_title">Daily keypress bar</string>
     <string name="info_daily_keypress_desc">Same per-day keystroke counts as the heatmap, plotted as a line over the selected range. Hidden under Today.</string>
@@ -133,32 +130,23 @@
     <string name="info_kd_orientation_formula">slice = COUNT(sessions) GROUP BY orientation</string>
 
 
-    <!-- Habits fragment ============================================ -->
+    <!-- Habits charts (relocated in Phase 15) ====================== -->
+    <!-- The Habits tab was dropped. info_habits_session_duration_* and
+         info_habits_flight_* are kept and reused at their relocated
+         render sites (session duration → Trends, flight → Keys). The
+         Sessions-per-period, Avg-error-rate and Activity-quality info
+         entries were removed with their cards (owner directive, §2 / §6
+         default — error-rate not duplicated into Trends). -->
 
     <string name="info_habits_session_duration_title">Avg session duration</string>
     <string name="info_habits_session_duration_desc">Average length of a session per bucket, in minutes. Sessions still in flight (no ended_at) are counted as zero duration in the SUM but still bump sessionCount, so very short or in-progress sessions can pull the average down.</string>
     <string name="info_habits_session_duration_interpretation">A higher line means longer typing bouts. Sudden dips often correspond to days with quick one-off sessions (a single message, an OTP code).</string>
     <string name="info_habits_session_duration_formula">avg_minutes = SUM(duration_ms) / sessions / 60000</string>
 
-    <string name="info_habits_sessions_title">Sessions per period</string>
-    <string name="info_habits_sessions_desc">Number of sessions in each bucket. Bucket width follows the range: hourly under Today, daily under Week and Month, weekly under All Time. Zero-bucket runs render as zero rather than line breaks since absence is meaningful here.</string>
-    <string name="info_habits_sessions_interpretation">A flat line at zero is a stretch when the keyboard wasn\'t opened. Tall spikes are heavy days; this chart pairs naturally with the duration chart above.</string>
-    <string name="info_habits_sessions_formula">value = COUNT(sessions) per bucket</string>
-
-    <string name="info_habits_error_rate_title">Avg error rate</string>
-    <string name="info_habits_error_rate_desc">Per-bucket weighted error rate. Numerator: sum of correction weights (BACKSPACE chars deleted + AUTOCORRECT replaced spans). Denominator: productive keystrokes — events that produced kept text (excludes both BACKSPACE and AUTOCORRECT).</string>
-    <string name="info_habits_error_rate_interpretation">Same formula as the Trends error chart and the global KPI, just bucketed by day or week. Higher values mean a larger share of your typing in that bucket was deletion or autocorrect activity.</string>
-    <string name="info_habits_error_rate_formula">errorRate = 100 × Σ correction_weight / productive_keystrokes\nproductive_keystrokes = events − BACKSPACE − AUTOCORRECT</string>
-
     <string name="info_habits_flight_title">Avg flight time</string>
     <string name="info_habits_flight_desc">Average flight time per bucket — the gap between releasing one key and pressing the next. The first event of every session is excluded (no previous key to measure from).</string>
     <string name="info_habits_flight_interpretation">Lower values mean smoother sequencing between keys; spikes suggest pause-heavy sessions in that bucket.</string>
     <string name="info_habits_flight_formula">avgFlightMs = AVG(flight_time_ms WHERE ≥ 0) per bucket</string>
-
-    <string name="info_habits_quality_title">Activity quality scatter</string>
-    <string name="info_habits_quality_desc" formatted="false">One point per day in the selected range. X axis = backspaces that day, Y axis = autocorrections that day. The newest day is fully opaque; older days fade toward 20 % alpha so the most recent dot stands out.</string>
-    <string name="info_habits_quality_interpretation">A point near the origin is a "clear-mind day" — few corrections of either kind. Points far up are autocorrect-heavy; far right are backspace-heavy. Tap a point for the date and counts.</string>
-    <string name="info_habits_quality_formula">x = COUNT(BACKSPACE), y = COUNT(AUTOCORRECT) per day</string>
 
 
     <!-- ===========================================================

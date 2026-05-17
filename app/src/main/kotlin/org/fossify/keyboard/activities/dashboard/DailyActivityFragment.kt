@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.updateTextColors
@@ -16,30 +15,28 @@ import org.fossify.keyboard.helpers.WidgetInfo
 import org.fossify.keyboard.helpers.attachWidgetInfo
 import org.fossify.keyboard.interfaces.HourWeekdayRow
 import org.fossify.keyboard.views.IkdHeatmapView
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 
 /**
- * Phase 9.11: Daily Activity tab. Calendar heatmap (9.5), daily keypress
- * bar (9.5), 24-hour bar (9.6), and circadian heatmap (9.6). Each widget
- * hides itself when its data is empty; the tab renders an empty
- * placeholder when *every* widget is empty for the current range.
+ * Phase 9.11: Daily Activity tab. Daily keypress bar (9.5), 24-hour bar
+ * (9.6), and circadian heatmap (9.6). Each widget hides itself when its
+ * data is empty; the tab renders an empty placeholder when *every*
+ * widget is empty for the current range.
  *
  * Phase 9.15: the Usage Map (`IkdBubbleMapView`) was moved to the
  * Summary tab and its card here was deleted — single render site rule.
  *
- * TODAY range hides the calendar heatmap and daily keypress bar (both
- * would degenerate to single-cell views) — that decision is made on the
- * host activity via `range.isHourly()` before the buckets land in the
- * snapshot.
+ * Phase 15: the Calendar heatmap card was removed (owner directive,
+ * §2). Only the daily keypress bar, the 24-hour bar and the circadian
+ * heatmap remain.
+ *
+ * TODAY range hides the daily keypress bar (it would degenerate to a
+ * single-cell view) — that decision is made on the host activity via
+ * `range.isHourly()` before the buckets land in the snapshot.
  */
 class DailyActivityFragment : DashboardFragment() {
 
     private var _binding: FragmentDashboardDailyActivityBinding? = null
     private val binding get() = _binding!!
-
-    private val isoDayParser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -53,14 +50,6 @@ class DailyActivityFragment : DashboardFragment() {
 
     /** Phase 9.13: bind tap-to-explain dialogs to each card's info icon. */
     private fun attachWidgetInfoButtons() {
-        binding.dashboardCalendarHeatmapInfo.attachWidgetInfo(
-            WidgetInfo(
-                titleRes = R.string.info_daily_calendar_heatmap_title,
-                descriptionRes = R.string.info_daily_calendar_heatmap_desc,
-                interpretationRes = R.string.info_daily_calendar_heatmap_interpretation,
-                formulaRes = R.string.info_daily_calendar_heatmap_formula,
-            ),
-        )
         binding.dashboardDailyKeypressInfo.attachWidgetInfo(
             WidgetInfo(
                 titleRes = R.string.info_daily_keypress_title,
@@ -106,10 +95,8 @@ class DailyActivityFragment : DashboardFragment() {
 
         applyCardThemeColors()
 
-        view.dashboardCalendarHeatmapCard.beVisibleIf(hasDaily)
         view.dashboardDailyKeypressCard.beVisibleIf(hasDaily)
         if (hasDaily) {
-            bindCalendarHeatmap(activity.dailyBuckets)
             bindDailyKeypressBar(activity.dailyBuckets)
         }
 
@@ -133,7 +120,6 @@ class DailyActivityFragment : DashboardFragment() {
         val view = _binding ?: return
         // Phase 9.12: re-theme card titles + DOW labels under each heatmap.
         activity?.updateTextColors(view.root)
-        view.dashboardCalendarHeatmapCard.setCardBackgroundColor(bg)
         view.dashboardDailyKeypressCard.setCardBackgroundColor(bg)
         view.dashboardHourlyCard.setCardBackgroundColor(bg)
         view.dashboardCircadianCard.setCardBackgroundColor(bg)
@@ -201,56 +187,6 @@ class DailyActivityFragment : DashboardFragment() {
         }
     }
 
-    private fun bindCalendarHeatmap(daily: List<IkdActivityAggregator.DailyBucket>) {
-        val view = _binding ?: return
-        val ctx = context ?: return
-        val parsed = daily.mapNotNull { bucket ->
-            runCatching {
-                val date = isoDayParser.parse(bucket.day) ?: return@mapNotNull null
-                val cal = Calendar.getInstance()
-                cal.time = date
-                Triple(bucket.day, cal, bucket.keystrokeCount)
-            }.getOrNull()
-        }
-        if (parsed.isEmpty()) {
-            view.dashboardCalendarHeatmapCard.beGone()
-            return
-        }
-        val firstWeek = parsed.minOf { it.second.get(Calendar.WEEK_OF_YEAR) }
-        val lastWeek = parsed.maxOf { it.second.get(Calendar.WEEK_OF_YEAR) }
-        val rows = (lastWeek - firstWeek + 1).coerceIn(1, MAX_HEATMAP_ROWS)
-        val maxCount = daily.maxOf { it.keystrokeCount }
-
-        val cells = parsed.map { (day, cal, count) ->
-            val rowIdx = (cal.get(Calendar.WEEK_OF_YEAR) - firstWeek).coerceIn(0, rows - 1)
-            val dow = cal.get(Calendar.DAY_OF_WEEK)
-            val col = (dow + DOW_MON_OFFSET) % DOW_COUNT
-            IkdHeatmapView.Cell(column = col, row = rowIdx, count = count, label = day)
-        }
-        view.dashboardCalendarHeatmap.setData(cells, columns = DOW_COUNT, rows = rows, maxIntensity = maxCount)
-        view.dashboardCalendarHeatmap.setAxisLabels(
-            x = listOf(
-                getString(R.string.dashboard_dow_mon),
-                getString(R.string.dashboard_dow_tue),
-                getString(R.string.dashboard_dow_wed),
-                getString(R.string.dashboard_dow_thu),
-                getString(R.string.dashboard_dow_fri),
-                getString(R.string.dashboard_dow_sat),
-                getString(R.string.dashboard_dow_sun),
-            ),
-            y = emptyList(),
-        )
-        view.dashboardCalendarHeatmap.setOnCellClickListener { cell ->
-            if (cell.label.isNotEmpty()) {
-                Toast.makeText(
-                    ctx,
-                    getString(R.string.dashboard_calendar_cell_toast, cell.label, cell.count),
-                    Toast.LENGTH_SHORT,
-                ).show()
-            }
-        }
-    }
-
     private fun bindDailyKeypressBar(daily: List<IkdActivityAggregator.DailyBucket>) {
         val view = _binding ?: return
         val labels = daily.map { it.day.substring(it.day.lastIndexOf('-') + 1) }
@@ -283,8 +219,6 @@ class DailyActivityFragment : DashboardFragment() {
 
     companion object {
         private const val DOW_COUNT = 7
-        private const val DOW_MON_OFFSET = 5
-        private const val MAX_HEATMAP_ROWS = 53
         private const val HOURS_PER_DAY = 24
         private const val HOUR_LABEL_0 = 0
         private const val HOUR_LABEL_6 = 6

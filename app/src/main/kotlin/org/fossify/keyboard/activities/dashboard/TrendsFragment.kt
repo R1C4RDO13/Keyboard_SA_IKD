@@ -78,6 +78,17 @@ class TrendsFragment : DashboardFragment() {
                 formulaRes = R.string.info_trends_accel_formula,
             ),
         )
+        // Phase 15: Avg session duration relocated from the dropped Habits
+        // tab. Info copy reuses the existing info_habits_session_duration_*
+        // keys (plan §3 — keep it simple, reuse keys).
+        binding.dashboardChartHabitsSessionDurationInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_habits_session_duration_title,
+                descriptionRes = R.string.info_habits_session_duration_desc,
+                interpretationRes = R.string.info_habits_session_duration_interpretation,
+                formulaRes = R.string.info_habits_session_duration_formula,
+            ),
+        )
     }
 
     override fun onDestroyView() {
@@ -139,6 +150,29 @@ class TrendsFragment : DashboardFragment() {
             )
         }
 
+        // Phase 15: Avg session duration, relocated from the dropped
+        // Habits tab. Reuses the IkdHabitsAggregator output already in
+        // the payload — no aggregator/DAO change. Hidden (with its title
+        // row) when no bucket carries a duration, mirroring the original
+        // Habits-tab behaviour.
+        val habits = payload.habits
+        val habitsLabels = habits.buckets.map {
+            DashboardLabelFormat.formatBucketLabel(ctx, it.label, habits.range)
+        }
+        val durationMinutes = habits.buckets.map {
+            it.avgSessionDurationMs?.toFloat()?.div(MS_PER_MINUTE)
+        }
+        val hasDuration = durationMinutes.any { it != null }
+        view.dashboardChartHabitsSessionDurationTitleRow.beVisibleIf(hasDuration)
+        view.dashboardChartHabitsSessionDuration.beVisibleIf(hasDuration)
+        if (hasDuration) {
+            view.dashboardChartHabitsSessionDuration.setData(
+                habitsLabels,
+                durationMinutes,
+                getString(R.string.dashboard_chart_habits_session_duration_y_label),
+            )
+        }
+
         // Trends tab empty placeholder: only when *all* of speed / ikd /
         // error / gyro / accel have no data. Speed / IKD / error always
         // render labels even if values are null (line breaks); the
@@ -147,5 +181,9 @@ class TrendsFragment : DashboardFragment() {
         // host activity is taking over.
         val anyData = snap.buckets.isNotEmpty()
         view.fragmentTrendsEmptyMessage.beVisibleIf(!anyData)
+    }
+
+    companion object {
+        private const val MS_PER_MINUTE = 60_000L
     }
 }

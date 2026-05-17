@@ -81,6 +81,17 @@ class KeystrokeDynamicsFragment : DashboardFragment() {
                 formulaRes = R.string.info_kd_orientation_formula,
             ),
         )
+        // Phase 15: Avg flight time relocated from the dropped Habits tab.
+        // Info copy reuses the existing info_habits_flight_* keys
+        // (plan §3 — keep it simple, reuse keys).
+        binding.dashboardChartHabitsFlightInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_habits_flight_title,
+                descriptionRes = R.string.info_habits_flight_desc,
+                interpretationRes = R.string.info_habits_flight_interpretation,
+                formulaRes = R.string.info_habits_flight_formula,
+            ),
+        )
     }
 
     override fun onDestroyView() {
@@ -124,7 +135,28 @@ class KeystrokeDynamicsFragment : DashboardFragment() {
             bindOrientationDonut(orientation.slices)
         }
 
-        val anyHasData = ikdHasData || dwellHasData || flightHasData || orientationHasData
+        // Phase 15: Avg flight time, relocated from the dropped Habits
+        // tab. Reuses the IkdHabitsAggregator output already carried in
+        // the payload — no aggregator/DAO change. Card hidden when no
+        // bucket carries a flight average.
+        val ctx = context ?: return
+        val habits = payload.habits
+        val habitsLabels = habits.buckets.map {
+            DashboardLabelFormat.formatBucketLabel(ctx, it.label, habits.range)
+        }
+        val flightMs = habits.buckets.map { it.avgFlightMs?.toFloat() }
+        val flightHabitsHasData = flightMs.any { it != null }
+        view.dashboardChartHabitsFlightCard.beVisibleIf(flightHabitsHasData)
+        if (flightHabitsHasData) {
+            view.dashboardChartHabitsFlight.setData(
+                habitsLabels,
+                flightMs,
+                getString(R.string.dashboard_chart_habits_flight_y_label),
+            )
+        }
+
+        val anyHasData = ikdHasData || dwellHasData || flightHasData ||
+            orientationHasData || flightHabitsHasData
         if (anyHasData) {
             view.fragmentKeystrokeDynamicsEmptyMessage.beGone()
         } else {
@@ -143,6 +175,7 @@ class KeystrokeDynamicsFragment : DashboardFragment() {
         view.dashboardDwellDistributionCard.setCardBackgroundColor(bg)
         view.dashboardFlightDistributionCard.setCardBackgroundColor(bg)
         view.dashboardOrientationCard.setCardBackgroundColor(bg)
+        view.dashboardChartHabitsFlightCard.setCardBackgroundColor(bg)
     }
 
     private fun bindOrientationDonut(slices: List<IkdOrientationAggregator.OrientationSlice>) {

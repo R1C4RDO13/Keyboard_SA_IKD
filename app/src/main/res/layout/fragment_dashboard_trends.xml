@@ -196,6 +196,46 @@
             android:layout_marginTop="@dimen/small_margin"
             android:visibility="gone" />
 
+        <!-- Phase 15: Avg session duration chart relocated here from the
+             dropped Habits tab. Backed by the same IkdHabitsAggregator
+             output already carried in the payload. -->
+        <LinearLayout
+            android:id="@+id/dashboard_chart_habits_session_duration_title_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dashboard_chart_habits_session_duration_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dashboard_chart_habits_session_duration_title"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/dashboard_chart_habits_session_duration_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="@dimen/small_margin"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/widget_info_content_description"
+                android:focusable="true"
+                android:src="@drawable/ic_info_outline_vector" />
+
+        </LinearLayout>
+
+        <org.fossify.keyboard.views.IkdLineChartView
+            android:id="@+id/dashboard_chart_habits_session_duration"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="@dimen/small_margin"
+            android:visibility="gone" />
+
         <!-- Empty placeholder when this tab has no data to show. -->
         <org.fossify.commons.views.MyTextView
             android:id="@+id/fragment_trends_empty_message"

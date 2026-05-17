@@ -138,12 +138,13 @@
 
     <!-- Phase 9.5: Daily Activity section -->
     <string name="dashboard_section_daily_activity">Daily Activity</string>
-    <string name="dashboard_chart_calendar_heatmap_title">Calendar heatmap</string>
+    <!-- Phase 15: dashboard_chart_calendar_heatmap_title +
+         dashboard_calendar_cell_toast removed with the Calendar heatmap
+         card (owner directive, §2). -->
     <string name="dashboard_chart_daily_keypress_title">Daily keypresses</string>
     <string name="dashboard_chart_daily_keypress_y_label">Keystrokes</string>
     <string name="dashboard_calendar_heatmap_legend_low">Less</string>
     <string name="dashboard_calendar_heatmap_legend_high">More</string>
-    <string name="dashboard_calendar_cell_toast">%1$s: %2$d keystrokes</string>
     <string name="dashboard_dow_mon">M</string>
     <string name="dashboard_dow_tue">T</string>
     <string name="dashboard_dow_wed">W</string>
@@ -185,12 +186,11 @@
     <string name="orientation_unknown">Unknown</string>
     <string name="orientation_not_captured">Not captured</string>
 
-    <!-- Phase 9.10: Activity Quality scatter -->
-    <string name="dashboard_chart_activity_quality_title">Activity Quality</string>
-    <string name="dashboard_activity_quality_subtitle">When our mind is clear we tend to make fewer typing errors and require less backspace usage. On such days, the most recent data point will be closer to the origin.</string>
-    <string name="dashboard_activity_quality_axis_x">Backspaces</string>
-    <string name="dashboard_activity_quality_axis_y">Autocorrections</string>
-    <string name="dashboard_activity_quality_tooltip">%1$s — %2$d backspaces, %3$d autocorrections</string>
+    <!-- Phase 9.10: Activity Quality scatter.
+         Phase 15: the Activity-quality scatter card was removed (owner
+         directive, §2); its strings were removed with it. The
+         IkdQualityAggregator stays intact but its output is no longer
+         surfaced (read-side, frozen, harmless — §6). -->
 
     <!-- Phase 9.4: Mood filter chip row (above the range selector) -->
     <string name="dashboard_mood_filter_all">All</string>
@@ -204,12 +204,12 @@
     <string name="dashboard_habits_streak_days">%1$d days</string>
     <string name="dashboard_habits_streak_weeks">%1$d weeks</string>
     <string name="dashboard_habits_avg_session_value">%1$.1f s</string>
+    <!-- Phase 15: session_duration + flight retained — relocated to the
+         Trends and Keys tabs. Sessions-per-period + Avg-error-rate chart
+         strings removed (those cards dropped; §6 default keeps only the
+         existing Trends error-rate chart). -->
     <string name="dashboard_chart_habits_session_duration_title">Avg session duration</string>
     <string name="dashboard_chart_habits_session_duration_y_label">Minutes</string>
-    <string name="dashboard_chart_habits_sessions_title">Sessions per bucket</string>
-    <string name="dashboard_chart_habits_sessions_y_label">Sessions</string>
-    <string name="dashboard_chart_habits_error_rate_title">Avg error rate</string>
-    <string name="dashboard_chart_habits_error_rate_y_label">Error rate (%)</string>
     <string name="dashboard_chart_habits_flight_title">Avg flight time</string>
     <string name="dashboard_chart_habits_flight_y_label">Avg flight (ms)</string>
 
