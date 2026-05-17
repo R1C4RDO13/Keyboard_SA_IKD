@@ -62,8 +62,11 @@
             android:id="@+id/badge_group_prev"
             android:layout_width="44dp"
             android:layout_height="match_parent"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_marginStart="@dimen/tiny_margin"
+            android:layout_marginEnd="@dimen/tiny_margin"
+            android:background="@drawable/badge_arrow_bg"
             android:contentDescription="@string/achievements_prev_badge"
+            android:elevation="@dimen/badge_arrow_elevation"
             android:scaleType="center"
             android:src="@drawable/ic_chevron_left_vector" />
 
@@ -79,8 +82,11 @@
             android:id="@+id/badge_group_next"
             android:layout_width="44dp"
             android:layout_height="match_parent"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_marginStart="@dimen/tiny_margin"
+            android:layout_marginEnd="@dimen/tiny_margin"
+            android:background="@drawable/badge_arrow_bg"
             android:contentDescription="@string/achievements_next_badge"
+            android:elevation="@dimen/badge_arrow_elevation"
             android:scaleType="center"
             android:src="@drawable/ic_chevron_right_vector" />
 

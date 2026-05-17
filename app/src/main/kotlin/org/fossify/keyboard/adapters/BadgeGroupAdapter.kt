@@ -129,6 +129,12 @@ class BadgeGroupAdapter(
             }
             binding.badgeGroupPrev.setColorFilter(primary)
             binding.badgeGroupNext.setColorFilter(primary)
+            // Raised arrow surface tracks the theme background; the
+            // layout's android:elevation casts the shadow that lifts it
+            // off the badge card so the arrows are clearly visible.
+            val arrowBg = ColorStateList.valueOf(ctx.getProperBackgroundColor())
+            binding.badgeGroupPrev.backgroundTintList = arrowBg
+            binding.badgeGroupNext.backgroundTintList = arrowBg
 
             bindDayStrip(model)
         }

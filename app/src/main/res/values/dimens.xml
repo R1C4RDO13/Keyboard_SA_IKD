@@ -28,6 +28,7 @@
          after the carousel row gained vertical padding for the (no longer
          clipped) MaterialCardView elevation shadow. -->
     <dimen name="badge_card_height">252dp</dimen>
+    <dimen name="badge_arrow_elevation">3dp</dimen>
 
     <!-- Phase 8 — keyboard mood bar -->
     <dimen name="mood_bar_height">40dp</dimen>
