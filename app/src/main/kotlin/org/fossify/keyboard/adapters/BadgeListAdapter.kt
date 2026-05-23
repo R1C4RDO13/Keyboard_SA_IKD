@@ -30,6 +30,10 @@ import java.util.Locale
  *   timestamp for the date caption; it may be absent even when
  *   [isUnlocked] is true (defensive), in which case the row still renders
  *   in its unlocked style but with no date.
+ * @property isTodayScoped true for badges whose criterion is defined over
+ *   the current day (Daily check-in group). The unlocked caption renders
+ *   as a time-of-day ("Unlocked at 12:14") instead of a date since the
+ *   date is always today.
  * @property progress null only for the (deferred) boolean badges; all
  *   28 v1 badges carry a non-null progress.
  */
@@ -41,6 +45,7 @@ data class BadgeUiModel(
     val isUnlocked: Boolean,
     val unlockedAt: Long?,
     val progress: BadgeProgress?,
+    val isTodayScoped: Boolean = false,
 )
 
 /**
@@ -171,11 +176,15 @@ class BadgeListAdapter(
                 val at = model.unlockedAt
                 if (at != null && at > 0L) {
                     binding.badgeRowState.visibility = View.VISIBLE
-                    val dateStr = DateFormat
-                        .getDateInstance(DateFormat.MEDIUM, Locale.getDefault())
-                        .format(Date(at))
+                    val (format, stringRes) = if (model.isTodayScoped) {
+                        DateFormat.getTimeInstance(DateFormat.SHORT, Locale.getDefault()) to
+                            R.string.achievements_unlocked_time_format
+                    } else {
+                        DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault()) to
+                            R.string.achievements_unlocked_date_format
+                    }
                     binding.badgeRowState.text =
-                        ctx.getString(R.string.achievements_unlocked_date_format, dateStr)
+                        ctx.getString(stringRes, format.format(Date(at)))
                     binding.badgeRowState.setTextColor(ctx.getProperPrimaryColor())
                 } else {
                     binding.badgeRowState.visibility = View.GONE

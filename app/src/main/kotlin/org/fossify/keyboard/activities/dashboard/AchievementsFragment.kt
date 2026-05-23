@@ -85,6 +85,7 @@ class AchievementsFragment : DashboardFragment() {
 
         for (group in IkdBadgeCatalog.GROUPS) {
             val defs = IkdBadgeCatalog.badgesFor(group)
+            val isTodayScoped = group == IkdBadgeCatalog.BadgeGroup.MOOD_DAILY_CHECKIN
             val badges = defs.map { def ->
                 val unlocked = def.key in unlockedKeys
                 BadgeUiModel(
@@ -95,6 +96,7 @@ class AchievementsFragment : DashboardFragment() {
                     isUnlocked = unlocked,
                     unlockedAt = if (unlocked) unlockedAt[def.key] else null,
                     progress = result.progressByKey[def.key],
+                    isTodayScoped = isTodayScoped,
                 )
             }
             items += BadgeListItem.Header(

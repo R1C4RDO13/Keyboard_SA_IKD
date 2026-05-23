@@ -465,6 +465,7 @@
     <string name="achievements_group_count_format">%1$d / %2$d</string>
     <string name="achievements_empty_message">No badges unlocked yet — keep typing and logging mood!</string>
     <string name="achievements_unlocked_date_format">Unlocked %1$s</string>
+    <string name="achievements_unlocked_time_format">Unlocked at %1$s</string>
     <string name="achievements_progress_count_format">%1$s / %2$s</string>
     <string name="achievements_progress_days_format">%1$d / %2$d days</string>
     <string name="achievements_day_strip_label">Last 14 days · filled = 3+ logs</string>
