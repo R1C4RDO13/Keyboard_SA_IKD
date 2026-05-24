@@ -84,6 +84,7 @@ class IkdAggregator(private val db: IkdDatabase) {
     suspend fun snapshot(
         range: Range,
         moodFilter: Int? = null,
+        minKeystrokes: Int = 0,
     ): Snapshot = withContext(Dispatchers.IO) {
         var result: Snapshot? = null
         val durationMs = measureTimeMillis {
@@ -91,20 +92,22 @@ class IkdAggregator(private val db: IkdDatabase) {
             val (fromMs, toMs) = computeRangeWindow(range, nowMs)
 
             val eventBuckets = if (moodFilter != null) {
-                db.IkdEventDao().getEventBucketsForMood(range.bucketFormat, fromMs, toMs, moodFilter)
+                db.IkdEventDao()
+                    .getEventBucketsForMood(range.bucketFormat, fromMs, toMs, moodFilter, minKeystrokes)
             } else {
-                db.IkdEventDao().getEventBuckets(range.bucketFormat, fromMs, toMs)
+                db.IkdEventDao().getEventBuckets(range.bucketFormat, fromMs, toMs, minKeystrokes)
             }
             val sessionBuckets = if (moodFilter != null) {
-                db.SessionDao().getSessionBucketsForMood(range.bucketFormat, fromMs, toMs, moodFilter)
+                db.SessionDao()
+                    .getSessionBucketsForMood(range.bucketFormat, fromMs, toMs, moodFilter, minKeystrokes)
             } else {
-                db.SessionDao().getSessionBuckets(range.bucketFormat, fromMs, toMs)
+                db.SessionDao().getSessionBuckets(range.bucketFormat, fromMs, toMs, minKeystrokes)
             }
 
             result = Companion.buildSnapshot(range, eventBuckets, sessionBuckets)
         }
         if (BuildConfig.DEBUG) {
-            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter) took ${durationMs}ms")
+            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter, min=$minKeystrokes) took ${durationMs}ms")
         }
         result!!
     }

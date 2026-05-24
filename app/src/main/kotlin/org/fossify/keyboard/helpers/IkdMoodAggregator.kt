@@ -92,19 +92,22 @@ class IkdMoodAggregator(private val db: IkdDatabase) {
         val total: Int,
     )
 
-    suspend fun snapshot(range: Range): MoodSnapshot = withContext(Dispatchers.IO) {
+    suspend fun snapshot(
+        range: Range,
+        minKeystrokes: Int = 0,
+    ): MoodSnapshot = withContext(Dispatchers.IO) {
         var result: MoodSnapshot? = null
         val durationMs = measureTimeMillis {
             val nowMs = System.currentTimeMillis()
             val (fromMs, toMs) = computeRangeWindow(range, nowMs)
 
-            val buckets = db.MoodDao().getMoodBuckets(range.bucketFormat, fromMs, toMs)
-            val distribution = db.MoodDao().getMoodDistribution(fromMs, toMs)
+            val buckets = db.MoodDao().getMoodBuckets(range.bucketFormat, fromMs, toMs, minKeystrokes)
+            val distribution = db.MoodDao().getMoodDistribution(fromMs, toMs, minKeystrokes)
 
             result = Companion.buildSnapshot(range, buckets, distribution)
         }
         if (BuildConfig.DEBUG) {
-            Log.d(LOG_TAG, "snapshot(${range.name}) took ${durationMs}ms")
+            Log.d(LOG_TAG, "snapshot(${range.name}, min=$minKeystrokes) took ${durationMs}ms")
         }
         result!!
     }
@@ -114,16 +117,19 @@ class IkdMoodAggregator(private val db: IkdDatabase) {
      * over Time" stacked bar chart. Composed alongside [snapshot] in the
      * same `Dispatchers.IO` hop on `DashboardActivity.onResume`.
      */
-    suspend fun mixSnapshot(range: Range): MoodMixSnapshot = withContext(Dispatchers.IO) {
+    suspend fun mixSnapshot(
+        range: Range,
+        minKeystrokes: Int = 0,
+    ): MoodMixSnapshot = withContext(Dispatchers.IO) {
         var result: MoodMixSnapshot? = null
         val durationMs = measureTimeMillis {
             val nowMs = System.currentTimeMillis()
             val (fromMs, toMs) = computeRangeWindow(range, nowMs)
-            val rows = db.MoodDao().getMoodCategoryBuckets(range.bucketFormat, fromMs, toMs)
+            val rows = db.MoodDao().getMoodCategoryBuckets(range.bucketFormat, fromMs, toMs, minKeystrokes)
             result = Companion.buildMixSnapshot(range, rows)
         }
         if (BuildConfig.DEBUG) {
-            Log.d(LOG_TAG, "mixSnapshot(${range.name}) took ${durationMs}ms")
+            Log.d(LOG_TAG, "mixSnapshot(${range.name}, min=$minKeystrokes) took ${durationMs}ms")
         }
         result!!
     }

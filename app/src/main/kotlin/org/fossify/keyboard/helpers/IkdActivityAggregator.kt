@@ -83,27 +83,28 @@ class IkdActivityAggregator(private val db: IkdDatabase) {
     suspend fun snapshot(
         range: Range,
         moodFilter: Int? = null,
+        minKeystrokes: Int = 0,
     ): ActivitySnapshot = withContext(Dispatchers.IO) {
         var result: ActivitySnapshot? = null
         val durationMs = measureTimeMillis {
             val nowMs = System.currentTimeMillis()
             val (fromMs, toMs) = computeRangeWindow(range, nowMs)
 
-            val daily = db.IkdEventDao().getDailyKeystrokes(fromMs, toMs, moodFilter)
-            val hourly = db.IkdEventDao().getHourlyKeystrokes(fromMs, toMs, moodFilter)
-            val dayHour = db.IkdEventDao().getDayHourBuckets(fromMs, toMs, moodFilter)
+            val daily = db.IkdEventDao().getDailyKeystrokes(fromMs, toMs, moodFilter, minKeystrokes)
+            val hourly = db.IkdEventDao().getHourlyKeystrokes(fromMs, toMs, moodFilter, minKeystrokes)
+            val dayHour = db.IkdEventDao().getDayHourBuckets(fromMs, toMs, moodFilter, minKeystrokes)
             // Phase 9.17: sibling row stream that brings each cell's
             // (mood_score, keystrokeCount) breakdown — folded into
             // `DayHourCell.dominantMood` for the Usage Map tinting.
-            val dayHourMood = db.IkdEventDao().getDayHourMoodBuckets(fromMs, toMs)
+            val dayHourMood = db.IkdEventDao().getDayHourMoodBuckets(fromMs, toMs, minKeystrokes)
             // Circadian heatmap is range-independent (Decision #18) — never
             // pass `fromMs`/`toMs` so it always returns the all-time fold.
-            val circadian = db.IkdEventDao().getHourByWeekday(moodFilter)
+            val circadian = db.IkdEventDao().getHourByWeekday(moodFilter, minKeystrokes)
 
             result = Companion.buildSnapshot(range, daily, hourly, dayHour, circadian, dayHourMood)
         }
         if (BuildConfig.DEBUG) {
-            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter) took ${durationMs}ms")
+            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter, min=$minKeystrokes) took ${durationMs}ms")
         }
         result!!
     }

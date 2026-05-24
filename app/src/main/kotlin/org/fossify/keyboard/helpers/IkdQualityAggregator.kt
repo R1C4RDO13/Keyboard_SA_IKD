@@ -43,17 +43,18 @@ class IkdQualityAggregator(private val db: IkdDatabase) {
     suspend fun snapshot(
         range: Range,
         moodFilter: Int? = null,
+        minKeystrokes: Int = 0,
     ): QualitySnapshot = withContext(Dispatchers.IO) {
         var result: QualitySnapshot? = null
         val durationMs = measureTimeMillis {
             val nowMs = System.currentTimeMillis()
             val (fromMs, toMs) = computeRangeWindow(range, nowMs)
 
-            val rows = db.IkdEventDao().getDailyQuality(fromMs, toMs, moodFilter)
+            val rows = db.IkdEventDao().getDailyQuality(fromMs, toMs, moodFilter, minKeystrokes)
             result = Companion.buildSnapshot(range, rows)
         }
         if (BuildConfig.DEBUG) {
-            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter) took ${durationMs}ms")
+            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter, min=$minKeystrokes) took ${durationMs}ms")
         }
         result!!
     }

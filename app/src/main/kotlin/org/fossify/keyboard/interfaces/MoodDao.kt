@@ -69,11 +69,20 @@ interface MoodDao {
             COUNT(*)   AS entryCount
         FROM mood_entries
         WHERE timestamp >= :fromMs AND timestamp < :toMs
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY mood_score
         ORDER BY mood_score
         """
     )
-    fun getMoodDistribution(fromMs: Long, toMs: Long): List<MoodDistributionRow>
+    fun getMoodDistribution(
+        fromMs: Long,
+        toMs: Long,
+        minKeystrokes: Int,
+    ): List<MoodDistributionRow>
 
     /**
      * Bucketed average + count for a time range. Buckets are produced by
@@ -92,6 +101,11 @@ interface MoodDao {
             COUNT(*)                                                            AS entryCount
         FROM mood_entries
         WHERE timestamp >= :fromMs AND timestamp < :toMs
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY bucket
         ORDER BY bucket
         """
@@ -100,6 +114,7 @@ interface MoodDao {
         bucketFormat: String,
         fromMs: Long,
         toMs: Long,
+        minKeystrokes: Int,
     ): List<MoodBucketRow>
 
     /**
@@ -121,6 +136,11 @@ interface MoodDao {
             COUNT(*)                                                            AS entryCount
         FROM mood_entries
         WHERE timestamp >= :fromMs AND timestamp < :toMs
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY bucket, mood_score
         ORDER BY bucket ASC, mood_score ASC
         """
@@ -129,5 +149,6 @@ interface MoodDao {
         bucketFormat: String,
         fromMs: Long,
         toMs: Long,
+        minKeystrokes: Int,
     ): List<MoodCategoryBucketRow>
 }

@@ -82,6 +82,11 @@ interface SensorSampleDao {
           AND timestamp <  :toMs
           AND (:moodScore IS NULL
                OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY bucket, sensor_type
         ORDER BY sensor_type, bucket
         """
@@ -91,5 +96,6 @@ interface SensorSampleDao {
         fromMs: Long,
         toMs: Long,
         moodScore: Int?,
+        minKeystrokes: Int,
     ): List<SensorBucketAggregateRow>
 }

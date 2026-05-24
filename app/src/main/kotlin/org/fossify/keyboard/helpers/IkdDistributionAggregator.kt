@@ -46,15 +46,16 @@ class IkdDistributionAggregator(private val db: IkdDatabase) {
     suspend fun snapshot(
         range: Range,
         moodFilter: Int? = null,
+        minKeystrokes: Int = 0,
     ): DistributionSnapshot = withContext(Dispatchers.IO) {
         var result: DistributionSnapshot? = null
         val durationMs = measureTimeMillis {
             val nowMs = System.currentTimeMillis()
             val (fromMs, toMs) = computeRangeWindow(range, nowMs)
 
-            val ikdRows = db.IkdEventDao().getIkdHistogram(fromMs, toMs, moodFilter)
-            val holdRows = db.IkdEventDao().getDwellHistogram(fromMs, toMs, moodFilter)
-            val flightRows = db.IkdEventDao().getFlightHistogram(fromMs, toMs, moodFilter)
+            val ikdRows = db.IkdEventDao().getIkdHistogram(fromMs, toMs, moodFilter, minKeystrokes)
+            val holdRows = db.IkdEventDao().getDwellHistogram(fromMs, toMs, moodFilter, minKeystrokes)
+            val flightRows = db.IkdEventDao().getFlightHistogram(fromMs, toMs, moodFilter, minKeystrokes)
 
             result = DistributionSnapshot(
                 range = range,
@@ -64,7 +65,7 @@ class IkdDistributionAggregator(private val db: IkdDatabase) {
             )
         }
         if (BuildConfig.DEBUG) {
-            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter) took ${durationMs}ms")
+            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter, min=$minKeystrokes) took ${durationMs}ms")
         }
         result!!
     }

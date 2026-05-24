@@ -19,6 +19,7 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.keyboard.R
 import org.fossify.keyboard.adapters.SessionsAdapter
 import org.fossify.keyboard.databinding.ActivitySessionsListBinding
+import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.extensions.ikdDB
 import org.fossify.keyboard.helpers.IkdCsvWriter
 import org.fossify.keyboard.helpers.IkdCsvWriter.asMoodRow
@@ -130,9 +131,19 @@ class SessionsListActivity : SimpleActivity() {
 
     private fun loadSessions() {
         val cutoff = currentFilter.cutoffMillis()
+        // Insights-only minimum-keystrokes filter (Config.minSessionKeystrokes).
+        // 0 disables it so empty / noise sessions remain manageable
+        // (exportable / deletable) from this screen. Capture is unaffected.
+        val minKeystrokes = config.minSessionKeystrokes
         ensureBackgroundThread {
             val dao = ikdDB.SessionDao()
-            val sessions = if (cutoff == null) dao.getAllSessions() else dao.getSessionsSince(cutoff)
+            val all = if (cutoff == null) dao.getAllSessions() else dao.getSessionsSince(cutoff)
+            val sessions = if (minKeystrokes <= 0) {
+                all
+            } else {
+                val qualifying = dao.getSessionIdsWithMinKeystrokes(minKeystrokes).toHashSet()
+                all.filter { it.sessionId in qualifying }
+            }
             runOnUiThread {
                 adapter.setSessions(sessions)
                 binding.sessionsListEmpty.beVisibleIf(sessions.isEmpty())

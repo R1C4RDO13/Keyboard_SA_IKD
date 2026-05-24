@@ -410,17 +410,22 @@ class DashboardActivity : SimpleActivity() {
             val badgeEvaluator = ikdBadgeEvaluator
             val range = currentRange
             val moodFilter = currentMoodFilter
+            // Insights-only minimum-keystrokes filter. Capture is unaffected;
+            // sub-threshold sessions are simply excluded from every
+            // aggregation. Read once per load so a mid-load settings change
+            // can't split the payload across two thresholds.
+            val minKeystrokes = config.minSessionKeystrokes
             val payload = withContext(Dispatchers.IO) {
                 DashboardPayload(
-                    ikd = agg.snapshot(range, moodFilter),
-                    mood = moodAgg.snapshot(range),
-                    moodMix = moodAgg.mixSnapshot(range),
-                    sensor = sensorAgg.snapshot(range, moodFilter),
-                    habits = habitsAgg.snapshot(range, moodFilter),
-                    activity = activityAgg.snapshot(range, moodFilter),
-                    distribution = distAgg.snapshot(range, moodFilter),
-                    orientation = orientationAgg.snapshot(range, moodFilter),
-                    quality = qualityAgg.snapshot(range, moodFilter),
+                    ikd = agg.snapshot(range, moodFilter, minKeystrokes),
+                    mood = moodAgg.snapshot(range, minKeystrokes),
+                    moodMix = moodAgg.mixSnapshot(range, minKeystrokes),
+                    sensor = sensorAgg.snapshot(range, moodFilter, minKeystrokes),
+                    habits = habitsAgg.snapshot(range, moodFilter, minKeystrokes),
+                    activity = activityAgg.snapshot(range, moodFilter, minKeystrokes),
+                    distribution = distAgg.snapshot(range, moodFilter, minKeystrokes),
+                    orientation = orientationAgg.snapshot(range, moodFilter, minKeystrokes),
+                    quality = qualityAgg.snapshot(range, moodFilter, minKeystrokes),
                     badges = badgeEvaluator.evaluate(),
                 )
             }

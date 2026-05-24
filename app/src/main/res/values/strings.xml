@@ -262,6 +262,11 @@
     <string name="ikd_section_sampling">Sensor sampling rate</string>
     <string name="ikd_section_metadata">Session metadata</string>
     <string name="ikd_section_retention">Retention period</string>
+    <string name="ikd_section_insights">Insights</string>
+    <string name="ikd_min_keystrokes_label">Minimum keystrokes per session</string>
+    <string name="ikd_min_keystrokes_summary">Sessions with fewer than this many keystrokes (excluding backspaces and autocorrections) are ignored in the dashboard and Sessions list. Every session is still stored. Default: %1$d.</string>
+    <string name="ikd_min_keystrokes_dialog_title">Minimum keystrokes</string>
+    <string name="ikd_min_keystrokes_invalid">Enter a whole number of 0 or more.</string>
     <string name="ikd_section_storage">Storage usage</string>
     <string name="ikd_privacy_mode_label">Privacy mode</string>
     <string name="ikd_privacy_mode_description">When on, no keyboard data is collected.</string>

@@ -44,6 +44,13 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(RETENTION_DAYS, RETENTION_DAYS_DEFAULT)
         set(value) = prefs.edit().putInt(RETENTION_DAYS, value).apply()
 
+    // Insights-only: minimum productive keystrokes for a session to be
+    // considered by the dashboard and Sessions list. Floored at 0
+    // (0 = include everything). Capture is unaffected.
+    var minSessionKeystrokes: Int
+        get() = prefs.getInt(MIN_SESSION_KEYSTROKES, MIN_SESSION_KEYSTROKES_DEFAULT)
+        set(value) = prefs.edit().putInt(MIN_SESSION_KEYSTROKES, value.coerceAtLeast(0)).apply()
+
     var sensorDisplayMode: String
         get() = prefs.getString(SENSOR_DISPLAY_MODE, SENSOR_DISPLAY_MODE_MAGNITUDE)
             ?: SENSOR_DISPLAY_MODE_MAGNITUDE

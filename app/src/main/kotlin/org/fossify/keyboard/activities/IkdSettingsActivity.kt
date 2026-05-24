@@ -4,7 +4,9 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.text.InputType
 import android.text.format.Formatter
+import android.widget.EditText
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import org.fossify.commons.extensions.beVisibleIf
@@ -25,6 +27,7 @@ import org.fossify.keyboard.extensions.ikdDB
 import org.fossify.keyboard.extensions.ikdMoodBarController
 import org.fossify.keyboard.helpers.KinematicSensorHelper
 import org.fossify.keyboard.helpers.LiveCaptureSessionStore
+import org.fossify.keyboard.helpers.MIN_SESSION_KEYSTROKES_DEFAULT
 import org.fossify.keyboard.helpers.RETENTION_DAYS_14
 import org.fossify.keyboard.helpers.RETENTION_DAYS_60
 import org.fossify.keyboard.helpers.RETENTION_DAYS_7
@@ -89,6 +92,7 @@ class IkdSettingsActivity : SimpleActivity() {
             ikdSectionSamplingLabel.setTextColor(color)
             ikdSectionMetadataLabel.setTextColor(color)
             ikdSectionRetentionLabel.setTextColor(color)
+            ikdSectionInsightsLabel.setTextColor(color)
             ikdSectionStorageLabel.setTextColor(color)
         }
     }
@@ -151,6 +155,13 @@ class IkdSettingsActivity : SimpleActivity() {
             else -> R.id.ikd_retention_30
         }
         binding.ikdRetentionGroup.check(retentionRadioId)
+
+        // Insights-only minimum-keystrokes filter (Config.minSessionKeystrokes).
+        binding.ikdMinKeystrokesValue.text = config.minSessionKeystrokes.toString()
+        binding.ikdMinKeystrokesDescription.text = getString(
+            R.string.ikd_min_keystrokes_summary,
+            MIN_SESSION_KEYSTROKES_DEFAULT,
+        )
     }
 
     private fun refreshStorageStats() {
@@ -248,6 +259,8 @@ class IkdSettingsActivity : SimpleActivity() {
                 }
             }
 
+            ikdMinKeystrokesHolder.setOnClickListener { showMinKeystrokesDialog() }
+
             ikdViewDashboardButton.setOnClickListener {
                 startActivity(Intent(this@IkdSettingsActivity, DashboardActivity::class.java))
             }
@@ -312,6 +325,34 @@ class IkdSettingsActivity : SimpleActivity() {
         } else {
             config.privacyModeEnabled = privacyOn
         }
+    }
+
+    /**
+     * Numeric dialog for the insights-only minimum-keystrokes threshold.
+     * Empty / non-numeric input is rejected; the value is floored at 0 by
+     * [Config.minSessionKeystrokes]'s setter. Persisting takes effect on the
+     * next dashboard / Sessions-list load (both re-read Config on resume).
+     */
+    private fun showMinKeystrokesDialog() {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setText(config.minSessionKeystrokes.toString())
+            setSelection(text.length)
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.ikd_min_keystrokes_dialog_title)
+            .setView(input)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                val parsed = input.text.toString().trim().toIntOrNull()
+                if (parsed == null || parsed < 0) {
+                    toast(R.string.ikd_min_keystrokes_invalid)
+                } else {
+                    config.minSessionKeystrokes = parsed
+                    binding.ikdMinKeystrokesValue.text = parsed.toString()
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun triggerBulkExport() {

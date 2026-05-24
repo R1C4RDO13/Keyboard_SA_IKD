@@ -20,6 +20,13 @@ const val COLLECT_ACCEL = "ikd_collect_accel"
 const val SENSOR_SAMPLING_RATE = "ikd_sensor_sampling_rate"
 const val CAPTURE_ORIENTATION = "ikd_capture_orientation"
 const val CAPTURE_LOCALE = "ikd_capture_locale"
+// Insights-only filter: sessions whose productive-keystroke count
+// (events excluding BACKSPACE + AUTOCORRECT) is below this threshold are
+// ignored by the dashboard aggregators and the Sessions list. Capture
+// still stores every session — this is purely a read-side filter.
+const val MIN_SESSION_KEYSTROKES = "ikd_min_session_keystrokes"
+const val MIN_SESSION_KEYSTROKES_DEFAULT = 5
+
 const val RETENTION_DAYS = "ikd_retention_days"
 const val RETENTION_FOREVER = -1
 const val RETENTION_DAYS_7 = 7

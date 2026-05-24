@@ -59,6 +59,7 @@ class IkdSensorAggregator(private val db: IkdDatabase) {
     suspend fun snapshot(
         range: Range,
         moodFilter: Int? = null,
+        minKeystrokes: Int = 0,
     ): Snapshot = withContext(Dispatchers.IO) {
         var result: Snapshot? = null
         val durationMs = measureTimeMillis {
@@ -70,11 +71,12 @@ class IkdSensorAggregator(private val db: IkdDatabase) {
                 fromMs,
                 toMs,
                 moodFilter,
+                minKeystrokes,
             )
             result = Companion.buildSnapshot(range, rows)
         }
         if (BuildConfig.DEBUG) {
-            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter) took ${durationMs}ms")
+            Log.d(LOG_TAG, "snapshot(${range.name}, mood=$moodFilter, min=$minKeystrokes) took ${durationMs}ms")
         }
         result!!
     }

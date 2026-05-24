@@ -55,11 +55,21 @@ interface IkdEventDao {
             COUNT(DISTINCT session_id) AS sessionCount
         FROM ikd_events
         WHERE timestamp >= :fromMs AND timestamp < :toMs
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY bucket
         ORDER BY bucket
         """
     )
-    fun getEventBuckets(bucketFormat: String, fromMs: Long, toMs: Long): List<EventBucketRow>
+    fun getEventBuckets(
+        bucketFormat: String,
+        fromMs: Long,
+        toMs: Long,
+        minKeystrokes: Int,
+    ): List<EventBucketRow>
 
     /**
      * Phase 9.4: mood-filtered counterpart to [getEventBuckets]. Two-query
@@ -80,6 +90,11 @@ interface IkdEventDao {
         WHERE timestamp >= :fromMs
           AND timestamp <  :toMs
           AND session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore)
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY bucket
         ORDER BY bucket
         """
@@ -89,6 +104,7 @@ interface IkdEventDao {
         fromMs: Long,
         toMs: Long,
         moodScore: Int,
+        minKeystrokes: Int,
     ): List<EventBucketRow>
 
     /**
@@ -184,6 +200,11 @@ interface IkdEventDao {
               AND started_at <  :toMs
               AND (:moodScore IS NULL
                    OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+              AND session_id IN (
+                  SELECT session_id FROM ikd_events
+                  GROUP BY session_id
+                  HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+              )
             GROUP BY bucket
         ) AS s
         LEFT JOIN (
@@ -198,6 +219,11 @@ interface IkdEventDao {
               AND timestamp <  :toMs
               AND (:moodScore IS NULL
                    OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+              AND session_id IN (
+                  SELECT session_id FROM ikd_events
+                  GROUP BY session_id
+                  HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+              )
             GROUP BY bucket
         ) AS e
         ON s.bucket = e.bucket
@@ -209,6 +235,7 @@ interface IkdEventDao {
         fromMs: Long,
         toMs: Long,
         moodScore: Int?,
+        minKeystrokes: Int,
     ): List<HabitsBucketRow>
 
     /**
@@ -232,6 +259,11 @@ interface IkdEventDao {
           AND timestamp <  :toMs
           AND (:moodScore IS NULL
                OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY day
         ORDER BY day
         """
@@ -240,6 +272,7 @@ interface IkdEventDao {
         fromMs: Long,
         toMs: Long,
         moodScore: Int?,
+        minKeystrokes: Int,
     ): List<DailyBucketRow>
 
     /**
@@ -258,6 +291,11 @@ interface IkdEventDao {
           AND timestamp <  :toMs
           AND (:moodScore IS NULL
                OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY hour
         ORDER BY hour
         """
@@ -266,6 +304,7 @@ interface IkdEventDao {
         fromMs: Long,
         toMs: Long,
         moodScore: Int?,
+        minKeystrokes: Int,
     ): List<HourlyBucketRow>
 
     /**
@@ -286,11 +325,16 @@ interface IkdEventDao {
         WHERE event_category != 'AUTOCORRECT'
           AND (:moodScore IS NULL
                OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY dow, hour
         ORDER BY dow, hour
         """
     )
-    fun getHourByWeekday(moodScore: Int?): List<HourWeekdayRow>
+    fun getHourByWeekday(moodScore: Int?, minKeystrokes: Int): List<HourWeekdayRow>
 
     /**
      * Phase 9.6 / 9.9: per-`(day, hour)` keystroke aggregation. Worst case
@@ -310,6 +354,11 @@ interface IkdEventDao {
           AND timestamp <  :toMs
           AND (:moodScore IS NULL
                OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY day, hour
         ORDER BY day, hour
         """
@@ -318,6 +367,7 @@ interface IkdEventDao {
         fromMs: Long,
         toMs: Long,
         moodScore: Int?,
+        minKeystrokes: Int,
     ): List<DayHourBucketRow>
 
     /**
@@ -346,11 +396,20 @@ interface IkdEventDao {
         WHERE e.event_category != 'AUTOCORRECT'
           AND e.timestamp >= :fromMs
           AND e.timestamp <  :toMs
+          AND e.session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY day, hour, m.mood_score
         ORDER BY day, hour, m.mood_score
         """
     )
-    fun getDayHourMoodBuckets(fromMs: Long, toMs: Long): List<DayHourMoodBucketRow>
+    fun getDayHourMoodBuckets(
+        fromMs: Long,
+        toMs: Long,
+        minKeystrokes: Int,
+    ): List<DayHourMoodBucketRow>
 
     /**
      * Phase 9.7: log-scale IKD distribution histogram. Bucket edges are
@@ -383,12 +442,22 @@ interface IkdEventDao {
               AND timestamp <  :toMs
               AND (:moodScore IS NULL
                    OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+              AND session_id IN (
+                  SELECT session_id FROM ikd_events
+                  GROUP BY session_id
+                  HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+              )
         )
         GROUP BY bucketIndex
         ORDER BY bucketIndex
         """
     )
-    fun getIkdHistogram(fromMs: Long, toMs: Long, moodScore: Int?): List<HistogramRow>
+    fun getIkdHistogram(
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int?,
+        minKeystrokes: Int,
+    ): List<HistogramRow>
 
     /** Phase 9.7: log-scale dwell-time (hold) distribution histogram. */
     @Query(
@@ -415,12 +484,22 @@ interface IkdEventDao {
               AND timestamp <  :toMs
               AND (:moodScore IS NULL
                    OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+              AND session_id IN (
+                  SELECT session_id FROM ikd_events
+                  GROUP BY session_id
+                  HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+              )
         )
         GROUP BY bucketIndex
         ORDER BY bucketIndex
         """
     )
-    fun getDwellHistogram(fromMs: Long, toMs: Long, moodScore: Int?): List<HistogramRow>
+    fun getDwellHistogram(
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int?,
+        minKeystrokes: Int,
+    ): List<HistogramRow>
 
     /** Phase 9.7: log-scale flight-time distribution histogram. */
     @Query(
@@ -447,12 +526,22 @@ interface IkdEventDao {
               AND timestamp <  :toMs
               AND (:moodScore IS NULL
                    OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+              AND session_id IN (
+                  SELECT session_id FROM ikd_events
+                  GROUP BY session_id
+                  HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+              )
         )
         GROUP BY bucketIndex
         ORDER BY bucketIndex
         """
     )
-    fun getFlightHistogram(fromMs: Long, toMs: Long, moodScore: Int?): List<HistogramRow>
+    fun getFlightHistogram(
+        fromMs: Long,
+        toMs: Long,
+        moodScore: Int?,
+        minKeystrokes: Int,
+    ): List<HistogramRow>
 
     /**
      * Phase 9.10: per-day backspace + autocorrection counts for the
@@ -474,6 +563,11 @@ interface IkdEventDao {
           AND timestamp <  :toMs
           AND (:moodScore IS NULL
                OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY day
         ORDER BY day DESC
         """
@@ -482,5 +576,6 @@ interface IkdEventDao {
         fromMs: Long,
         toMs: Long,
         moodScore: Int?,
+        minKeystrokes: Int,
     ): List<DayQualityRow>
 }

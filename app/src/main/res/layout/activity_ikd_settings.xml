@@ -371,6 +371,50 @@
 
             </RadioGroup>
 
+            <!-- Insights section: read-side-only minimum-keystrokes filter.
+                 Capture is unaffected; this only changes what the dashboard
+                 and Sessions list consider. Tapping the row opens a numeric
+                 dialog. -->
+            <TextView
+                android:id="@+id/ikd_section_insights_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:text="@string/ikd_section_insights" />
+
+            <RelativeLayout
+                android:id="@+id/ikd_min_keystrokes_holder"
+                style="@style/SettingsHolderTextViewStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/ikd_min_keystrokes_label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ikd_min_keystrokes_label" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/ikd_min_keystrokes_value"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/ikd_min_keystrokes_label"
+                    android:layout_marginTop="@dimen/tiny_margin"
+                    android:textSize="@dimen/bigger_text_size"
+                    android:textStyle="bold" />
+
+            </RelativeLayout>
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/ikd_min_keystrokes_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/normal_margin"
+                android:layout_marginTop="@dimen/tiny_margin"
+                android:textSize="@dimen/smaller_text_size" />
+
             <!-- Storage usage section -->
             <TextView
                 android:id="@+id/ikd_section_storage_label"

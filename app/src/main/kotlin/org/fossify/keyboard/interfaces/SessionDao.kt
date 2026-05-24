@@ -51,11 +51,21 @@ interface SessionDao {
             COUNT(*) AS sessionCount
         FROM sessions
         WHERE started_at >= :fromMs AND started_at < :toMs
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY bucket
         ORDER BY bucket
         """
     )
-    fun getSessionBuckets(bucketFormat: String, fromMs: Long, toMs: Long): List<SessionBucketRow>
+    fun getSessionBuckets(
+        bucketFormat: String,
+        fromMs: Long,
+        toMs: Long,
+        minKeystrokes: Int,
+    ): List<SessionBucketRow>
 
     /**
      * Phase 9.4: mood-filtered counterpart to [getSessionBuckets]. Two-query
@@ -72,6 +82,11 @@ interface SessionDao {
         WHERE started_at >= :fromMs
           AND started_at <  :toMs
           AND session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore)
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY bucket
         ORDER BY bucket
         """
@@ -81,6 +96,7 @@ interface SessionDao {
         fromMs: Long,
         toMs: Long,
         moodScore: Int,
+        minKeystrokes: Int,
     ): List<SessionBucketRow>
 
     /**
@@ -96,6 +112,23 @@ interface SessionDao {
             "FROM sessions ORDER BY 1"
     )
     fun getSessionCalendarDays(): List<String>
+
+    /**
+     * Insights-only: session ids whose productive-keystroke count
+     * (events excluding AUTOCORRECT + BACKSPACE) meets the configured
+     * minimum. The Sessions list intersects its query result with this
+     * set so sub-threshold sessions are hidden without changing what's
+     * stored. `minKeystrokes = 0` matches every session that has at
+     * least one event row.
+     */
+    @Query(
+        """
+        SELECT session_id FROM ikd_events
+        GROUP BY session_id
+        HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+        """
+    )
+    fun getSessionIdsWithMinKeystrokes(minKeystrokes: Int): List<String>
 
     /** Returns null when the sessions table is empty. Used to size the All Time range. */
     @Query("SELECT MIN(started_at) FROM sessions")
@@ -125,6 +158,11 @@ interface SessionDao {
           AND started_at <  :toMs
           AND (:moodScore IS NULL
                OR session_id IN (SELECT session_id FROM mood_entries WHERE mood_score = :moodScore))
+          AND session_id IN (
+              SELECT session_id FROM ikd_events
+              GROUP BY session_id
+              HAVING SUM(CASE WHEN event_category NOT IN ('AUTOCORRECT', 'BACKSPACE') THEN 1 ELSE 0 END) >= :minKeystrokes
+          )
         GROUP BY device_orientation
         ORDER BY device_orientation
         """
@@ -133,5 +171,6 @@ interface SessionDao {
         fromMs: Long,
         toMs: Long,
         moodScore: Int?,
+        minKeystrokes: Int,
     ): List<org.fossify.keyboard.interfaces.OrientationRow>
 }
