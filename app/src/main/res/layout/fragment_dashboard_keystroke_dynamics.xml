@@ -194,60 +194,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Phase 15: Avg flight time chart relocated here from the
-             dropped Habits tab (owner directive, §2). Backed by the same
-             IkdHabitsAggregator output already in the payload. -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/dashboard_chart_habits_flight_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/normal_margin"
-            android:visibility="gone"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/normal_margin">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <org.fossify.commons.views.MyTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/dashboard_chart_habits_flight_title"
-                        android:textStyle="bold" />
-
-                    <ImageView
-                        android:id="@+id/dashboard_chart_habits_flight_info"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginStart="@dimen/small_margin"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:contentDescription="@string/widget_info_content_description"
-                        android:focusable="true"
-                        android:src="@drawable/ic_info_outline_vector" />
-
-                </LinearLayout>
-
-                <org.fossify.keyboard.views.IkdLineChartView
-                    android:id="@+id/dashboard_chart_habits_flight"
-                    android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:layout_marginTop="@dimen/small_margin" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
         <!-- Empty placeholder when this tab has no data to show. -->
         <org.fossify.commons.views.MyTextView
             android:id="@+id/fragment_keystroke_dynamics_empty_message"

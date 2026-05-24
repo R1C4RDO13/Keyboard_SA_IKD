@@ -100,6 +100,17 @@ class TrendsFragment : DashboardFragment() {
                 formulaRes = R.string.info_habits_session_duration_formula,
             ),
         )
+        // Avg flight time relocated here from the Keystroke Dynamics tab
+        // (owner directive). Info copy reuses the existing
+        // info_habits_flight_* keys.
+        binding.dashboardChartHabitsFlightInfo.attachWidgetInfo(
+            WidgetInfo(
+                titleRes = R.string.info_habits_flight_title,
+                descriptionRes = R.string.info_habits_flight_desc,
+                interpretationRes = R.string.info_habits_flight_interpretation,
+                formulaRes = R.string.info_habits_flight_formula,
+            ),
+        )
         // Phase 9.8 orientation donut relocated here from the Keystroke
         // Dynamics tab (owner directive). Info copy reuses the existing
         // info_kd_orientation_* keys.
@@ -139,6 +150,7 @@ class TrendsFragment : DashboardFragment() {
         view.dashboardChartGyroCard.setCardBackgroundColor(cardBg)
         view.dashboardChartAccelCard.setCardBackgroundColor(cardBg)
         view.dashboardChartHabitsSessionDurationCard.setCardBackgroundColor(cardBg)
+        view.dashboardChartHabitsFlightCard.setCardBackgroundColor(cardBg)
 
         val snap = payload.ikd
         val sensor = payload.sensor
@@ -201,6 +213,21 @@ class TrendsFragment : DashboardFragment() {
                 habitsLabels,
                 durationMinutes,
                 getString(R.string.dashboard_chart_habits_session_duration_y_label),
+            )
+        }
+
+        // Avg flight time, relocated from the Keystroke Dynamics tab.
+        // Reuses the IkdHabitsAggregator output already in the payload —
+        // no aggregator/DAO change. Card hidden when no bucket carries a
+        // flight average.
+        val flightMs = habits.buckets.map { it.avgFlightMs?.toFloat() }
+        val flightHabitsHasData = flightMs.any { it != null }
+        view.dashboardChartHabitsFlightCard.beVisibleIf(flightHabitsHasData)
+        if (flightHabitsHasData) {
+            view.dashboardChartHabitsFlight.setData(
+                habitsLabels,
+                flightMs,
+                getString(R.string.dashboard_chart_habits_flight_y_label),
             )
         }
 
