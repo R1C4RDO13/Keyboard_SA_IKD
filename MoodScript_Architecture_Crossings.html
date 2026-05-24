@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MoodScript &times; Fossify Keyboard &mdash; Architectural Crossings</title>
+  <style>
+    :root {
+      --ink: #1f2937;
+      --ink-soft: #4b5563;
+      --rule: #d1d5db;
+      --rule-soft: #e5e7eb;
+      --accent: #4f46e5;
+      --accent-soft: #eef2ff;
+      --new: #047857;
+      --new-soft: #ecfdf5;
+      --mod: #b45309;
+      --mod-soft: #fffbeb;
+      --warn: #b91c1c;
+      --warn-soft: #fef2f2;
+      --bg: #ffffff;
+      --code-bg: #f3f4f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      max-width: 1100px;
+      margin: 32px auto;
+      padding: 0 24px 80px;
+      line-height: 1.55;
+      font-size: 14.5px;
+    }
+    h1 { font-size: 26px; margin: 0 0 4px; }
+    h2 {
+      font-size: 19px;
+      margin: 36px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--accent);
+      color: var(--accent);
+    }
+    h3 {
+      font-size: 15.5px;
+      margin: 22px 0 8px;
+      color: var(--ink);
+    }
+    p.lede {
+      color: var(--ink-soft);
+      margin: 0 0 24px;
+    }
+    code, .mono {
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 16px 0 24px;
+    }
+    .meta-cell {
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 12px 14px;
+      background: #fafafa;
+    }
+    .meta-cell .k {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-soft);
+    }
+    .meta-cell .v {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 12px 0 20px;
+      font-size: 13.5px;
+    }
+    th, td {
+      border: 1px solid var(--rule);
+      padding: 8px 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #f3f4f6;
+      font-weight: 600;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 10px;
+      letter-spacing: 0.02em;
+    }
+    .tag-new { background: var(--new-soft); color: var(--new); border: 1px solid #a7f3d0; }
+    .tag-mod { background: var(--mod-soft); color: var(--mod); border: 1px solid #fde68a; }
+    .tag-warn { background: var(--warn-soft); color: var(--warn); border: 1px solid #fecaca; }
+    .tag-info { background: var(--accent-soft); color: var(--accent); border: 1px solid #c7d2fe; }
+
+    .layer-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 12px 0 24px;
+    }
+    .layer-card {
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 12px;
+      background: #fafafa;
+    }
+    .layer-card .ltitle {
+      font-weight: 600;
+      font-size: 13.5px;
+      margin-bottom: 4px;
+      color: var(--accent);
+    }
+    .layer-card .lsub {
+      font-size: 11.5px;
+      color: var(--ink-soft);
+    }
+
+    .callsite {
+      border: 1px solid var(--rule-soft);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin: 8px 0;
+      background: #fafafa;
+    }
+    .callsite .head {
+      font-weight: 600;
+      color: var(--ink);
+      font-size: 13.5px;
+      margin-bottom: 4px;
+    }
+    .callsite .head .where {
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: var(--ink-soft);
+      font-weight: 400;
+      margin-left: 8px;
+    }
+    .callsite .what {
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+
+    .verdict {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .verdict.warn {
+      border-left-color: var(--warn);
+      background: var(--warn-soft);
+    }
+    .verdict.good {
+      border-left-color: var(--new);
+      background: var(--new-soft);
+    }
+    .verdict h4 {
+      margin: 0 0 6px;
+      font-size: 14px;
+    }
+    .verdict p { margin: 0; font-size: 13.5px; }
+
+    ul.crisp { margin: 4px 0 8px; padding-left: 20px; }
+    ul.crisp li { margin: 2px 0; }
+
+    .small { font-size: 12px; color: var(--ink-soft); }
+
+    /* ---------- Diagrams ---------- */
+    .diagram {
+      margin: 24px 0 32px;
+      padding: 22px 24px 24px;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      background: linear-gradient(180deg, #fafbfc 0%, #ffffff 100%);
+      overflow-x: auto;
+    }
+    .diagram h3 {
+      margin: 0 0 4px;
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .diagram .dcap {
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-bottom: 18px;
+    }
+    .node {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      border: 1.5px solid var(--rule);
+      background: #ffffff;
+      white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .node.host    { border-color: #6b7280; background: #f9fafb; color: #1f2937; }
+    .node.hook    { border-color: #94a3b8; background: #f1f5f9; color: #334155; }
+    .node.action  { border-color: #c7d2fe; background: #ffffff; color: var(--ink); font-family: inherit; font-style: italic; }
+    .node.ms      { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+    .node.store   { border-color: var(--new); background: var(--new-soft); color: var(--new); font-weight: 600; }
+    .node.db      { border-color: #7c3aed; background: #f5f3ff; color: #6d28d9; font-weight: 600; }
+    .node.ui      { border-color: var(--mod); background: var(--mod-soft); color: var(--mod); font-weight: 600; }
+    .node.sml     { font-size: 11.5px; padding: 5px 10px; }
+
+    /* Fan-out diagram */
+    .fan {
+      display: grid;
+      grid-template-columns: auto 28px 1fr;
+      align-items: stretch;
+      gap: 0;
+    }
+    .fan-root {
+      grid-column: 1;
+      align-self: center;
+      justify-self: end;
+    }
+    .fan-spine {
+      grid-column: 2;
+      position: relative;
+    }
+    .fan-spine::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 22px;
+      bottom: 22px;
+      width: 2px;
+      background: #cbd5e1;
+    }
+    .fan-branches {
+      grid-column: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .fan-branch {
+      display: grid;
+      grid-template-columns: 220px 24px 1fr 24px auto;
+      align-items: center;
+      gap: 0;
+      position: relative;
+    }
+    .fan-branch::before {
+      /* horizontal connector from spine to first node */
+      content: "";
+      position: absolute;
+      left: -14px;
+      top: 50%;
+      width: 14px;
+      height: 2px;
+      background: #cbd5e1;
+    }
+    .arrow {
+      color: #94a3b8;
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 13px;
+      text-align: center;
+      user-select: none;
+    }
+
+    /* Pipeline (vertical) */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .pipeline .node {
+      min-width: 320px;
+      text-align: center;
+      justify-content: center;
+    }
+    .pipeline .arrow-v {
+      height: 26px;
+      width: 2px;
+      background: #cbd5e1;
+      position: relative;
+    }
+    .pipeline .arrow-v::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -1px;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 7px solid #94a3b8;
+    }
+    .pipeline .side {
+      font-size: 11.5px;
+      color: var(--ink-soft);
+      max-width: 320px;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .legend-mini {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      font-size: 11.5px;
+    }
+    .legend-mini .swatch {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 5px;
+      border: 1.5px solid;
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin: 4px 0 8px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+
+<h1>MoodScript &times; Fossify Keyboard</h1>
+<p class="lede">
+  Architectural crossings catalog &mdash; where the original Fossify Keyboard ends and the
+  MoodScript extension begins. Diff baseline: fork point
+  <code>dbc89a44</code> (last upstream Fossify commit, <em>"chore(l10n): update Belarusian translations"</em>)
+  &rarr; current <code>HEAD</code>.
+</p>
+
+<div class="meta-grid">
+  <div class="meta-cell">
+    <div class="k">Fork start</div>
+    <div class="v">8afb4cab</div>
+    <div class="small">"Start of the IKD project for SA"</div>
+  </div>
+  <div class="meta-cell">
+    <div class="k">New Kotlin files</div>
+    <div class="v">79</div>
+    <div class="small">pure MoodScript</div>
+  </div>
+  <div class="meta-cell">
+    <div class="k">Modified bridge files</div>
+    <div class="v">13</div>
+    <div class="small">Kotlin + manifest + gradle</div>
+  </div>
+  <div class="meta-cell">
+    <div class="k">Net source delta</div>
+    <div class="v">+18 705</div>
+    <div class="small">212 files, +18 886&nbsp;/&nbsp;&minus;181</div>
+  </div>
+</div>
+
+<h2>1. Architecture map &mdash; five layers</h2>
+
+<div class="layer-strip">
+  <div class="layer-card">
+    <div class="ltitle">IME / input</div>
+    <div class="lsub">The keystroke pipeline. Where event capture begins.</div>
+  </div>
+  <div class="layer-card">
+    <div class="ltitle">View / chrome</div>
+    <div class="lsub">Keyboard top bar + emoji drawer. Mood bar lives here.</div>
+  </div>
+  <div class="layer-card">
+    <div class="ltitle">Settings / Config</div>
+    <div class="lsub">Shared <code>BaseConfig</code>. MoodScript adds 14 prefs.</div>
+  </div>
+  <div class="layer-card">
+    <div class="ltitle">Persistence</div>
+    <div class="lsub">New <code>ikd.db</code> Room DB alongside Fossify's <code>clips.db</code>.</div>
+  </div>
+  <div class="layer-card">
+    <div class="ltitle">Activities / nav</div>
+    <div class="lsub">5 new activities + 6 dashboard fragments wired into existing menus.</div>
+  </div>
+</div>
+
+<h2>2. The bridge &mdash; 13 modified Fossify files</h2>
+<p class="lede">
+  Every file Fossify ever shipped that MoodScript had to touch. This is the surface area of
+  the extension on the host project &mdash; everything else is purely additive.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 36%">File</th>
+      <th style="width: 12%">+/&minus;</th>
+      <th>Role at the crossing</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>services/SimpleKeyboardIME.kt</code></td>
+      <td>+480 / &minus;14</td>
+      <td>
+        <strong>Heaviest crossing.</strong> 8 lifecycle / callback overrides now drive IKD &amp;
+        sensor capture. The architectural pivot point of the extension.
+      </td>
+    </tr>
+    <tr>
+      <td><code>views/MyKeyboardView.kt</code></td>
+      <td>+813 / &minus;25</td>
+      <td>
+        Top-bar mood bar (Phase 8/8.5/13), emoji drawer curated section (Phase 12), chat-bubble
+        popup, dance animation. UI host for everything mood-related.
+      </td>
+    </tr>
+    <tr>
+      <td><code>interfaces/OnKeyboardActionListener.kt</code></td>
+      <td>+8 / &minus;0</td>
+      <td>
+        Adds <code>onEmojiText(text)</code> with a default delegating to <code>onText</code>.
+        The view calls it on palette taps; the IME overrides it to record an
+        <code>EMOJI</code> event before commit.
+      </td>
+    </tr>
+    <tr>
+      <td><code>adapters/EmojisAdapter.kt</code></td>
+      <td>+8 / &minus;3</td>
+      <td>
+        Title renderer swapped to <code>getCategoryTitle()</code> so the curated
+        <code>mood_curated:&lt;emoji&gt;</code> pseudo-category gets the localized
+        <em>"Mood: %1$s"</em> header.
+      </td>
+    </tr>
+    <tr>
+      <td><code>helpers/EmojiHelper.kt</code></td>
+      <td>+33 / &minus;10</td>
+      <td>
+        Phase 12 extension: adds <code>MOOD_CURATED_PREFIX</code> and the
+        <code>getCategoryTitle()</code> resolver. Existing category dispatch unchanged.
+      </td>
+    </tr>
+    <tr>
+      <td><code>helpers/Config.kt</code></td>
+      <td>+62 / &minus;5</td>
+      <td>
+        <strong>14 new preference properties</strong> on the shared <code>BaseConfig</code>
+        (privacy, sensors, retention, mood bar, badges&hellip;). No separate config class.
+      </td>
+    </tr>
+    <tr>
+      <td><code>helpers/Constants.kt</code></td>
+      <td>+90 / &minus;0</td>
+      <td>
+        Pref keys + 8 <code>EVENT_CATEGORY_*</code> tokens + 5 retention presets +
+        <code>IME_EDIT_GRACE_MS</code>. Purely additive.
+      </td>
+    </tr>
+    <tr>
+      <td><code>extensions/ContextExt.kt</code></td>
+      <td>+50 / &minus;0</td>
+      <td>
+        <strong>14 lazy property getters</strong> as the DI surface
+        (<code>context.ikdDB</code>, <code>context.ikdAggregator</code>,
+        <code>context.ikdMoodBarController</code>, &hellip;). Mirrors the Fossify pattern
+        for <code>context.clipsDB</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><code>App.kt</code></td>
+      <td>+41 / &minus;1</td>
+      <td>
+        Application bootstrapping: <code>LiveCaptureSessionStore.init(this)</code>,
+        schedules <code>IkdRetentionWorker</code> as periodic <code>WorkManager</code>
+        job, installs debug-only <code>StrictMode</code> disk-read detection.
+      </td>
+    </tr>
+    <tr>
+      <td><code>activities/MainActivity.kt</code></td>
+      <td>+19 / &minus;12</td>
+      <td>
+        Overflow menu adds <em>Insights</em> &rarr; <code>DashboardActivity</code>,
+        <em>Sessions history</em> &rarr; <code>SessionsListActivity</code>. About swapped
+        from Commons Compose AboutActivity to local <code>AboutActivity</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><code>activities/SettingsActivity.kt</code></td>
+      <td>+19 / &minus;1</td>
+      <td>
+        Two new rows: <em>IKD settings</em> &rarr; <code>IkdSettingsActivity</code>,
+        <em>Diagnostics</em> &rarr; <code>DiagnosticsActivity</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><code>AndroidManifest.xml</code></td>
+      <td>+39 / &minus;1</td>
+      <td>
+        5 new <code>&lt;activity&gt;</code> entries; <code>POST_NOTIFICATIONS</code> permission
+        (Phase 14 badge unlock); About activity re-pointed to local class. <strong>No
+        <code>INTERNET</code></strong> &mdash; the privacy guarantee is preserved.
+      </td>
+    </tr>
+    <tr>
+      <td><code>app/build.gradle.kts</code></td>
+      <td>+10 / &minus;0</td>
+      <td>
+        Adds <code>androidx.work.runtime.ktx</code> + <code>MPAndroidChart</code> deps,
+        wires <code>androidTest</code> source set + Room migration test infra.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>3. Hook-level call sites in <code>SimpleKeyboardIME</code></h2>
+<p class="lede">
+  The IME is where Fossify code calls into MoodScript code on the hot path of every
+  keystroke. These are the architecturally load-bearing crossings.
+</p>
+
+<div class="callsite">
+  <div class="head">onStartInputView <span class="where">SimpleKeyboardIME.kt:225&ndash;283</span></div>
+  <div class="what">
+    Keyboard opens. The IME calls <code>maybeResetStaleMood()</code>, builds a
+    <code>KinematicSensorHelper</code> if absent, gates on
+    <code>!Config.privacyModeEnabled &amp;&amp; !isPasswordField()</code>, and on the happy
+    path calls <code>LiveCaptureSessionStore.startSession(orientation, locale)</code> +
+    <code>sensorHelper.start()</code>. Also resets the Phase-7 autocorrect trackers
+    (<code>expectedCursorPosition</code>, <code>lastImeEditTimestamp</code>, &hellip;).
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">onFinishInputView <span class="where">SimpleKeyboardIME.kt:312&ndash;324</span></div>
+  <div class="what">
+    Keyboard closes. <code>LiveCaptureSessionStore.stopSession()</code> drains the in-memory
+    buffer and finalizes the <code>SessionRecord</code>; <code>sensorHelper.stop()</code>
+    unregisters listeners; best-effort writes <code>Config.lastMoodActivityTimestamp</code>
+    when a standing rating exists.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">onPress <span class="where">SimpleKeyboardIME.kt:345&ndash;360</span></div>
+  <div class="what">
+    Key-down event. Two-line MoodScript addition: when capturing, record
+    <code>SystemClock.uptimeMillis()</code> into <code>lastKeyDownTimestamp</code> and
+    compute <code>pendingFlightTime</code> from the prior <code>lastKeyUpTimestamp</code>.
+    Original feedback path (<code>performKeypressFeedback</code>) untouched.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">onKey <span class="where">SimpleKeyboardIME.kt:425&ndash;635</span></div>
+  <div class="what">
+    <strong>The heaviest crossing.</strong> Top of the method builds a
+    <code>KeyTimingEvent</code> (sessionId / wall-clock timestamp / category / IKD / hold /
+    flight / isCorrection / correctionWeight) and pushes it to
+    <code>LiveCaptureSessionStore.recordTimingEvent()</code>. <code>computeBackspaceWeight()</code>
+    reads the selection length (never the text) so a multi-char BACKSPACE contributes its full
+    weight. Every Fossify <code>commitText</code> / <code>deleteSurroundingText</code> call
+    site is now preceded by <code>markImeEdit()</code> &mdash; the Phase-7 grace-window
+    signal for the autocorrect heuristic.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">onText <span class="where">SimpleKeyboardIME.kt:714&ndash;717</span></div>
+  <div class="what">
+    Clipboard / popup-key text path. One added line: <code>markImeEdit()</code> before the
+    commit so the resulting <code>onUpdateSelection</code> isn't mistaken for an external
+    replacement.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">onEmojiText <span class="where">SimpleKeyboardIME.kt:727&ndash;748</span></div>
+  <div class="what">
+    Phase 7 split out from <code>onText</code> via the new interface default method.
+    Records an <code>EMOJI</code> <code>KeyTimingEvent</code> (hold = &minus;1, flight from
+    prior <code>lastKeyUpTimestamp</code>) <em>before</em> delegating back to
+    <code>onText(text)</code>. Lets the existing commit path remain unchanged.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">onUpdateSelection <span class="where">SimpleKeyboardIME.kt:789&ndash;918</span></div>
+  <div class="what">
+    Phase 7 external-replacement heuristic. <code>maybeRecordExternalReplacement(&hellip;)</code>
+    runs first; classifies any delta outside <code>IME_EDIT_GRACE_MS</code> of our last
+    <code>markImeEdit()</code> as an <code>AUTOCORRECT</code> event using the
+    select-range-then-collapse OR cursor-and-length-changed signatures. Field length is read
+    via <code>getExtractedText().length</code> only &mdash; raw text never retained.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">onSharedPreferenceChanged <span class="where">SimpleKeyboardIME.kt:1101&ndash;1123</span></div>
+  <div class="what">
+    Phase 13 reach-back: when <code>LAST_MOOD_SCORE</code> changes (mood-bar tap on
+    <code>Dispatchers.IO</code>), call <code>keyboardView?.notifyEmojiAdapterMoodChanged()</code>
+    so the open emoji drawer's curated section re-renders. Only place where the rebuild is
+    guaranteed to see the committed value (race-condition note in plan).
+  </div>
+</div>
+
+<h2>4. Hook-level call sites in <code>MyKeyboardView</code></h2>
+
+<div class="callsite">
+  <div class="head">setKeyboardHolder &rarr; setupMoodBar <span class="where">MyKeyboardView.kt:540, 712&ndash;775</span></div>
+  <div class="what">
+    The Fossify view inflates <code>keyboard_view_keyboard.xml</code>; after binding,
+    MoodScript wires the seven-button mood bar (privacy &#x1F6E1; + 6 Ekman emotions) and
+    the chevron toggle. Click handlers run on a <code>moodScope</code>
+    (<code>Dispatchers.Main.immediate</code> + <code>SupervisorJob</code>) cancelled in
+    <code>onDetachedFromWindow</code>.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">onMoodSlotClicked <span class="where">MyKeyboardView.kt:797&ndash;845</span></div>
+  <div class="what">
+    Routes a slot tap through <code>IkdMoodBarController</code>
+    (<code>setMoodForActiveSession</code> / <code>clearMoodForActiveSession</code> /
+    <code>enablePrivacyAndClearMood</code> / <code>disablePrivacy</code>) on
+    <code>Dispatchers.IO</code>. Optimistic highlight + Phase 8.4 dance animation +
+    Phase 8.2 chat-bubble popup.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">onVisibilityChanged &rarr; refreshMoodBarFromState <span class="where">MyKeyboardView.kt:433, 876</span></div>
+  <div class="what">
+    Every time the keyboard returns to <code>VISIBLE</code>, MoodScript re-derives the
+    mood-bar highlight from <code>Config.privacyModeEnabled</code> +
+    <code>Config.lastMoodScore</code> and checks Phase-8.5 inactivity reset. Survives
+    cross-process IME teardown / re-attach.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">prepareEmojiItems &rarr; addCuratedMoodSection <span class="where">MyKeyboardView.kt:2509&ndash;2563</span></div>
+  <div class="what">
+    Phase 12: when the emoji drawer is built, prepend an
+    <code>EmojisAdapter.Item.Category("mood_curated:&lt;emoji&gt;")</code> + 15&ndash;25
+    curated codepoints for the standing mood. The mapping lives in
+    <code>helpers/MoodEmoji.kt</code> only &mdash; never stored to disk.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">notifyEmojiAdapterMoodChanged <span class="where">MyKeyboardView.kt:2466&ndash;2472</span></div>
+  <div class="what">
+    Public callback invoked by the IME's <code>onSharedPreferenceChanged</code> listener
+    (Phase 13). Re-runs <code>setupEmojis()</code> if the drawer is visible; no-op
+    otherwise. The only path from a preference write back into the live keyboard chrome.
+  </div>
+</div>
+
+<h2>5. Hook-level call sites in App / activities / interface</h2>
+
+<div class="callsite">
+  <div class="head">App.onCreate <span class="where">App.kt:13&ndash;26</span></div>
+  <div class="what">
+    Three additions: <code>installStrictModeDiskReadDetection()</code> (debug only),
+    <code>LiveCaptureSessionStore.init(this)</code>,
+    <code>scheduleIkdRetentionWorker()</code> (one-day periodic, battery-not-low).
+    Gated on <code>!isDeviceInDirectBootMode</code> so the WorkManager / SharedPreferences
+    paths never run before user unlock.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">MainActivity menu <span class="where">MainActivity.kt:73&ndash;90</span></div>
+  <div class="what">
+    Overflow menu now dispatches <code>R.id.dashboard</code> &rarr;
+    <code>DashboardActivity</code> and <code>R.id.sessions_history</code> &rarr;
+    <code>SessionsListActivity</code>. <code>more_apps_from_us</code> dropped to match
+    Phase 10 rebrand.
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">SettingsActivity setup <span class="where">SettingsActivity.kt:70, 338&ndash;356</span></div>
+  <div class="what">
+    <code>setupIkdSettings()</code> and <code>setupDiagnostics()</code> wire two new rows
+    to the existing <code>activity_settings.xml</code> layout (which gained two new
+    <code>LinearLayout</code> holders).
+  </div>
+</div>
+
+<div class="callsite">
+  <div class="head">OnKeyboardActionListener.onEmojiText <span class="where">OnKeyboardActionListener.kt:42&ndash;49</span></div>
+  <div class="what">
+    Interface evolution via Kotlin default method: <code>fun onEmojiText(text: String) =
+    onText(text)</code>. Every existing implementer keeps working unchanged; the IME
+    overrides it to inject the <code>EMOJI</code> event before delegating. This is the
+    cleanest crossing in the project &mdash; a one-line semantic extension to a Fossify
+    contract without breaking it.
+  </div>
+</div>
+
+<h2>6. Added MoodScript surface &mdash; 79 new Kotlin files</h2>
+<p class="lede">
+  Everything under the bridge. Grouped by role.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 18%">Group</th>
+      <th style="width: 7%">Count</th>
+      <th>Representative files</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Entities &amp; models</strong></td>
+      <td>7</td>
+      <td>
+        <code>SessionRecord</code>, <code>IkdEvent</code>, <code>SensorSample</code>,
+        <code>MoodEntry</code>, <code>Badge</code> (Room) + <code>KeyTimingEvent</code>,
+        <code>SensorReadingEvent</code> (in-memory)
+      </td>
+    </tr>
+    <tr>
+      <td><strong>DAOs &amp; row POJOs</strong></td>
+      <td>22</td>
+      <td>
+        <code>SessionDao</code>, <code>IkdEventDao</code>, <code>SensorSampleDao</code>,
+        <code>MoodDao</code>, <code>BadgeDao</code> + 17 row projection POJOs
+        (<code>EventBucketRow</code>, <code>SessionBucketRow</code>,
+        <code>MoodCategoryBucketRow</code>, &hellip;)
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Database</strong></td>
+      <td>1</td>
+      <td>
+        <code>databases/IkdDatabase.kt</code> &mdash; Room <code>@Database(version = 4)</code>;
+        3 migrations (1&rarr;2 mood, 2&rarr;3 correction_weight, 3&rarr;4 badges)
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Capture-path helpers</strong></td>
+      <td>4</td>
+      <td>
+        <code>LiveCaptureSessionStore</code> (in-memory store + write-behind flusher),
+        <code>KinematicSensorHelper</code>, <code>IkdRetentionWorker</code>,
+        <code>IkdCsvWriter</code>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Read-side aggregators</strong></td>
+      <td>11</td>
+      <td>
+        <code>IkdAggregator</code> (global trends), <code>IkdSessionStatsLoader</code> +
+        <code>IkdSessionChartLoader</code> (per-session), <code>IkdMoodAggregator</code>,
+        <code>IkdSensorAggregator</code>, <code>IkdHabitsAggregator</code>,
+        <code>IkdActivityAggregator</code>, <code>IkdDistributionAggregator</code>,
+        <code>IkdOrientationAggregator</code>, <code>IkdQualityAggregator</code>,
+        <code>IkdMoodLoader</code>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Mood / badges helpers</strong></td>
+      <td>5</td>
+      <td>
+        <code>IkdMoodBarController</code>, <code>MoodEmoji</code>,
+        <code>IkdBadgeCatalog</code>, <code>IkdBadgeEvaluator</code>,
+        <code>IkdBadgeNotifier</code>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>UI helpers</strong></td>
+      <td>5</td>
+      <td>
+        <code>IkdFormatters</code>, <code>IkdStorageStats</code>, <code>WidgetInfo</code>,
+        <code>WidgetInfoDialog</code>, <code>InsightsFiltersBottomSheet</code>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Custom views</strong></td>
+      <td>7</td>
+      <td>
+        <code>IkdLineChartView</code>, <code>IkdStackedBarChartView</code>,
+        <code>IkdHistogramView</code>, <code>IkdHeatmapView</code>,
+        <code>IkdBubbleMapView</code>, <code>IkdBadgeDayStripView</code>
+        (MPAndroidChart wrappers + Canvas-drawn views)
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Activities</strong></td>
+      <td>6</td>
+      <td>
+        <code>DashboardActivity</code>, <code>DiagnosticsActivity</code>,
+        <code>EventFeedActivity</code>, <code>IkdSettingsActivity</code>,
+        <code>SessionsListActivity</code>, <code>AboutActivity</code>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Dashboard fragments</strong></td>
+      <td>9</td>
+      <td>
+        <code>DashboardFragment</code> (base), <code>DashboardPagerAdapter</code>,
+        <code>DashboardPayload</code>, <code>DashboardLabelFormat</code> +
+        <code>SummaryFragment</code>, <code>AchievementsFragment</code>,
+        <code>DailyActivityFragment</code>, <code>TrendsFragment</code>,
+        <code>KeystrokeDynamicsFragment</code>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Adapters</strong></td>
+      <td>2</td>
+      <td><code>SessionsAdapter</code>, <code>BadgeListAdapter</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>7. Coupling assessment</h2>
+
+<div class="verdict good">
+  <h4>Strong: interface-level extension (Phase 7)</h4>
+  <p>
+    <code>OnKeyboardActionListener.onEmojiText()</code> with a Kotlin default method that
+    delegates to <code>onText()</code> is the cleanest crossing in the project. Every
+    existing implementer of the listener keeps working; the IME overrides selectively to
+    inject behaviour <em>before</em> delegating. Zero binary-compat risk, zero behavioural
+    drift on the original commit path.
+  </p>
+</div>
+
+<div class="verdict good">
+  <h4>Strong: persistence isolation</h4>
+  <p>
+    MoodScript created a brand-new <code>ikd.db</code> Room database with its own
+    <code>RoomDatabase</code> subclass, schema folder, DAOs, and migrations &mdash; never
+    touching Fossify's <code>clips.db</code>. The two persistence surfaces share only the
+    <code>Context</code> they're handed (<code>safeStorageContext</code>). A future
+    upstream sync of clipboard code carries zero risk to MoodScript data.
+  </p>
+</div>
+
+<div class="verdict good">
+  <h4>Strong: DI via existing extension-property pattern</h4>
+  <p>
+    <code>ContextExt.kt</code> already exposed <code>context.clipsDB</code>. MoodScript
+    extended the same pattern with 14 lazy <code>Context.&lt;helper&gt;</code> getters
+    (<code>ikdDB</code>, <code>ikdAggregator</code>, <code>ikdMoodBarController</code>,
+    &hellip;) &mdash; idiomatic Fossify-shaped, easy to mock at test boundaries.
+  </p>
+</div>
+
+<div class="verdict">
+  <h4>Notable: capture writes are on the IME hot path but never block it</h4>
+  <p>
+    The original <code>onKey()</code> ran one <code>commitText()</code> per keystroke.
+    MoodScript inserts a <code>KeyTimingEvent</code> allocation +
+    <code>LiveCaptureSessionStore.recordTimingEvent()</code> call before it. The store only
+    appends to in-memory lists under a write lock &mdash; actual DB persistence is deferred
+    to the <code>flushExecutor</code> inside the store (write-behind, every 500&nbsp;ms or
+    100 events). This honours the CLAUDE.md "Critical Constraint" of never blocking the
+    IME thread on disk I/O.
+  </p>
+</div>
+
+<div class="verdict">
+  <h4>Notable: <code>Config</code> is shared, not subclassed</h4>
+  <p>
+    MoodScript added 14 properties directly onto Fossify's <code>helpers/Config.kt</code>
+    (which extends <code>BaseConfig</code>) rather than creating a separate
+    <code>IkdConfig</code>. Pragmatic &mdash; the file gets a clear "Phase N" comment
+    block per group &mdash; but it means upstream Fossify edits to this file are a likely
+    merge-conflict surface. <em>Mitigation:</em> the additions are at the bottom of the
+    file and use distinct pref keys, so conflicts should be mechanical.
+  </p>
+</div>
+
+<div class="verdict">
+  <h4>Notable: <code>SimpleKeyboardIME</code> is the structural pivot</h4>
+  <p>
+    +480 lines on Fossify's 600-line IME service. The MoodScript additions are
+    well-localised inside 8 callbacks and one preference listener, with private helpers
+    grouped at the bottom (<code>maybeRecordExternalReplacement</code>,
+    <code>recordAutocorrectEvent</code>, <code>markImeEdit</code>,
+    <code>computeBackspaceWeight</code>, <code>isPasswordField</code>,
+    <code>maybeResetStaleMood</code>). But because every <code>commitText</code> /
+    <code>deleteSurroundingText</code> call site in the original code now needs a paired
+    <code>markImeEdit()</code>, an upstream patch that adds a <em>new</em> commit call
+    site would silently break the autocorrect heuristic.
+  </p>
+</div>
+
+<div class="verdict warn">
+  <h4>Smell: <code>About</code> activity replaced wholesale</h4>
+  <p>
+    Fossify's <code>org.fossify.commons.activities.AboutActivity</code> is final and
+    Compose-only with no public extension hooks, so Phase 10 replaced it with a local
+    XML-based <code>AboutActivity</code>. The manifest was repointed and
+    <code>MainActivity.launchAbout()</code> now <code>startActivity(Intent(this,
+    AboutActivity::class.java))</code> directly. Diverges from the Commons "About"
+    contract (no <code>LICENSE_GSON</code>, no <code>FAQItem</code> list, no
+    <code>startAboutActivity</code> helper) &mdash; benign for now, but future Commons
+    "About" features won't reach this app for free.
+  </p>
+</div>
+
+<div class="verdict warn">
+  <h4>Smell: VN Telex deliberately skips <code>markImeEdit()</code></h4>
+  <p>
+    Inside <code>onKey</code>'s VN Telex substitution branch, the comment explicitly
+    notes <em>"deliberately do NOT call markImeEdit() here"</em> so the Telex
+    <code>setComposingText</code> lands as an <code>AUTOCORRECT</code> event. This is
+    semantically correct (Telex <em>is</em> an inline replacement) but couples the IKD
+    heuristic to a specific Fossify code path. A future refactor of the Telex branch
+    that consolidates with the regular commit path would change MoodScript's metrics
+    silently.
+  </p>
+</div>
+
+<h2>8. Bottom-up sweep &mdash; CLAUDE.md coverage check</h2>
+<p class="lede">
+  CLAUDE.md was used top-down to drive this catalog. A bottom-up pass against
+  <code>git diff --name-status dbc89a44..HEAD</code> turned up <strong>no surprises</strong>
+  &mdash; every modified Fossify file and every added MoodScript file is accounted for in
+  one of the phase sections above. The CLAUDE.md / actual-code drift is zero on the
+  source-tree axis.
+</p>
+<p class="lede">
+  Drift on the documentation/diagram axis: the <code>PROJECT_JOURNEY.html</code> schema
+  diagram (lines 1205&ndash;1294) still documents the database as v3 with 4 tables &mdash;
+  Phase 14's <code>badges</code> table and <code>Migration(3,&nbsp;4)</code> are missing.
+  Fixing that diagram is the only known stale documentation in the catalog.
+</p>
+
+<h2>9. Summary verdict</h2>
+<div class="verdict">
+  <h4>Architecture</h4>
+  <p>
+    MoodScript is a <strong>well-encapsulated extension</strong> on top of Fossify Keyboard.
+    79 added files vs. 13 modified bridge files (a ~6:1 ratio) means the bulk of the
+    feature lives in isolated, MoodScript-owned modules. The 13 bridge files are touched
+    sparingly with one architectural exception &mdash; <code>SimpleKeyboardIME</code> at
+    +480 lines is structurally a MoodScript-shaped class now, even though it formally
+    remains a Fossify service. The cleanest crossings are the interface-default-method
+    pattern (<code>onEmojiText</code>) and the isolated Room database (<code>ikd.db</code>).
+    The riskiest coupling lives inside <code>SimpleKeyboardIME.onKey()</code> where the
+    paired <code>markImeEdit()</code> calls are an implicit contract no Fossify upstream
+    contributor can see.
+  </p>
+</div>
+
+<p class="small">
+  Generated from <code>git diff dbc89a44..HEAD</code>; CLAUDE.md phase sections cross-checked
+  for every modified file and every added file listed.
+</p>
+
+<h2>10. Diagrams</h2>
+
+<div class="legend-mini">
+  <span><span class="swatch" style="background:#f9fafb;border-color:#6b7280;"></span>Fossify host</span>
+  <span><span class="swatch" style="background:#f1f5f9;border-color:#94a3b8;"></span>Fossify hook</span>
+  <span><span class="swatch" style="background:#eef2ff;border-color:#4f46e5;"></span>MoodScript module</span>
+  <span><span class="swatch" style="background:#ecfdf5;border-color:#047857;"></span>MoodScript state store</span>
+  <span><span class="swatch" style="background:#f5f3ff;border-color:#7c3aed;"></span>Persistence</span>
+  <span><span class="swatch" style="background:#fffbeb;border-color:#b45309;"></span>UI activity / fragment</span>
+</div>
+
+<!-- ============================================================ -->
+<!-- Diagram 1: IME hook fan-out                                   -->
+<!-- ============================================================ -->
+<div class="diagram">
+  <h3>Diagram 1 &mdash; IME callbacks fan out into MoodScript modules</h3>
+  <div class="dcap">
+    Eight Fossify lifecycle / event callbacks on <code>SimpleKeyboardIME</code> now
+    dispatch into MoodScript subsystems. The IME itself remains a Fossify service; the
+    overrides inject MoodScript logic before delegating back via <code>super</code>.
+  </div>
+  <div class="fan">
+    <div class="fan-root">
+      <span class="node host">SimpleKeyboardIME<br><span style="font-weight:400;font-size:11px;color:var(--ink-soft);">Fossify IME service</span></span>
+    </div>
+    <div class="fan-spine"></div>
+    <div class="fan-branches">
+
+      <div class="fan-branch">
+        <span class="node hook">onStartInputView</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node action">starts capture session</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node store">LiveCaptureSessionStore</span>
+      </div>
+
+      <div class="fan-branch">
+        <span class="node hook">onPress</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node action">stamps key-down time</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node ms">pendingFlightTime</span>
+      </div>
+
+      <div class="fan-branch">
+        <span class="node hook">onKey</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node action">builds KeyTimingEvent</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node store">LiveCaptureSessionStore</span>
+      </div>
+
+      <div class="fan-branch">
+        <span class="node hook">onText</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node action">markImeEdit()</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node ms">grace window</span>
+      </div>
+
+      <div class="fan-branch">
+        <span class="node hook">onEmojiText</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node action">records EMOJI event</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node store">LiveCaptureSessionStore</span>
+      </div>
+
+      <div class="fan-branch">
+        <span class="node hook">onUpdateSelection</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node action">detects AUTOCORRECT</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node store">LiveCaptureSessionStore</span>
+      </div>
+
+      <div class="fan-branch">
+        <span class="node hook">onFinishInputView</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node action">stops capture + sensors</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node store">LiveCaptureSessionStore</span>
+      </div>
+
+      <div class="fan-branch">
+        <span class="node hook">onSharedPreferenceChanged</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node action">rebuilds emoji drawer</span>
+        <span class="arrow">&#x2192;</span>
+        <span class="node ui">MyKeyboardView</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Diagram 2: Capture data flow (write path)                     -->
+<!-- ============================================================ -->
+<div class="diagram">
+  <h3>Diagram 2 &mdash; Keystroke capture pipeline (write path)</h3>
+  <div class="dcap">
+    A single key press travels through Fossify input handling, gets enriched with
+    timing fields, lands in an in-memory ring inside <code>LiveCaptureSessionStore</code>,
+    and is later flushed to Room. Persistence is decoupled from the IME thread by design
+    &mdash; the "Critical Constraint" from CLAUDE.md.
+  </div>
+  <div class="pipeline">
+
+    <span class="node host">User touch on key</span>
+    <span class="arrow-v"></span>
+
+    <span class="node host">MyKeyboardView.onTouchEvent()</span>
+    <div class="side">Fossify view layer &mdash; unchanged</div>
+    <span class="arrow-v"></span>
+
+    <span class="node hook">onPress(primaryCode)</span>
+    <div class="side">key-down timestamp &rarr; <code>lastKeyDownTimestamp</code></div>
+    <span class="arrow-v"></span>
+
+    <span class="node hook">onKey(code)</span>
+    <div class="side">builds <code>KeyTimingEvent</code><br>category, IKD, hold, flight, weight</div>
+    <span class="arrow-v"></span>
+
+    <span class="node store">LiveCaptureSessionStore.recordTimingEvent()</span>
+    <div class="side">appends to in-memory list under write lock<br><strong>does not block the IME thread</strong></div>
+    <span class="arrow-v"></span>
+
+    <span class="node ms">flushExecutor (background)</span>
+    <div class="side">every 500 ms or 100 events &mdash; whichever first</div>
+    <span class="arrow-v"></span>
+
+    <span class="node db">ikd_events table (Room, ikd.db)</span>
+    <div class="side">single-writer; WAL enabled</div>
+
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Diagram 3: Dashboard read path                                -->
+<!-- ============================================================ -->
+<div class="diagram">
+  <h3>Diagram 3 &mdash; Insights dashboard read path</h3>
+  <div class="dcap">
+    The dashboard never touches the keyboard layer. Each fragment's
+    <code>onResume</code> kicks off a single <code>Dispatchers.IO</code> hop that loads
+    every chart's pre-aggregated rows in parallel through the helper layer, then renders
+    on the main thread. SQL-side <code>GROUP BY</code> keeps the wire footprint bounded
+    (&le; 30 rows per chart per range).
+  </div>
+  <div class="pipeline">
+
+    <span class="node ui">DashboardActivity / *Fragment</span>
+    <div class="side">user picks a range / mood filter</div>
+    <span class="arrow-v"></span>
+
+    <span class="node ms">IkdAggregator&#x2009;/&#x2009;IkdMoodAggregator&#x2009;/&#x2009;IkdHabitsAggregator&#x2009;&hellip;</span>
+    <div class="side">11 read-side helpers, all <code>suspend</code> on <code>Dispatchers.IO</code></div>
+    <span class="arrow-v"></span>
+
+    <span class="node ms">SessionDao&#x2009;/&#x2009;IkdEventDao&#x2009;/&#x2009;SensorSampleDao&#x2009;/&#x2009;MoodDao&#x2009;/&#x2009;BadgeDao</span>
+    <div class="side">Room DAOs &mdash; pre-aggregated <code>GROUP BY</code> queries</div>
+    <span class="arrow-v"></span>
+
+    <span class="node db">IkdDatabase (Room v4)</span>
+    <div class="side">5 tables · WAL · CASCADE on FK</div>
+    <span class="arrow-v" style="border-left:2px dashed #94a3b8;background:transparent;"></span>
+
+    <span class="node ms">DashboardPayload (data class)</span>
+    <div class="side">single immutable bundle returned to the main thread</div>
+    <span class="arrow-v"></span>
+
+    <span class="node ui">Chart views (IkdLineChartView, IkdHistogramView, IkdHeatmapView&#x2009;&hellip;)</span>
+    <div class="side">renders on main thread, no further I/O</div>
+
+  </div>
+</div>
+
+</body>
+</html>
