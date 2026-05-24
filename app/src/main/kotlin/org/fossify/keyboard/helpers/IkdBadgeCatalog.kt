@@ -65,8 +65,9 @@ object IkdBadgeCatalog {
      * `mood_entries` / `sessions` / `ikd_events` with no new captured data.
      *
      * @property moodCount total rows in `mood_entries` (group 1).
-     * @property bestDayLogs max intentional mood logs in any single local
-     *   calendar day (group 3).
+     * @property todayLogs intentional mood logs on the current local
+     *   calendar day (group 3 — Daily Check-In). Resets at midnight; drives
+     *   the per-day re-lock semantics enforced by [IkdBadgeEvaluator].
      * @property devotionStreak longest run of *consecutive* local days each
      *   with ≥ 3 intentional mood logs (group 4, strict streak).
      * @property recentDayQualified last 14 local days, oldest→newest, each
@@ -78,7 +79,7 @@ object IkdBadgeCatalog {
      */
     data class BadgeSnapshot(
         val moodCount: Int,
-        val bestDayLogs: Int,
+        val todayLogs: Int,
         val devotionStreak: Int,
         val recentDayQualified: List<Boolean>,
         val keystrokeTotal: Long,
@@ -180,7 +181,13 @@ object IkdBadgeCatalog {
         progress = { countProgress(it.moodCount.toLong(), target.toLong()) },
     )
 
-    /** Group 3 — Daily check-in (best single calendar day ever). */
+    /**
+     * Group 3 — Daily check-in. **Daily-reset** challenge: criteria and
+     * progress are evaluated against the current local calendar day only.
+     * Badges re-lock at midnight; re-earning fires a fresh notification.
+     * The per-day re-lock and re-notify semantics live in
+     * [IkdBadgeEvaluator] — the catalog just declares the criterion.
+     */
     private val moodCheckin = listOf(
         moodDay(
             "mood_day_1", "📝",
@@ -208,8 +215,8 @@ object IkdBadgeCatalog {
         emoji = emoji,
         titleRes = titleRes,
         descRes = descRes,
-        criteria = { it.bestDayLogs >= target },
-        progress = { countProgress(it.bestDayLogs.toLong(), target.toLong()) },
+        criteria = { it.todayLogs >= target },
+        progress = { countProgress(it.todayLogs.toLong(), target.toLong()) },
     )
 
     /** Group 4 — Daily devotion (strict consecutive ≥3-logs-per-day streak). */

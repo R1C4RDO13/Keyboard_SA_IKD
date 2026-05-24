@@ -95,18 +95,87 @@ class IkdBadgeEvaluatorTest {
         assertFalse(result.allUnlocked.contains("mood_vol_500"))
     }
 
-    // ---------- group 3: daily check-in (best day) ----------
+    // ---------- group 3: daily check-in (today's count, daily reset) ----------
 
     @Test
-    fun dailyCheckin_bestDayLogs_isMaxPerDayCount() {
-        // 3 logs same UTC day (10 days ago), 1 log another day.
-        val ts = listOf(dayTs(10), dayTs(10), dayTs(10), dayTs(4))
+    fun dailyCheckin_unlocksTieredByTodaysLogCount() {
+        // 2 logs today, plus 5 logs spread across older days that should
+        // NOT contribute to today's tiered unlock (no max-ever fallback).
+        val ts = listOf(dayTs(0), dayTs(0)) + (1..5).map { dayTs(it) }
         val snap = snapshot(moodTimestamps = ts)
-        assertEquals(3, snap.bestDayLogs)
-        val result = IkdBadgeEvaluator.evaluateBadges(snap, emptySet(), nowMs)
+        assertEquals(2, snap.todayLogs)
+        val result = IkdBadgeEvaluator.evaluateBadges(
+            snap, emptySet(), nowMs, zone = utc,
+        )
         assertTrue(result.allUnlocked.contains("mood_day_1"))
         assertTrue(result.allUnlocked.contains("mood_day_2"))
-        assertTrue(result.allUnlocked.contains("mood_day_3"))
+        assertFalse(result.allUnlocked.contains("mood_day_3"))
+    }
+
+    @Test
+    fun dailyCheckin_doesNotUnlock_whenAllLogsAreFromEarlierDays() {
+        // 3 logs ten days ago, none today: best-day-ever no longer matters.
+        val ts = listOf(dayTs(10), dayTs(10), dayTs(10))
+        val snap = snapshot(moodTimestamps = ts)
+        assertEquals(0, snap.todayLogs)
+        val result = IkdBadgeEvaluator.evaluateBadges(
+            snap, emptySet(), nowMs, zone = utc,
+        )
+        assertFalse(result.allUnlocked.contains("mood_day_1"))
+        assertFalse(result.allUnlocked.contains("mood_day_2"))
+        assertFalse(result.allUnlocked.contains("mood_day_3"))
+    }
+
+    @Test
+    fun dailyCheckin_relocks_whenYesterdaysUnlockHasNoLogsToday() {
+        // Persisted: unlocked yesterday. Today: no logs at all.
+        val snap = snapshot(moodTimestamps = emptyList())
+        val result = IkdBadgeEvaluator.evaluateBadges(
+            snapshot = snap,
+            alreadyUnlocked = setOf("mood_day_1"),
+            nowMs = nowMs,
+            persistedUnlockAt = mapOf("mood_day_1" to dayTs(1)),
+            zone = utc,
+        )
+        assertFalse(result.allUnlocked.contains("mood_day_1"))
+        assertFalse(result.unlockedAtByKey.containsKey("mood_day_1"))
+        assertTrue(result.newlyUnlocked.none { it.key == "mood_day_1" })
+    }
+
+    @Test
+    fun dailyCheckin_reUnlocksFresh_whenLogsCrossOverIntoNewDay() {
+        // Persisted: unlocked yesterday with a stale `unlocked_at`. Today
+        // the user logs again — should re-fire as a newlyUnlocked entry
+        // and overwrite the timestamp to today.
+        val snap = snapshot(moodTimestamps = listOf(dayTs(0)))
+        val result = IkdBadgeEvaluator.evaluateBadges(
+            snapshot = snap,
+            alreadyUnlocked = setOf("mood_day_1"),
+            nowMs = nowMs,
+            persistedUnlockAt = mapOf("mood_day_1" to dayTs(1)),
+            zone = utc,
+        )
+        assertTrue(result.allUnlocked.contains("mood_day_1"))
+        assertEquals(nowMs, result.unlockedAtByKey["mood_day_1"])
+        assertTrue(result.newlyUnlocked.any { it.key == "mood_day_1" })
+    }
+
+    @Test
+    fun dailyCheckin_alreadyUnlockedToday_doesNotReNotify() {
+        // Persisted: today's earlier log already wrote the row. A later
+        // evaluation in the same day must not re-fire the snackbar.
+        val snap = snapshot(moodTimestamps = listOf(dayTs(0), dayTs(0)))
+        val priorTodayMs = nowMs - 60_000L // a minute earlier, same UTC day
+        val result = IkdBadgeEvaluator.evaluateBadges(
+            snapshot = snap,
+            alreadyUnlocked = setOf("mood_day_1"),
+            nowMs = nowMs,
+            persistedUnlockAt = mapOf("mood_day_1" to priorTodayMs),
+            zone = utc,
+        )
+        assertTrue(result.allUnlocked.contains("mood_day_1"))
+        assertEquals(priorTodayMs, result.unlockedAtByKey["mood_day_1"])
+        assertTrue(result.newlyUnlocked.none { it.key == "mood_day_1" })
     }
 
     // ---------- group 4: devotion strict streak ----------

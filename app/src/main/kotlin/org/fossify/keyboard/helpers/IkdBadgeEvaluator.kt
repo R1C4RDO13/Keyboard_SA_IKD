@@ -108,7 +108,9 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
          * Pure read-model construction. No I/O, no time read beyond the
          * caller-supplied lists. Buckets the ordered mood timestamps by
          * local ISO day, then derives:
-         *  - `bestDayLogs`  = max per-day count (group 3),
+         *  - `todayLogs` = count for the current local day (group 3 —
+         *    daily-reset challenge; see [evaluateBadges] for the re-lock
+         *    + re-notify semantics that pair with this field),
          *  - `devotionStreak` = longest run of consecutive days with
          *    ≥ 3 logs, via [computeLongestStreak] over the qualifying-day
          *    list (group 4),
@@ -116,7 +118,7 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
          *    each true iff that day had ≥ 3 logs (group 4 strip UI).
          *
          * `nowMs` defaults to the current time but is injectable so the
-         * 14-day window is deterministic in unit tests.
+         * "today" bucket and 14-day window are deterministic in tests.
          */
         internal fun buildSnapshot(
             moodCount: Int,
@@ -130,7 +132,8 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
                 .groupingBy { localDayKey(it, zone) }
                 .eachCount()
 
-            val bestDayLogs = perDayCounts.values.maxOrNull() ?: 0
+            val todayKey = localDayKey(nowMs, zone)
+            val todayLogs = perDayCounts[todayKey] ?: 0
 
             // Qualifying days, ascending, for the strict consecutive streak.
             val qualifyingDays = perDayCounts
@@ -150,7 +153,7 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
 
             return BadgeSnapshot(
                 moodCount = moodCount,
-                bestDayLogs = bestDayLogs,
+                todayLogs = todayLogs,
                 devotionStreak = devotionStreak,
                 recentDayQualified = recentDayQualified,
                 keystrokeTotal = keystrokeTotal,
@@ -164,25 +167,66 @@ class IkdBadgeEvaluator(private val db: IkdDatabase) {
          * passes — record it as newly unlocked at [nowMs]. Already-unlocked
          * badges keep their progress entry for completeness (the card
          * renders unlocked) but never re-notify.
+         *
+         * Daily-reset exception ([IkdBadgeCatalog.BadgeGroup.MOOD_DAILY_CHECKIN]):
+         * a badge in that group counts as "currently unlocked" only when
+         * its persisted `unlocked_at` falls within today's local day. Each
+         * new day all three Daily Check-In badges are treated as locked
+         * until today's first qualifying log re-earns them (which fires a
+         * fresh `newlyUnlocked` entry and overwrites the DB row's
+         * timestamp). [zone] / [nowMs] are injectable so the "today" cut is
+         * deterministic in tests.
          */
         internal fun evaluateBadges(
             snapshot: BadgeSnapshot,
             alreadyUnlocked: Set<String>,
             nowMs: Long,
             persistedUnlockAt: Map<String, Long> = emptyMap(),
+            zone: ZoneId = ZoneId.systemDefault(),
         ): EvaluationResult {
             val progressByKey = LinkedHashMap<String, BadgeProgress>()
             val newlyUnlocked = ArrayList<UnlockedBadge>()
-            val allUnlocked = HashSet(alreadyUnlocked)
-            val unlockedAtByKey = HashMap(persistedUnlockAt)
+            val allUnlocked = HashSet<String>()
+            val unlockedAtByKey = HashMap<String, Long>()
+            val todayKey = localDayKey(nowMs, zone)
 
             for (def in IkdBadgeCatalog.ALL) {
                 def.progress(snapshot)?.let { progressByKey[def.key] = it }
-                if (def.key in alreadyUnlocked) continue
-                if (def.criteria(snapshot)) {
-                    newlyUnlocked += UnlockedBadge(def.key, nowMs)
-                    allUnlocked += def.key
-                    unlockedAtByKey[def.key] = nowMs
+
+                val isDaily = def.group == IkdBadgeCatalog.BadgeGroup.MOOD_DAILY_CHECKIN
+                val priorUnlockAt = persistedUnlockAt[def.key]
+                val unlockedToday = priorUnlockAt != null &&
+                    localDayKey(priorUnlockAt, zone) == todayKey
+                val priorlyUnlocked = def.key in alreadyUnlocked
+
+                if (isDaily) {
+                    // Daily-reset semantics: only "today's" unlock counts as
+                    // unlocked, and a fresh unlock fires every day the
+                    // criterion is re-met.
+                    when {
+                        def.criteria(snapshot) && !unlockedToday -> {
+                            newlyUnlocked += UnlockedBadge(def.key, nowMs)
+                            allUnlocked += def.key
+                            unlockedAtByKey[def.key] = nowMs
+                        }
+                        def.criteria(snapshot) && unlockedToday -> {
+                            allUnlocked += def.key
+                            unlockedAtByKey[def.key] = priorUnlockAt!!
+                        }
+                        // criteria fails today → locked, regardless of any
+                        // stale prior `unlocked_at` from earlier days.
+                    }
+                } else {
+                    // Cumulative badges: classic "once unlocked, stays
+                    // unlocked" — preserve every prior unlock.
+                    if (priorlyUnlocked) {
+                        allUnlocked += def.key
+                        if (priorUnlockAt != null) unlockedAtByKey[def.key] = priorUnlockAt
+                    } else if (def.criteria(snapshot)) {
+                        newlyUnlocked += UnlockedBadge(def.key, nowMs)
+                        allUnlocked += def.key
+                        unlockedAtByKey[def.key] = nowMs
+                    }
                 }
             }
 
